@@ -738,7 +738,7 @@ function GeneralTab({ cliente, socios, infoAdicional, guardarCliente, guardarInf
         </Card>
       )}
 
-      <Card title="🔧 Integraciones">
+      <Card title="🔧 Integraciones V2">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
           <EditableField label="Discord ID" value={infoAdicional?.id_discord} campo="id_discord" onSave={guardarInfoAdicional} />
           <EditableField label="Chatwoot ID" value={infoAdicional?.id_chatwoot} campo="id_chatwoot" onSave={guardarInfoAdicional} />
@@ -1493,7 +1493,7 @@ function RegistroTab({ historial }) {
     link_landing: 'Link Landing', link_tally: 'Link Tally', link_creativos: 'Link Creativos'
   }
 
-  const nombresTablas = { clientes: 'Datos Generales', clientes_facturacion: 'Facturación', clientes_urls: 'URLs', clientes_branding: 'Branding', clientes_info_adicional: 'Integraciones', clientes_lanzamiento: 'Lanzamiento' }
+  const nombresTablas = { clientes: 'Datos Generales', clientes_facturacion: 'Facturación', clientes_urls: 'URLs', clientes_branding: 'Branding', clientes_info_adicional: 'Integraciones V2', clientes_lanzamiento: 'Lanzamiento' }
 
   return (
     <Card title="📝 Historial de Cambios">
