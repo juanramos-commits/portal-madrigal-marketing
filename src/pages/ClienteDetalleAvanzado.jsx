@@ -1367,7 +1367,7 @@ function NotasTab({ notas, clienteId, setNotas, usuario }) {
             onChange={(e) => setNuevaNota(e.target.value)}
             placeholder="Escribe una nota sobre este cliente..."
             className="input"
-            style={{ minHeight: '100px', resize: 'vertical' }}
+            style={{ minHeight: '120px', resize: 'vertical', padding: '16px', lineHeight: '1.6' }}
           />
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button onClick={agregarNota} disabled={guardando || !nuevaNota.trim()} className="btn primary">
