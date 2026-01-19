@@ -103,6 +103,7 @@ function SortableMenuItem({ item, isActive, onNavigate }) {
   const [isHovered, setIsHovered] = useState(false)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
   const dragStartPos = useRef(null)
+  const hasDragged = useRef(false)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -110,13 +111,28 @@ function SortableMenuItem({ item, isActive, onNavigate }) {
     opacity: isDragging ? 0.5 : 1,
   }
 
+  useEffect(() => {
+    if (isDragging) {
+      hasDragged.current = true
+    }
+  }, [isDragging])
+
   const Icon = item.icon
 
-  const handleMouseDown = (e) => {
+  const handlePointerDown = (e) => {
     dragStartPos.current = { x: e.clientX, y: e.clientY }
+    hasDragged.current = false
   }
 
   const handleClick = (e) => {
+    // Si se detectó dragging, no navegar
+    if (hasDragged.current) {
+      e.preventDefault()
+      e.stopPropagation()
+      hasDragged.current = false
+      return
+    }
+
     // Si hubo movimiento significativo, fue un drag - no navegar
     if (dragStartPos.current) {
       const dx = Math.abs(e.clientX - dragStartPos.current.x)
@@ -138,12 +154,12 @@ function SortableMenuItem({ item, isActive, onNavigate }) {
       style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onPointerDown={handlePointerDown}
       {...attributes}
       {...listeners}
     >
       <div
         className={`nav-item ${isActive ? 'active' : ''}`}
-        onMouseDown={handleMouseDown}
         onClick={handleClick}
         style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', cursor: 'pointer' }}
       >
@@ -168,21 +184,36 @@ function SortableMenuItem({ item, isActive, onNavigate }) {
 
 function SortableDocMenuItem({ item, isActive, onClick }) {
   const [isHovered, setIsHovered] = useState(false)
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
   const dragStartPos = useRef(null)
+  const hasDragged = useRef(false)
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   }
 
+  useEffect(() => {
+    if (isDragging) {
+      hasDragged.current = true
+    }
+  }, [isDragging])
+
   const Icon = item.icon
 
-  const handleMouseDown = (e) => {
+  const handlePointerDown = (e) => {
     dragStartPos.current = { x: e.clientX, y: e.clientY }
+    hasDragged.current = false
   }
 
   const handleClick = (e) => {
+    if (hasDragged.current) {
+      e.preventDefault()
+      e.stopPropagation()
+      hasDragged.current = false
+      return
+    }
+
     if (dragStartPos.current) {
       const dx = Math.abs(e.clientX - dragStartPos.current.x)
       const dy = Math.abs(e.clientY - dragStartPos.current.y)
@@ -203,11 +234,11 @@ function SortableDocMenuItem({ item, isActive, onClick }) {
       style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onPointerDown={handlePointerDown}
       {...attributes}
       {...listeners}
     >
       <div
-        onMouseDown={handleMouseDown}
         onClick={handleClick}
         className={`nav-item ${isActive ? 'active' : ''}`}
         style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between', cursor: 'pointer' }}
