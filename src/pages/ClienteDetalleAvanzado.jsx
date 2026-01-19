@@ -53,9 +53,14 @@ export default function ClienteDetalleAvanzado() {
       setCliente(clienteData)
 
       // Cargar datos opcionales sin bloquear si fallan
-      const cargarOpcional = async (query, setter, defaultValue = null) => {
+      const cargarOpcional = async (queryFn, setter, defaultValue = null) => {
         try {
-          const { data } = await query
+          const { data, error } = await queryFn()
+          if (error) {
+            console.log('Error en tabla opcional:', error.message, error.code)
+            setter(defaultValue)
+            return
+          }
           setter(data || defaultValue)
         } catch (e) {
           console.log('Tabla opcional no disponible:', e.message)
@@ -65,17 +70,18 @@ export default function ClienteDetalleAvanzado() {
 
       // Datos opcionales - no bloquean si fallan
       await Promise.all([
-        cargarOpcional(supabase.from('clientes_branding').select('*').eq('cliente_id', id).maybeSingle(), setBranding),
-        cargarOpcional(supabase.from('clientes_facturacion').select('*').eq('cliente_id', id).maybeSingle(), setFacturacion),
-        cargarOpcional(supabase.from('clientes_info_adicional').select('*').eq('cliente_id', id).maybeSingle(), setInfoAdicional),
-        cargarOpcional(supabase.from('clientes_urls').select('*').eq('cliente_id', id).maybeSingle(), setUrls),
-        cargarOpcional(supabase.from('clientes_socios').select('*').eq('cliente_id', id).order('numero_socio'), setSocios, []),
-        cargarOpcional(supabase.from('campanas').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setCampanas, []),
-        cargarOpcional(supabase.from('facturas').select('*').eq('cliente_id', id).order('fecha', { ascending: false }), setFacturas, []),
-        cargarOpcional(supabase.from('reuniones').select('*').eq('cliente_id', id).order('fecha', { ascending: false }), setReuniones, []),
-        cargarOpcional(supabase.from('paquetes_leads').select('*').eq('cliente_id', id).order('fecha_compra', { ascending: false }), setPaquetes, []),
-        cargarOpcional(supabase.from('leads').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setLeads, []),
-        cargarOpcional(supabase.from('cliente_historial').select('*, usuario:usuario_id(nombre)').eq('cliente_id', id).order('fecha', { ascending: false }).limit(100), setHistorial, [])
+        cargarOpcional(() => supabase.from('clientes_branding').select('*').eq('cliente_id', id).maybeSingle(), setBranding),
+        cargarOpcional(() => supabase.from('clientes_facturacion').select('*').eq('cliente_id', id).maybeSingle(), setFacturacion),
+        cargarOpcional(() => supabase.from('clientes_info_adicional').select('*').eq('cliente_id', id).maybeSingle(), setInfoAdicional),
+        cargarOpcional(() => supabase.from('clientes_urls').select('*').eq('cliente_id', id).maybeSingle(), setUrls),
+        cargarOpcional(() => supabase.from('clientes_socios').select('*').eq('cliente_id', id).order('numero_socio'), setSocios, []),
+        cargarOpcional(() => supabase.from('campanas').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setCampanas, []),
+        cargarOpcional(() => supabase.from('facturas').select('*').eq('cliente_id', id).order('fecha', { ascending: false }), setFacturas, []),
+        cargarOpcional(() => supabase.from('reuniones').select('*').eq('cliente_id', id).order('fecha', { ascending: false }), setReuniones, []),
+        cargarOpcional(() => supabase.from('paquetes_leads').select('*').eq('cliente_id', id).order('fecha_compra', { ascending: false }), setPaquetes, []),
+        cargarOpcional(() => supabase.from('leads').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setLeads, []),
+        // Historial - query simplificada sin JOIN para mayor compatibilidad
+        cargarOpcional(() => supabase.from('cliente_historial').select('*').eq('cliente_id', id).order('fecha', { ascending: false }).limit(100), setHistorial, [])
       ])
 
     } catch (error) {
@@ -99,22 +105,29 @@ export default function ClienteDetalleAvanzado() {
       const { error } = await supabase.from('cliente_historial').insert({
         cliente_id: id,
         usuario_id: usuario?.id,
+        usuario_nombre: usuario?.nombre || 'Sistema',
         tabla,
         campo,
         valor_anterior: anterior || '(vacío)',
         valor_nuevo: nuevo || '(vacío)'
       })
 
-      if (error) console.error('Error registrando historial:', error)
+      if (error) {
+        console.error('Error registrando historial:', error)
+        return
+      }
 
-      // Recargar historial
-      const { data: nuevoHistorial } = await supabase
+      // Recargar historial (query simple sin JOIN)
+      const { data: nuevoHistorial, error: loadError } = await supabase
         .from('cliente_historial')
-        .select('*, usuario:usuario_id(nombre)')
+        .select('*')
         .eq('cliente_id', id)
         .order('fecha', { ascending: false })
         .limit(100)
-      setHistorial(nuevoHistorial || [])
+
+      if (!loadError) {
+        setHistorial(nuevoHistorial || [])
+      }
     } catch (error) {
       console.error('Error en historial:', error)
     }
@@ -791,10 +804,10 @@ function RegistroTab({ historial }) {
               {/* Usuario */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '600', color: 'white' }}>
-                  {item.usuario?.nombre?.[0]?.toUpperCase() || '?'}
+                  {(item.usuario_nombre || item.usuario?.nombre)?.[0]?.toUpperCase() || '?'}
                 </div>
                 <span style={{ fontSize: '13px', color: 'var(--text)' }}>
-                  {item.usuario?.nombre || 'Sistema'}
+                  {item.usuario_nombre || item.usuario?.nombre || 'Sistema'}
                 </span>
               </div>
             </div>
