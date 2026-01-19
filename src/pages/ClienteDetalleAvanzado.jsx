@@ -37,6 +37,32 @@ const formatearEstado = (estado) => {
   return estados[estado] || estado
 }
 
+// Componente Modal personalizado
+function ConfirmModal({ isOpen, onClose, onConfirm, title, message, confirmText = 'Confirmar', cancelText = 'Cancelar', danger = false }) {
+  if (!isOpen) return null
+
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0, 0, 0, 0.7)', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', zIndex: 9999, backdropFilter: 'blur(4px)'
+    }} onClick={onClose}>
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: '16px', padding: '24px', maxWidth: '400px', width: '90%',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)'
+      }} onClick={e => e.stopPropagation()}>
+        <h3 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text)', marginBottom: '12px' }}>{title}</h3>
+        <p style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '24px' }}>{message}</p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+          <button onClick={onClose} className="btn">{cancelText}</button>
+          <button onClick={onConfirm} className={`btn ${danger ? 'danger' : 'primary'}`}>{confirmText}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ClienteDetalleAvanzado() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -58,6 +84,7 @@ export default function ClienteDetalleAvanzado() {
 
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('general')
+  const [modalEliminar, setModalEliminar] = useState(false)
 
   const tabs = [
     { id: 'general', label: 'General', icon: '👤' },
@@ -257,16 +284,12 @@ export default function ClienteDetalleAvanzado() {
   }
 
   const eliminarCliente = async () => {
-    if (!window.confirm('¿Estás seguro de que quieres eliminar este cliente? Esta acción no se puede deshacer.')) {
-      return
-    }
     try {
       const { error } = await supabase.from('clientes').delete().eq('id', id)
       if (error) throw error
       navigate('/clientes')
     } catch (error) {
       console.error('Error eliminando cliente:', error)
-      alert('Error al eliminar el cliente')
     }
   }
 
@@ -395,7 +418,7 @@ export default function ClienteDetalleAvanzado() {
 
       {/* Content */}
       <div>
-        {activeTab === 'general' && <GeneralTab cliente={cliente} socios={socios} infoAdicional={infoAdicional} guardarCliente={guardarCliente} guardarInfoAdicional={guardarInfoAdicional} eliminarCliente={eliminarCliente} />}
+        {activeTab === 'general' && <GeneralTab cliente={cliente} socios={socios} infoAdicional={infoAdicional} guardarCliente={guardarCliente} guardarInfoAdicional={guardarInfoAdicional} onEliminar={() => setModalEliminar(true)} />}
         {activeTab === 'facturacion' && <FacturacionTab facturacion={facturacion} facturas={facturas} guardarFacturacion={guardarFacturacion} />}
         {activeTab === 'urls' && <URLsTab urls={urls} guardarUrls={guardarUrls} />}
         {activeTab === 'branding' && <BrandingTab branding={branding} guardarBranding={guardarBranding} />}
@@ -405,6 +428,17 @@ export default function ClienteDetalleAvanzado() {
         {activeTab === 'notas' && <NotasTab notas={notas} clienteId={id} setNotas={setNotas} usuario={usuario} />}
         {activeTab === 'registro' && <RegistroTab historial={historial} />}
       </div>
+
+      {/* Modal de confirmación para eliminar cliente */}
+      <ConfirmModal
+        isOpen={modalEliminar}
+        onClose={() => setModalEliminar(false)}
+        onConfirm={() => { setModalEliminar(false); eliminarCliente() }}
+        title="Eliminar Cliente"
+        message="¿Estás seguro de que quieres eliminar este cliente? Esta acción eliminará permanentemente todos los datos asociados y no se puede deshacer."
+        confirmText="Eliminar"
+        danger
+      />
     </div>
   )
 }
@@ -551,7 +585,7 @@ function MultiSelect({ value, onChange, options }) {
 
 // ==================== TABS ====================
 
-function GeneralTab({ cliente, socios, infoAdicional, guardarCliente, guardarInfoAdicional, eliminarCliente }) {
+function GeneralTab({ cliente, socios, infoAdicional, guardarCliente, guardarInfoAdicional, onEliminar }) {
   const estadoOptions = [
     { value: 'campañas_activas', label: 'Campañas Activas' },
     { value: 'pausado', label: 'Pausado' },
@@ -614,7 +648,7 @@ function GeneralTab({ cliente, socios, infoAdicional, guardarCliente, guardarInf
             <div style={{ fontSize: '16px', fontWeight: '600', color: '#ef4444', marginBottom: '8px' }}>Eliminar Cliente</div>
             <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Esta acción eliminará permanentemente el cliente y todos sus datos asociados. Esta acción no se puede deshacer.</div>
           </div>
-          <button onClick={eliminarCliente} className="btn danger">
+          <button onClick={onEliminar} className="btn danger">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
             </svg>
@@ -685,12 +719,18 @@ function FacturacionTab({ facturacion, facturas, guardarFacturacion }) {
                 <span className={`badge ${factura.estado === 'pagada' ? 'active' : factura.estado === 'pendiente' ? 'paused' : 'error'}`} style={{ marginRight: '12px' }}>
                   {factura.estado}
                 </span>
-                {factura.url_pdf && (
-                  <a href={factura.url_pdf} target="_blank" rel="noopener noreferrer" className="btn btn-icon" style={{ width: '40px' }}>
+                {factura.url_pdf ? (
+                  <a href={factura.url_pdf} target="_blank" rel="noopener noreferrer" className="btn btn-icon" style={{ width: '40px' }} title="Descargar factura">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
                     </svg>
                   </a>
+                ) : (
+                  <button className="btn btn-icon" style={{ width: '40px', opacity: 0.5, cursor: 'not-allowed' }} title="Sin documento" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                  </button>
                 )}
               </div>
             ))}
@@ -999,7 +1039,7 @@ function CampanasTab({ campanas, clienteId, setCampanas }) {
 
         <div>
           <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Especificaciones y apuntes</label>
-          <textarea value={formData.especificaciones} onChange={(e) => setFormData(prev => ({ ...prev, especificaciones: e.target.value }))} className="input" style={{ minHeight: '100px', resize: 'vertical' }} placeholder="Notas, especificaciones..." />
+          <textarea value={formData.especificaciones} onChange={(e) => setFormData(prev => ({ ...prev, especificaciones: e.target.value }))} className="input" style={{ minHeight: '120px', resize: 'vertical', padding: '16px', lineHeight: '1.6' }} placeholder="Notas, especificaciones..." />
         </div>
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
@@ -1086,6 +1126,7 @@ function CampanasTab({ campanas, clienteId, setCampanas }) {
 function ReunionesTab({ reuniones, clienteId, setReuniones }) {
   const [editando, setEditando] = useState(null)
   const [formData, setFormData] = useState({ notas: '', url_transcripcion: '' })
+  const [modalEliminar, setModalEliminar] = useState(null)
 
   const handleGuardar = async (reunionId) => {
     try {
@@ -1098,61 +1139,80 @@ function ReunionesTab({ reuniones, clienteId, setReuniones }) {
     }
   }
 
-  return (
-    <Card title="📅 Reuniones">
-      {reuniones.length === 0 ? (
-        <div className="empty-state"><p className="empty-state-text">No hay reuniones registradas</p></div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {reuniones.map(reunion => (
-            <div key={reunion.id} style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)', borderRadius: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text)' }}>{new Date(reunion.fecha).toLocaleDateString('es-ES')}</div>
-                  <span className="badge info">{reunion.tipo}</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className={`badge ${reunion.estado === 'realizada' ? 'active' : 'paused'}`}>{reunion.estado}</span>
-                  <button onClick={() => { setEditando(reunion.id); setFormData({ notas: reunion.notas || '', url_transcripcion: reunion.url_transcripcion || '' }) }} className="btn btn-icon" style={{ width: '36px', height: '36px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                </div>
-              </div>
+  const handleEliminar = async (reunionId) => {
+    try {
+      const { error } = await supabase.from('reuniones').delete().eq('id', reunionId)
+      if (error) throw error
+      setReuniones(prev => prev.filter(r => r.id !== reunionId))
+      setModalEliminar(null)
+    } catch (error) {
+      console.error('Error eliminando reunión:', error)
+    }
+  }
 
-              {editando === reunion.id ? (
-                <div style={{ display: 'grid', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>URL Transcripción / Llamada</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input type="url" value={formData.url_transcripcion} onChange={(e) => setFormData(prev => ({ ...prev, url_transcripcion: e.target.value }))} className="input" placeholder="https://..." style={{ flex: 1 }} />
-                      {formData.url_transcripcion && (
-                        <a href={formData.url_transcripcion} target="_blank" rel="noopener noreferrer" className="btn btn-icon" style={{ width: '42px' }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
-                        </a>
-                      )}
-                    </div>
+  return (
+    <>
+      <Card title="📅 Reuniones">
+        {reuniones.length === 0 ? (
+          <div className="empty-state"><p className="empty-state-text">No hay reuniones registradas</p></div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {reuniones.map(reunion => (
+              <div key={reunion.id} style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)', borderRadius: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text)' }}>{new Date(reunion.fecha).toLocaleDateString('es-ES')}</div>
+                    <span className="badge info">{reunion.tipo}</span>
                   </div>
-                  <div>
-                    <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Notas</label>
-                    <textarea value={formData.notas} onChange={(e) => setFormData(prev => ({ ...prev, notas: e.target.value }))} className="input" style={{ minHeight: '80px', resize: 'vertical' }} placeholder="Notas de la reunión..." />
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                    <button onClick={() => setEditando(null)} className="btn">Cancelar</button>
-                    <button onClick={() => handleGuardar(reunion.id)} className="btn primary">Guardar</button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className={`badge ${reunion.estado === 'realizada' ? 'active' : 'paused'}`}>{reunion.estado}</span>
+                    <button onClick={() => { setEditando(reunion.id); setFormData({ notas: reunion.notas || '', url_transcripcion: reunion.url_transcripcion || '' }) }} className="btn btn-icon" style={{ width: '36px', height: '36px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button onClick={() => setModalEliminar(reunion.id)} className="btn btn-icon danger" style={{ width: '36px', height: '36px' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
                   </div>
                 </div>
-              ) : (
-                <>
-                  {reunion.url_transcripcion && (
-                    <div style={{ marginBottom: '12px' }}>
-                      <a href={reunion.url_transcripcion} target="_blank" rel="noopener noreferrer" className="btn" style={{ fontSize: '13px' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
-                        Ver Transcripción / Llamada
-                      </a>
+
+                {editando === reunion.id ? (
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>URL Transcripción / Llamada</label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <input type="url" value={formData.url_transcripcion} onChange={(e) => setFormData(prev => ({ ...prev, url_transcripcion: e.target.value }))} className="input" placeholder="https://..." style={{ flex: 1 }} />
+                        {formData.url_transcripcion && (
+                          <a href={formData.url_transcripcion} target="_blank" rel="noopener noreferrer" className="btn btn-icon" style={{ width: '42px' }}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                          </a>
+                        )}
+                      </div>
                     </div>
-                  )}
-                  {reunion.notas && <div style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: '1.6' }}>{reunion.notas}</div>}
-                  {reunion.agente && <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>Agente: {reunion.agente.nombre} {reunion.agente.apellidos}</div>}
+                    <div>
+                      <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Notas</label>
+                      <textarea value={formData.notas} onChange={(e) => setFormData(prev => ({ ...prev, notas: e.target.value }))} className="input" style={{ minHeight: '100px', resize: 'vertical', padding: '16px', lineHeight: '1.6' }} placeholder="Notas de la reunión..." />
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                      <button onClick={() => setEditando(null)} className="btn">Cancelar</button>
+                      <button onClick={() => handleGuardar(reunion.id)} className="btn primary">Guardar</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {reunion.url_transcripcion && (
+                      <div style={{ marginBottom: '12px' }}>
+                        <a href={reunion.url_transcripcion} target="_blank" rel="noopener noreferrer" className="btn" style={{ fontSize: '13px' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+                          Ver Transcripción / Llamada
+                        </a>
+                      </div>
+                    )}
+                    {reunion.notas && (
+                      <div style={{ padding: '14px 16px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', fontSize: '14px', color: 'var(--text)', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>
+                        {reunion.notas}
+                      </div>
+                    )}
+                    {reunion.agente && <div style={{ marginTop: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>Agente: {reunion.agente.nombre} {reunion.agente.apellidos}</div>}
                 </>
               )}
             </div>
@@ -1160,6 +1220,17 @@ function ReunionesTab({ reuniones, clienteId, setReuniones }) {
         </div>
       )}
     </Card>
+
+      <ConfirmModal
+        isOpen={modalEliminar !== null}
+        onClose={() => setModalEliminar(null)}
+        onConfirm={() => handleEliminar(modalEliminar)}
+        title="Eliminar Reunión"
+        message="¿Estás seguro de que quieres eliminar esta reunión? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        danger
+      />
+    </>
   )
 }
 
@@ -1325,6 +1396,7 @@ function AvatarEditable({ cliente, onSave }) {
 function NotasTab({ notas, clienteId, setNotas, usuario }) {
   const [nuevaNota, setNuevaNota] = useState('')
   const [guardando, setGuardando] = useState(false)
+  const [modalEliminar, setModalEliminar] = useState(null)
 
   const agregarNota = async () => {
     if (!nuevaNota.trim()) return
@@ -1348,17 +1420,18 @@ function NotasTab({ notas, clienteId, setNotas, usuario }) {
   }
 
   const eliminarNota = async (notaId) => {
-    if (!window.confirm('¿Eliminar esta nota?')) return
     try {
       const { error } = await supabase.from('cliente_notas').delete().eq('id', notaId)
       if (error) throw error
       setNotas(prev => prev.filter(n => n.id !== notaId))
+      setModalEliminar(null)
     } catch (error) {
       console.error('Error eliminando nota:', error)
     }
   }
 
   return (
+    <>
     <div style={{ display: 'grid', gap: '24px' }}>
       <Card title="📌 Añadir Nota">
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1405,7 +1478,7 @@ function NotasTab({ notas, clienteId, setNotas, usuario }) {
                     </div>
                   </div>
                   {(nota.usuario_id === usuario?.id || usuario?.rol === 'super_admin') && (
-                    <button onClick={() => eliminarNota(nota.id)} className="btn btn-icon danger" style={{ width: '32px', height: '32px' }}>
+                    <button onClick={() => setModalEliminar(nota.id)} className="btn btn-icon danger" style={{ width: '32px', height: '32px' }}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
                   )}
@@ -1419,6 +1492,17 @@ function NotasTab({ notas, clienteId, setNotas, usuario }) {
         )}
       </Card>
     </div>
+
+      <ConfirmModal
+        isOpen={modalEliminar !== null}
+        onClose={() => setModalEliminar(null)}
+        onConfirm={() => eliminarNota(modalEliminar)}
+        title="Eliminar Nota"
+        message="¿Estás seguro de que quieres eliminar esta nota?"
+        confirmText="Eliminar"
+        danger
+      />
+    </>
   )
 }
 
