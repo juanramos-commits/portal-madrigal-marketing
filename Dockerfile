@@ -1,4 +1,5 @@
 FROM node:18-alpine AS builder
+ARG CACHEBUST=2
 WORKDIR /app
 
 # Cache buster - change this to force rebuild
