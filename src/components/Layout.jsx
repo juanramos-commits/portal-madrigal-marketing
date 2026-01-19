@@ -250,60 +250,16 @@ export default function Layout() {
   }, [usuario?.id])
 
   const loadMenuOrder = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('usuarios_menu_order')
-        .select('menu_order')
-        .eq('usuario_id', usuario.id)
-        .single()
-
-      if (error && error.code !== 'PGRST116') throw error
-
-      if (data?.menu_order) {
-        const savedOrder = data.menu_order
-        const orderedItems = savedOrder
-          .map(id => defaultNavigation.find(item => item.id === id))
-          .filter(item => item && shouldShowItem(item))
-        
-        const newItems = defaultNavigation.filter(
-          item => !savedOrder.includes(item.id) && shouldShowItem(item)
-        )
-        
-        setMenuItems([...orderedItems, ...newItems])
-      } else {
-        setMenuItems(defaultNavigation.filter(shouldShowItem))
-      }
-    } catch (error) {
-      console.error('Error loading menu order:', error)
-      setMenuItems(defaultNavigation.filter(shouldShowItem))
-    }
+    // Usar orden por defecto siempre (la tabla usuarios_menu_order puede no existir)
+    setMenuItems(defaultNavigation.filter(shouldShowItem))
   }
 
   const saveMenuOrder = async (newOrder) => {
-    try {
-      const menuOrder = newOrder.map(item => item.id)
-
-      // Primero eliminar el registro existente
-      await supabase
-        .from('usuarios_menu_order')
-        .delete()
-        .eq('usuario_id', usuario.id)
-
-      // Luego insertar el nuevo
-      const { error } = await supabase
-        .from('usuarios_menu_order')
-        .insert({
-          usuario_id: usuario.id,
-          menu_order: menuOrder,
-          updated_at: new Date().toISOString()
-        })
-
-      if (error) {
-        console.error('Error saving menu order:', error)
-      }
-    } catch (error) {
-      console.error('Error saving menu order:', error)
-    }
+    // Deshabilitado temporalmente - la tabla puede no existir
+    // Para habilitar, crear tabla usuarios_menu_order con columnas:
+    // - usuario_id (uuid, FK a usuarios)
+    // - menu_order (jsonb)
+    // - updated_at (timestamp)
   }
 
   const debouncedSave = (newOrder) => {
