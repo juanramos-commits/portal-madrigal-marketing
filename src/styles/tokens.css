@@ -1,0 +1,62 @@
+/* ==========================================================================
+   MADRIGAL CRM - DESIGN TOKENS
+   Basado en Meta Lab Design System
+   ========================================================================== */
+
+:root {
+  /* Colors - Background */
+  --bg: #0a0a0b;
+  --bg-sidebar: #0a0a0b;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-input: rgba(255, 255, 255, 0.04);
+  
+  /* Colors - Text */
+  --text: rgba(255, 255, 255, 0.95);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  
+  /* Colors - Border */
+  --border: rgba(255, 255, 255, 0.08);
+  
+  /* Colors - Primary */
+  --primary: #ffffff;
+  --primary-hover: #f5f5f5;
+  
+  /* Colors - States */
+  --error: #ff6b6b;
+  --success: #2ee59d;
+  --warning: #ffa94d;
+  
+  /* Colors - Status badges */
+  --status-active-bg: rgba(46, 229, 157, 0.15);
+  --status-active-text: #2ee59d;
+  --status-paused-bg: rgba(255, 169, 77, 0.15);
+  --status-paused-text: #ffa94d;
+  --status-inactive-bg: rgba(255, 107, 107, 0.15);
+  --status-inactive-text: #ff6b6b;
+  --status-onboarding-bg: rgba(100, 149, 237, 0.15);
+  --status-onboarding-text: #6495ed;
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 4px 24px rgba(0, 0, 0, 0.4), 0 8px 48px rgba(0, 0, 0, 0.2);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}

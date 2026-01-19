@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Madrigal Marketing | Portal</title>
+    
+    <!-- Favicon por defecto -->
+    <link rel="icon" type="image/png" id="favicon" href="/favicon-light.png" />
+    
+    <meta name="description" content="Portal de gestión de clientes de Madrigal Marketing" />
+    <meta name="theme-color" content="#0a0a0b" />
+    
+    <script>
+      // Detectar tema del sistema y cambiar favicon
+      function updateFavicon() {
+        const favicon = document.getElementById('favicon');
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        favicon.href = isDark ? '/favicon-light.png' : '/favicon-dark.png';
+      }
+      
+      // Ejecutar al cargar
+      updateFavicon();
+      
+      // Escuchar cambios de tema
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateFavicon);
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
