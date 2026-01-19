@@ -102,42 +102,59 @@ const Icons = {
 function SortableMenuItem({ item, isActive, onClick }) {
   const [isHovered, setIsHovered] = useState(false)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-  
+  const wasDraggingRef = useRef(false)
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
 
+  // Track dragging state
+  useEffect(() => {
+    if (isDragging) {
+      wasDraggingRef.current = true
+    }
+  }, [isDragging])
+
   const Icon = item.icon
 
+  const handleClick = (e) => {
+    // Si acabamos de arrastrar, prevenir navegación
+    if (wasDraggingRef.current) {
+      e.preventDefault()
+      wasDraggingRef.current = false
+      return
+    }
+    onClick?.()
+  }
+
   return (
-    <div 
-      ref={setNodeRef} 
+    <div
+      ref={setNodeRef}
       style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      {...attributes}
+      {...listeners}
     >
       <Link
         to={item.href}
         className={`nav-item ${isActive ? 'active' : ''}`}
-        onClick={onClick}
+        onClick={handleClick}
         style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}
       >
         <Icon />
         <span className="nav-label" style={{ flex: 1 }}>{item.name}</span>
-        <div 
-          {...attributes} 
-          {...listeners} 
-          style={{ 
-            cursor: 'grab', 
-            display: 'flex', 
-            alignItems: 'center', 
+        <div
+          style={{
+            cursor: 'grab',
+            display: 'flex',
+            alignItems: 'center',
             opacity: isHovered ? 0.6 : 0,
             transition: 'opacity 0.2s',
             padding: '4px'
           }}
-          onClick={(e) => e.preventDefault()}
         >
           <Icons.GripVertical />
         </div>
@@ -149,24 +166,41 @@ function SortableMenuItem({ item, isActive, onClick }) {
 function SortableDocMenuItem({ item, isActive, onClick }) {
   const [isHovered, setIsHovered] = useState(false)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-  
+  const wasDraggingRef = useRef(false)
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
 
+  useEffect(() => {
+    if (isDragging) {
+      wasDraggingRef.current = true
+    }
+  }, [isDragging])
+
   const Icon = item.icon
 
+  const handleClick = () => {
+    if (wasDraggingRef.current) {
+      wasDraggingRef.current = false
+      return
+    }
+    onClick?.()
+  }
+
   return (
-    <div 
-      ref={setNodeRef} 
+    <div
+      ref={setNodeRef}
       style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      {...attributes}
+      {...listeners}
     >
       <button
-        onClick={onClick}
+        onClick={handleClick}
         className={`nav-item ${isActive ? 'active' : ''}`}
         style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}
       >
@@ -178,18 +212,15 @@ function SortableDocMenuItem({ item, isActive, onClick }) {
           <div style={{ transform: item.isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
             <Icons.ChevronDown />
           </div>
-          <div 
-            {...attributes} 
-            {...listeners} 
-            style={{ 
-              cursor: 'grab', 
-              display: 'flex', 
-              alignItems: 'center', 
+          <div
+            style={{
+              cursor: 'grab',
+              display: 'flex',
+              alignItems: 'center',
               opacity: isHovered ? 0.6 : 0,
               transition: 'opacity 0.2s',
               padding: '4px'
             }}
-            onClick={(e) => e.stopPropagation()}
           >
             <Icons.GripVertical />
           </div>
