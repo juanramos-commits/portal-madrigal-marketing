@@ -263,7 +263,7 @@ export default function Clientes() {
       <div className="page-header">
         <div className="page-header-row">
           <div>
-            <h1 className="h1">Clientes</h1>
+            <h1 className="h1">Clientes v2</h1>
             <p className="sub">Gestiona todos tus clientes desde aquí</p>
           </div>
           {tienePermiso('clientes.crear') && (
