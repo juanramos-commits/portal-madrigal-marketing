@@ -493,3 +493,4 @@ export default function Clientes() {
   )
 }
 // Build timestamp: 2026011917
+// rebuild lunes, 19 de enero de 2026, 19:05:32 CET
