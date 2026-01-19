@@ -42,6 +42,7 @@ export default function ClienteDetalleAvanzado() {
   const cargarTodosDatos = async () => {
     setLoading(true)
     try {
+      // Cliente principal (obligatorio)
       const { data: clienteData, error: clienteError } = await supabase
         .from('clientes')
         .select('*')
@@ -51,41 +52,34 @@ export default function ClienteDetalleAvanzado() {
       if (clienteError) throw clienteError
       setCliente(clienteData)
 
-      const { data: brandingData } = await supabase.from('clientes_branding').select('*').eq('cliente_id', id).single()
-      setBranding(brandingData)
+      // Cargar datos opcionales sin bloquear si fallan
+      const cargarOpcional = async (query, setter, defaultValue = null) => {
+        try {
+          const { data } = await query
+          setter(data || defaultValue)
+        } catch (e) {
+          console.log('Tabla opcional no disponible:', e.message)
+          setter(defaultValue)
+        }
+      }
 
-      const { data: facturacionData } = await supabase.from('clientes_facturacion').select('*').eq('cliente_id', id).single()
-      setFacturacion(facturacionData)
-
-      const { data: infoData } = await supabase.from('clientes_info_adicional').select('*').eq('cliente_id', id).single()
-      setInfoAdicional(infoData)
-
-      const { data: sociosData } = await supabase.from('clientes_socios').select('*').eq('cliente_id', id).order('numero_socio')
-      setSocios(sociosData || [])
-
-      const { data: urlsData } = await supabase.from('clientes_urls').select('*').eq('cliente_id', id).single()
-      setUrls(urlsData)
-
-      const { data: campanasData } = await supabase.from('campanas').select('*').eq('cliente_id', id).order('created_at', { ascending: false })
-      setCampanas(campanasData || [])
-
-      const { data: facturasData } = await supabase.from('facturas').select('*').eq('cliente_id', id).order('fecha', { ascending: false })
-      setFacturas(facturasData || [])
-
-      const { data: reunionesData } = await supabase.from('reuniones').select('*, agente:agente_id(nombre, apellidos)').eq('cliente_id', id).order('fecha', { ascending: false })
-      setReuniones(reunionesData || [])
-
-      const { data: paquetesData } = await supabase.from('paquetes_leads').select('*').eq('cliente_id', id).order('fecha_compra', { ascending: false })
-      setPaquetes(paquetesData || [])
-
-      const { data: leadsData } = await supabase.from('leads').select('*').eq('cliente_id', id).order('created_at', { ascending: false })
-      setLeads(leadsData || [])
-
-      const { data: historialData } = await supabase.from('cliente_historial').select('*, usuario:usuario_id(nombre)').eq('cliente_id', id).order('fecha', { ascending: false }).limit(100)
-      setHistorial(historialData || [])
+      // Datos opcionales - no bloquean si fallan
+      await Promise.all([
+        cargarOpcional(supabase.from('clientes_branding').select('*').eq('cliente_id', id).maybeSingle(), setBranding),
+        cargarOpcional(supabase.from('clientes_facturacion').select('*').eq('cliente_id', id).maybeSingle(), setFacturacion),
+        cargarOpcional(supabase.from('clientes_info_adicional').select('*').eq('cliente_id', id).maybeSingle(), setInfoAdicional),
+        cargarOpcional(supabase.from('clientes_urls').select('*').eq('cliente_id', id).maybeSingle(), setUrls),
+        cargarOpcional(supabase.from('clientes_socios').select('*').eq('cliente_id', id).order('numero_socio'), setSocios, []),
+        cargarOpcional(supabase.from('campanas').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setCampanas, []),
+        cargarOpcional(supabase.from('facturas').select('*').eq('cliente_id', id).order('fecha', { ascending: false }), setFacturas, []),
+        cargarOpcional(supabase.from('reuniones').select('*').eq('cliente_id', id).order('fecha', { ascending: false }), setReuniones, []),
+        cargarOpcional(supabase.from('paquetes_leads').select('*').eq('cliente_id', id).order('fecha_compra', { ascending: false }), setPaquetes, []),
+        cargarOpcional(supabase.from('leads').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setLeads, []),
+        cargarOpcional(supabase.from('cliente_historial').select('*, usuario:usuario_id(nombre)').eq('cliente_id', id).order('fecha', { ascending: false }).limit(100), setHistorial, [])
+      ])
 
     } catch (error) {
-      console.error('Error cargando datos:', error)
+      console.error('Error cargando cliente:', error)
       navigate('/clientes')
     } finally {
       setLoading(false)
