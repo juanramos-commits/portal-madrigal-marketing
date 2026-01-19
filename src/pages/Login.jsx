@@ -40,7 +40,7 @@ export default function Login() {
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
-            <img src="/logo.png" alt="Madrigal Marketing" className="login-logo-img" style={{ width: '320px', marginBottom: '4px' }} />
+            <img src="/logo.png" alt="Madrigal Marketing" className="login-logo-img" style={{ width: '400px', marginBottom: '4px' }} />
             <p className="login-subtitle">Accede a tu panel de gestión</p>
           </div>
 
