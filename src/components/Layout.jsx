@@ -399,7 +399,7 @@ export default function Layout() {
       <div className={`sidebar-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} />
 
       <div className="main">
-        <div className="page" style={{ padding: 0 }}>
+        <div className="page">
           <Outlet />
         </div>
       </div>
