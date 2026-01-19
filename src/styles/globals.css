@@ -480,6 +480,29 @@ body {
 .input::placeholder { color: var(--text-muted); opacity: 0.5; }
 .input:focus { border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.05); box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06); }
 
+/* Date Input Styling */
+input[type="date"] {
+  color-scheme: dark;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  filter: invert(0.9);
+  background: rgba(255, 255, 255, 0.1);
+}
+input[type="date"]::-webkit-datetime-edit {
+  padding: 0;
+}
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
 /* Select / Dropdown */
 .select {
   height: 40px;

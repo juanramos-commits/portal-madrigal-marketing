@@ -474,7 +474,7 @@ export default function ClienteDetalleAvanzado() {
         {activeTab === 'facturacion' && <FacturacionTab facturacion={facturacion} facturas={facturas} guardarFacturacion={guardarFacturacion} />}
         {activeTab === 'urls' && <URLsTab urls={urls} guardarUrls={guardarUrls} />}
         {activeTab === 'branding' && <BrandingTab branding={branding} guardarBranding={guardarBranding} />}
-        {activeTab === 'leads' && <LeadsTab leads={leads} paquetes={paquetes} cliente={cliente} />}
+        {activeTab === 'leads' && <LeadsTab leads={leads} paquetes={paquetes} setPaquetes={setPaquetes} clienteId={id} />}
         {activeTab === 'campanas' && <CampanasTab campanas={campanas} clienteId={id} setCampanas={setCampanas} />}
         {activeTab === 'reuniones' && <ReunionesTab reuniones={reuniones} clienteId={id} setReuniones={setReuniones} />}
         {activeTab === 'notas' && <NotasTab notas={notas} clienteId={id} setNotas={setNotas} usuario={usuario} />}
@@ -941,11 +941,16 @@ function BrandingTab({ branding, guardarBranding }) {
   )
 }
 
-function LeadsTab({ leads, paquetes, cliente }) {
+function LeadsTab({ leads, paquetes, setPaquetes, clienteId }) {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('')
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('')
   const [busqueda, setBusqueda] = useState('')
+  const [mostrarFormPaquete, setMostrarFormPaquete] = useState(false)
+  const [editandoPaquete, setEditandoPaquete] = useState(null)
+  const [formPaquete, setFormPaquete] = useState({ fecha_compra: '', cantidad: '', importe: '' })
+  const [guardando, setGuardando] = useState(false)
+  const [modalEliminar, setModalEliminar] = useState(null)
 
   const totalComprados = paquetes.reduce((sum, p) => sum + (p.cantidad || 0), 0)
   const totalUtilizados = leads.length
@@ -965,10 +970,62 @@ function LeadsTab({ leads, paquetes, cliente }) {
     return true
   })
 
-  // Estados únicos para el filtro
   const estadosUnicos = [...new Set(leads.map(l => l.estado).filter(Boolean))]
 
+  const guardarPaquete = async () => {
+    if (!formPaquete.cantidad) return
+    setGuardando(true)
+    try {
+      const datos = {
+        cliente_id: clienteId,
+        fecha_compra: formPaquete.fecha_compra || new Date().toISOString().split('T')[0],
+        cantidad: parseInt(formPaquete.cantidad),
+        importe: parseFloat(formPaquete.importe) || 0
+      }
+
+      if (editandoPaquete) {
+        const { error } = await supabase.from('paquetes_leads').update(datos).eq('id', editandoPaquete)
+        if (error) throw error
+        setPaquetes(prev => prev.map(p => p.id === editandoPaquete ? { ...p, ...datos } : p))
+      } else {
+        const { data, error } = await supabase.from('paquetes_leads').insert(datos).select().single()
+        if (error) throw error
+        setPaquetes(prev => [data, ...prev])
+      }
+
+      setMostrarFormPaquete(false)
+      setEditandoPaquete(null)
+      setFormPaquete({ fecha_compra: '', cantidad: '', importe: '' })
+    } catch (error) {
+      console.error('Error guardando paquete:', error)
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  const eliminarPaquete = async (id) => {
+    try {
+      const { error } = await supabase.from('paquetes_leads').delete().eq('id', id)
+      if (error) throw error
+      setPaquetes(prev => prev.filter(p => p.id !== id))
+      setModalEliminar(null)
+    } catch (error) {
+      console.error('Error eliminando paquete:', error)
+    }
+  }
+
+  const editarPaquete = (paquete) => {
+    setEditandoPaquete(paquete.id)
+    setFormPaquete({
+      fecha_compra: paquete.fecha_compra?.split('T')[0] || '',
+      cantidad: paquete.cantidad?.toString() || '',
+      importe: paquete.importe?.toString() || ''
+    })
+    setMostrarFormPaquete(true)
+  }
+
   return (
+    <>
     <div style={{ display: 'grid', gap: '24px' }}>
       <div className="grid grid-cols-3 gap-4">
         <div className="stat-card" style={{ background: 'rgba(102, 126, 234, 0.1)', borderColor: 'rgba(102, 126, 234, 0.2)' }}>
@@ -985,18 +1042,67 @@ function LeadsTab({ leads, paquetes, cliente }) {
         </div>
       </div>
 
-      <Card title="📦 Paquetes Comprados">
+      <Card title="📦 Paquetes de Leads">
+        <div style={{ marginBottom: '16px' }}>
+          <button onClick={() => { setMostrarFormPaquete(true); setEditandoPaquete(null); setFormPaquete({ fecha_compra: '', cantidad: '', importe: '' }) }} className="btn primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+            Añadir Paquete
+          </button>
+        </div>
+
+        {mostrarFormPaquete && (
+          <div style={{ padding: '20px', background: 'rgba(102, 126, 234, 0.05)', border: '1px solid rgba(102, 126, 234, 0.2)', borderRadius: '12px', marginBottom: '16px' }}>
+            <h4 style={{ marginBottom: '16px', fontSize: '15px', fontWeight: '600', color: 'var(--text)' }}>
+              {editandoPaquete ? 'Editar Paquete' : 'Nuevo Paquete de Leads'}
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Fecha de Compra</label>
+                <input type="date" value={formPaquete.fecha_compra} onChange={(e) => setFormPaquete(prev => ({ ...prev, fecha_compra: e.target.value }))} className="input" />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Cantidad de Leads *</label>
+                <input type="number" value={formPaquete.cantidad} onChange={(e) => setFormPaquete(prev => ({ ...prev, cantidad: e.target.value }))} className="input" placeholder="Ej: 50" min="1" />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Importe (€)</label>
+                <input type="number" value={formPaquete.importe} onChange={(e) => setFormPaquete(prev => ({ ...prev, importe: e.target.value }))} className="input" placeholder="Ej: 250.00" step="0.01" min="0" />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button onClick={() => { setMostrarFormPaquete(false); setEditandoPaquete(null) }} className="btn">Cancelar</button>
+              <button onClick={guardarPaquete} disabled={guardando || !formPaquete.cantidad} className="btn primary">
+                {guardando ? <div className="spinner" style={{ width: '16px', height: '16px' }}></div> : (editandoPaquete ? 'Guardar' : 'Añadir')}
+              </button>
+            </div>
+          </div>
+        )}
+
         {paquetes.length === 0 ? (
           <div className="empty-state"><p className="empty-state-text">No hay paquetes comprados</p></div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {paquetes.map(paquete => (
               <div key={paquete.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)', borderRadius: '12px' }}>
-                <div>
-                  <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text)', marginBottom: '4px' }}>Paquete de {paquete.cantidad} leads</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{new Date(paquete.fecha_compra).toLocaleDateString('es-ES')}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '15px', fontWeight: '600', color: 'var(--text)', marginBottom: '4px' }}>
+                    Paquete de {paquete.cantidad} leads
+                  </div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                    {paquete.fecha_compra ? new Date(paquete.fecha_compra).toLocaleDateString('es-ES') : 'Sin fecha'}
+                  </div>
                 </div>
-                <div style={{ fontSize: '18px', fontWeight: '700', color: '#10b981' }}>{parseFloat(paquete.importe || 0).toFixed(2)}€</div>
+                <div style={{ fontSize: '18px', fontWeight: '700', color: '#10b981', marginRight: '16px' }}>
+                  {parseFloat(paquete.importe || 0).toFixed(2)}€
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => editarPaquete(paquete)} className="btn btn-icon" style={{ width: '36px', height: '36px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  </button>
+                  <button onClick={() => setModalEliminar(paquete.id)} className="btn btn-icon danger" style={{ width: '36px', height: '36px' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -1004,39 +1110,14 @@ function LeadsTab({ leads, paquetes, cliente }) {
       </Card>
 
       <Card title="📋 Lista de Leads">
-        {/* Filtros */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
-          <input
-            type="text"
-            placeholder="Buscar por nombre, email, teléfono..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="input"
-          />
-          <select
-            value={filtroEstado}
-            onChange={(e) => setFiltroEstado(e.target.value)}
-            className="select"
-          >
+          <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="input" />
+          <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} className="select">
             <option value="">Todos los estados</option>
-            {estadosUnicos.map(estado => (
-              <option key={estado} value={estado}>{estado}</option>
-            ))}
+            {estadosUnicos.map(estado => <option key={estado} value={estado}>{estado}</option>)}
           </select>
-          <input
-            type="date"
-            value={filtroFechaDesde}
-            onChange={(e) => setFiltroFechaDesde(e.target.value)}
-            className="input"
-            placeholder="Desde"
-          />
-          <input
-            type="date"
-            value={filtroFechaHasta}
-            onChange={(e) => setFiltroFechaHasta(e.target.value)}
-            className="input"
-            placeholder="Hasta"
-          />
+          <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="input" />
+          <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="input" />
         </div>
 
         {leadsFiltrados.length === 0 ? (
@@ -1059,6 +1140,17 @@ function LeadsTab({ leads, paquetes, cliente }) {
         )}
       </Card>
     </div>
+
+    <ConfirmModal
+      isOpen={modalEliminar !== null}
+      onClose={() => setModalEliminar(null)}
+      onConfirm={() => eliminarPaquete(modalEliminar)}
+      title="Eliminar Paquete"
+      message="¿Estás seguro de que quieres eliminar este paquete de leads?"
+      confirmText="Eliminar"
+      danger
+    />
+    </>
   )
 }
 
