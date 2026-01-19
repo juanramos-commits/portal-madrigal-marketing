@@ -5,7 +5,12 @@ import { supabase } from '../lib/supabase'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
+
+// Modifier para restringir movimiento vertical
+const restrictToVerticalAxis = ({ transform }) => ({
+  ...transform,
+  x: 0,
+})
 
 const Icons = {
   Dashboard: () => (
@@ -368,7 +373,7 @@ export default function Layout() {
         </div>
 
         <nav className="nav">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis, restrictToParentElement]}>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
             <SortableContext items={menuItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
               {menuItems.map((item) => {
                 if (item.type === 'submenu') {
