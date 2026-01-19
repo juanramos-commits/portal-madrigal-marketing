@@ -81,6 +81,7 @@ export default function ClienteDetalleAvanzado() {
   const [leads, setLeads] = useState([])
   const [historial, setHistorial] = useState([])
   const [notas, setNotas] = useState([])
+  const [lanzamiento, setLanzamiento] = useState(null)
 
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('general')
@@ -88,6 +89,7 @@ export default function ClienteDetalleAvanzado() {
 
   const tabs = [
     { id: 'general', label: 'General', icon: '👤' },
+    { id: 'lanzamiento', label: 'Lanzamiento', icon: '🚀' },
     { id: 'facturacion', label: 'Facturación', icon: '💰' },
     { id: 'urls', label: 'URLs', icon: '🔗' },
     { id: 'branding', label: 'Branding', icon: '🎨' },
@@ -141,7 +143,8 @@ export default function ClienteDetalleAvanzado() {
         cargarOpcional(() => supabase.from('paquetes_leads').select('*').eq('cliente_id', id).order('fecha_compra', { ascending: false }), setPaquetes, []),
         cargarOpcional(() => supabase.from('leads').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setLeads, []),
         cargarOpcional(() => supabase.from('cliente_historial').select('*').eq('cliente_id', id).order('fecha', { ascending: false }).limit(100), setHistorial, []),
-        cargarOpcional(() => supabase.from('cliente_notas').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setNotas, [])
+        cargarOpcional(() => supabase.from('cliente_notas').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setNotas, []),
+        cargarOpcional(() => supabase.from('clientes_lanzamiento').select('*').eq('cliente_id', id).maybeSingle(), setLanzamiento)
       ])
 
     } catch (error) {
@@ -283,6 +286,26 @@ export default function ClienteDetalleAvanzado() {
     }
   }
 
+  const guardarLanzamiento = async (campo, valor) => {
+    const valorAnterior = lanzamiento?.[campo]
+    try {
+      if (lanzamiento?.id) {
+        const { error } = await supabase.from('clientes_lanzamiento').update({ [campo]: valor }).eq('id', lanzamiento.id)
+        if (error) throw error
+        setLanzamiento(prev => ({ ...prev, [campo]: valor }))
+      } else {
+        const { data, error } = await supabase.from('clientes_lanzamiento').insert({ cliente_id: id, [campo]: valor }).select().single()
+        if (error) throw error
+        setLanzamiento(data)
+      }
+      await registrarCambio('clientes_lanzamiento', campo, valorAnterior, valor)
+      return true
+    } catch (error) {
+      console.error('Error guardando lanzamiento:', error)
+      return false
+    }
+  }
+
   const eliminarCliente = async () => {
     try {
       const { error } = await supabase.from('clientes').delete().eq('id', id)
@@ -330,6 +353,18 @@ export default function ClienteDetalleAvanzado() {
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <h1 className="h1" style={{ margin: 0 }}>{cliente.nombre_comercial}</h1>
+              <span style={{
+                padding: '4px 10px',
+                background: 'rgba(102, 126, 234, 0.15)',
+                border: '1px solid rgba(102, 126, 234, 0.3)',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: '600',
+                color: '#667eea',
+                fontFamily: 'monospace'
+              }}>
+                ID: {cliente.id}
+              </span>
               {notas.length > 0 && (
                 <div
                   onClick={() => setActiveTab('notas')}
@@ -352,21 +387,39 @@ export default function ClienteDetalleAvanzado() {
                   <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>{cliente.telefono}</span>
                 </>
               )}
-              <span className={`badge ${cliente.estado === 'campañas_activas' ? 'active' : cliente.estado === 'pausado' ? 'paused' : 'error'}`}>
+              <span className={`badge ${cliente.estado === 'campañas_activas' ? 'active' : cliente.estado === 'pausado' ? 'paused' : cliente.estado === 'onboarding' ? 'info' : 'error'}`}>
                 {formatearEstado(cliente.estado)}
               </span>
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
+            {infoAdicional?.id_chatwoot && (
+              <a
+                href={`https://n8n-chatwoot.q20n0s.easypanel.host/app/accounts/2/conversations/${infoAdicional.id_chatwoot}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-icon"
+                style={{ background: 'rgba(37, 211, 102, 0.15)', borderColor: 'rgba(37, 211, 102, 0.3)', color: '#25d366' }}
+                title="Abrir WhatsApp en Chatwoot"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              </a>
+            )}
             {infoAdicional?.url_drive && (
-              <a href={infoAdicional.url_drive} target="_blank" rel="noopener noreferrer" className="btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L5.82 10.18h4.35V24h3.66V10.18h4.35L12 0z"/></svg>
-                Drive
+              <a
+                href={infoAdicional.url_drive}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-icon"
+                style={{ background: 'rgba(66, 133, 244, 0.15)', borderColor: 'rgba(66, 133, 244, 0.3)', color: '#4285f4' }}
+                title="Abrir Google Drive"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4.433 22l3.81-6.6H22l-3.81 6.6H4.433zM15.81 8.2l3.8 6.6H6L2.2 8.2h13.61zM8.2 2l3.8 6.6L8.2 15.2 4.4 8.6 8.2 2z"/></svg>
               </a>
             )}
             {urls?.instagram && (
-              <a href={urls.instagram} target="_blank" rel="noopener noreferrer" className="btn btn-icon" style={{ background: 'rgba(225, 48, 108, 0.15)', borderColor: 'rgba(225, 48, 108, 0.3)', color: '#e1306c' }}>
+              <a href={urls.instagram} target="_blank" rel="noopener noreferrer" className="btn btn-icon" style={{ background: 'rgba(225, 48, 108, 0.15)', borderColor: 'rgba(225, 48, 108, 0.3)', color: '#e1306c' }} title="Abrir Instagram">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c2.717 0 3.056.01 4.122.06 1.065.05 1.79.217 2.428.465.66.254 1.216.598 1.772 1.153a4.908 4.908 0 0 1 1.153 1.772c.247.637.415 1.363.465 2.428.047 1.066.06 1.405.06 4.122 0 2.717-.01 3.056-.06 4.122-.05 1.065-.218 1.79-.465 2.428a4.883 4.883 0 0 1-1.153 1.772 4.915 4.915 0 0 1-1.772 1.153c-.637.247-1.363.415-2.428.465-1.066.047-1.405.06-4.122.06-2.717 0-3.056-.01-4.122-.06-1.065-.05-1.79-.218-2.428-.465a4.89 4.89 0 0 1-1.772-1.153 4.904 4.904 0 0 1-1.153-1.772c-.248-.637-.415-1.363-.465-2.428C2.013 15.056 2 14.717 2 12c0-2.717.01-3.056.06-4.122.05-1.066.217-1.79.465-2.428a4.88 4.88 0 0 1 1.153-1.772A4.897 4.897 0 0 1 5.45 2.525c.638-.248 1.362-.415 2.428-.465C8.944 2.013 9.283 2 12 2zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm6.5-.25a1.25 1.25 0 1 0-2.5 0 1.25 1.25 0 0 0 2.5 0zM12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>
               </a>
             )}
@@ -419,6 +472,7 @@ export default function ClienteDetalleAvanzado() {
       {/* Content */}
       <div>
         {activeTab === 'general' && <GeneralTab cliente={cliente} socios={socios} infoAdicional={infoAdicional} guardarCliente={guardarCliente} guardarInfoAdicional={guardarInfoAdicional} onEliminar={() => setModalEliminar(true)} />}
+        {activeTab === 'lanzamiento' && <LanzamientoTab lanzamiento={lanzamiento} guardarLanzamiento={guardarLanzamiento} />}
         {activeTab === 'facturacion' && <FacturacionTab facturacion={facturacion} facturas={facturas} guardarFacturacion={guardarFacturacion} />}
         {activeTab === 'urls' && <URLsTab urls={urls} guardarUrls={guardarUrls} />}
         {activeTab === 'branding' && <BrandingTab branding={branding} guardarBranding={guardarBranding} />}
@@ -553,29 +607,49 @@ function MultiSelect({ value, onChange, options }) {
   )
 
   return (
-    <div style={{ flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', maxHeight: '300px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div style={{
+      flex: 1,
+      background: '#1e1e2e',
+      border: '1px solid var(--border)',
+      borderRadius: '8px',
+      height: '220px',
+      maxHeight: '220px',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       <input
         type="text"
-        placeholder="Buscar..."
+        placeholder="Buscar especialidad..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="input"
-        style={{ borderRadius: '8px 8px 0 0', border: 'none', borderBottom: '1px solid var(--border)' }}
+        style={{ borderRadius: '8px 8px 0 0', border: 'none', borderBottom: '1px solid var(--border)', flexShrink: 0 }}
       />
-      <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
+      {selected.length > 0 && (
+        <div style={{ padding: '8px', borderBottom: '1px solid var(--border)', flexShrink: 0, display: 'flex', flexWrap: 'wrap', gap: '4px', maxHeight: '60px', overflowY: 'auto' }}>
+          {selected.map(s => (
+            <span key={s} style={{ padding: '2px 8px', background: 'rgba(102, 126, 234, 0.2)', borderRadius: '12px', fontSize: '11px', color: '#667eea' }}>
+              {s}
+            </span>
+          ))}
+        </div>
+      )}
+      <div style={{ flex: 1, overflow: 'auto', padding: '6px' }}>
         {filtered.map(opt => (
           <div
             key={opt}
             onClick={() => toggleOption(opt)}
             style={{
-              padding: '10px 12px', cursor: 'pointer', borderRadius: '6px', marginBottom: '4px',
+              padding: '8px 10px', cursor: 'pointer', borderRadius: '6px', marginBottom: '2px',
               background: selected.includes(opt) ? 'rgba(102, 126, 234, 0.15)' : 'transparent',
               color: selected.includes(opt) ? '#667eea' : 'var(--text)',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              fontSize: '13px'
             }}
           >
             {opt}
-            {selected.includes(opt) && <span>✓</span>}
+            {selected.includes(opt) && <span style={{ fontSize: '12px' }}>✓</span>}
           </div>
         ))}
       </div>
@@ -654,6 +728,52 @@ function GeneralTab({ cliente, socios, infoAdicional, guardarCliente, guardarInf
             </svg>
             Eliminar Cliente
           </button>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+function LanzamientoTab({ lanzamiento, guardarLanzamiento }) {
+  const estadoOptions = [
+    { value: 'pendiente', label: 'Pendiente' },
+    { value: 'en_proceso', label: 'En Proceso' },
+    { value: 'completado', label: 'Completado' },
+    { value: 'pausado', label: 'Pausado' }
+  ]
+
+  return (
+    <div style={{ display: 'grid', gap: '24px' }}>
+      <Card title="🚀 Configuración de Lanzamiento">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+          <EditableField label="Encargado Landing" value={lanzamiento?.encargado_landing} campo="encargado_landing" onSave={guardarLanzamiento} />
+          <EditableField label="Encargado Creativos" value={lanzamiento?.encargado_creativos} campo="encargado_creativos" onSave={guardarLanzamiento} />
+          <EditableField label="Estado" value={lanzamiento?.estado} campo="estado" onSave={guardarLanzamiento} type="select" options={estadoOptions} />
+          <EditableField label="Pack" value={lanzamiento?.pack} campo="pack" onSave={guardarLanzamiento} />
+          <EditableField label="Web Cliente" value={lanzamiento?.web_cliente} campo="web_cliente" onSave={guardarLanzamiento} type="url" showUrlButton />
+          <EditableField label="Enlace de Botones" value={lanzamiento?.enlace_botones} campo="enlace_botones" onSave={guardarLanzamiento} type="url" showUrlButton />
+        </div>
+      </Card>
+
+      <Card title="📧 Contacto">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+          <EditableField label="Correo Electrónico" value={lanzamiento?.correo_electronico} campo="correo_electronico" onSave={guardarLanzamiento} type="email" />
+        </div>
+      </Card>
+
+      <Card title="📅 Fechas Importantes">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+          <EditableField label="Fecha Onboarding" value={lanzamiento?.fecha_onboarding} campo="fecha_onboarding" onSave={guardarLanzamiento} type="date" />
+          <EditableField label="Fecha Subida Material" value={lanzamiento?.fecha_subida_material} campo="fecha_subida_material" onSave={guardarLanzamiento} type="date" />
+          <EditableField label="Fecha Lanzamiento" value={lanzamiento?.fecha_lanzamiento} campo="fecha_lanzamiento" onSave={guardarLanzamiento} type="date" />
+        </div>
+      </Card>
+
+      <Card title="🔗 Enlaces del Proyecto">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+          <EditableField label="Link Landing" value={lanzamiento?.link_landing} campo="link_landing" onSave={guardarLanzamiento} type="url" showUrlButton />
+          <EditableField label="Link Tally" value={lanzamiento?.link_tally} campo="link_tally" onSave={guardarLanzamiento} type="url" showUrlButton />
+          <EditableField label="Link Creativos" value={lanzamiento?.link_creativos} campo="link_creativos" onSave={guardarLanzamiento} type="url" showUrlButton />
         </div>
       </Card>
     </div>
@@ -752,7 +872,6 @@ function URLsTab({ urls, guardarUrls }) {
         <EditableField label="LinkedIn" value={urls?.linkedin} campo="linkedin" onSave={guardarUrls} type="url" showUrlButton />
         <EditableField label="TikTok" value={urls?.tiktok} campo="tiktok" onSave={guardarUrls} type="url" showUrlButton />
         <EditableField label="YouTube" value={urls?.youtube} campo="youtube" onSave={guardarUrls} type="url" showUrlButton />
-        <EditableField label="Google My Business" value={urls?.google_my_business} campo="google_my_business" onSave={guardarUrls} type="url" showUrlButton />
         <EditableField label="Otra URL 1" value={urls?.otra_url_1} campo="otra_url_1" onSave={guardarUrls} type="url" showUrlButton />
         <EditableField label="Otra URL 2" value={urls?.otra_url_2} campo="otra_url_2" onSave={guardarUrls} type="url" showUrlButton />
       </div>
@@ -1241,13 +1360,17 @@ function RegistroTab({ historial }) {
     nombre_fiscal: 'Nombre Fiscal', cif_nif: 'CIF/NIF', direccion_fiscal: 'Dirección Fiscal', ciudad: 'Ciudad',
     provincia: 'Provincia', codigo_postal: 'Código Postal', pais: 'País', pagina_web: 'Página Web', pagina_web_2: 'Página Web 2',
     instagram: 'Instagram', facebook: 'Facebook', linkedin: 'LinkedIn', tiktok: 'TikTok', youtube: 'YouTube',
-    google_my_business: 'Google My Business', colores: 'Colores', tipografias: 'Tipografías', tono_marca: 'Tono de Marca',
+    colores: 'Colores', tipografias: 'Tipografías', tono_marca: 'Tono de Marca',
     especificaciones_funnel: 'Especificaciones Funnel', logo_url: 'URL Logo', guia_estilo_url: 'URL Guía de Estilo',
     id_discord: 'Discord ID', id_chatwoot: 'Chatwoot ID', url_drive: 'URL Drive', url_drive_creativos: 'URL Drive Creativos',
-    password_portal: 'Contraseña Portal', otra_url_1: 'Otra URL 1', otra_url_2: 'Otra URL 2'
+    password_portal: 'Contraseña Portal', otra_url_1: 'Otra URL 1', otra_url_2: 'Otra URL 2',
+    encargado_landing: 'Encargado Landing', encargado_creativos: 'Encargado Creativos', pack: 'Pack',
+    web_cliente: 'Web Cliente', enlace_botones: 'Enlace de Botones', correo_electronico: 'Correo Electrónico',
+    fecha_subida_material: 'Fecha Subida Material', fecha_lanzamiento: 'Fecha Lanzamiento',
+    link_landing: 'Link Landing', link_tally: 'Link Tally', link_creativos: 'Link Creativos'
   }
 
-  const nombresTablas = { clientes: 'Datos Generales', clientes_facturacion: 'Facturación', clientes_urls: 'URLs', clientes_branding: 'Branding', clientes_info_adicional: 'Integraciones' }
+  const nombresTablas = { clientes: 'Datos Generales', clientes_facturacion: 'Facturación', clientes_urls: 'URLs', clientes_branding: 'Branding', clientes_info_adicional: 'Integraciones', clientes_lanzamiento: 'Lanzamiento' }
 
   return (
     <Card title="📝 Historial de Cambios">
@@ -1291,14 +1414,36 @@ function RegistroTab({ historial }) {
 
 function AvatarEditable({ cliente, onSave }) {
   const [showMenu, setShowMenu] = useState(false)
-  const [editingUrl, setEditingUrl] = useState(false)
-  const [urlInput, setUrlInput] = useState('')
+  const [uploading, setUploading] = useState(false)
 
-  const handleUrlSave = async () => {
-    await onSave(urlInput)
-    setEditingUrl(false)
-    setShowMenu(false)
-    setUrlInput('')
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${cliente.id}-${Date.now()}.${fileExt}`
+      const filePath = `avatars/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('clientes')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('clientes')
+        .getPublicUrl(filePath)
+
+      await onSave(publicUrl)
+      setShowMenu(false)
+    } catch (error) {
+      console.error('Error subiendo imagen:', error)
+      alert('Error al subir la imagen. Intenta de nuevo.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const handleRemove = async () => {
@@ -1323,68 +1468,67 @@ function AvatarEditable({ cliente, onSave }) {
 
       {showMenu && (
         <div style={{
-          position: 'absolute', top: '70px', left: '0', background: 'var(--bg-card)',
-          border: '1px solid var(--border)', borderRadius: '12px', padding: '8px',
-          minWidth: '200px', zIndex: 100, boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+          position: 'absolute', top: '70px', left: '0',
+          background: '#1e1e2e',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '8px',
+          minWidth: '220px', zIndex: 100, boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
         }}>
-          {editingUrl ? (
-            <div style={{ padding: '8px' }}>
-              <input
-                type="url"
-                value={urlInput}
-                onChange={(e) => setUrlInput(e.target.value)}
-                placeholder="URL de la imagen..."
-                className="input"
-                style={{ marginBottom: '8px' }}
-                autoFocus
-              />
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => setEditingUrl(false)} className="btn" style={{ flex: 1 }}>Cancelar</button>
-                <button onClick={handleUrlSave} className="btn primary" style={{ flex: 1 }}>Guardar</button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <button
-                onClick={() => setEditingUrl(true)}
-                style={{
-                  width: '100%', padding: '10px 12px', background: 'transparent', border: 'none',
-                  color: 'var(--text)', fontSize: '14px', textAlign: 'left', cursor: 'pointer',
-                  borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                Cambiar imagen
-              </button>
-              {cliente.avatar_url && (
-                <button
-                  onClick={handleRemove}
-                  style={{
-                    width: '100%', padding: '10px 12px', background: 'transparent', border: 'none',
-                    color: '#ef4444', fontSize: '14px', textAlign: 'left', cursor: 'pointer',
-                    borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  Eliminar imagen
-                </button>
-              )}
-              <button
-                onClick={() => setShowMenu(false)}
-                style={{
-                  width: '100%', padding: '10px 12px', background: 'transparent', border: 'none',
-                  color: 'var(--text-muted)', fontSize: '14px', textAlign: 'left', cursor: 'pointer',
-                  borderRadius: '8px', marginTop: '4px'
-                }}
-              >
-                Cancelar
-              </button>
-            </>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            style={{ display: 'none' }}
+            id="avatar-upload"
+          />
+          <label
+            htmlFor="avatar-upload"
+            style={{
+              width: '100%', padding: '12px 14px', background: 'transparent', border: 'none',
+              color: 'var(--text)', fontSize: '14px', textAlign: 'left', cursor: 'pointer',
+              borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            {uploading ? (
+              <>
+                <div className="spinner" style={{ width: '16px', height: '16px' }}></div>
+                Subiendo...
+              </>
+            ) : (
+              <>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                Subir foto
+              </>
+            )}
+          </label>
+          {cliente.avatar_url && (
+            <button
+              onClick={handleRemove}
+              style={{
+                width: '100%', padding: '12px 14px', background: 'transparent', border: 'none',
+                color: '#ef4444', fontSize: '14px', textAlign: 'left', cursor: 'pointer',
+                borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '10px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'}
+              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Eliminar imagen
+            </button>
           )}
+          <button
+            onClick={() => setShowMenu(false)}
+            style={{
+              width: '100%', padding: '12px 14px', background: 'transparent', border: 'none',
+              color: 'var(--text-muted)', fontSize: '14px', textAlign: 'left', cursor: 'pointer',
+              borderRadius: '8px', marginTop: '4px'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+            onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+          >
+            Cancelar
+          </button>
         </div>
       )}
     </div>
