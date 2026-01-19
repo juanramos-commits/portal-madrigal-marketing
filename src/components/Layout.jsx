@@ -102,8 +102,6 @@ const Icons = {
 function SortableMenuItem({ item, isActive, onNavigate }) {
   const [isHovered, setIsHovered] = useState(false)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-  const dragStartPos = useRef(null)
-  const hasDragged = useRef(false)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -111,42 +109,7 @@ function SortableMenuItem({ item, isActive, onNavigate }) {
     opacity: isDragging ? 0.5 : 1,
   }
 
-  useEffect(() => {
-    if (isDragging) {
-      hasDragged.current = true
-    }
-  }, [isDragging])
-
   const Icon = item.icon
-
-  const handlePointerDown = (e) => {
-    dragStartPos.current = { x: e.clientX, y: e.clientY }
-    hasDragged.current = false
-  }
-
-  const handleClick = (e) => {
-    // Si se detectó dragging, no navegar
-    if (hasDragged.current) {
-      e.preventDefault()
-      e.stopPropagation()
-      hasDragged.current = false
-      return
-    }
-
-    // Si hubo movimiento significativo, fue un drag - no navegar
-    if (dragStartPos.current) {
-      const dx = Math.abs(e.clientX - dragStartPos.current.x)
-      const dy = Math.abs(e.clientY - dragStartPos.current.y)
-      if (dx > 5 || dy > 5) {
-        e.preventDefault()
-        e.stopPropagation()
-        dragStartPos.current = null
-        return
-      }
-    }
-    dragStartPos.current = null
-    onNavigate(item.href)
-  }
 
   return (
     <div
@@ -154,18 +117,21 @@ function SortableMenuItem({ item, isActive, onNavigate }) {
       style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onPointerDown={handlePointerDown}
-      {...attributes}
-      {...listeners}
     >
       <div
         className={`nav-item ${isActive ? 'active' : ''}`}
-        onClick={handleClick}
-        style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', cursor: 'pointer' }}
+        style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}
       >
-        <Icon />
-        <span className="nav-label" style={{ flex: 1 }}>{item.name}</span>
         <div
+          onClick={() => onNavigate(item.href)}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, cursor: 'pointer' }}
+        >
+          <Icon />
+          <span className="nav-label">{item.name}</span>
+        </div>
+        <div
+          {...attributes}
+          {...listeners}
           style={{
             cursor: 'grab',
             display: 'flex',
@@ -185,48 +151,14 @@ function SortableMenuItem({ item, isActive, onNavigate }) {
 function SortableDocMenuItem({ item, isActive, onClick }) {
   const [isHovered, setIsHovered] = useState(false)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-  const dragStartPos = useRef(null)
-  const hasDragged = useRef(false)
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.5 : 1,
   }
-
-  useEffect(() => {
-    if (isDragging) {
-      hasDragged.current = true
-    }
-  }, [isDragging])
 
   const Icon = item.icon
-
-  const handlePointerDown = (e) => {
-    dragStartPos.current = { x: e.clientX, y: e.clientY }
-    hasDragged.current = false
-  }
-
-  const handleClick = (e) => {
-    if (hasDragged.current) {
-      e.preventDefault()
-      e.stopPropagation()
-      hasDragged.current = false
-      return
-    }
-
-    if (dragStartPos.current) {
-      const dx = Math.abs(e.clientX - dragStartPos.current.x)
-      const dy = Math.abs(e.clientY - dragStartPos.current.y)
-      if (dx > 5 || dy > 5) {
-        e.preventDefault()
-        e.stopPropagation()
-        dragStartPos.current = null
-        return
-      }
-    }
-    dragStartPos.current = null
-    onClick?.()
-  }
 
   return (
     <div
@@ -234,24 +166,28 @@ function SortableDocMenuItem({ item, isActive, onClick }) {
       style={style}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onPointerDown={handlePointerDown}
-      {...attributes}
-      {...listeners}
     >
       <div
-        onClick={handleClick}
         className={`nav-item ${isActive ? 'active' : ''}`}
-        style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between', cursor: 'pointer' }}
+        style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div
+          onClick={onClick}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, cursor: 'pointer' }}
+        >
           <Icon />
           <span className="nav-label">{item.name}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ transform: item.isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+          <div
+            onClick={onClick}
+            style={{ transform: item.isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', cursor: 'pointer' }}
+          >
             <Icons.ChevronDown />
           </div>
           <div
+            {...attributes}
+            {...listeners}
             style={{
               cursor: 'grab',
               display: 'flex',
@@ -340,14 +276,21 @@ export default function Layout() {
   const saveMenuOrder = async (newOrder) => {
     try {
       const menuOrder = newOrder.map(item => item.id)
-      
-      await supabase
+
+      const { error } = await supabase
         .from('usuarios_menu_order')
-        .upsert({
-          usuario_id: usuario.id,
-          menu_order: menuOrder,
-          updated_at: new Date().toISOString()
-        })
+        .upsert(
+          {
+            usuario_id: usuario.id,
+            menu_order: menuOrder,
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'usuario_id' }
+        )
+
+      if (error) {
+        console.error('Error saving menu order:', error)
+      }
     } catch (error) {
       console.error('Error saving menu order:', error)
     }
