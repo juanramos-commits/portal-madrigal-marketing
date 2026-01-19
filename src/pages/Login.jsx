@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -8,20 +8,20 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { signInWithEmail } = useAuth()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
+    const { data, error: authError } = await signInWithEmail(email, password)
 
     if (authError) {
       console.error('Auth error:', authError)
-      if (authError.message.includes('Invalid login credentials')) {
+      if (authError.message === 'CUENTA_DESACTIVADA') {
+        setError('Tu cuenta está desactivada. Contacta al administrador.')
+      } else if (authError.message.includes('Invalid login credentials')) {
         setError('Email o contraseña incorrectos')
       } else {
         setError(authError.message)
@@ -30,8 +30,10 @@ export default function Login() {
       return
     }
 
-    if (data.user) {
-      window.location.href = '/dashboard'
+    if (data?.user) {
+      navigate('/dashboard')
+    } else {
+      setLoading(false)
     }
   }
 
