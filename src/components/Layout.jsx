@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers'
 
 const Icons = {
   Dashboard: () => (
@@ -277,16 +278,20 @@ export default function Layout() {
     try {
       const menuOrder = newOrder.map(item => item.id)
 
+      // Primero eliminar el registro existente
+      await supabase
+        .from('usuarios_menu_order')
+        .delete()
+        .eq('usuario_id', usuario.id)
+
+      // Luego insertar el nuevo
       const { error } = await supabase
         .from('usuarios_menu_order')
-        .upsert(
-          {
-            usuario_id: usuario.id,
-            menu_order: menuOrder,
-            updated_at: new Date().toISOString()
-          },
-          { onConflict: 'usuario_id' }
-        )
+        .insert({
+          usuario_id: usuario.id,
+          menu_order: menuOrder,
+          updated_at: new Date().toISOString()
+        })
 
       if (error) {
         console.error('Error saving menu order:', error)
@@ -363,7 +368,7 @@ export default function Layout() {
         </div>
 
         <nav className="nav">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis, restrictToParentElement]}>
             <SortableContext items={menuItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
               {menuItems.map((item) => {
                 if (item.type === 'submenu') {
