@@ -1,9 +1,13 @@
 FROM node:18-alpine AS builder
 WORKDIR /app
+
+# Cache buster - change this to force rebuild
+ARG CACHE_BUST=2026-01-19-v3
+
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --no-cache
 COPY . .
-RUN npm run build
+RUN echo "Build: $CACHE_BUST" && npm run build
 
 FROM node:18-alpine
 WORKDIR /app
