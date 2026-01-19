@@ -255,20 +255,24 @@ export default function Layout() {
         .from('usuarios_menu_order')
         .select('menu_order')
         .eq('usuario_id', usuario.id)
-        .single()
+        .maybeSingle()
 
-      if (error && error.code !== 'PGRST116') throw error
+      if (error) {
+        console.error('Error loading menu order:', error)
+        setMenuItems(defaultNavigation.filter(shouldShowItem))
+        return
+      }
 
       if (data?.menu_order) {
         const savedOrder = data.menu_order
         const orderedItems = savedOrder
           .map(id => defaultNavigation.find(item => item.id === id))
           .filter(item => item && shouldShowItem(item))
-        
+
         const newItems = defaultNavigation.filter(
           item => !savedOrder.includes(item.id) && shouldShowItem(item)
         )
-        
+
         setMenuItems([...orderedItems, ...newItems])
       } else {
         setMenuItems(defaultNavigation.filter(shouldShowItem))
@@ -294,8 +298,7 @@ export default function Layout() {
         .from('usuarios_menu_order')
         .insert({
           usuario_id: usuario.id,
-          menu_order: menuOrder,
-          updated_at: new Date().toISOString()
+          menu_order: menuOrder
         })
 
       if (error) {
