@@ -65,9 +65,9 @@ body {
 }
 
 .login-logo-img {
-  max-width: 280px;
+  max-width: 350px;
   height: auto;
-  margin: 0 auto 8px;
+  margin: 0 auto 4px;
   display: block;
 }
 
