@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useLocation, Outlet } from 'react-router-dom'
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -99,10 +99,10 @@ const Icons = {
   )
 }
 
-function SortableMenuItem({ item, isActive, onClick }) {
+function SortableMenuItem({ item, isActive, onNavigate }) {
   const [isHovered, setIsHovered] = useState(false)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-  const wasDraggingRef = useRef(false)
+  const dragStartPos = useRef(null)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -110,23 +110,26 @@ function SortableMenuItem({ item, isActive, onClick }) {
     opacity: isDragging ? 0.5 : 1,
   }
 
-  // Track dragging state
-  useEffect(() => {
-    if (isDragging) {
-      wasDraggingRef.current = true
-    }
-  }, [isDragging])
-
   const Icon = item.icon
 
+  const handleMouseDown = (e) => {
+    dragStartPos.current = { x: e.clientX, y: e.clientY }
+  }
+
   const handleClick = (e) => {
-    // Si acabamos de arrastrar, prevenir navegación
-    if (wasDraggingRef.current) {
-      e.preventDefault()
-      wasDraggingRef.current = false
-      return
+    // Si hubo movimiento significativo, fue un drag - no navegar
+    if (dragStartPos.current) {
+      const dx = Math.abs(e.clientX - dragStartPos.current.x)
+      const dy = Math.abs(e.clientY - dragStartPos.current.y)
+      if (dx > 5 || dy > 5) {
+        e.preventDefault()
+        e.stopPropagation()
+        dragStartPos.current = null
+        return
+      }
     }
-    onClick?.()
+    dragStartPos.current = null
+    onNavigate(item.href)
   }
 
   return (
@@ -138,11 +141,11 @@ function SortableMenuItem({ item, isActive, onClick }) {
       {...attributes}
       {...listeners}
     >
-      <Link
-        to={item.href}
+      <div
         className={`nav-item ${isActive ? 'active' : ''}`}
+        onMouseDown={handleMouseDown}
         onClick={handleClick}
-        style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}
+        style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', cursor: 'pointer' }}
       >
         <Icon />
         <span className="nav-label" style={{ flex: 1 }}>{item.name}</span>
@@ -158,35 +161,39 @@ function SortableMenuItem({ item, isActive, onClick }) {
         >
           <Icons.GripVertical />
         </div>
-      </Link>
+      </div>
     </div>
   )
 }
 
 function SortableDocMenuItem({ item, isActive, onClick }) {
   const [isHovered, setIsHovered] = useState(false)
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-  const wasDraggingRef = useRef(false)
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.id })
+  const dragStartPos = useRef(null)
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   }
-
-  useEffect(() => {
-    if (isDragging) {
-      wasDraggingRef.current = true
-    }
-  }, [isDragging])
 
   const Icon = item.icon
 
-  const handleClick = () => {
-    if (wasDraggingRef.current) {
-      wasDraggingRef.current = false
-      return
+  const handleMouseDown = (e) => {
+    dragStartPos.current = { x: e.clientX, y: e.clientY }
+  }
+
+  const handleClick = (e) => {
+    if (dragStartPos.current) {
+      const dx = Math.abs(e.clientX - dragStartPos.current.x)
+      const dy = Math.abs(e.clientY - dragStartPos.current.y)
+      if (dx > 5 || dy > 5) {
+        e.preventDefault()
+        e.stopPropagation()
+        dragStartPos.current = null
+        return
+      }
     }
+    dragStartPos.current = null
     onClick?.()
   }
 
@@ -199,10 +206,11 @@ function SortableDocMenuItem({ item, isActive, onClick }) {
       {...attributes}
       {...listeners}
     >
-      <button
+      <div
+        onMouseDown={handleMouseDown}
         onClick={handleClick}
         className={`nav-item ${isActive ? 'active' : ''}`}
-        style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}
+        style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between', cursor: 'pointer' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <Icon />
@@ -225,7 +233,7 @@ function SortableDocMenuItem({ item, isActive, onClick }) {
             <Icons.GripVertical />
           </div>
         </div>
-      </button>
+      </div>
     </div>
   )
 }
@@ -235,6 +243,7 @@ export default function Layout() {
   const [docMenuOpen, setDocMenuOpen] = useState(false)
   const [menuItems, setMenuItems] = useState([])
   const location = useLocation()
+  const navigate = useNavigate()
   const { usuario, signOut, tienePermiso } = useAuth()
   const saveTimeoutRef = useRef(null)
 
@@ -412,7 +421,10 @@ export default function Layout() {
                     key={item.id}
                     item={item}
                     isActive={isActive(item.href)}
-                    onClick={() => setMobileMenuOpen(false)}
+                    onNavigate={(href) => {
+                      setMobileMenuOpen(false)
+                      navigate(href)
+                    }}
                   />
                 )
               })}
