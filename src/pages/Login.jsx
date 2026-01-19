@@ -40,8 +40,8 @@ export default function Login() {
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
-            <img src="/logo.png" alt="Madrigal Marketing" className="login-logo-img" style={{ width: '400px', marginBottom: '4px' }} />
-            <p className="login-subtitle">Portal de gestión</p>
+            <img src="/logo.png" alt="Madrigal Marketing" className="login-logo-img" style={{ width: '280px', marginBottom: '4px' }} />
+            <p className="login-subtitle">Accede a tu portal de gestión</p>
           </div>
 
           {error && (
