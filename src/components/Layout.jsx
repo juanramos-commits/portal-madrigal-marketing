@@ -331,6 +331,16 @@ export default function Layout() {
     }
   }
 
+  const formatTipoUsuario = (tipo) => {
+    const tipos = {
+      'super_admin': 'Super Admin',
+      'admin': 'Admin',
+      'equipo': 'Equipo',
+      'cliente': 'Cliente'
+    }
+    return tipos[tipo] || tipo
+  }
+
   return (
     <div className="app-shell">
       <aside className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
@@ -386,7 +396,7 @@ export default function Layout() {
             </div>
             <div className="sidebar-user-info">
               <div className="sidebar-user-name">{usuario?.nombre || 'Usuario'}</div>
-              <div className="sidebar-user-email">{usuario?.rol?.nombre || usuario?.tipo || ''}</div>
+              <div className="sidebar-user-email">{usuario?.rol?.nombre || formatTipoUsuario(usuario?.tipo) || ''}</div>
             </div>
           </div>
           <button onClick={handleSignOut} className="nav-item" style={{ marginTop: '8px', color: 'var(--error)' }}>
