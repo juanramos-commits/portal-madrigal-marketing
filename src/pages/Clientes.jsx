@@ -38,7 +38,7 @@ const Icons = {
 }
 
 const ESTADOS = {
-  'campañas_activas': { label: 'Activo', class: 'active' },
+  'campañas_activas': { label: 'Campañas Activas', class: 'active' },
   'pausado': { label: 'Pausado', class: 'paused' },
   'baja': { label: 'Baja', class: 'error' },
   'onboarding': { label: 'Onboarding', class: 'info' }
