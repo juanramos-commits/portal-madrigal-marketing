@@ -10,13 +10,42 @@ const ESTADOS = {
   'onboarding': { label: 'Onboarding', color: '#667eea', bg: 'rgba(102, 126, 234, 0.15)' }
 }
 
-// Normalizar texto para búsqueda (quita acentos y convierte a minúsculas)
+// Normalizar texto para búsqueda
 const normalizar = (texto) => {
   if (!texto) return ''
-  return texto.toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
+
+// Definición de todas las columnas para la vista completa
+const COLUMNAS_COMPLETAS = [
+  // Datos básicos
+  { key: 'numero_cliente', label: '#', width: '60px' },
+  { key: 'nombre_comercial', label: 'Nombre Comercial', width: '180px' },
+  { key: 'nombre_pila', label: 'Nombre Pila', width: '120px' },
+  { key: 'email_portal', label: 'Email Portal', width: '200px' },
+  { key: 'telefono', label: 'Teléfono', width: '120px' },
+  { key: 'estado', label: 'Estado', width: '130px', isEstado: true },
+  { key: 'servicio_contratado', label: 'Servicio', width: '150px' },
+  { key: 'fecha_onboarding', label: 'Fecha Onboarding', width: '130px', isDate: true },
+  { key: 'tiene_whatsapp', label: 'WhatsApp', width: '80px', isBool: true },
+  // Facturación
+  { key: 'facturacion.nombre_fiscal', label: 'Nombre Fiscal', width: '180px' },
+  { key: 'facturacion.cif_nif', label: 'CIF/NIF', width: '100px' },
+  { key: 'facturacion.ciudad', label: 'Ciudad', width: '120px' },
+  { key: 'facturacion.provincia', label: 'Provincia', width: '120px' },
+  // URLs
+  { key: 'urls.pagina_web', label: 'Web', width: '180px', isUrl: true },
+  { key: 'urls.instagram', label: 'Instagram', width: '150px', isUrl: true },
+  { key: 'urls.facebook', label: 'Facebook', width: '150px', isUrl: true },
+  // Lanzamiento
+  { key: 'lanzamiento.encargado_landing', label: 'Enc. Landing', width: '120px' },
+  { key: 'lanzamiento.encargado_creativos', label: 'Enc. Creativos', width: '120px' },
+  { key: 'lanzamiento.fecha_lanzamiento', label: 'Fecha Lanzamiento', width: '140px', isDate: true },
+  { key: 'lanzamiento.pack', label: 'Pack', width: '100px' },
+  // Info adicional
+  { key: 'info_adicional.id_discord', label: 'Discord ID', width: '120px' },
+  { key: 'info_adicional.id_chatwoot', label: 'Chatwoot ID', width: '120px' },
+]
 
 export default function TablaClientesAvanzada() {
   const navigate = useNavigate()
@@ -39,15 +68,32 @@ export default function TablaClientesAvanzada() {
 
   useEffect(() => {
     cargarClientes()
-  }, [filtroEstado])
+  }, [filtroEstado, vistaActual])
 
   const cargarClientes = async () => {
     setLoading(true)
     try {
-      let query = supabase
-        .from('clientes')
-        .select('*')
-        .order('nombre_comercial', { ascending: true })
+      let query
+
+      if (vistaActual === 'completa') {
+        // Para vista completa, traer datos de todas las tablas relacionadas
+        query = supabase
+          .from('clientes')
+          .select(`
+            *,
+            facturacion:clientes_facturacion(*),
+            urls:clientes_urls(*),
+            lanzamiento:clientes_lanzamiento(*),
+            info_adicional:clientes_info_adicional(*),
+            branding:clientes_branding(*)
+          `)
+          .order('nombre_comercial', { ascending: true })
+      } else {
+        query = supabase
+          .from('clientes')
+          .select('*')
+          .order('nombre_comercial', { ascending: true })
+      }
 
       if (filtroEstado !== 'todos') {
         query = query.eq('estado', filtroEstado)
@@ -63,14 +109,14 @@ export default function TablaClientesAvanzada() {
     }
   }
 
-  // Filtrado en tiempo real con normalización
   const clientesFiltrados = clientes.filter(cliente => {
     if (!busqueda) return true
     const busquedaNorm = normalizar(busqueda)
     return (
       normalizar(cliente.nombre_comercial).includes(busquedaNorm) ||
       normalizar(cliente.email_portal).includes(busquedaNorm) ||
-      normalizar(cliente.telefono).includes(busquedaNorm)
+      normalizar(cliente.telefono).includes(busquedaNorm) ||
+      normalizar(cliente.nombre_pila).includes(busquedaNorm)
     )
   })
 
@@ -107,20 +153,51 @@ export default function TablaClientesAvanzada() {
     const config = ESTADOS[estado] || { label: estado, color: '#888', bg: 'rgba(136, 136, 136, 0.15)' }
     return (
       <span style={{
-        display: 'inline-block',
-        padding: '4px 10px',
-        borderRadius: '6px',
-        fontSize: '12px',
-        fontWeight: '500',
-        background: config.bg,
-        color: config.color
+        display: 'inline-block', padding: '4px 10px', borderRadius: '6px',
+        fontSize: '12px', fontWeight: '500', background: config.bg, color: config.color,
+        whiteSpace: 'nowrap'
       }}>
         {config.label}
       </span>
     )
   }
 
-  // Vista de tabla
+  // Obtener valor de campo anidado (ej: "facturacion.nombre_fiscal")
+  const getNestedValue = (obj, path) => {
+    const parts = path.split('.')
+    let value = obj
+    for (const part of parts) {
+      if (value === null || value === undefined) return null
+      value = value[part]
+    }
+    return value
+  }
+
+  // Formatear valor según tipo de columna
+  const formatValue = (value, col) => {
+    if (value === null || value === undefined || value === '') return '-'
+    if (col.isEstado) return getEstadoBadge(value)
+    if (col.isBool) return value ? '✓' : '-'
+    if (col.isDate) {
+      try {
+        return new Date(value).toLocaleDateString('es-ES')
+      } catch {
+        return value
+      }
+    }
+    if (col.isUrl && value) {
+      return (
+        <a href={value} target="_blank" rel="noopener noreferrer"
+           style={{ color: '#667eea', textDecoration: 'none' }}
+           onClick={(e) => e.stopPropagation()}>
+          {value.replace(/^https?:\/\/(www\.)?/, '').substring(0, 25)}...
+        </a>
+      )
+    }
+    return String(value)
+  }
+
+  // Vista de tabla simple
   const VistaTabla = () => (
     <div style={{
       background: 'rgba(255, 255, 255, 0.02)',
@@ -173,15 +250,89 @@ export default function TablaClientesAvanzada() {
                 <button
                   onClick={() => navigate(`/clientes/${cliente.id}`)}
                   style={{
-                    padding: '6px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '6px',
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    cursor: 'pointer'
+                    padding: '6px', background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '6px',
+                    color: 'rgba(255, 255, 255, 0.6)', cursor: 'pointer'
                   }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+
+  // Vista de tabla completa con todas las columnas
+  const VistaCompleta = () => (
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.02)',
+      border: '1px solid rgba(255, 255, 255, 0.06)',
+      borderRadius: '12px',
+      overflow: 'auto',
+      maxHeight: 'calc(100vh - 280px)'
+    }}>
+      <table style={{ borderCollapse: 'collapse', minWidth: '2500px' }}>
+        <thead style={{ position: 'sticky', top: 0, background: 'rgba(10, 10, 12, 0.98)', zIndex: 10 }}>
+          <tr>
+            {COLUMNAS_COMPLETAS.map(col => (
+              <th key={col.key} style={{
+                padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: '600',
+                color: 'rgba(255, 255, 255, 0.6)', textTransform: 'uppercase',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                whiteSpace: 'nowrap', minWidth: col.width, maxWidth: col.width
+              }}>
+                {col.label}
+              </th>
+            ))}
+            <th style={{
+              padding: '10px 12px', textAlign: 'center', fontSize: '11px', fontWeight: '600',
+              color: 'rgba(255, 255, 255, 0.6)', textTransform: 'uppercase',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)', width: '60px',
+              position: 'sticky', right: 0, background: 'rgba(10, 10, 12, 0.98)'
+            }}>
+              Ver
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {clientesFiltrados.map(cliente => (
+            <tr
+              key={cliente.id}
+              style={{ cursor: 'pointer' }}
+              onClick={() => navigate(`/clientes/${cliente.id}`)}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            >
+              {COLUMNAS_COMPLETAS.map(col => (
+                <td key={col.key} style={{
+                  padding: '10px 12px', borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                  color: 'rgba(255, 255, 255, 0.7)', fontSize: '13px',
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                  minWidth: col.width, maxWidth: col.width
+                }}>
+                  {formatValue(getNestedValue(cliente, col.key), col)}
+                </td>
+              ))}
+              <td style={{
+                padding: '10px 12px', borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
+                textAlign: 'center', position: 'sticky', right: 0,
+                background: 'rgba(15, 15, 20, 0.95)'
+              }} onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => navigate(`/clientes/${cliente.id}`)}
+                  style={{
+                    padding: '5px', background: 'rgba(102, 126, 234, 0.15)',
+                    border: '1px solid rgba(102, 126, 234, 0.3)', borderRadius: '4px',
+                    color: '#667eea', cursor: 'pointer'
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2"/>
                     <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
                   </svg>
@@ -202,10 +353,7 @@ export default function TablaClientesAvanzada() {
           <div style={{
             background: 'rgba(255, 255, 255, 0.02)',
             border: '1px solid rgba(255, 255, 255, 0.06)',
-            borderRadius: '12px',
-            padding: '20px',
-            cursor: 'pointer',
-            transition: 'all 0.2s ease'
+            borderRadius: '12px', padding: '20px', cursor: 'pointer', transition: 'all 0.2s ease'
           }}
           onMouseOver={(e) => { e.currentTarget.style.borderColor = '#667eea'; e.currentTarget.style.transform = 'translateY(-2px)' }}
           onMouseOut={(e) => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)'; e.currentTarget.style.transform = 'translateY(0)' }}
@@ -250,8 +398,7 @@ export default function TablaClientesAvanzada() {
     <div style={{
       background: 'rgba(255, 255, 255, 0.02)',
       border: '1px solid rgba(255, 255, 255, 0.06)',
-      borderRadius: '12px',
-      padding: '12px'
+      borderRadius: '12px', padding: '12px'
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {clientesFiltrados.map((cliente) => (
@@ -295,6 +442,13 @@ export default function TablaClientesAvanzada() {
     </div>
   )
 
+  const VISTAS = [
+    { id: 'tabla', label: 'Tabla', icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></> },
+    { id: 'completa', label: 'Completa', icon: <><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="2" y1="8" x2="22" y2="8"/><line x1="2" y1="13" x2="22" y2="13"/><line x1="2" y1="18" x2="22" y2="18"/><line x1="7" y1="3" x2="7" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="17" y1="3" x2="17" y2="21"/></> },
+    { id: 'tarjetas', label: 'Tarjetas', icon: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></> },
+    { id: 'compacta', label: 'Compacta', icon: <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></> }
+  ]
+
   return (
     <div style={{ padding: '24px', background: '#0a0a0c', minHeight: '100vh' }}>
       {/* Header */}
@@ -306,17 +460,9 @@ export default function TablaClientesAvanzada() {
           <button
             onClick={() => setModalNuevoCliente(true)}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '10px 16px',
-              background: 'rgba(102, 126, 234, 0.15)',
-              border: '1px solid rgba(102, 126, 234, 0.3)',
-              borderRadius: '8px',
-              color: '#667eea',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer'
+              display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px',
+              background: 'rgba(102, 126, 234, 0.15)', border: '1px solid rgba(102, 126, 234, 0.3)',
+              borderRadius: '8px', color: '#667eea', fontSize: '14px', fontWeight: '500', cursor: 'pointer'
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
@@ -347,14 +493,9 @@ export default function TablaClientesAvanzada() {
             onChange={(e) => setBusqueda(e.target.value)}
             placeholder="Buscar por nombre, email, teléfono..."
             style={{
-              width: '100%',
-              padding: '10px 14px 10px 44px',
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '8px',
-              color: 'rgba(255, 255, 255, 0.9)',
-              fontSize: '14px',
-              outline: 'none'
+              width: '100%', padding: '10px 14px 10px 44px',
+              background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '8px', color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px', outline: 'none'
             }}
           />
         </div>
@@ -363,15 +504,10 @@ export default function TablaClientesAvanzada() {
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
           style={{
-            padding: '10px 14px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '8px',
-            color: 'rgba(255, 255, 255, 0.9)',
-            fontSize: '14px',
-            outline: 'none',
-            cursor: 'pointer',
-            minWidth: '180px'
+            padding: '10px 14px', background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px',
+            color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px', outline: 'none',
+            cursor: 'pointer', minWidth: '180px'
           }}
         >
           <option value="todos">Todos los estados</option>
@@ -383,30 +519,24 @@ export default function TablaClientesAvanzada() {
 
         {/* View Toggle */}
         <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '8px' }}>
-          {[
-            { id: 'tabla', icon: <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></> },
-            { id: 'tarjetas', icon: <><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></> },
-            { id: 'compacta', icon: <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></> }
-          ].map(vista => (
+          {VISTAS.map(vista => (
             <button
               key={vista.id}
               onClick={() => setVistaActual(vista.id)}
               style={{
-                padding: '8px',
+                padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px',
                 background: vistaActual === vista.id ? 'rgba(102, 126, 234, 0.2)' : 'transparent',
                 border: vistaActual === vista.id ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid transparent',
                 borderRadius: '6px',
                 color: vistaActual === vista.id ? '#667eea' : 'rgba(255, 255, 255, 0.5)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                cursor: 'pointer', fontSize: '13px', fontWeight: '500'
               }}
-              title={`Vista ${vista.id}`}
+              title={vista.label}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 {vista.icon}
               </svg>
+              <span style={{ display: vistaActual === vista.id ? 'inline' : 'none' }}>{vista.label}</span>
             </button>
           ))}
         </div>
@@ -424,6 +554,7 @@ export default function TablaClientesAvanzada() {
       ) : (
         <>
           {vistaActual === 'tabla' && <VistaTabla />}
+          {vistaActual === 'completa' && <VistaCompleta />}
           {vistaActual === 'tarjetas' && <VistaTarjetas />}
           {vistaActual === 'compacta' && <VistaCompacta />}
         </>
@@ -433,6 +564,7 @@ export default function TablaClientesAvanzada() {
       {clientesFiltrados.length > 0 && (
         <p style={{ marginTop: '16px', fontSize: '14px', color: 'rgba(255, 255, 255, 0.4)' }}>
           Mostrando {clientesFiltrados.length} de {clientes.length} clientes
+          {vistaActual === 'completa' && ' • Desplázate horizontalmente para ver todas las columnas'}
         </p>
       )}
 
@@ -464,14 +596,9 @@ export default function TablaClientesAvanzada() {
                   placeholder="Nombre del negocio"
                   autoFocus
                   style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '8px',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '14px',
-                    outline: 'none'
+                    width: '100%', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px',
+                    color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px', outline: 'none'
                   }}
                 />
               </div>
@@ -486,14 +613,9 @@ export default function TablaClientesAvanzada() {
                   onChange={(e) => setNuevoCliente(prev => ({ ...prev, telefono: e.target.value }))}
                   placeholder="+34 600 000 000"
                   style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '8px',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '14px',
-                    outline: 'none'
+                    width: '100%', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px',
+                    color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px', outline: 'none'
                   }}
                 />
               </div>
@@ -508,14 +630,9 @@ export default function TablaClientesAvanzada() {
                   onChange={(e) => setNuevoCliente(prev => ({ ...prev, email_portal: e.target.value }))}
                   placeholder="email@ejemplo.com"
                   style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '8px',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '14px',
-                    outline: 'none'
+                    width: '100%', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px',
+                    color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px', outline: 'none'
                   }}
                 />
               </div>
@@ -530,14 +647,9 @@ export default function TablaClientesAvanzada() {
                   onChange={(e) => setNuevoCliente(prev => ({ ...prev, password_portal: e.target.value }))}
                   placeholder="Contraseña inicial"
                   style={{
-                    width: '100%',
-                    padding: '10px 14px',
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '8px',
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '14px',
-                    outline: 'none'
+                    width: '100%', padding: '10px 14px', background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px',
+                    color: 'rgba(255, 255, 255, 0.9)', fontSize: '14px', outline: 'none'
                   }}
                 />
               </div>
@@ -558,13 +670,9 @@ export default function TablaClientesAvanzada() {
               <button
                 onClick={() => setModalNuevoCliente(false)}
                 style={{
-                  padding: '10px 16px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  color: 'rgba(255, 255, 255, 0.7)',
-                  fontSize: '14px',
-                  cursor: 'pointer'
+                  padding: '10px 16px', background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px',
+                  color: 'rgba(255, 255, 255, 0.7)', fontSize: '14px', cursor: 'pointer'
                 }}
               >
                 Cancelar
@@ -575,11 +683,8 @@ export default function TablaClientesAvanzada() {
                 style={{
                   padding: '10px 16px',
                   background: guardando || !nuevoCliente.nombre_comercial.trim() ? 'rgba(102, 126, 234, 0.3)' : 'rgba(102, 126, 234, 0.8)',
-                  border: '1px solid rgba(102, 126, 234, 0.5)',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: '500',
+                  border: '1px solid rgba(102, 126, 234, 0.5)', borderRadius: '8px',
+                  color: 'white', fontSize: '14px', fontWeight: '500',
                   cursor: guardando || !nuevoCliente.nombre_comercial.trim() ? 'not-allowed' : 'pointer'
                 }}
               >
