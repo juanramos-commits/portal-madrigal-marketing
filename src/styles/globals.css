@@ -65,10 +65,10 @@ body {
 }
 
 .login-logo-img {
-  width: 320px;
-  height: auto;
-  margin: 0 auto 4px;
-  display: block;
+  width: 320px !important;
+  height: auto !important;
+  margin: 0 auto 4px !important;
+  display: block !important;
 }
 
 .login-subtitle {
