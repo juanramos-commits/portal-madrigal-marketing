@@ -81,7 +81,7 @@ export default function ClienteDetalleAvanzado() {
       const { data: leadsData } = await supabase.from('leads').select('*').eq('cliente_id', id).order('created_at', { ascending: false })
       setLeads(leadsData || [])
 
-      const { data: historialData } = await supabase.from('cliente_historial').select('*, usuario:usuario_id(nombre, apellidos)').eq('cliente_id', id).order('fecha', { ascending: false }).limit(50)
+      const { data: historialData } = await supabase.from('cliente_historial').select('*, usuario:usuario_id(nombre)').eq('cliente_id', id).order('fecha', { ascending: false }).limit(100)
       setHistorial(historialData || [])
 
     } catch (error) {
@@ -92,12 +92,48 @@ export default function ClienteDetalleAvanzado() {
     }
   }
 
+  // Función para registrar cambios en el historial
+  const registrarCambio = async (tabla, campo, valorAnterior, valorNuevo) => {
+    try {
+      // Convertir arrays a string para comparación
+      const anterior = Array.isArray(valorAnterior) ? valorAnterior.join(', ') : (valorAnterior || '')
+      const nuevo = Array.isArray(valorNuevo) ? valorNuevo.join(', ') : (valorNuevo || '')
+
+      // Solo registrar si hay cambio real
+      if (anterior === nuevo) return
+
+      const { error } = await supabase.from('cliente_historial').insert({
+        cliente_id: id,
+        usuario_id: usuario?.id,
+        tabla,
+        campo,
+        valor_anterior: anterior || '(vacío)',
+        valor_nuevo: nuevo || '(vacío)'
+      })
+
+      if (error) console.error('Error registrando historial:', error)
+
+      // Recargar historial
+      const { data: nuevoHistorial } = await supabase
+        .from('cliente_historial')
+        .select('*, usuario:usuario_id(nombre)')
+        .eq('cliente_id', id)
+        .order('fecha', { ascending: false })
+        .limit(100)
+      setHistorial(nuevoHistorial || [])
+    } catch (error) {
+      console.error('Error en historial:', error)
+    }
+  }
+
   // Función para guardar cambios en la tabla clientes
   const guardarCliente = async (campo, valor) => {
+    const valorAnterior = cliente[campo]
     try {
       const { error } = await supabase.from('clientes').update({ [campo]: valor }).eq('id', id)
       if (error) throw error
       setCliente(prev => ({ ...prev, [campo]: valor }))
+      await registrarCambio('clientes', campo, valorAnterior, valor)
       return true
     } catch (error) {
       console.error('Error guardando cliente:', error)
@@ -107,6 +143,7 @@ export default function ClienteDetalleAvanzado() {
 
   // Función para guardar cambios en la tabla clientes_facturacion
   const guardarFacturacion = async (campo, valor) => {
+    const valorAnterior = facturacion?.[campo]
     try {
       if (facturacion?.id) {
         const { error } = await supabase.from('clientes_facturacion').update({ [campo]: valor }).eq('id', facturacion.id)
@@ -117,6 +154,7 @@ export default function ClienteDetalleAvanzado() {
         if (error) throw error
         setFacturacion(data)
       }
+      await registrarCambio('clientes_facturacion', campo, valorAnterior, valor)
       return true
     } catch (error) {
       console.error('Error guardando facturacion:', error)
@@ -126,6 +164,7 @@ export default function ClienteDetalleAvanzado() {
 
   // Función para guardar cambios en la tabla clientes_urls
   const guardarUrls = async (campo, valor) => {
+    const valorAnterior = urls?.[campo]
     try {
       if (urls?.id) {
         const { error } = await supabase.from('clientes_urls').update({ [campo]: valor }).eq('id', urls.id)
@@ -136,6 +175,7 @@ export default function ClienteDetalleAvanzado() {
         if (error) throw error
         setUrls(data)
       }
+      await registrarCambio('clientes_urls', campo, valorAnterior, valor)
       return true
     } catch (error) {
       console.error('Error guardando urls:', error)
@@ -145,6 +185,7 @@ export default function ClienteDetalleAvanzado() {
 
   // Función para guardar cambios en la tabla clientes_branding
   const guardarBranding = async (campo, valor) => {
+    const valorAnterior = branding?.[campo]
     try {
       if (branding?.id) {
         const { error } = await supabase.from('clientes_branding').update({ [campo]: valor }).eq('id', branding.id)
@@ -155,6 +196,7 @@ export default function ClienteDetalleAvanzado() {
         if (error) throw error
         setBranding(data)
       }
+      await registrarCambio('clientes_branding', campo, valorAnterior, valor)
       return true
     } catch (error) {
       console.error('Error guardando branding:', error)
@@ -164,6 +206,7 @@ export default function ClienteDetalleAvanzado() {
 
   // Función para guardar cambios en clientes_info_adicional
   const guardarInfoAdicional = async (campo, valor) => {
+    const valorAnterior = infoAdicional?.[campo]
     try {
       if (infoAdicional?.id) {
         const { error } = await supabase.from('clientes_info_adicional').update({ [campo]: valor }).eq('id', infoAdicional.id)
@@ -174,6 +217,7 @@ export default function ClienteDetalleAvanzado() {
         if (error) throw error
         setInfoAdicional(data)
       }
+      await registrarCambio('clientes_info_adicional', campo, valorAnterior, valor)
       return true
     } catch (error) {
       console.error('Error guardando info adicional:', error)
@@ -656,21 +700,108 @@ function ReunionesTab({ reuniones }) {
 }
 
 function RegistroTab({ historial }) {
+  // Mapeo de nombres de campos a nombres legibles
+  const nombresCampos = {
+    nombre_comercial: 'Nombre Comercial',
+    email_portal: 'Email',
+    telefono: 'Teléfono',
+    nombre_pila: 'Nombre de Pila',
+    servicio_contratado: 'Servicio Contratado',
+    estado: 'Estado',
+    fecha_onboarding: 'Fecha Onboarding',
+    especialidad: 'Especialidad',
+    nombre_fiscal: 'Nombre Fiscal',
+    cif_nif: 'CIF/NIF',
+    direccion_fiscal: 'Dirección Fiscal',
+    ciudad: 'Ciudad',
+    provincia: 'Provincia',
+    codigo_postal: 'Código Postal',
+    pais: 'País',
+    pagina_web: 'Página Web',
+    pagina_web_2: 'Página Web 2',
+    instagram: 'Instagram',
+    facebook: 'Facebook',
+    linkedin: 'LinkedIn',
+    tiktok: 'TikTok',
+    youtube: 'YouTube',
+    google_my_business: 'Google My Business',
+    colores: 'Colores',
+    tipografias: 'Tipografías',
+    tono_marca: 'Tono de Marca',
+    especificaciones_funnel: 'Especificaciones Funnel',
+    logo_url: 'URL Logo',
+    guia_estilo_url: 'URL Guía de Estilo',
+    id_discord: 'Discord ID',
+    id_chatwoot: 'Chatwoot ID',
+    id_ghl: 'GHL ID',
+    url_drive: 'URL Drive',
+    url_drive_creativos: 'URL Drive Creativos'
+  }
+
+  const nombresTablas = {
+    clientes: 'Datos Generales',
+    clientes_facturacion: 'Facturación',
+    clientes_urls: 'URLs',
+    clientes_branding: 'Branding',
+    clientes_info_adicional: 'Integraciones'
+  }
+
   return (
     <Card title="📝 Historial de Cambios">
       {historial.length === 0 ? (
         <div className="empty-state"><p className="empty-state-text">No hay cambios registrados</p></div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Cabecera de tabla */}
+          <div style={{ display: 'grid', gridTemplateColumns: '180px 120px 1fr 1fr 140px', gap: '12px', padding: '12px 16px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            <div>Fecha y Hora</div>
+            <div>Sección</div>
+            <div>Valor Anterior</div>
+            <div>Nuevo Valor</div>
+            <div>Usuario</div>
+          </div>
+
+          {/* Filas de historial */}
           {historial.map(item => (
-            <div key={item.id} style={{ display: 'flex', gap: '16px', padding: '16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)', borderRadius: '12px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: item.accion === 'crear' ? 'rgba(16, 185, 129, 0.15)' : item.accion === 'editar' ? 'rgba(102, 126, 234, 0.15)' : 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-                {item.accion === 'crear' ? '➕' : item.accion === 'editar' ? '✏️' : '🗑️'}
+            <div key={item.id} style={{ display: 'grid', gridTemplateColumns: '180px 120px 1fr 1fr 140px', gap: '12px', padding: '14px 16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border)', borderRadius: '10px', alignItems: 'center', fontSize: '14px' }}>
+              {/* Fecha y hora */}
+              <div style={{ color: 'var(--text-muted)' }}>
+                <div style={{ fontWeight: '500', color: 'var(--text)' }}>
+                  {new Date(item.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </div>
+                <div style={{ fontSize: '12px' }}>
+                  {new Date(item.fecha).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text)', marginBottom: '4px' }}>{item.accion.charAt(0).toUpperCase() + item.accion.slice(1)}</div>
-                {item.descripcion && <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>{item.descripcion}</div>}
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{item.usuario?.nombre} {item.usuario?.apellidos} • {new Date(item.fecha).toLocaleString('es-ES')}</div>
+
+              {/* Campo modificado */}
+              <div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>
+                  {nombresTablas[item.tabla] || item.tabla}
+                </div>
+                <div style={{ fontWeight: '500', color: '#667eea' }}>
+                  {nombresCampos[item.campo] || item.campo}
+                </div>
+              </div>
+
+              {/* Valor anterior */}
+              <div style={{ padding: '8px 12px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '6px', color: '#ef4444', fontSize: '13px', wordBreak: 'break-word', maxHeight: '60px', overflow: 'auto' }}>
+                {item.valor_anterior || '(vacío)'}
+              </div>
+
+              {/* Nuevo valor */}
+              <div style={{ padding: '8px 12px', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '6px', color: '#10b981', fontSize: '13px', wordBreak: 'break-word', maxHeight: '60px', overflow: 'auto' }}>
+                {item.valor_nuevo || '(vacío)'}
+              </div>
+
+              {/* Usuario */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '600', color: 'white' }}>
+                  {item.usuario?.nombre?.[0]?.toUpperCase() || '?'}
+                </div>
+                <span style={{ fontSize: '13px', color: 'var(--text)' }}>
+                  {item.usuario?.nombre || 'Sistema'}
+                </span>
               </div>
             </div>
           ))}
