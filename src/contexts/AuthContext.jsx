@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
@@ -20,7 +21,7 @@ export function AuthProvider({ children }) {
         .single()
 
       if (usuarioError) {
-        console.error('Error cargando usuario:', usuarioError)
+        logger.error('Error cargando usuario:', usuarioError)
         return null
       }
 
@@ -44,7 +45,7 @@ export function AuthProvider({ children }) {
 
       return usuarioData
     } catch (error) {
-      console.error('Error en cargarUsuario:', error)
+      logger.error('Error en cargarUsuario:', error)
       return null
     }
   }, [])
@@ -56,7 +57,7 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
       
-      console.log('Auth event:', event)
+      logger.log('Auth event:', event)
 
       if (event === 'SIGNED_OUT') {
         setUser(null)

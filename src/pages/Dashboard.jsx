@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -83,7 +84,7 @@ export default function Dashboard() {
       setTareasRecientes(tareasRes.data || [])
 
     } catch (error) {
-      console.error('Error cargando dashboard:', error)
+      logger.error('Error cargando dashboard:', error)
     } finally {
       setLoading(false)
     }
@@ -109,53 +110,55 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-4" style={{ marginBottom: '32px' }}>
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-label">Total Clientes</span>
-            <div className="stat-card-icon blue">
-              <Icons.Users />
+      {/* Stats Grid - Solo métricas globales si tiene permiso */}
+      {tienePermiso('dashboard.ver_metricas_globales') && (
+        <div className="grid grid-cols-4 gap-4" style={{ marginBottom: '32px' }}>
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-label">Total Clientes</span>
+              <div className="stat-card-icon blue">
+                <Icons.Users />
+              </div>
             </div>
+            <div className="stat-card-value">{stats.totalClientes}</div>
           </div>
-          <div className="stat-card-value">{stats.totalClientes}</div>
-        </div>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-label">Campañas Activas</span>
-            <div className="stat-card-icon green">
-              <Icons.TrendingUp />
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-label">Campañas Activas</span>
+              <div className="stat-card-icon green">
+                <Icons.TrendingUp />
+              </div>
             </div>
+            <div className="stat-card-value">{stats.clientesActivos}</div>
           </div>
-          <div className="stat-card-value">{stats.clientesActivos}</div>
-        </div>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-label">Tareas Pendientes</span>
-            <div className="stat-card-icon yellow">
-              <Icons.Clock />
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-label">Tareas Pendientes</span>
+              <div className="stat-card-icon yellow">
+                <Icons.Clock />
+              </div>
             </div>
+            <div className="stat-card-value">{stats.tareasPendientes}</div>
           </div>
-          <div className="stat-card-value">{stats.tareasPendientes}</div>
-        </div>
 
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <span className="stat-card-label">Leads Este Mes</span>
-            <div className="stat-card-icon purple">
-              <Icons.Target />
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-label">Leads Este Mes</span>
+              <div className="stat-card-icon purple">
+                <Icons.Target />
+              </div>
             </div>
+            <div className="stat-card-value">{stats.leadsMes}</div>
           </div>
-          <div className="stat-card-value">{stats.leadsMes}</div>
         </div>
-      </div>
+      )}
 
       {/* Content Grid */}
       <div className="grid grid-cols-2 gap-6">
-        {/* Clientes con pocos leads */}
-        <div className="card">
+        {/* Clientes con pocos leads - Solo si tiene métricas globales */}
+        {tienePermiso('dashboard.ver_metricas_globales') && <div className="card">
           <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h2 className="card-title">⚠️ Clientes con pocos leads</h2>
@@ -215,7 +218,7 @@ export default function Dashboard() {
               ))}
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Tareas pendientes */}
         <div className="card">

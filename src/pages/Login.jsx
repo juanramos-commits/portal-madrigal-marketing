@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -18,7 +19,7 @@ export default function Login() {
     const { data, error: authError } = await signInWithEmail(email, password)
 
     if (authError) {
-      console.error('Auth error:', authError)
+      logger.error('Auth error:', authError)
       if (authError.message === 'CUENTA_DESACTIVADA') {
         setError('Tu cuenta está desactivada. Contacta al administrador.')
       } else if (authError.message.includes('Invalid login credentials')) {

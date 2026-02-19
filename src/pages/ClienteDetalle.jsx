@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -94,7 +95,7 @@ export default function ClienteDetalle() {
       setBranding(brandingRes.data)
       setSocios(sociosRes.data || [])
     } catch (error) {
-      console.error('Error cargando cliente:', error)
+      logger.error('Error cargando cliente:', error)
     } finally {
       setLoading(false)
     }
@@ -114,7 +115,7 @@ export default function ClienteDetalle() {
       }
       setEditando(prev => ({ ...prev, [campo]: false }))
     } catch (error) {
-      console.error('Error guardando:', error)
+      logger.error('Error guardando:', error)
     } finally {
       setSaving(false)
     }

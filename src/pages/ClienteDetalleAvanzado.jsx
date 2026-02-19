@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -87,18 +88,19 @@ export default function ClienteDetalleAvanzado() {
   const [activeTab, setActiveTab] = useState('general')
   const [modalEliminar, setModalEliminar] = useState(false)
 
-  const tabs = [
+  const allTabs = [
     { id: 'general', label: 'General', icon: '👤' },
     { id: 'lanzamiento', label: 'Lanzamiento', icon: '🚀' },
-    { id: 'facturacion', label: 'Facturación', icon: '💰' },
+    { id: 'facturacion', label: 'Facturación', icon: '💰', permiso: 'facturacion.ver' },
     { id: 'urls', label: 'URLs', icon: '🔗' },
-    { id: 'branding', label: 'Branding', icon: '🎨' },
-    { id: 'leads', label: 'Leads', icon: '📊' },
-    { id: 'campanas', label: 'Campañas', icon: '🎯' },
-    { id: 'reuniones', label: 'Reuniones', icon: '📅' },
+    { id: 'branding', label: 'Branding', icon: '🎨', permiso: 'clientes.editar_branding' },
+    { id: 'leads', label: 'Leads', icon: '📊', permiso: 'leads.ver' },
+    { id: 'campanas', label: 'Campañas', icon: '🎯', permiso: 'campanas.ver' },
+    { id: 'reuniones', label: 'Reuniones', icon: '📅', permiso: 'reuniones.ver' },
     { id: 'notas', label: 'Notas', icon: '📌' },
     { id: 'registro', label: 'Registro', icon: '📝' },
   ]
+  const tabs = allTabs.filter(tab => !tab.permiso || tienePermiso(tab.permiso))
 
   useEffect(() => {
     cargarTodosDatos()
@@ -120,13 +122,13 @@ export default function ClienteDetalleAvanzado() {
         try {
           const { data, error } = await queryFn()
           if (error) {
-            console.log('Error en tabla opcional:', error.message, error.code)
+            logger.log('Error en tabla opcional:', error.message, error.code)
             setter(defaultValue)
             return
           }
           setter(data || defaultValue)
         } catch (e) {
-          console.log('Tabla opcional no disponible:', e.message)
+          logger.log('Tabla opcional no disponible:', e.message)
           setter(defaultValue)
         }
       }
@@ -148,7 +150,7 @@ export default function ClienteDetalleAvanzado() {
       ])
 
     } catch (error) {
-      console.error('Error cargando cliente:', error)
+      logger.error('Error cargando cliente:', error)
       navigate('/clientes')
     } finally {
       setLoading(false)
@@ -173,7 +175,7 @@ export default function ClienteDetalleAvanzado() {
       })
 
       if (error) {
-        console.error('Error registrando historial:', error)
+        logger.error('Error registrando historial:', error)
         return
       }
 
@@ -188,7 +190,7 @@ export default function ClienteDetalleAvanzado() {
         setHistorial(nuevoHistorial || [])
       }
     } catch (error) {
-      console.error('Error en historial:', error)
+      logger.error('Error en historial:', error)
     }
   }
 
@@ -201,7 +203,7 @@ export default function ClienteDetalleAvanzado() {
       await registrarCambio('clientes', campo, valorAnterior, valor)
       return true
     } catch (error) {
-      console.error('Error guardando cliente:', error)
+      logger.error('Error guardando cliente:', error)
       return false
     }
   }
@@ -221,7 +223,7 @@ export default function ClienteDetalleAvanzado() {
       await registrarCambio('clientes_facturacion', campo, valorAnterior, valor)
       return true
     } catch (error) {
-      console.error('Error guardando facturacion:', error)
+      logger.error('Error guardando facturacion:', error)
       return false
     }
   }
@@ -241,7 +243,7 @@ export default function ClienteDetalleAvanzado() {
       await registrarCambio('clientes_urls', campo, valorAnterior, valor)
       return true
     } catch (error) {
-      console.error('Error guardando urls:', error)
+      logger.error('Error guardando urls:', error)
       return false
     }
   }
@@ -261,7 +263,7 @@ export default function ClienteDetalleAvanzado() {
       await registrarCambio('clientes_branding', campo, valorAnterior, valor)
       return true
     } catch (error) {
-      console.error('Error guardando branding:', error)
+      logger.error('Error guardando branding:', error)
       return false
     }
   }
@@ -281,7 +283,7 @@ export default function ClienteDetalleAvanzado() {
       await registrarCambio('clientes_info_adicional', campo, valorAnterior, valor)
       return true
     } catch (error) {
-      console.error('Error guardando info adicional:', error)
+      logger.error('Error guardando info adicional:', error)
       return false
     }
   }
@@ -301,7 +303,7 @@ export default function ClienteDetalleAvanzado() {
       await registrarCambio('clientes_lanzamiento', campo, valorAnterior, valor)
       return true
     } catch (error) {
-      console.error('Error guardando lanzamiento:', error)
+      logger.error('Error guardando lanzamiento:', error)
       return false
     }
   }
@@ -312,7 +314,7 @@ export default function ClienteDetalleAvanzado() {
       if (error) throw error
       navigate('/clientes')
     } catch (error) {
-      console.error('Error eliminando cliente:', error)
+      logger.error('Error eliminando cliente:', error)
     }
   }
 
@@ -469,15 +471,15 @@ export default function ClienteDetalleAvanzado() {
 
       {/* Content */}
       <div>
-        {activeTab === 'general' && <GeneralTab cliente={cliente} socios={socios} infoAdicional={infoAdicional} guardarCliente={guardarCliente} guardarInfoAdicional={guardarInfoAdicional} onEliminar={() => setModalEliminar(true)} />}
-        {activeTab === 'lanzamiento' && <LanzamientoTab lanzamiento={lanzamiento} guardarLanzamiento={guardarLanzamiento} />}
-        {activeTab === 'facturacion' && <FacturacionTab facturacion={facturacion} facturas={facturas} guardarFacturacion={guardarFacturacion} />}
-        {activeTab === 'urls' && <URLsTab urls={urls} guardarUrls={guardarUrls} />}
-        {activeTab === 'branding' && <BrandingTab branding={branding} guardarBranding={guardarBranding} />}
-        {activeTab === 'leads' && <LeadsTab leads={leads} paquetes={paquetes} setPaquetes={setPaquetes} clienteId={id} />}
-        {activeTab === 'campanas' && <CampanasTab campanas={campanas} clienteId={id} setCampanas={setCampanas} />}
-        {activeTab === 'reuniones' && <ReunionesTab reuniones={reuniones} clienteId={id} setReuniones={setReuniones} />}
-        {activeTab === 'notas' && <NotasTab notas={notas} clienteId={id} setNotas={setNotas} usuario={usuario} />}
+        {activeTab === 'general' && <GeneralTab cliente={cliente} socios={socios} infoAdicional={infoAdicional} guardarCliente={guardarCliente} guardarInfoAdicional={guardarInfoAdicional} onEliminar={() => setModalEliminar(true)} tienePermiso={tienePermiso} />}
+        {activeTab === 'lanzamiento' && <LanzamientoTab lanzamiento={lanzamiento} guardarLanzamiento={guardarLanzamiento} tienePermiso={tienePermiso} />}
+        {activeTab === 'facturacion' && <FacturacionTab facturacion={facturacion} facturas={facturas} guardarFacturacion={guardarFacturacion} tienePermiso={tienePermiso} />}
+        {activeTab === 'urls' && <URLsTab urls={urls} guardarUrls={guardarUrls} tienePermiso={tienePermiso} />}
+        {activeTab === 'branding' && <BrandingTab branding={branding} guardarBranding={guardarBranding} tienePermiso={tienePermiso} />}
+        {activeTab === 'leads' && <LeadsTab leads={leads} paquetes={paquetes} setPaquetes={setPaquetes} clienteId={id} tienePermiso={tienePermiso} />}
+        {activeTab === 'campanas' && <CampanasTab campanas={campanas} clienteId={id} setCampanas={setCampanas} tienePermiso={tienePermiso} />}
+        {activeTab === 'reuniones' && <ReunionesTab reuniones={reuniones} clienteId={id} setReuniones={setReuniones} tienePermiso={tienePermiso} />}
+        {activeTab === 'notas' && <NotasTab notas={notas} clienteId={id} setNotas={setNotas} usuario={usuario} tienePermiso={tienePermiso} />}
         {activeTab === 'registro' && <RegistroTab historial={historial} />}
       </div>
 
@@ -621,6 +623,22 @@ function EditableField({ label, value, campo, onSave, type = 'text', options = n
   )
 }
 
+// Componente de solo lectura para cuando no se tiene permiso de edición
+function ReadOnlyField({ label, value }) {
+  return (
+    <div>
+      <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px' }}>{label}</div>
+      <div style={{
+        padding: '10px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px',
+        border: '1px solid var(--border)', fontSize: '15px', color: value ? 'var(--text)' : 'var(--text-muted)',
+        minHeight: '42px', display: 'flex', alignItems: 'center'
+      }}>
+        {value || '-'}
+      </div>
+    </div>
+  )
+}
+
 // Componente MultiSelect para especialidades
 function MultiSelect({ value, onChange, options }) {
   const [search, setSearch] = useState('')
@@ -690,7 +708,10 @@ function MultiSelect({ value, onChange, options }) {
 
 // ==================== TABS ====================
 
-function GeneralTab({ cliente, socios, infoAdicional, guardarCliente, guardarInfoAdicional, onEliminar }) {
+function GeneralTab({ cliente, socios, infoAdicional, guardarCliente, guardarInfoAdicional, onEliminar, tienePermiso }) {
+  const puedeEditar = tienePermiso('clientes.editar')
+  const puedeEliminar = tienePermiso('clientes.eliminar')
+
   const estadoOptions = [
     { value: 'campañas_activas', label: 'Campañas Activas' },
     { value: 'pausado', label: 'Pausado' },
@@ -703,24 +724,39 @@ function GeneralTab({ cliente, socios, infoAdicional, guardarCliente, guardarInf
   return (
     <div style={{ display: 'grid', gap: '24px' }}>
       <Card title="📋 Información Básica">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-          <EditableField label="Nombre Comercial" value={cliente.nombre_comercial} campo="nombre_comercial" onSave={guardarCliente} />
-          <EditableField label="Email del Portal" value={cliente.email_portal} campo="email_portal" onSave={guardarCliente} type="email" />
-          <EditableField label="Contraseña Portal" value={cliente.password_portal} campo="password_portal" onSave={guardarCliente} type="password" />
-          <EditableField label="Teléfono" value={cliente.telefono} campo="telefono" onSave={guardarCliente} type="tel" />
-          <EditableField label="Nombre de Pila" value={cliente.nombre_pila} campo="nombre_pila" onSave={guardarCliente} />
-          <EditableField label="Servicio Contratado" value={cliente.servicio_contratado} campo="servicio_contratado" onSave={guardarCliente} />
-          <EditableField label="Estado" value={cliente.estado} campo="estado" onSave={guardarCliente} type="select" options={estadoOptions} />
-          <EditableField label="Fecha Onboarding" value={cliente.fecha_onboarding} campo="fecha_onboarding" onSave={guardarCliente} type="date" />
-          <EditableField
-            label="Especialidad"
-            value={cliente.especialidad?.join(', ')}
-            campo="especialidad"
-            onSave={(campo, valor) => guardarCliente(campo, valor.split(',').map(s => s.trim()).filter(Boolean))}
-            type="multiselect"
-            options={especialidadOptions}
-          />
-        </div>
+        {puedeEditar ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+            <EditableField label="Nombre Comercial" value={cliente.nombre_comercial} campo="nombre_comercial" onSave={guardarCliente} />
+            <EditableField label="Email del Portal" value={cliente.email_portal} campo="email_portal" onSave={guardarCliente} type="email" />
+            {tienePermiso('sistema.configuracion') && (
+              <EditableField label="Contraseña Portal" value={cliente.password_portal} campo="password_portal" onSave={guardarCliente} type="password" />
+            )}
+            <EditableField label="Teléfono" value={cliente.telefono} campo="telefono" onSave={guardarCliente} type="tel" />
+            <EditableField label="Nombre de Pila" value={cliente.nombre_pila} campo="nombre_pila" onSave={guardarCliente} />
+            <EditableField label="Servicio Contratado" value={cliente.servicio_contratado} campo="servicio_contratado" onSave={guardarCliente} />
+            <EditableField label="Estado" value={cliente.estado} campo="estado" onSave={guardarCliente} type="select" options={estadoOptions} />
+            <EditableField label="Fecha Onboarding" value={cliente.fecha_onboarding} campo="fecha_onboarding" onSave={guardarCliente} type="date" />
+            <EditableField
+              label="Especialidad"
+              value={cliente.especialidad?.join(', ')}
+              campo="especialidad"
+              onSave={(campo, valor) => guardarCliente(campo, valor.split(',').map(s => s.trim()).filter(Boolean))}
+              type="multiselect"
+              options={especialidadOptions}
+            />
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+            <ReadOnlyField label="Nombre Comercial" value={cliente.nombre_comercial} />
+            <ReadOnlyField label="Email del Portal" value={cliente.email_portal} />
+            <ReadOnlyField label="Teléfono" value={cliente.telefono} />
+            <ReadOnlyField label="Nombre de Pila" value={cliente.nombre_pila} />
+            <ReadOnlyField label="Servicio Contratado" value={cliente.servicio_contratado} />
+            <ReadOnlyField label="Estado" value={formatearEstado(cliente.estado)} />
+            <ReadOnlyField label="Fecha Onboarding" value={cliente.fecha_onboarding} />
+            <ReadOnlyField label="Especialidad" value={cliente.especialidad?.join(', ')} />
+          </div>
+        )}
       </Card>
 
       {socios.length > 0 && (
@@ -738,34 +774,38 @@ function GeneralTab({ cliente, socios, infoAdicional, guardarCliente, guardarInf
         </Card>
       )}
 
-      <Card title="🔧 Integraciones V2">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-          <EditableField label="Discord ID" value={infoAdicional?.id_discord} campo="id_discord" onSave={guardarInfoAdicional} />
-          <EditableField label="Chatwoot ID" value={infoAdicional?.id_chatwoot} campo="id_chatwoot" onSave={guardarInfoAdicional} />
-          <EditableField label="URL Google Drive" value={infoAdicional?.url_drive} campo="url_drive" onSave={guardarInfoAdicional} type="url" showUrlButton />
-          <EditableField label="URL Drive Creativos" value={infoAdicional?.url_drive_creativos} campo="url_drive_creativos" onSave={guardarInfoAdicional} type="url" showUrlButton />
-        </div>
-      </Card>
-
-      <Card title="⚠️ Zona de Peligro">
-        <div style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px' }}>
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ fontSize: '16px', fontWeight: '600', color: '#ef4444', marginBottom: '8px' }}>Eliminar Cliente</div>
-            <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Esta acción eliminará permanentemente el cliente y todos sus datos asociados. Esta acción no se puede deshacer.</div>
+      {puedeEditar && (
+        <Card title="🔧 Integraciones V2">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+            <EditableField label="Discord ID" value={infoAdicional?.id_discord} campo="id_discord" onSave={guardarInfoAdicional} />
+            <EditableField label="Chatwoot ID" value={infoAdicional?.id_chatwoot} campo="id_chatwoot" onSave={guardarInfoAdicional} />
+            <EditableField label="URL Google Drive" value={infoAdicional?.url_drive} campo="url_drive" onSave={guardarInfoAdicional} type="url" showUrlButton />
+            <EditableField label="URL Drive Creativos" value={infoAdicional?.url_drive_creativos} campo="url_drive_creativos" onSave={guardarInfoAdicional} type="url" showUrlButton />
           </div>
-          <button onClick={onEliminar} className="btn danger">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            </svg>
-            Eliminar Cliente
-          </button>
-        </div>
-      </Card>
+        </Card>
+      )}
+
+      {puedeEliminar && (
+        <Card title="⚠️ Zona de Peligro">
+          <div style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '12px' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '16px', fontWeight: '600', color: '#ef4444', marginBottom: '8px' }}>Eliminar Cliente</div>
+              <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Esta acción eliminará permanentemente el cliente y todos sus datos asociados. Esta acción no se puede deshacer.</div>
+            </div>
+            <button onClick={onEliminar} className="btn danger">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Eliminar Cliente
+            </button>
+          </div>
+        </Card>
+      )}
     </div>
   )
 }
 
-function LanzamientoTab({ lanzamiento, guardarLanzamiento }) {
+function LanzamientoTab({ lanzamiento, guardarLanzamiento, tienePermiso }) {
   const estadoOptions = [
     { value: 'pendiente', label: 'Pendiente' },
     { value: 'en_proceso', label: 'En Proceso' },
@@ -811,7 +851,8 @@ function LanzamientoTab({ lanzamiento, guardarLanzamiento }) {
   )
 }
 
-function FacturacionTab({ facturacion, facturas, guardarFacturacion }) {
+function FacturacionTab({ facturacion, facturas, guardarFacturacion, tienePermiso }) {
+  const puedeEditar = tienePermiso('clientes.editar_facturacion')
   const totalAbonado = facturas.filter(f => f.estado === 'pagada').reduce((sum, f) => sum + parseFloat(f.importe_total || 0), 0)
   const totalPendiente = facturas.filter(f => f.estado === 'pendiente').reduce((sum, f) => sum + parseFloat(f.importe_total || 0), 0)
   const recibosAbonados = facturas.filter(f => f.estado === 'pagada').length
@@ -839,15 +880,27 @@ function FacturacionTab({ facturacion, facturas, guardarFacturacion }) {
       </div>
 
       <Card title="🏢 Datos Fiscales">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-          <EditableField label="Nombre Fiscal" value={facturacion?.nombre_fiscal} campo="nombre_fiscal" onSave={guardarFacturacion} fullWidth />
-          <EditableField label="CIF/NIF" value={facturacion?.cif_nif} campo="cif_nif" onSave={guardarFacturacion} />
-          <EditableField label="Dirección Fiscal" value={facturacion?.direccion_fiscal} campo="direccion_fiscal" onSave={guardarFacturacion} fullWidth />
-          <EditableField label="Ciudad" value={facturacion?.ciudad} campo="ciudad" onSave={guardarFacturacion} />
-          <EditableField label="Provincia" value={facturacion?.provincia} campo="provincia" onSave={guardarFacturacion} />
-          <EditableField label="Código Postal" value={facturacion?.codigo_postal} campo="codigo_postal" onSave={guardarFacturacion} />
-          <EditableField label="País" value={facturacion?.pais} campo="pais" onSave={guardarFacturacion} />
-        </div>
+        {puedeEditar ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+            <EditableField label="Nombre Fiscal" value={facturacion?.nombre_fiscal} campo="nombre_fiscal" onSave={guardarFacturacion} fullWidth />
+            <EditableField label="CIF/NIF" value={facturacion?.cif_nif} campo="cif_nif" onSave={guardarFacturacion} />
+            <EditableField label="Dirección Fiscal" value={facturacion?.direccion_fiscal} campo="direccion_fiscal" onSave={guardarFacturacion} fullWidth />
+            <EditableField label="Ciudad" value={facturacion?.ciudad} campo="ciudad" onSave={guardarFacturacion} />
+            <EditableField label="Provincia" value={facturacion?.provincia} campo="provincia" onSave={guardarFacturacion} />
+            <EditableField label="Código Postal" value={facturacion?.codigo_postal} campo="codigo_postal" onSave={guardarFacturacion} />
+            <EditableField label="País" value={facturacion?.pais} campo="pais" onSave={guardarFacturacion} />
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+            <ReadOnlyField label="Nombre Fiscal" value={facturacion?.nombre_fiscal} />
+            <ReadOnlyField label="CIF/NIF" value={facturacion?.cif_nif} />
+            <ReadOnlyField label="Dirección Fiscal" value={facturacion?.direccion_fiscal} />
+            <ReadOnlyField label="Ciudad" value={facturacion?.ciudad} />
+            <ReadOnlyField label="Provincia" value={facturacion?.provincia} />
+            <ReadOnlyField label="Código Postal" value={facturacion?.codigo_postal} />
+            <ReadOnlyField label="País" value={facturacion?.pais} />
+          </div>
+        )}
       </Card>
 
       <Card title="📄 Facturas">
@@ -892,7 +945,7 @@ function FacturacionTab({ facturacion, facturas, guardarFacturacion }) {
   )
 }
 
-function URLsTab({ urls, guardarUrls }) {
+function URLsTab({ urls, guardarUrls, tienePermiso }) {
   return (
     <Card title="🔗 URLs y Redes Sociales">
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
@@ -910,7 +963,7 @@ function URLsTab({ urls, guardarUrls }) {
   )
 }
 
-function BrandingTab({ branding, guardarBranding }) {
+function BrandingTab({ branding, guardarBranding, tienePermiso }) {
   return (
     <div style={{ display: 'grid', gap: '24px' }}>
       <Card title="🎨 Paleta de Colores">
@@ -941,7 +994,7 @@ function BrandingTab({ branding, guardarBranding }) {
   )
 }
 
-function LeadsTab({ leads, paquetes, setPaquetes, clienteId }) {
+function LeadsTab({ leads, paquetes, setPaquetes, clienteId, tienePermiso }) {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [filtroFechaDesde, setFiltroFechaDesde] = useState('')
   const [filtroFechaHasta, setFiltroFechaHasta] = useState('')
@@ -997,7 +1050,7 @@ function LeadsTab({ leads, paquetes, setPaquetes, clienteId }) {
       setEditandoPaquete(null)
       setFormPaquete({ fecha_compra: '', cantidad: '', importe: '' })
     } catch (error) {
-      console.error('Error guardando paquete:', error)
+      logger.error('Error guardando paquete:', error)
     } finally {
       setGuardando(false)
     }
@@ -1010,7 +1063,7 @@ function LeadsTab({ leads, paquetes, setPaquetes, clienteId }) {
       setPaquetes(prev => prev.filter(p => p.id !== id))
       setModalEliminar(null)
     } catch (error) {
-      console.error('Error eliminando paquete:', error)
+      logger.error('Error eliminando paquete:', error)
     }
   }
 
@@ -1043,12 +1096,14 @@ function LeadsTab({ leads, paquetes, setPaquetes, clienteId }) {
       </div>
 
       <Card title="📦 Paquetes de Leads">
-        <div style={{ marginBottom: '16px' }}>
-          <button onClick={() => { setMostrarFormPaquete(true); setEditandoPaquete(null); setFormPaquete({ fecha_compra: '', cantidad: '', importe: '' }) }} className="btn primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
-            Añadir Paquete
-          </button>
-        </div>
+        {tienePermiso('leads.crear') && (
+          <div style={{ marginBottom: '16px' }}>
+            <button onClick={() => { setMostrarFormPaquete(true); setEditandoPaquete(null); setFormPaquete({ fecha_compra: '', cantidad: '', importe: '' }) }} className="btn primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
+              Añadir Paquete
+            </button>
+          </div>
+        )}
 
         {mostrarFormPaquete && (
           <div style={{ padding: '20px', background: 'rgba(102, 126, 234, 0.05)', border: '1px solid rgba(102, 126, 234, 0.2)', borderRadius: '12px', marginBottom: '16px' }}>
@@ -1095,14 +1150,20 @@ function LeadsTab({ leads, paquetes, setPaquetes, clienteId }) {
                 <div style={{ fontSize: '18px', fontWeight: '700', color: '#10b981', marginRight: '16px' }}>
                   {parseFloat(paquete.importe || 0).toFixed(2)}€
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => editarPaquete(paquete)} className="btn btn-icon" style={{ width: '36px', height: '36px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                  <button onClick={() => setModalEliminar(paquete.id)} className="btn btn-icon danger" style={{ width: '36px', height: '36px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                  </button>
-                </div>
+                {(tienePermiso('leads.editar') || tienePermiso('leads.eliminar')) && (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    {tienePermiso('leads.editar') && (
+                      <button onClick={() => editarPaquete(paquete)} className="btn btn-icon" style={{ width: '36px', height: '36px' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                    )}
+                    {tienePermiso('leads.eliminar') && (
+                      <button onClick={() => setModalEliminar(paquete.id)} className="btn btn-icon danger" style={{ width: '36px', height: '36px' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1154,7 +1215,7 @@ function LeadsTab({ leads, paquetes, setPaquetes, clienteId }) {
   )
 }
 
-function CampanasTab({ campanas, clienteId, setCampanas }) {
+function CampanasTab({ campanas, clienteId, setCampanas, tienePermiso }) {
   const [editando, setEditando] = useState(null)
   const [nuevaCampana, setNuevaCampana] = useState(false)
   const [formData, setFormData] = useState({
@@ -1182,7 +1243,7 @@ function CampanasTab({ campanas, clienteId, setCampanas }) {
       setNuevaCampana(false)
       setFormData({ nombre: '', activa: true, ubicaciones: [], url_formulario: '', url_landing: '', url_creativos: '', especificaciones: '' })
     } catch (error) {
-      console.error('Error guardando campaña:', error)
+      logger.error('Error guardando campaña:', error)
     }
   }
 
@@ -1296,7 +1357,7 @@ function CampanasTab({ campanas, clienteId, setCampanas }) {
     <div>
       {(nuevaCampana || editando) && <FormularioCampana />}
 
-      {!nuevaCampana && !editando && (
+      {!nuevaCampana && !editando && tienePermiso('campanas.crear') && (
         <div style={{ marginBottom: '24px' }}>
           <button onClick={() => setNuevaCampana(true)} className="btn primary">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>
@@ -1316,9 +1377,11 @@ function CampanasTab({ campanas, clienteId, setCampanas }) {
                   <h3 className="h3" style={{ margin: 0 }}>{campana.nombre}</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span className={`badge ${campana.activa ? 'active' : 'error'}`}>{campana.activa ? 'Activa' : 'Pausada'}</span>
-                    <button onClick={() => handleEditar(campana)} className="btn btn-icon" style={{ width: '36px', height: '36px' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
+                    {tienePermiso('campanas.editar') && (
+                      <button onClick={() => handleEditar(campana)} className="btn btn-icon" style={{ width: '36px', height: '36px' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                    )}
                   </div>
                 </div>
                 {campana.ubicaciones?.length > 0 && (
@@ -1365,7 +1428,7 @@ function CampanasTab({ campanas, clienteId, setCampanas }) {
   )
 }
 
-function ReunionesTab({ reuniones, clienteId, setReuniones }) {
+function ReunionesTab({ reuniones, clienteId, setReuniones, tienePermiso }) {
   const [editando, setEditando] = useState(null)
   const [formData, setFormData] = useState({ notas: '', url_transcripcion: '' })
   const [modalEliminar, setModalEliminar] = useState(null)
@@ -1377,7 +1440,7 @@ function ReunionesTab({ reuniones, clienteId, setReuniones }) {
       setReuniones(prev => prev.map(r => r.id === reunionId ? { ...r, ...formData } : r))
       setEditando(null)
     } catch (error) {
-      console.error('Error guardando reunión:', error)
+      logger.error('Error guardando reunión:', error)
     }
   }
 
@@ -1388,7 +1451,7 @@ function ReunionesTab({ reuniones, clienteId, setReuniones }) {
       setReuniones(prev => prev.filter(r => r.id !== reunionId))
       setModalEliminar(null)
     } catch (error) {
-      console.error('Error eliminando reunión:', error)
+      logger.error('Error eliminando reunión:', error)
     }
   }
 
@@ -1408,12 +1471,16 @@ function ReunionesTab({ reuniones, clienteId, setReuniones }) {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span className={`badge ${reunion.estado === 'realizada' ? 'active' : 'paused'}`}>{reunion.estado}</span>
-                    <button onClick={() => { setEditando(reunion.id); setFormData({ notas: reunion.notas || '', url_transcripcion: reunion.url_transcripcion || '' }) }} className="btn btn-icon" style={{ width: '36px', height: '36px' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    </button>
-                    <button onClick={() => setModalEliminar(reunion.id)} className="btn btn-icon danger" style={{ width: '36px', height: '36px' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
+                    {tienePermiso('reuniones.editar') && (
+                      <button onClick={() => { setEditando(reunion.id); setFormData({ notas: reunion.notas || '', url_transcripcion: reunion.url_transcripcion || '' }) }} className="btn btn-icon" style={{ width: '36px', height: '36px' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                    )}
+                    {tienePermiso('reuniones.eliminar') && (
+                      <button onClick={() => setModalEliminar(reunion.id)} className="btn btn-icon danger" style={{ width: '36px', height: '36px' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1562,7 +1629,7 @@ function AvatarEditable({ cliente, onSave }) {
       await onSave(publicUrl)
       setShowMenu(false)
     } catch (error) {
-      console.error('Error subiendo imagen:', error)
+      logger.error('Error subiendo imagen:', error)
       alert('Error al subir la imagen. Intenta de nuevo.')
     } finally {
       setUploading(false)
@@ -1660,7 +1727,7 @@ function AvatarEditable({ cliente, onSave }) {
 
 // ==================== NOTAS TAB ====================
 
-function NotasTab({ notas, clienteId, setNotas, usuario }) {
+function NotasTab({ notas, clienteId, setNotas, usuario, tienePermiso }) {
   const [nuevaNota, setNuevaNota] = useState('')
   const [guardando, setGuardando] = useState(false)
   const [modalEliminar, setModalEliminar] = useState(null)
@@ -1680,7 +1747,7 @@ function NotasTab({ notas, clienteId, setNotas, usuario }) {
       setNotas(prev => [data, ...prev])
       setNuevaNota('')
     } catch (error) {
-      console.error('Error guardando nota:', error)
+      logger.error('Error guardando nota:', error)
     } finally {
       setGuardando(false)
     }
@@ -1693,7 +1760,7 @@ function NotasTab({ notas, clienteId, setNotas, usuario }) {
       setNotas(prev => prev.filter(n => n.id !== notaId))
       setModalEliminar(null)
     } catch (error) {
-      console.error('Error eliminando nota:', error)
+      logger.error('Error eliminando nota:', error)
     }
   }
 

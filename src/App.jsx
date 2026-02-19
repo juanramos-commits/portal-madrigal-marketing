@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import PermissionRoute from './components/PermissionRoute'
 import Layout from './components/Layout'
 
 // Páginas públicas
@@ -37,15 +38,15 @@ function App() {
             }
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="clientes" element={<TablaClientesAvanzada />} />
-            <Route path="clientes/:id" element={<ClienteDetalleAvanzado />} />
-            <Route path="tareas" element={<PlaceholderPage title="Tareas" />} />
-            <Route path="sugerencias" element={<PlaceholderPage title="Sugerencias" />} />
-            
+            <Route path="dashboard" element={<PermissionRoute permiso="dashboard.ver"><Dashboard /></PermissionRoute>} />
+            <Route path="clientes" element={<PermissionRoute permiso="clientes.ver_lista"><TablaClientesAvanzada /></PermissionRoute>} />
+            <Route path="clientes/:id" element={<PermissionRoute permiso="clientes.ver_detalle"><ClienteDetalleAvanzado /></PermissionRoute>} />
+            <Route path="tareas" element={<PermissionRoute permiso="tareas.ver_propias"><PlaceholderPage title="Tareas" /></PermissionRoute>} />
+            <Route path="sugerencias" element={<PermissionRoute permiso="sugerencias.ver_propias"><PlaceholderPage title="Sugerencias" /></PermissionRoute>} />
+
             {/* Admin */}
-            <Route path="usuarios" element={<Usuarios />} />
-            <Route path="roles" element={<Roles />} />
+            <Route path="usuarios" element={<PermissionRoute permiso="usuarios.ver"><Usuarios /></PermissionRoute>} />
+            <Route path="roles" element={<PermissionRoute permiso="roles.ver"><Roles /></PermissionRoute>} />
           </Route>
 
           {/* Ruta por defecto */}
