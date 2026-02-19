@@ -11,7 +11,7 @@
 -- - Super admin tiene acceso total (manejado dentro de tiene_permiso)
 -- - Cada operación (SELECT/INSERT/UPDATE/DELETE) tiene su propia política
 -- - WITH CHECK se incluye en INSERT y UPDATE
--- - ver_solo_asignados filtra por responsable_id donde aplique
+-- - ver_solo_asignados filtra por usuario_asignado_id donde aplique
 
 -- ==========================================================================
 -- SECCION 3A: Arreglar políticas existentes de CLIENTES y LEADS
@@ -34,7 +34,7 @@ CREATE POLICY clientes_select ON clientes FOR SELECT USING (
       NOT tiene_permiso(auth.uid()::uuid, 'clientes.ver_solo_asignados')
       OR
       -- Con restricción → solo donde es responsable
-      clientes.responsable_id = auth.uid()::uuid
+      clientes.usuario_asignado_id = auth.uid()::uuid
     )
   )
   OR
@@ -74,7 +74,7 @@ CREATE POLICY leads_select ON leads FOR SELECT USING (
       EXISTS (
         SELECT 1 FROM clientes
         WHERE clientes.id = leads.cliente_id
-        AND clientes.responsable_id = auth.uid()::uuid
+        AND clientes.usuario_asignado_id = auth.uid()::uuid
       )
     )
   )
@@ -219,21 +219,7 @@ CREATE POLICY clientes_info_adicional_delete ON clientes_info_adicional FOR DELE
   tiene_permiso(auth.uid()::uuid, 'clientes.eliminar')
 );
 
--- CLIENTES_LANZAMIENTO
-ALTER TABLE clientes_lanzamiento ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY clientes_lanzamiento_select ON clientes_lanzamiento FOR SELECT USING (
-  puede_ver_cliente(cliente_id)
-);
-CREATE POLICY clientes_lanzamiento_insert ON clientes_lanzamiento FOR INSERT WITH CHECK (
-  tiene_permiso(auth.uid()::uuid, 'clientes.editar')
-);
-CREATE POLICY clientes_lanzamiento_update ON clientes_lanzamiento FOR UPDATE
-  USING (tiene_permiso(auth.uid()::uuid, 'clientes.editar'))
-  WITH CHECK (tiene_permiso(auth.uid()::uuid, 'clientes.editar'));
-CREATE POLICY clientes_lanzamiento_delete ON clientes_lanzamiento FOR DELETE USING (
-  tiene_permiso(auth.uid()::uuid, 'clientes.eliminar')
-);
+-- NOTA: clientes_lanzamiento no existe en la BD actual, se omite
 
 -- CLIENTES_SOCIOS
 ALTER TABLE clientes_socios ENABLE ROW LEVEL SECURITY;
@@ -291,8 +277,8 @@ CREATE POLICY tareas_select ON tareas FOR SELECT USING (
   (
     tiene_permiso(auth.uid()::uuid, 'tareas.ver_propias')
     AND (
-      tareas.asignado_a = auth.uid()::uuid
-      OR tareas.creado_por = auth.uid()::uuid
+      tareas.asignado_a_id = auth.uid()::uuid
+      OR tareas.creado_por_id = auth.uid()::uuid
     )
   )
 );
@@ -308,8 +294,8 @@ CREATE POLICY tareas_update ON tareas FOR UPDATE
     tiene_permiso(auth.uid()::uuid, 'tareas.editar')
     AND (
       tiene_permiso(auth.uid()::uuid, 'tareas.ver_todas')
-      OR tareas.asignado_a = auth.uid()::uuid
-      OR tareas.creado_por = auth.uid()::uuid
+      OR tareas.asignado_a_id = auth.uid()::uuid
+      OR tareas.creado_por_id = auth.uid()::uuid
     )
   )
   WITH CHECK (
@@ -464,7 +450,7 @@ CREATE POLICY campanas_select ON campanas FOR SELECT USING (
       EXISTS (
         SELECT 1 FROM clientes
         WHERE clientes.id = campanas.cliente_id
-        AND clientes.responsable_id = auth.uid()::uuid
+        AND clientes.usuario_asignado_id = auth.uid()::uuid
       )
     )
   )
@@ -522,9 +508,9 @@ CREATE POLICY facturas_delete ON facturas FOR DELETE USING (
 -- INDICES para optimizar las políticas RLS
 -- ==========================================================================
 
-CREATE INDEX IF NOT EXISTS idx_clientes_responsable ON clientes(responsable_id);
-CREATE INDEX IF NOT EXISTS idx_tareas_asignado ON tareas(asignado_a);
-CREATE INDEX IF NOT EXISTS idx_tareas_creado_por ON tareas(creado_por);
+CREATE INDEX IF NOT EXISTS idx_clientes_usuario_asignado ON clientes(usuario_asignado_id);
+CREATE INDEX IF NOT EXISTS idx_tareas_asignado ON tareas(asignado_a_id);
+CREATE INDEX IF NOT EXISTS idx_tareas_creado_por ON tareas(creado_por_id);
 CREATE INDEX IF NOT EXISTS idx_reuniones_cliente ON reuniones(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_campanas_cliente ON campanas(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_facturas_cliente ON facturas(cliente_id);
