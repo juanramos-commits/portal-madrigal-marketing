@@ -17,13 +17,9 @@ export default function ForgotPassword() {
       redirectTo: `${window.location.origin}/reset-password`
     })
 
-    if (error) {
-      setError('Error al enviar el correo. Inténtalo de nuevo.')
-      setLoading(false)
-    } else {
-      setSent(true)
-      setLoading(false)
-    }
+    // Always show success to prevent email enumeration
+    setSent(true)
+    setLoading(false)
   }
 
   if (sent) {
@@ -67,14 +63,7 @@ export default function ForgotPassword() {
                 lineHeight: 1.6,
                 marginBottom: '8px'
               }}>
-                Hemos enviado un enlace de recuperación a
-              </p>
-              <p style={{
-                fontSize: '15px',
-                color: 'var(--text)',
-                fontWeight: 500
-              }}>
-                {email}
+                Si existe una cuenta con ese email, recibirás instrucciones para restablecer tu contraseña.
               </p>
             </div>
 

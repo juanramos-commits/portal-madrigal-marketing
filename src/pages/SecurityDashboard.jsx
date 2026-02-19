@@ -24,6 +24,7 @@ export default function SecurityDashboard() {
   const [securityChecks, setSecurityChecks] = useState({})
   const [activityData, setActivityData] = useState([])
   const [exporting, setExporting] = useState(false)
+  const [emergencyMode, setEmergencyMode] = useState(false)
 
   useEffect(() => {
     loadDashboardData()
@@ -152,11 +153,11 @@ export default function SecurityDashboard() {
 
     try {
       const [clientesRes, usuariosRes, rolesRes, permisosRes, auditRes] = await Promise.all([
-        supabase.from('clientes').select('*'),
+        supabase.from('clientes').select('id, nombre, email, telefono, estado, tipo_servicio, created_at'),
         supabase.from('usuarios').select('id, email, nombre, tipo, activo, ultimo_acceso, created_at'),
-        supabase.from('roles').select('*, permisos:roles_permisos(permiso:permisos(codigo))'),
-        supabase.from('permisos').select('*'),
-        supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(5000)
+        supabase.from('roles').select('id, nombre, nivel, permisos:roles_permisos(permiso:permisos(codigo))'),
+        supabase.from('permisos').select('id, modulo, codigo, descripcion'),
+        supabase.from('audit_log').select('id, usuario_id, accion, categoria, descripcion, created_at').order('created_at', { ascending: false }).limit(5000)
       ])
 
       const zip = new JSZip()
@@ -203,6 +204,48 @@ export default function SecurityDashboard() {
     }
   }
 
+  const handleEmergencyMode = async () => {
+    if (!confirm('MODO EMERGENCIA: Se desactivarán TODOS los usuarios excepto super_admin. ¿Confirmar?')) return
+    if (!confirm('SEGUNDA CONFIRMACIÓN: Esta acción bloqueará el acceso a todos los usuarios no super_admin. ¿Estás seguro?')) return
+
+    setEmergencyMode(true)
+    try {
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ activo: false })
+        .neq('tipo', 'super_admin')
+
+      if (error) throw error
+
+      try {
+        await supabase.rpc('registrar_auditoria', {
+          p_usuario_id: usuario.id,
+          p_accion: 'EMERGENCY_LOCKDOWN',
+          p_categoria: 'sistema',
+          p_descripcion: 'Modo emergencia activado: todos los usuarios no super_admin desactivados'
+        })
+      } catch (_) {}
+
+      try {
+        await supabase.from('security_alerts').insert({
+          tipo: 'emergency_lockdown',
+          severidad: 'critica',
+          titulo: 'Modo emergencia activado',
+          descripcion: `Activado por ${usuario.nombre} (${usuario.email}). Todos los usuarios no super_admin han sido desactivados.`,
+          usuario_afectado_id: usuario.id
+        })
+      } catch (_) {}
+
+      alert('Modo emergencia activado. Todos los usuarios no super_admin han sido desactivados.')
+      await loadDashboardData()
+    } catch (e) {
+      logger.error('Error activating emergency mode:', e)
+      alert('Error al activar modo emergencia')
+    } finally {
+      setEmergencyMode(false)
+    }
+  }
+
   const SEVERIDAD_COLORS = {
     critica: '#ef4444', alta: '#f59e0b', media: '#3b82f6', baja: '#6b7280'
   }
@@ -224,11 +267,28 @@ export default function SecurityDashboard() {
           <h1 className="h1" style={{ marginBottom: '4px' }}>Dashboard de Seguridad</h1>
           <p className="sub">Estado general del sistema</p>
         </div>
-        {tienePermiso('sistema.backup') && (
-          <button onClick={handleExport} className="btn primary" disabled={exporting}>
-            {exporting ? 'Exportando...' : 'Exportar datos'}
-          </button>
-        )}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {tienePermiso('sistema.backup') && (
+            <button onClick={handleExport} className="btn primary" disabled={exporting}>
+              {exporting ? 'Exportando...' : 'Exportar datos'}
+            </button>
+          )}
+          {usuario?.tipo === 'super_admin' && (
+            <button
+              onClick={handleEmergencyMode}
+              className="btn"
+              disabled={emergencyMode}
+              style={{
+                background: '#ef4444',
+                color: 'white',
+                border: 'none',
+                fontWeight: 600
+              }}
+            >
+              {emergencyMode ? 'Activando...' : 'Modo Emergencia'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Métricas */}
