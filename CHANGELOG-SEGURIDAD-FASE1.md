@@ -199,19 +199,30 @@ Generado `sql/003-rls-completo.sql` con politicas para:
 
 ---
 
-## SQL Pendiente de Ejecutar
+## SQL Ejecutado en Supabase (19 feb 2026)
 
-Los siguientes archivos SQL deben ejecutarse **manualmente** en Supabase SQL Editor:
+Los siguientes archivos SQL han sido ejecutados exitosamente via Management API:
 
-1. **`sql/003-rls-completo.sql`** - Ejecutar seccion por seccion (3A, 3B, 3C, 3D, 3E, 3F, 3G)
-2. **`sql/004-permisos-nuevos-sidebar.sql`** - Ejecutar completo
+1. **`sql/004-permisos-nuevos-sidebar.sql`** - EJECUTADO OK
+   - 3 permisos nuevos creados: `documentacion.ver`, `archivos.ver`, `madrigalito.ver`
+   - Asignados a todos los roles existentes
+2. **`sql/003-rls-completo.sql`** - EJECUTADO OK (seccion por seccion)
+   - Seccion 3A: Clientes y Leads - OK
+   - Seccion 3B: Usuarios - OK
+   - Seccion 3C: Tablas secundarias de clientes (7 tablas, sin clientes_lanzamiento que no existe) - OK
+   - Seccion 3D: Tareas - OK
+   - Seccion 3E: Tablas del sistema de permisos - OK
+   - Seccion 3F: Reuniones - OK
+   - Seccion 3G: Tablas restantes (campanas, facturas, paquetes_leads, usuarios_menu_order) + Indices - OK
 
-**Orden recomendado:**
-1. Ejecutar `004-permisos-nuevos-sidebar.sql` primero (crea permisos y los asigna)
-2. Ejecutar `003-rls-completo.sql` seccion por seccion
-3. Despues de cada seccion, verificar en la app que todo sigue funcionando
+**Correcciones aplicadas durante ejecucion:**
+- `responsable_id` → `usuario_asignado_id` (columna real en tabla clientes)
+- `asignado_a` → `asignado_a_id` (columna real en tabla tareas)
+- `creado_por` → `creado_por_id` (columna real en tabla tareas)
+- `clientes_lanzamiento` omitida (tabla no existe en la BD)
+- Politicas antiguas de leads, reuniones y facturas eliminadas antes de crear las nuevas
 
-**Atencion:** Verificar que las tablas referenciadas existen. Si alguna tabla no existe (ej: `tareas` aun no se ha creado), comentar esa seccion y ejecutar el resto.
+**Resultado final:** 20 tablas con RLS activado, 72 politicas RLS creadas, 10 indices de rendimiento.
 
 ---
 
@@ -236,10 +247,10 @@ Los siguientes archivos SQL deben ejecutarse **manualmente** en Supabase SQL Edi
 | Vulnerabilidad | Estado |
 |---|---|
 | V1: Acceso a rutas protegidas por URL directa | **CERRADA** - PermissionRoute en todas las rutas |
-| V2: Sin RLS en tabla usuarios | **CERRADA** - SQL preparado (pendiente ejecucion) |
-| V3: Filtrado de datos solo en frontend | **CERRADA** - RLS con `ver_solo_asignados` (pendiente ejecucion) |
-| V4: Sin WITH CHECK en politicas RLS | **CERRADA** - Todas las politicas con WITH CHECK (pendiente ejecucion) |
-| V5: RLS activado sin politicas en campanas/facturas | **CERRADA** - Politicas creadas (pendiente ejecucion) |
+| V2: Sin RLS en tabla usuarios | **CERRADA** - RLS activado y politicas ejecutadas en BD |
+| V3: Filtrado de datos solo en frontend | **CERRADA** - RLS con `ver_solo_asignados` ejecutado en BD |
+| V4: Sin WITH CHECK en politicas RLS | **CERRADA** - Todas las politicas con WITH CHECK ejecutadas |
+| V5: RLS activado sin politicas en campanas/facturas | **CERRADA** - Politicas creadas y ejecutadas |
 | V6: Credenciales hardcodeadas | **CERRADA** - Movidas a .env |
 | V7: Sin validacion server-side de permisos | **PARCIAL** - RLS cubre la BD. Edge Functions pendientes para Fase 2 |
 | V8: tienePermiso no usado en ClienteDetalleAvanzado | **CERRADA** - Aplicado en todos los componentes |
