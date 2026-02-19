@@ -54,7 +54,14 @@ const MODULOS = {
   facturacion: { nombre: 'Facturación', icono: '💰' },
   usuarios: { nombre: 'Usuarios', icono: '👤' },
   roles: { nombre: 'Roles', icono: '🔐' },
-  sistema: { nombre: 'Sistema', icono: '⚙️' }
+  sistema: { nombre: 'Sistema', icono: '⚙️' },
+  notificaciones: { nombre: 'Notificaciones', icono: '🔔' },
+  archivos: { nombre: 'Archivos', icono: '📁' },
+  documentacion: { nombre: 'Documentación', icono: '📄' },
+  madrigalito: { nombre: 'Madrigalito', icono: '🎯' },
+  paquetes: { nombre: 'Paquetes', icono: '📦' },
+  notas: { nombre: 'Notas', icono: '📝' },
+  historial: { nombre: 'Historial', icono: '🕐' },
 }
 
 export default function Roles() {
@@ -167,13 +174,12 @@ export default function Roles() {
         if (error) throw error
       }
 
-      await supabase.from('roles_permisos').delete().eq('rol_id', rolId)
-
-      if (permisosSeleccionados.length > 0) {
-        await supabase.from('roles_permisos').insert(
-          permisosSeleccionados.map(permisoId => ({ rol_id: rolId, permiso_id: permisoId }))
-        )
-      }
+      // Usar Edge Function para cambiar permisos (validación server-side)
+      const { data: permResult, error: permError } = await supabase.functions.invoke('cambiar-permisos-rol', {
+        body: { rol_id: rolId, permisos_ids: permisosSeleccionados }
+      })
+      if (permError) throw permError
+      if (permResult?.error) throw new Error(permResult.error)
 
       setModalEditar(null)
       cargarDatos()

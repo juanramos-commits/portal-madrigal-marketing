@@ -21,7 +21,14 @@ const MODULOS = {
   facturacion: { nombre: 'Facturación', icono: '💰' },
   usuarios: { nombre: 'Usuarios', icono: '👤' },
   roles: { nombre: 'Roles', icono: '🔐' },
-  sistema: { nombre: 'Sistema', icono: '⚙️' }
+  sistema: { nombre: 'Sistema', icono: '⚙️' },
+  notificaciones: { nombre: 'Notificaciones', icono: '🔔' },
+  archivos: { nombre: 'Archivos', icono: '📁' },
+  documentacion: { nombre: 'Documentación', icono: '📄' },
+  madrigalito: { nombre: 'Madrigalito', icono: '🎯' },
+  paquetes: { nombre: 'Paquetes', icono: '📦' },
+  notas: { nombre: 'Notas', icono: '📝' },
+  historial: { nombre: 'Historial', icono: '🕐' },
 }
 
 export default function Usuarios() {
@@ -211,15 +218,35 @@ export default function Usuarios() {
   }
 
   const eliminarUsuario = async (id) => {
-    await supabase.from('usuarios').delete().eq('id', id)
-    setUsuarios(prev => prev.filter(u => u.id !== id))
+    try {
+      const { data, error } = await supabase.functions.invoke('eliminar-usuario', {
+        body: { usuario_id: id }
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      // Soft delete: marcar como inactivo en la UI
+      setUsuarios(prev => prev.map(u => u.id === id ? { ...u, activo: false } : u))
+    } catch (error) {
+      logger.error('Error eliminando usuario:', error)
+      alert(error.message || 'Error al eliminar usuario')
+    }
     setModalConfirmar(null)
   }
 
   const cambiarRol = async (id, rolId) => {
-    await supabase.from('usuarios').update({ rol_id: rolId || null }).eq('id', id)
-    const rol = roles.find(r => r.id === rolId)
-    setUsuarios(prev => prev.map(u => u.id === id ? { ...u, rol_id: rolId, rol } : u))
+    try {
+      const { data, error } = await supabase.functions.invoke('cambiar-rol-usuario', {
+        body: { usuario_id: id, nuevo_rol_id: rolId || null }
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      const rol = roles.find(r => r.id === rolId)
+      setUsuarios(prev => prev.map(u => u.id === id ? { ...u, rol_id: rolId, rol } : u))
+    } catch (error) {
+      logger.error('Error cambiando rol:', error)
+      alert(error.message || 'Error al cambiar rol')
+      cargarDatos() // Recargar para reflejar estado real
+    }
   }
 
   if (loading) {
@@ -303,7 +330,15 @@ export default function Usuarios() {
                     {u.tipo !== 'cliente' && u.tipo !== 'super_admin' ? (
                       <select value={u.rol_id || ''} onChange={e => cambiarRol(u.id, e.target.value)} className="select" style={{ height: '32px', fontSize: '13px', background: 'transparent' }} disabled={!tienePermiso('usuarios.editar') || u.id === currentUser?.id}>
                         <option value="">Sin rol</option>
-                        {roles.filter(r => r.nombre !== 'Super Admin').map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+                        {roles.filter(r => {
+                          if (r.nombre === 'Super Admin') return false
+                          // Solo mostrar roles con nivel menor al del usuario actual
+                          if (currentUser?.tipo !== 'super_admin') {
+                            const nivelActual = currentUser?.rol?.nivel ?? 0
+                            if (r.nivel >= nivelActual) return false
+                          }
+                          return true
+                        }).map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
                       </select>
                     ) : <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{u.tipo === 'super_admin' ? 'Super Admin' : 'N/A'}</span>}
                   </td>

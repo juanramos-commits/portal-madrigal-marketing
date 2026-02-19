@@ -310,11 +310,15 @@ export default function ClienteDetalleAvanzado() {
 
   const eliminarCliente = async () => {
     try {
-      const { error } = await supabase.from('clientes').delete().eq('id', id)
+      const { data, error } = await supabase.functions.invoke('eliminar-cliente', {
+        body: { cliente_id: id }
+      })
       if (error) throw error
+      if (data?.error) throw new Error(data.error)
       navigate('/clientes')
     } catch (error) {
       logger.error('Error eliminando cliente:', error)
+      alert(error.message || 'Error al eliminar cliente')
     }
   }
 

@@ -40,6 +40,17 @@ export function AuthProvider({ children }) {
         setPermisos(permisosData?.map(p => p.codigo) || [])
       }
 
+      // Verificar expiración de sesión (24h desde último acceso)
+      const SESION_MAX_HORAS = 24
+      if (usuarioData.ultimo_acceso) {
+        const horasDesdeUltimoAcceso = (Date.now() - new Date(usuarioData.ultimo_acceso).getTime()) / (1000 * 60 * 60)
+        if (horasDesdeUltimoAcceso > SESION_MAX_HORAS) {
+          logger.log('Sesión expirada por inactividad')
+          await supabase.auth.signOut()
+          return null
+        }
+      }
+
       // Actualizar último acceso
       supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id)
 
@@ -114,11 +125,37 @@ export function AuthProvider({ children }) {
         await supabase.auth.signOut()
         return { data: null, error: { message: 'CUENTA_DESACTIVADA' } }
       }
+      // Registrar login en auditoría
+      if (usuarioData?.id) {
+        try {
+          await supabase.rpc('registrar_auditoria', {
+            p_usuario_id: usuarioData.id,
+            p_accion: 'LOGIN',
+            p_categoria: 'auth',
+            p_descripcion: `Inicio de sesión: ${usuarioData.email}`,
+          })
+        } catch (e) {
+          logger.error('Error registrando login en auditoría:', e)
+        }
+      }
     }
     return { data, error }
   }
 
   const signOut = async () => {
+    // Registrar logout en auditoría antes de cerrar sesión
+    if (usuario?.id) {
+      try {
+        await supabase.rpc('registrar_auditoria', {
+          p_usuario_id: usuario.id,
+          p_accion: 'LOGOUT',
+          p_categoria: 'auth',
+          p_descripcion: `Cierre de sesión: ${usuario.email}`,
+        })
+      } catch (e) {
+        logger.error('Error registrando logout en auditoría:', e)
+      }
+    }
     setUser(null)
     setUsuario(null)
     setPermisos([])
