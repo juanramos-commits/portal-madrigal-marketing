@@ -16,6 +16,7 @@ import TablaClientesAvanzada from './pages/TablaClientesAvanzada'
 import ClienteDetalleAvanzado from './pages/ClienteDetalleAvanzado'
 import Usuarios from './pages/Usuarios'
 import Roles from './pages/Roles'
+import AuditLog from './pages/AuditLog'
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
             {/* Admin */}
             <Route path="usuarios" element={<PermissionRoute permiso="usuarios.ver"><Usuarios /></PermissionRoute>} />
             <Route path="roles" element={<PermissionRoute permiso="roles.ver"><Roles /></PermissionRoute>} />
+            <Route path="audit-log" element={<PermissionRoute permiso="sistema.logs"><AuditLog /></PermissionRoute>} />
           </Route>
 
           {/* Ruta por defecto */}

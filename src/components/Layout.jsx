@@ -103,6 +103,11 @@ const Icons = {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>
     </svg>
+  ),
+  ScrollText: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2"/>
+    </svg>
   )
 }
 
@@ -241,7 +246,8 @@ export default function Layout() {
     { id: 'madrigalito', name: 'Madrigalito', href: '/madrigalito', icon: Icons.Target, permiso: 'madrigalito.ver', type: 'link' },
     { id: 'usuarios', name: 'Usuarios', href: '/usuarios', icon: Icons.UserCog, permiso: 'usuarios.ver', type: 'link' },
     { id: 'roles', name: 'Roles', href: '/roles', icon: Icons.Shield, permiso: 'roles.ver', type: 'link' },
-    { id: 'sugerencias', name: 'Sugerencias', href: '/sugerencias', icon: Icons.Messages, permiso: 'sugerencias.ver_propias', type: 'link' }
+    { id: 'sugerencias', name: 'Sugerencias', href: '/sugerencias', icon: Icons.Messages, permiso: 'sugerencias.ver_propias', type: 'link' },
+    { id: 'audit-log', name: 'Registro de Actividad', href: '/audit-log', icon: Icons.ScrollText, permiso: 'sistema.logs', type: 'link' }
   ]
 
   useEffect(() => {
