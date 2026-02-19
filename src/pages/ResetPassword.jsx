@@ -2,6 +2,8 @@ import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { validarPassword } from '../lib/passwordValidation'
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
@@ -41,8 +43,9 @@ export default function ResetPassword() {
       return
     }
 
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres')
+    const { valida, errores } = validarPassword(password)
+    if (!valida) {
+      setError(errores.join(', '))
       return
     }
 
@@ -191,9 +194,10 @@ export default function ResetPassword() {
                 placeholder="••••••••"
                 required
                 disabled={loading}
-                minLength={6}
+                minLength={8}
                 autoComplete="new-password"
               />
+              <PasswordStrengthMeter password={password} />
             </div>
 
             <div className="field">
@@ -206,14 +210,10 @@ export default function ResetPassword() {
                 placeholder="••••••••"
                 required
                 disabled={loading}
-                minLength={6}
+                minLength={8}
                 autoComplete="new-password"
               />
             </div>
-
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0', textAlign: 'center' }}>
-              La contraseña debe tener al menos 6 caracteres.
-            </p>
 
             <button type="submit" disabled={loading} className="login-button">
               {loading ? (
