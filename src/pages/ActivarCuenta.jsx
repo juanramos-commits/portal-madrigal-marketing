@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { validarPassword } from '../lib/passwordValidation'
+import PasswordStrengthMeter from '../components/PasswordStrengthMeter'
 
 export default function ActivarCuenta() {
   const [password, setPassword] = useState('')
@@ -42,7 +44,8 @@ export default function ActivarCuenta() {
     e.preventDefault()
     setError('')
     if (password !== confirmPassword) { setError('Las contraseñas no coinciden'); return }
-    if (password.length < 6) { setError('Mínimo 6 caracteres'); return }
+    const { valida, errores } = validarPassword(password)
+    if (!valida) { setError(errores.join(', ')); return }
 
     setLoading(true)
     const { error: err } = await supabase.auth.updateUser({ password })
@@ -112,13 +115,13 @@ export default function ActivarCuenta() {
       <form onSubmit={handleSubmit} className="login-form">
         <div className="field">
           <label className="field-label">Contraseña</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="login-input" placeholder="••••••••" required disabled={loading} minLength={6} />
+          <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="login-input" placeholder="••••••••" required disabled={loading} minLength={8} />
+          <PasswordStrengthMeter password={password} />
         </div>
         <div className="field">
           <label className="field-label">Confirmar</label>
-          <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="login-input" placeholder="••••••••" required disabled={loading} minLength={6} />
+          <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="login-input" placeholder="••••••••" required disabled={loading} minLength={8} />
         </div>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 }}>Mínimo 6 caracteres</p>
         <button type="submit" disabled={loading} className="login-button">{loading ? 'Activando...' : 'Activar cuenta'}</button>
       </form>
     </div><p className="login-brand">© 2026 Madrigal Marketing</p></div></div>

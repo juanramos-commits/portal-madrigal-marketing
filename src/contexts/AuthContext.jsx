@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null)
   const [permisos, setPermisos] = useState([])
   const [loading, setLoading] = useState(true)
+  const [requiere2FA, setRequiere2FA] = useState(false)
 
   const cargarUsuario = useCallback(async (email) => {
     try {
@@ -51,6 +52,25 @@ export function AuthProvider({ children }) {
         }
       }
 
+      // Verificar si el rol requiere 2FA (nivel >= 90)
+      const rolNivel = usuarioData.rol?.nivel || 0
+      if (rolNivel >= 90 || usuarioData.tipo === 'super_admin') {
+        try {
+          const { data: factors } = await supabase.auth.mfa.listFactors()
+          const tiene2FA = factors?.totp?.some(f => f.status === 'verified')
+          if (!tiene2FA) {
+            setRequiere2FA(true)
+          } else {
+            setRequiere2FA(false)
+          }
+        } catch (e) {
+          logger.error('Error checking MFA status:', e)
+          setRequiere2FA(false)
+        }
+      } else {
+        setRequiere2FA(false)
+      }
+
       // Actualizar último acceso
       supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id)
 
@@ -67,13 +87,14 @@ export function AuthProvider({ children }) {
     // Escuchar cambios de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
-      
+
       logger.log('Auth event:', event)
 
       if (event === 'SIGNED_OUT') {
         setUser(null)
         setUsuario(null)
         setPermisos([])
+        setRequiere2FA(false)
         setLoading(false)
         return
       }
@@ -89,6 +110,7 @@ export function AuthProvider({ children }) {
         setUser(null)
         setUsuario(null)
         setPermisos([])
+        setRequiere2FA(false)
       }
       setLoading(false)
     })
@@ -159,6 +181,7 @@ export function AuthProvider({ children }) {
     setUser(null)
     setUsuario(null)
     setPermisos([])
+    setRequiere2FA(false)
     return supabase.auth.signOut()
   }
 
@@ -168,6 +191,7 @@ export function AuthProvider({ children }) {
       usuario,
       permisos,
       loading,
+      requiere2FA,
       tienePermiso,
       signInWithEmail,
       signOut,
