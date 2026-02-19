@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -13,7 +14,7 @@ export default function ResetPassword() {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('ResetPassword auth event:', event)
+      logger.log('ResetPassword auth event:', event)
       
       if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setSessionReady(true)
@@ -52,7 +53,7 @@ export default function ResetPassword() {
     })
 
     if (updateError) {
-      console.error('Error updating password:', updateError)
+      logger.error('Error updating password:', updateError)
       setError('Error al actualizar la contraseña. Inténtalo de nuevo.')
       setLoading(false)
     } else {

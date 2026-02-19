@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -56,7 +57,7 @@ export default function Clientes() {
       if (error) throw error
       setClientes(data || [])
     } catch (error) {
-      console.error('Error cargando clientes:', error)
+      logger.error('Error cargando clientes:', error)
     } finally {
       setLoading(false)
     }
@@ -97,7 +98,7 @@ export default function Clientes() {
       setNuevoCliente({ nombre_comercial: '', telefono: '', email_portal: '', password_portal: '', tiene_whatsapp: true })
       navigate(`/clientes/${data.id}`)
     } catch (error) {
-      console.error('Error creando cliente:', error)
+      logger.error('Error creando cliente:', error)
       alert('Error al crear el cliente')
     } finally {
       setGuardando(false)

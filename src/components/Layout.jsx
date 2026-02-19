@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -234,10 +235,10 @@ export default function Layout() {
     { id: 'clientes', name: 'Clientes', href: '/clientes', icon: Icons.Users, permiso: 'clientes.ver_lista', onlyFor: ['equipo', 'admin', 'super_admin'], type: 'link' },
     { id: 'crm', name: 'CRM', href: '/crm', icon: Icons.UserCheck, permiso: null, onlyFor: ['cliente'], type: 'link' },
     { id: 'paquetes', name: 'Paquetes de Clientes', href: '/paquetes-clientes', icon: Icons.Package, permiso: 'clientes.ver_lista', type: 'link' },
-    { id: 'documentacion', name: 'Documentación', href: '/documentacion', icon: Icons.FileText, permiso: null, type: 'submenu' },
-    { id: 'reuniones', name: 'Reuniones', href: '/reuniones', icon: Icons.Calendar, permiso: null, type: 'link' },
-    { id: 'archivos', name: 'Archivos', href: '/archivos', icon: Icons.Folder, permiso: null, type: 'link' },
-    { id: 'madrigalito', name: 'Madrigalito', href: '/madrigalito', icon: Icons.Target, permiso: null, type: 'link' },
+    { id: 'documentacion', name: 'Documentación', href: '/documentacion', icon: Icons.FileText, permiso: 'documentacion.ver', type: 'submenu' },
+    { id: 'reuniones', name: 'Reuniones', href: '/reuniones', icon: Icons.Calendar, permiso: 'reuniones.ver', type: 'link' },
+    { id: 'archivos', name: 'Archivos', href: '/archivos', icon: Icons.Folder, permiso: 'archivos.ver', type: 'link' },
+    { id: 'madrigalito', name: 'Madrigalito', href: '/madrigalito', icon: Icons.Target, permiso: 'madrigalito.ver', type: 'link' },
     { id: 'usuarios', name: 'Usuarios', href: '/usuarios', icon: Icons.UserCog, permiso: 'usuarios.ver', type: 'link' },
     { id: 'roles', name: 'Roles', href: '/roles', icon: Icons.Shield, permiso: 'roles.ver', type: 'link' },
     { id: 'sugerencias', name: 'Sugerencias', href: '/sugerencias', icon: Icons.Messages, permiso: 'sugerencias.ver_propias', type: 'link' }
@@ -258,7 +259,7 @@ export default function Layout() {
         .maybeSingle()
 
       if (error) {
-        console.error('Error loading menu order:', error)
+        logger.error('Error loading menu order:', error)
         setMenuItems(defaultNavigation.filter(shouldShowItem))
         return
       }
@@ -278,7 +279,7 @@ export default function Layout() {
         setMenuItems(defaultNavigation.filter(shouldShowItem))
       }
     } catch (error) {
-      console.error('Error loading menu order:', error)
+      logger.error('Error loading menu order:', error)
       setMenuItems(defaultNavigation.filter(shouldShowItem))
     }
   }
@@ -302,10 +303,10 @@ export default function Layout() {
         })
 
       if (error) {
-        console.error('Error saving menu order:', error)
+        logger.error('Error saving menu order:', error)
       }
     } catch (error) {
-      console.error('Error saving menu order:', error)
+      logger.error('Error saving menu order:', error)
     }
   }
 

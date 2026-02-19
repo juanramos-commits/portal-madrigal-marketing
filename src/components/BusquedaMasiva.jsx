@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
@@ -74,7 +75,7 @@ export default function BusquedaMasiva() {
       if (error) throw error
       setClientes(data || [])
     } catch (error) {
-      console.error('Error cargando clientes:', error)
+      logger.error('Error cargando clientes:', error)
     } finally {
       setLoading(false)
     }

@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
@@ -64,7 +65,7 @@ export default function Usuarios() {
       setRoles(rolesRes.data || [])
       setPermisos(permisosRes.data || [])
     } catch (error) {
-      console.error('Error cargando datos:', error)
+      logger.error('Error cargando datos:', error)
     } finally {
       setLoading(false)
     }
@@ -130,7 +131,7 @@ export default function Usuarios() {
       }, 1500)
 
     } catch (error) {
-      console.error('Error:', error)
+      logger.error('Error:', error)
       if (error.name === 'AbortError') {
         setInviteError('La petición tardó demasiado. Verifica tu conexión.')
       } else {
@@ -159,7 +160,7 @@ export default function Usuarios() {
       setPermisosRol(rolRes.data?.map(p => p.permiso_id) || [])
       setPermisosUsuario(userRes.data || [])
     } catch (error) {
-      console.error('Error cargando permisos:', error)
+      logger.error('Error cargando permisos:', error)
     } finally {
       setPermisosLoading(false)
     }
@@ -199,7 +200,7 @@ export default function Usuarios() {
         setPermisosUsuario(prev => prev.filter(p => p.permiso_id !== permisoId))
       }
     } catch (error) {
-      console.error('Error:', error)
+      logger.error('Error:', error)
     }
   }
 

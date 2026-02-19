@@ -1,3 +1,4 @@
+import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -98,7 +99,7 @@ export default function Roles() {
       })
       setUsuariosPorRol(conteo)
     } catch (error) {
-      console.error('Error cargando datos:', error)
+      logger.error('Error cargando datos:', error)
     } finally {
       setLoading(false)
     }
@@ -177,7 +178,7 @@ export default function Roles() {
       setModalEditar(null)
       cargarDatos()
     } catch (error) {
-      console.error('Error guardando rol:', error)
+      logger.error('Error guardando rol:', error)
     } finally {
       setEditLoading(false)
     }
@@ -189,7 +190,7 @@ export default function Roles() {
       await supabase.from('roles').delete().eq('id', rolId)
       cargarDatos()
     } catch (error) {
-      console.error('Error eliminando rol:', error)
+      logger.error('Error eliminando rol:', error)
     }
   }
 
