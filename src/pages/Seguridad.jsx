@@ -13,6 +13,7 @@ export default function Seguridad() {
   const [verifyError, setVerifyError] = useState('')
   const [unenrolling, setUnenrolling] = useState(false)
   const [unenrollCode, setUnenrollCode] = useState('')
+  const [downloadingData, setDownloadingData] = useState(false)
 
   useEffect(() => {
     loadFactors()
@@ -143,6 +144,51 @@ export default function Seguridad() {
     } catch (_) {}
     await supabase.auth.signOut({ scope: 'global' })
     window.location.href = '/login'
+  }
+
+  const handleDownloadMyData = async () => {
+    setDownloadingData(true)
+    try {
+      const userId = usuario.id
+
+      const [perfil, auditoria, permisos, sesiones] = await Promise.all([
+        supabase.from('usuarios').select('id, email, nombre, tipo, activo, ultimo_acceso, created_at').eq('id', userId).single(),
+        supabase.from('audit_log').select('accion, categoria, descripcion, created_at').eq('usuario_id', userId).order('created_at', { ascending: false }).limit(500),
+        supabase.from('usuarios_permisos').select('permiso:permisos(modulo, codigo, descripcion), activo').eq('usuario_id', userId),
+        supabase.from('login_attempts').select('ip, exitoso, created_at').eq('usuario_id', userId).order('created_at', { ascending: false }).limit(100)
+      ])
+
+      const data = {
+        fecha_exportacion: new Date().toISOString(),
+        nota: 'Exportación conforme al Art. 15 RGPD - Derecho de acceso',
+        perfil: perfil.data || {},
+        historial_actividad: auditoria.data || [],
+        permisos_especificos: permisos.data || [],
+        intentos_acceso: sesiones.data || []
+      }
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `mis-datos-${new Date().toISOString().split('T')[0]}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+
+      try {
+        await supabase.rpc('registrar_auditoria', {
+          p_usuario_id: userId,
+          p_accion: 'GDPR_DATA_EXPORT',
+          p_categoria: 'auth',
+          p_descripcion: 'Usuario descargó sus datos personales (Art. 15 RGPD)'
+        })
+      } catch (_) {}
+    } catch (e) {
+      logger.error('Error downloading personal data:', e)
+      alert('Error al descargar datos. Inténtalo de nuevo.')
+    } finally {
+      setDownloadingData(false)
+    }
   }
 
   const verifiedFactors = factors.filter(f => f.status === 'verified')
@@ -366,6 +412,36 @@ export default function Seguridad() {
         <button onClick={handleCloseAllSessions} className="btn" style={{ color: '#ef4444' }}>
           Cerrar todas las sesiones
         </button>
+      </div>
+
+      {/* GDPR - Derecho de acceso */}
+      <div style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: '12px',
+        padding: '24px',
+        marginBottom: '24px'
+      }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>Tus datos personales (RGPD)</h2>
+        <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          Conforme al Art. 15 del RGPD, puedes descargar todos los datos que tenemos asociados a tu cuenta.
+        </p>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            onClick={handleDownloadMyData}
+            className="btn primary"
+            disabled={downloadingData}
+          >
+            {downloadingData ? 'Preparando...' : 'Descargar mis datos'}
+          </button>
+          <a href="/privacidad" target="_blank" rel="noopener noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', padding: '8px 16px', fontSize: '14px', color: '#3b82f6', textDecoration: 'none' }}>
+            Política de privacidad
+          </a>
+        </div>
+        <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '12px' }}>
+          Para solicitar la eliminación de tus datos (Art. 17 RGPD), contacta al administrador del sistema.
+        </p>
       </div>
 
       {/* Info de cuenta */}

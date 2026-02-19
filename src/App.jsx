@@ -10,6 +10,8 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import ActivarCuenta from './pages/ActivarCuenta'
 import Configurar2FA from './pages/Configurar2FA'
+import PoliticaPrivacidad from './pages/PoliticaPrivacidad'
+import CookieConsent from './components/CookieConsent'
 
 // Páginas protegidas
 import Dashboard from './pages/Dashboard'
@@ -49,6 +51,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/activar-cuenta" element={<ActivarCuenta />} />
+          <Route path="/privacidad" element={<PoliticaPrivacidad />} />
           <Route path="/configurar-2fa" element={
             <ProtectedRoute><Configurar2FA /></ProtectedRoute>
           } />
@@ -84,6 +87,7 @@ function App() {
           {/* Ruta por defecto */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        <CookieConsent />
       </BrowserRouter>
     </AuthProvider>
   )

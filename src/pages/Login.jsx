@@ -86,11 +86,9 @@ export default function Login() {
       }
 
       if (authError.message === 'CUENTA_DESACTIVADA') {
-        setError('Tu cuenta está desactivada. Contacta al administrador.')
-      } else if (authError.message.includes('Invalid login credentials')) {
-        setError('Email o contraseña incorrectos')
+        setError('Credenciales incorrectas. Verifica tu email y contraseña.')
       } else {
-        setError(authError.message)
+        setError('Credenciales incorrectas. Verifica tu email y contraseña.')
       }
       setLoading(false)
       return
