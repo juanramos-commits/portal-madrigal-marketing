@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const [requiere2FA, setRequiere2FA] = useState(false)
 
-  const cargarUsuario = useCallback(async (email) => {
+  const cargarUsuario = useCallback(async (email, { esLoginFresco = false } = {}) => {
     try {
       const { data: usuarioData, error: usuarioError } = await supabase
         .from('usuarios')
@@ -42,13 +42,16 @@ export function AuthProvider({ children }) {
       }
 
       // Verificar expiración de sesión (24h desde último acceso)
-      const SESION_MAX_HORAS = 24
-      if (usuarioData.ultimo_acceso) {
-        const horasDesdeUltimoAcceso = (Date.now() - new Date(usuarioData.ultimo_acceso).getTime()) / (1000 * 60 * 60)
-        if (horasDesdeUltimoAcceso > SESION_MAX_HORAS) {
-          logger.log('Sesión expirada por inactividad')
-          await supabase.auth.signOut()
-          return null
+      // Solo aplicar en restauración de sesión, no en login fresco
+      if (!esLoginFresco) {
+        const SESION_MAX_HORAS = 24
+        if (usuarioData.ultimo_acceso) {
+          const horasDesdeUltimoAcceso = (Date.now() - new Date(usuarioData.ultimo_acceso).getTime()) / (1000 * 60 * 60)
+          if (horasDesdeUltimoAcceso > SESION_MAX_HORAS) {
+            logger.log('Sesión expirada por inactividad')
+            await supabase.auth.signOut()
+            return null
+          }
         }
       }
 
@@ -142,7 +145,7 @@ export function AuthProvider({ children }) {
   const signInWithEmail = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (!error && data.user) {
-      const usuarioData = await cargarUsuario(data.user.email)
+      const usuarioData = await cargarUsuario(data.user.email, { esLoginFresco: true })
       if (usuarioData?.desactivado) {
         await supabase.auth.signOut()
         return { data: null, error: { message: 'CUENTA_DESACTIVADA' } }
