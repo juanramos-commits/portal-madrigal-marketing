@@ -272,6 +272,7 @@ export default function Layout() {
   const defaultNavigation = [
     { id: 'ventas', name: 'Ventas', href: '/ventas', icon: Icons.ShoppingCart, permiso: null, type: 'submenu', children: [
       { name: 'Dashboard', href: '/ventas/dashboard', icon: Icons.TrendingUp },
+      { name: 'Notificaciones', href: '/ventas/notificaciones', icon: Icons.Bell },
       { name: 'CRM Setters', href: '/ventas/crm-setters', icon: Icons.UserCheck },
       { name: 'CRM Closers', href: '/ventas/crm-closers', icon: Icons.UserCheck },
       { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet },
