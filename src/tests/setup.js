@@ -35,13 +35,6 @@ vi.mock('../lib/supabase', () => ({
       onAuthStateChange: vi.fn(() => ({
         data: { subscription: { unsubscribe: vi.fn() } }
       })),
-      mfa: {
-        listFactors: vi.fn(() => Promise.resolve({ data: { totp: [] } })),
-        enroll: vi.fn(),
-        challenge: vi.fn(),
-        verify: vi.fn(),
-        unenroll: vi.fn(),
-      },
     },
     functions: { invoke: vi.fn() },
   },
