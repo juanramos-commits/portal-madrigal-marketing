@@ -28,6 +28,7 @@ import Seguridad from './pages/Seguridad'
 import VentasDashboard from './pages/ventas/VentasDashboard'
 import VentasNotificaciones from './pages/ventas/VentasNotificaciones'
 import VentasCRM from './pages/ventas/VentasCRM'
+import CRMLeadDetalle from './components/ventas/CRMLeadDetalle'
 import VentasBiblioteca from './pages/ventas/VentasBiblioteca'
 import VentasWallet from './pages/ventas/VentasWallet'
 import VentasCalendario from './pages/ventas/Calendario'
@@ -80,6 +81,7 @@ function App() {
             <Route path="ventas/dashboard" element={<VentasDashboard />} />
             <Route path="ventas/notificaciones" element={<VentasNotificaciones />} />
             <Route path="ventas/crm" element={<VentasCRM />} />
+            <Route path="ventas/crm/lead/:id" element={<CRMLeadDetalle />} />
             <Route path="ventas/biblioteca" element={<VentasBiblioteca />} />
             <Route path="ventas/wallet" element={<VentasWallet />} />
             <Route path="ventas/calendario" element={<VentasCalendario />} />
