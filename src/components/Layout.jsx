@@ -123,6 +123,21 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
     </svg>
+  ),
+  ShoppingCart: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+    </svg>
+  ),
+  Wallet: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
+    </svg>
+  ),
+  TrendingUp: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+    </svg>
   )
 }
 
@@ -235,6 +250,7 @@ function SortableDocMenuItem({ item, isActive, onClick }) {
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [docMenuOpen, setDocMenuOpen] = useState(false)
+  const [ventasMenuOpen, setVentasMenuOpen] = useState(false)
   const [menuItems, setMenuItems] = useState([])
   const location = useLocation()
   const navigate = useNavigate()
@@ -255,7 +271,16 @@ export default function Layout() {
     { id: 'clientes', name: 'Clientes', href: '/clientes', icon: Icons.Users, permiso: 'clientes.ver_lista', onlyFor: ['equipo', 'admin', 'super_admin'], type: 'link' },
     { id: 'crm', name: 'CRM', href: '/crm', icon: Icons.UserCheck, permiso: null, onlyFor: ['cliente'], type: 'link' },
     { id: 'paquetes', name: 'Paquetes de Clientes', href: '/paquetes-clientes', icon: Icons.Package, permiso: 'clientes.ver_lista', type: 'link' },
-    { id: 'documentacion', name: 'Documentación', href: '/documentacion', icon: Icons.FileText, permiso: 'documentacion.ver', type: 'submenu' },
+    { id: 'ventas', name: 'Ventas', href: '/ventas', icon: Icons.ShoppingCart, permiso: null, type: 'submenu', children: [
+      { name: 'CRM', href: '/ventas/crm', icon: Icons.UserCheck },
+      { name: 'Dashboard', href: '/ventas/dashboard', icon: Icons.TrendingUp },
+      { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet },
+      { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar },
+    ]},
+    { id: 'documentacion', name: 'Documentación', href: '/documentacion', icon: Icons.FileText, permiso: 'documentacion.ver', type: 'submenu', children: [
+      { name: 'Facturas', href: '/documentacion/facturas', icon: Icons.File },
+      { name: 'Contrato', href: '/documentacion/contrato', icon: Icons.File },
+    ]},
     { id: 'reuniones', name: 'Reuniones', href: '/reuniones', icon: Icons.Calendar, permiso: 'reuniones.ver', type: 'link' },
     { id: 'archivos', name: 'Archivos', href: '/archivos', icon: Icons.Folder, permiso: 'archivos.ver', type: 'link' },
     { id: 'madrigalito', name: 'Madrigalito', href: '/madrigalito', icon: Icons.Target, permiso: 'madrigalito.ver', type: 'link' },
@@ -405,23 +430,28 @@ export default function Layout() {
             <SortableContext items={menuItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
               {menuItems.map((item) => {
                 if (item.type === 'submenu') {
+                  const isOpen = item.id === 'documentacion' ? docMenuOpen
+                    : item.id === 'ventas' ? ventasMenuOpen
+                    : false
+                  const toggleOpen = item.id === 'documentacion' ? () => setDocMenuOpen(!docMenuOpen)
+                    : item.id === 'ventas' ? () => setVentasMenuOpen(!ventasMenuOpen)
+                    : () => {}
+
                   return (
                     <div key={item.id}>
                       <SortableDocMenuItem
-                        item={{ ...item, isOpen: docMenuOpen }}
+                        item={{ ...item, isOpen }}
                         isActive={false}
-                        onClick={() => setDocMenuOpen(!docMenuOpen)}
+                        onClick={toggleOpen}
                       />
-                      {docMenuOpen && (
+                      {isOpen && item.children && (
                         <div style={{ paddingLeft: '32px', marginTop: '2px' }}>
-                          <Link to="/documentacion/facturas" className={`nav-item ${isActive('/documentacion/facturas') ? 'active' : ''}`}>
-                            <Icons.File />
-                            <span className="nav-label">Facturas</span>
-                          </Link>
-                          <Link to="/documentacion/contrato" className={`nav-item ${isActive('/documentacion/contrato') ? 'active' : ''}`}>
-                            <Icons.File />
-                            <span className="nav-label">Contrato</span>
-                          </Link>
+                          {item.children.map(child => (
+                            <Link key={child.href} to={child.href} className={`nav-item ${isActive(child.href) ? 'active' : ''}`}>
+                              <child.icon />
+                              <span className="nav-label">{child.name}</span>
+                            </Link>
+                          ))}
                         </div>
                       )}
                     </div>

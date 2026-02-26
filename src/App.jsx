@@ -72,6 +72,10 @@ function App() {
             <Route path="mi-cuenta" element={<ClienteDashboard />} />
             <Route path="clientes" element={<PermissionRoute permiso="clientes.ver_lista"><TablaClientesAvanzada /></PermissionRoute>} />
             <Route path="clientes/:id" element={<PermissionRoute permiso="clientes.ver_detalle"><ClienteDetalleAvanzado /></PermissionRoute>} />
+            <Route path="ventas/crm" element={<PlaceholderPage title="CRM" />} />
+            <Route path="ventas/dashboard" element={<PlaceholderPage title="Dashboard de Ventas" />} />
+            <Route path="ventas/wallet" element={<PlaceholderPage title="Wallet" />} />
+            <Route path="ventas/calendario" element={<PlaceholderPage title="Calendario de Ventas" />} />
             <Route path="tareas" element={<PermissionRoute permiso="tareas.ver_propias"><PlaceholderPage title="Tareas" /></PermissionRoute>} />
             <Route path="sugerencias" element={<PermissionRoute permiso="sugerencias.ver_propias"><PlaceholderPage title="Sugerencias" /></PermissionRoute>} />
 
