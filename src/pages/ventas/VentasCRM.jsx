@@ -1,11 +1,14 @@
 import { useState, useMemo } from 'react'
 import { useVentasCRM } from '../../hooks/useVentasCRM'
+import { useVentas } from '../../hooks/useVentas'
 import CRMKanban from '../../components/ventas/CRMKanban'
 import CRMTabla from '../../components/ventas/CRMTabla'
 import CRMBuscador from '../../components/ventas/CRMBuscador'
 import CRMFiltros from '../../components/ventas/CRMFiltros'
 import CRMNuevoLead from '../../components/ventas/CRMNuevoLead'
+import VentaPopupCierre from '../../components/ventas/VentaPopupCierre'
 import '../../styles/ventas-crm.css'
+import '../../styles/ventas-ventas.css'
 
 const KanbanIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -39,6 +42,7 @@ const RefreshIcon = () => (
 
 export default function VentasCRM() {
   const crm = useVentasCRM()
+  const ventasHook = useVentas()
   const [showFilters, setShowFilters] = useState(false)
   const [showNewLead, setShowNewLead] = useState(false)
   const [toast, setToast] = useState(null)
@@ -201,6 +205,29 @@ export default function VentasCRM() {
           categorias={crm.categorias}
           onCrear={handleCrearLead}
           onCerrar={() => setShowNewLead(false)}
+        />
+      )}
+
+      {/* ── Venta Popup ──────────────────────────────────────────────── */}
+      {crm.leadParaVenta && (
+        <VentaPopupCierre
+          lead={crm.leadParaVenta}
+          onConfirm={async (datosVenta) => {
+            await ventasHook.registrarVenta(datosVenta)
+            await ventasHook.moverLeadAVenta(
+              crm.leadParaVenta.id,
+              crm.pipelineActivo.id,
+              crm.etapaVentaDestino
+            )
+            crm.setLeadParaVenta(null)
+            crm.setEtapaVentaDestino(null)
+            crm.refrescar()
+            showToast('Venta registrada correctamente', 'success')
+          }}
+          onCancel={() => {
+            crm.setLeadParaVenta(null)
+            crm.setEtapaVentaDestino(null)
+          }}
         />
       )}
 
