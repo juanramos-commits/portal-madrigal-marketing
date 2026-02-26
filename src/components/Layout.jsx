@@ -249,8 +249,8 @@ function SortableDocMenuItem({ item, isActive, onClick }) {
 
 export default function Layout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [docMenuOpen, setDocMenuOpen] = useState(false)
   const [ventasMenuOpen, setVentasMenuOpen] = useState(false)
+  const [porOrganizarMenuOpen, setPorOrganizarMenuOpen] = useState(false)
   const [menuItems, setMenuItems] = useState([])
   const location = useLocation()
   const navigate = useNavigate()
@@ -265,12 +265,6 @@ export default function Layout() {
   )
 
   const defaultNavigation = [
-    { id: 'dashboard', name: 'Dashboard', href: '/dashboard', icon: Icons.Dashboard, permiso: 'dashboard.ver', type: 'link' },
-    { id: 'notificaciones', name: 'Notificaciones', href: '/notificaciones', icon: Icons.Bell, permiso: null, type: 'link' },
-    { id: 'tareas', name: 'Tareas', href: '/tareas', icon: Icons.Tasks, permiso: 'tareas.ver_propias', type: 'link' },
-    { id: 'clientes', name: 'Clientes', href: '/clientes', icon: Icons.Users, permiso: 'clientes.ver_lista', onlyFor: ['equipo', 'admin', 'super_admin'], type: 'link' },
-    { id: 'crm', name: 'CRM', href: '/crm', icon: Icons.UserCheck, permiso: null, onlyFor: ['cliente'], type: 'link' },
-    { id: 'paquetes', name: 'Paquetes de Clientes', href: '/paquetes-clientes', icon: Icons.Package, permiso: 'clientes.ver_lista', type: 'link' },
     { id: 'ventas', name: 'Ventas', href: '/ventas', icon: Icons.ShoppingCart, permiso: null, type: 'submenu', children: [
       { name: 'CRM Setters', href: '/ventas/crm-setters', icon: Icons.UserCheck },
       { name: 'CRM Closers', href: '/ventas/crm-closers', icon: Icons.UserCheck },
@@ -278,20 +272,26 @@ export default function Layout() {
       { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet },
       { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar },
     ]},
-    { id: 'documentacion', name: 'Documentación', href: '/documentacion', icon: Icons.FileText, permiso: 'documentacion.ver', type: 'submenu', children: [
+    { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [
+      { name: 'Dashboard', href: '/dashboard', icon: Icons.Dashboard },
+      { name: 'Notificaciones', href: '/notificaciones', icon: Icons.Bell },
+      { name: 'Tareas', href: '/tareas', icon: Icons.Tasks },
+      { name: 'Clientes', href: '/clientes', icon: Icons.Users },
+      { name: 'CRM', href: '/crm', icon: Icons.UserCheck },
+      { name: 'Paquetes de Clientes', href: '/paquetes-clientes', icon: Icons.Package },
       { name: 'Facturas', href: '/documentacion/facturas', icon: Icons.File },
       { name: 'Contrato', href: '/documentacion/contrato', icon: Icons.File },
-    ]},
-    { id: 'reuniones', name: 'Reuniones', href: '/reuniones', icon: Icons.Calendar, permiso: 'reuniones.ver', type: 'link' },
-    { id: 'archivos', name: 'Archivos', href: '/archivos', icon: Icons.Folder, permiso: 'archivos.ver', type: 'link' },
-    { id: 'madrigalito', name: 'Madrigalito', href: '/madrigalito', icon: Icons.Target, permiso: 'madrigalito.ver', type: 'link' },
-    { id: 'usuarios', name: 'Usuarios', href: '/usuarios', icon: Icons.UserCog, permiso: 'usuarios.ver', type: 'link' },
-    { id: 'roles', name: 'Roles', href: '/roles', icon: Icons.Shield, permiso: 'roles.ver', type: 'link' },
-    { id: 'sugerencias', name: 'Sugerencias', href: '/sugerencias', icon: Icons.Messages, permiso: 'sugerencias.ver_propias', type: 'link' },
-    { id: 'audit-log', name: 'Registro de Actividad', href: '/audit-log', icon: Icons.ScrollText, permiso: 'sistema.logs', type: 'link' },
-    { id: 'security-alerts', name: 'Alertas de Seguridad', href: '/alertas-seguridad', icon: Icons.ShieldAlert, permiso: 'sistema.logs', type: 'link' },
-    { id: 'security-dashboard', name: 'Seguridad', href: '/seguridad-dashboard', icon: Icons.BarChart, permiso: 'sistema.configuracion', type: 'link' },
-    { id: 'mi-seguridad', name: 'Mi Seguridad', href: '/mi-seguridad', icon: Icons.Lock, permiso: null, type: 'link' }
+      { name: 'Reuniones', href: '/reuniones', icon: Icons.Calendar },
+      { name: 'Archivos', href: '/archivos', icon: Icons.Folder },
+      { name: 'Madrigalito', href: '/madrigalito', icon: Icons.Target },
+      { name: 'Usuarios', href: '/usuarios', icon: Icons.UserCog },
+      { name: 'Roles', href: '/roles', icon: Icons.Shield },
+      { name: 'Sugerencias', href: '/sugerencias', icon: Icons.Messages },
+      { name: 'Registro de Actividad', href: '/audit-log', icon: Icons.ScrollText },
+      { name: 'Alertas de Seguridad', href: '/alertas-seguridad', icon: Icons.ShieldAlert },
+      { name: 'Seguridad', href: '/seguridad-dashboard', icon: Icons.BarChart },
+      { name: 'Mi Seguridad', href: '/mi-seguridad', icon: Icons.Lock },
+    ]}
   ]
 
   useEffect(() => {
@@ -431,11 +431,11 @@ export default function Layout() {
             <SortableContext items={menuItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
               {menuItems.map((item) => {
                 if (item.type === 'submenu') {
-                  const isOpen = item.id === 'documentacion' ? docMenuOpen
-                    : item.id === 'ventas' ? ventasMenuOpen
+                  const isOpen = item.id === 'ventas' ? ventasMenuOpen
+                    : item.id === 'por-organizar' ? porOrganizarMenuOpen
                     : false
-                  const toggleOpen = item.id === 'documentacion' ? () => setDocMenuOpen(!docMenuOpen)
-                    : item.id === 'ventas' ? () => setVentasMenuOpen(!ventasMenuOpen)
+                  const toggleOpen = item.id === 'ventas' ? () => setVentasMenuOpen(!ventasMenuOpen)
+                    : item.id === 'por-organizar' ? () => setPorOrganizarMenuOpen(!porOrganizarMenuOpen)
                     : () => {}
 
                   return (
