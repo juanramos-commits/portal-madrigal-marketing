@@ -298,6 +298,11 @@ export function useVentasCRM() {
     }
   }, [pipelineActivo, buildLeadQuery, tablaPage, tablaSort, etapas])
 
+  // ── Venta popup state ──────────────────────────────────────────────
+  const [leadParaVenta, setLeadParaVenta] = useState(null)
+  const [etapaVentaDestino, setEtapaVentaDestino] = useState(null)
+  const [etapaVentaOrigen, setEtapaVentaOrigen] = useState(null)
+
   // ── Move lead (drag & drop) ────────────────────────────────────────
   const moverLead = useCallback(async (leadId, etapaOrigenId, etapaDestinoId) => {
     if (etapaOrigenId === etapaDestinoId) return
@@ -309,6 +314,14 @@ export function useVentasCRM() {
     // Find lead
     const leadData = leads[etapaOrigenId]?.find(l => l.id === leadId)
     if (!leadData) return
+
+    // Intercept venta stage — open popup instead of moving
+    if (etapaDestino.tipo === 'venta') {
+      setLeadParaVenta(leadData)
+      setEtapaVentaDestino(etapaDestinoId)
+      setEtapaVentaOrigen(etapaOrigenId)
+      return
+    }
 
     // Optimistic update
     setLeads(prev => {
@@ -398,6 +411,21 @@ export function useVentasCRM() {
       throw new Error('Error al mover el lead')
     }
   }, [leads, etapas, pipelineActivo])
+
+  // ── Force move lead (after venta popup confirms) ───────────────────
+  const moverLeadForzado = useCallback(async (leadId, pipelineId, etapaDestinoId) => {
+    const { error: err } = await supabase
+      .from('ventas_lead_pipeline')
+      .update({
+        etapa_id: etapaDestinoId,
+        contador_intentos: 0,
+        fecha_entrada: new Date().toISOString(),
+      })
+      .eq('lead_id', leadId)
+      .eq('pipeline_id', pipelineId)
+
+    if (err) throw err
+  }, [])
 
   // ── Create lead ────────────────────────────────────────────────────
   const crearLead = useCallback(async (datos) => {
@@ -660,8 +688,12 @@ export function useVentasCRM() {
     setTablaPage, setTablaSort,
 
     // CRUD
-    cargarLeads, cargarMasLeads, moverLead, crearLead,
+    cargarLeads, cargarMasLeads, moverLead, moverLeadForzado, crearLead,
     actualizarLead, eliminarLead,
+
+    // Venta popup
+    leadParaVenta, etapaVentaDestino, etapaVentaOrigen,
+    setLeadParaVenta, setEtapaVentaDestino,
 
     // Detail
     cargarLeadDetalle, cargarActividad,
