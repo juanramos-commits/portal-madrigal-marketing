@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function ProtectedRoute({ children }) {
-  const { user, usuario, loading } = useAuth()
+  const { user, usuario, loading, refrescarUsuario } = useAuth()
 
   if (loading) {
     return (
@@ -55,7 +55,7 @@ export default function ProtectedRoute({ children }) {
             color: 'var(--text)',
             marginBottom: '8px'
           }}>
-            Acceso no autorizado
+            No se pudo cargar tu cuenta
           </h2>
           <p style={{
             fontSize: '14px',
@@ -63,8 +63,24 @@ export default function ProtectedRoute({ children }) {
             marginBottom: '16px',
             lineHeight: 1.5
           }}>
-            Tu cuenta de email no está registrada en el sistema. Contacta con el administrador para obtener acceso.
+            Hubo un problema al cargar los datos de tu cuenta. Puede ser un error temporal de conexión.
           </p>
+          <button
+            onClick={() => refrescarUsuario()}
+            style={{
+              background: '#6c5ce7',
+              color: '#fff',
+              border: 'none',
+              padding: '10px 24px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: 600,
+              marginBottom: '12px'
+            }}
+          >
+            Reintentar
+          </button>
           <p style={{
             fontSize: '13px',
             color: 'var(--text-muted)',

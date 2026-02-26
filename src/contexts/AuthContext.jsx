@@ -41,10 +41,10 @@ export function AuthProvider({ children }) {
         setPermisos(permisosData?.map(p => p.codigo) || [])
       }
 
-      // Verificar expiración de sesión (24h desde último acceso)
+      // Verificar expiración de sesión (72h desde último acceso)
       // Solo aplicar en restauración de sesión, no en login fresco
       if (!esLoginFresco) {
-        const SESION_MAX_HORAS = 24
+        const SESION_MAX_HORAS = 72
         if (usuarioData.ultimo_acceso) {
           const horasDesdeUltimoAcceso = (Date.now() - new Date(usuarioData.ultimo_acceso).getTime()) / (1000 * 60 * 60)
           if (horasDesdeUltimoAcceso > SESION_MAX_HORAS) {
@@ -56,7 +56,7 @@ export function AuthProvider({ children }) {
       }
 
       // Actualizar último acceso
-      supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id)
+      await supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id)
 
       return usuarioData
     } catch (error) {
@@ -67,12 +67,39 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true
+    let initialSessionHandled = false
 
-    // Escuchar cambios de auth
+    const isAuthPage = () => ['/activar-cuenta', '/reset-password'].some(p => window.location.pathname.startsWith(p))
+
+    // Obtener sesión inicial primero
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return
+      initialSessionHandled = true
+      if (session?.user) {
+        setUser(session.user)
+        if (!isAuthPage()) {
+          await cargarUsuario(session.user.email)
+        }
+      }
+      setLoading(false)
+    }).catch(() => {
+      if (mounted) setLoading(false)
+    })
+
+    // Escuchar cambios de auth posteriores (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
       logger.log('Auth event:', event)
+
+      // Ignorar el INITIAL_SESSION ya que lo manejamos con getSession
+      if (event === 'INITIAL_SESSION') return
+
+      // En token refresh solo actualizar el user, no recargar todo
+      if (event === 'TOKEN_REFRESHED') {
+        if (session?.user) setUser(session.user)
+        return
+      }
 
       if (event === 'SIGNED_OUT') {
         setUser(null)
@@ -84,31 +111,13 @@ export function AuthProvider({ children }) {
 
       if (session?.user) {
         setUser(session.user)
-        // Si signInWithEmail está en curso, no llamar cargarUsuario aquí
-        // porque signInWithEmail ya lo maneja con esLoginFresco: true
-        if (!isSigningIn.current) {
-          const isAuthPage = ['/activar-cuenta', '/reset-password'].some(p => window.location.pathname.includes(p))
-          if (!isAuthPage) {
-            await cargarUsuario(session.user.email)
-          }
+        if (!isSigningIn.current && !isAuthPage()) {
+          await cargarUsuario(session.user.email)
         }
       } else {
         setUser(null)
         setUsuario(null)
         setPermisos([])
-      }
-      setLoading(false)
-    })
-
-    // Obtener sesión inicial
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (!mounted) return
-      if (session?.user) {
-        setUser(session.user)
-        const isAuthPage = ['/activar-cuenta', '/reset-password'].some(p => window.location.pathname.includes(p))
-        if (!isAuthPage) {
-          await cargarUsuario(session.user.email)
-        }
       }
       setLoading(false)
     })
