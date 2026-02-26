@@ -281,6 +281,7 @@ export default function Layout() {
       { name: 'CRM', href: '/ventas/crm', icon: Icons.UserCheck },
       { name: 'Biblioteca', href: '/ventas/biblioteca', icon: Icons.BookOpen },
       { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet },
+      { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar },
       { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [
@@ -302,7 +303,6 @@ export default function Layout() {
       { name: 'Alertas de Seguridad', href: '/alertas-seguridad', icon: Icons.ShieldAlert },
       { name: 'Seguridad', href: '/seguridad-dashboard', icon: Icons.BarChart },
       { name: 'Mi Seguridad', href: '/mi-seguridad', icon: Icons.Lock },
-      { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar },
     ]}
   ]
 
