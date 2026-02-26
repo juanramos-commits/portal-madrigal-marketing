@@ -1,0 +1,143 @@
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+  </svg>
+)
+
+export default function CRMFiltros({
+  filtros,
+  onFiltrosChange,
+  onCerrar,
+  esAdminODirector,
+  setters = [],
+  closers = [],
+  categorias = [],
+  etiquetas = [],
+  etapas = [],
+  fuentes = [],
+}) {
+  const handleChange = (key, value) => {
+    onFiltrosChange({ ...filtros, [key]: value })
+  }
+
+  const limpiar = () => {
+    onFiltrosChange({})
+    onCerrar()
+  }
+
+  const aplicar = () => {
+    onCerrar()
+  }
+
+  return (
+    <>
+      <div className="crm-filters-overlay" onClick={onCerrar} />
+      <div className="crm-filters-panel">
+        <div className="crm-filters-header">
+          <h2>Filtros</h2>
+          <button className="crm-modal-close" onClick={onCerrar}>
+            <CloseIcon />
+          </button>
+        </div>
+
+        <div className="crm-filters-body">
+          {esAdminODirector && (
+            <>
+              <div className="crm-field">
+                <label>Setter asignado</label>
+                <select
+                  value={filtros.setter_id || ''}
+                  onChange={e => handleChange('setter_id', e.target.value || null)}
+                >
+                  <option value="">Todos los setters</option>
+                  {setters.map(s => (
+                    <option key={s.usuario_id} value={s.usuario_id}>
+                      {s.usuario?.nombre || s.usuario?.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="crm-field">
+                <label>Closer asignado</label>
+                <select
+                  value={filtros.closer_id || ''}
+                  onChange={e => handleChange('closer_id', e.target.value || null)}
+                >
+                  <option value="">Todos los closers</option>
+                  {closers.map(c => (
+                    <option key={c.usuario_id} value={c.usuario_id}>
+                      {c.usuario?.nombre || c.usuario?.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+
+          <div className="crm-field">
+            <label>Categor\u00eda</label>
+            <select
+              value={filtros.categoria_id || ''}
+              onChange={e => handleChange('categoria_id', e.target.value || null)}
+            >
+              <option value="">Todas las categor\u00edas</option>
+              {categorias.map(c => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="crm-field">
+            <label>Fuente</label>
+            <select
+              value={filtros.fuente || ''}
+              onChange={e => handleChange('fuente', e.target.value || null)}
+            >
+              <option value="">Todas las fuentes</option>
+              {fuentes.map(f => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="crm-field">
+            <label>Etapa</label>
+            <select
+              value={(filtros.etapa_ids && filtros.etapa_ids[0]) || ''}
+              onChange={e => handleChange('etapa_ids', e.target.value ? [e.target.value] : null)}
+            >
+              <option value="">Todas las etapas</option>
+              {etapas.map(e => (
+                <option key={e.id} value={e.id}>{e.nombre}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="crm-field">
+            <label>Fecha desde</label>
+            <input
+              type="date"
+              value={filtros.fecha_desde || ''}
+              onChange={e => handleChange('fecha_desde', e.target.value || null)}
+            />
+          </div>
+
+          <div className="crm-field">
+            <label>Fecha hasta</label>
+            <input
+              type="date"
+              value={filtros.fecha_hasta || ''}
+              onChange={e => handleChange('fecha_hasta', e.target.value || null)}
+            />
+          </div>
+        </div>
+
+        <div className="crm-filters-footer">
+          <button className="btn" onClick={limpiar}>Limpiar</button>
+          <button className="btn primary" onClick={aplicar}>Aplicar filtros</button>
+        </div>
+      </div>
+    </>
+  )
+}
