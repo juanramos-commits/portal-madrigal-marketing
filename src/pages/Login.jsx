@@ -114,6 +114,8 @@ export default function Login() {
               <label className="field-label">Correo Electrónico</label>
               <input
                 type="email"
+                name="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="login-input"
@@ -127,6 +129,8 @@ export default function Login() {
               <label className="field-label">Contraseña</label>
               <input
                 type="password"
+                name="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="login-input"
