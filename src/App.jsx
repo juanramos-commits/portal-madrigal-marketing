@@ -30,7 +30,18 @@ import VentasNotificaciones from './pages/ventas/VentasNotificaciones'
 import VentasCRM from './pages/ventas/VentasCRM'
 import VentasBiblioteca from './pages/ventas/VentasBiblioteca'
 import VentasWallet from './pages/ventas/VentasWallet'
+import VentasCalendario from './pages/ventas/Calendario'
 import VentasAjustes from './pages/ventas/VentasAjustes'
+
+// Páginas generales
+import Notificaciones from './pages/Notificaciones'
+import CRM from './pages/CRM'
+import PaquetesClientes from './pages/PaquetesClientes'
+import Facturas from './pages/documentacion/Facturas'
+import Contrato from './pages/documentacion/Contrato'
+import Reuniones from './pages/Reuniones'
+import Archivos from './pages/Archivos'
+import Madrigalito from './pages/Madrigalito'
 
 // Redirige al dashboard correcto según tipo de usuario
 function SmartRedirect() {
@@ -71,7 +82,18 @@ function App() {
             <Route path="ventas/crm" element={<VentasCRM />} />
             <Route path="ventas/biblioteca" element={<VentasBiblioteca />} />
             <Route path="ventas/wallet" element={<VentasWallet />} />
+            <Route path="ventas/calendario" element={<VentasCalendario />} />
             <Route path="ventas/ajustes" element={<VentasAjustes />} />
+
+            {/* Generales */}
+            <Route path="notificaciones" element={<Notificaciones />} />
+            <Route path="crm" element={<CRM />} />
+            <Route path="paquetes-clientes" element={<PaquetesClientes />} />
+            <Route path="documentacion/facturas" element={<Facturas />} />
+            <Route path="documentacion/contrato" element={<Contrato />} />
+            <Route path="reuniones" element={<Reuniones />} />
+            <Route path="archivos" element={<Archivos />} />
+            <Route path="madrigalito" element={<Madrigalito />} />
             <Route path="tareas" element={<PermissionRoute permiso="tareas.ver_propias"><PlaceholderPage title="Tareas" /></PermissionRoute>} />
             <Route path="sugerencias" element={<PermissionRoute permiso="sugerencias.ver_propias"><PlaceholderPage title="Sugerencias" /></PermissionRoute>} />
 
