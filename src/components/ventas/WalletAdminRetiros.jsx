@@ -1,0 +1,239 @@
+import { useState } from 'react'
+
+function formatMoneda(v) {
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
+}
+
+function formatFecha(d) {
+  if (!d) return '-'
+  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
+
+const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+
+const XIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+  </svg>
+)
+
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+  </svg>
+)
+
+const estadoConfig = {
+  pendiente: { label: 'Pendiente', className: 'wt-badge-pendiente' },
+  aprobado: { label: 'Aprobado', className: 'wt-badge-aprobado' },
+  rechazado: { label: 'Rechazado', className: 'wt-badge-rechazado' },
+}
+
+const tabs = [
+  { key: 'pendiente', label: 'Pendientes' },
+  { key: 'aprobado', label: 'Aprobados' },
+  { key: 'rechazado', label: 'Rechazados' },
+  { key: 'todos', label: 'Todos' },
+]
+
+export default function WalletAdminRetiros({
+  retiros,
+  filtro,
+  onFiltroChange,
+  contadores,
+  onAprobar,
+  onRechazar,
+  loading,
+}) {
+  const [modal, setModal] = useState(null)
+  const [motivo, setMotivo] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [modalError, setModalError] = useState(null)
+
+  const handleAprobar = async (retiroId) => {
+    setSubmitting(true)
+    setModalError(null)
+    try {
+      await onAprobar(retiroId)
+      setModal(null)
+    } catch (err) {
+      setModalError(err.message || 'Error al aprobar')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleRechazar = async (retiroId) => {
+    if (!motivo.trim()) { setModalError('El motivo es obligatorio'); return }
+    setSubmitting(true)
+    setModalError(null)
+    try {
+      await onRechazar(retiroId, motivo)
+      setModal(null)
+      setMotivo('')
+    } catch (err) {
+      setModalError(err.message || 'Error al rechazar')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="wt-admin-retiros">
+      {/* Tabs */}
+      <div className="wt-tabs-mini">
+        {tabs.map(t => (
+          <button
+            key={t.key}
+            className={`wt-tab-mini${filtro === t.key ? ' active' : ''}`}
+            onClick={() => onFiltroChange(t.key)}
+          >
+            {t.label} ({contadores[t.key] || 0})
+          </button>
+        ))}
+      </div>
+
+      {loading && retiros.length === 0 ? (
+        <div className="wt-loading">Cargando retiros...</div>
+      ) : retiros.length === 0 ? (
+        <div className="wt-empty">No hay retiros</div>
+      ) : (
+        <>
+          {/* Desktop */}
+          <div className="wt-desktop-only">
+            <div className="wt-table-wrap">
+              <table className="wt-table">
+                <thead>
+                  <tr>
+                    <th>Miembro</th>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>IBAN</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {retiros.map(r => {
+                    const estado = estadoConfig[r.estado] || estadoConfig.pendiente
+                    return (
+                      <tr key={r.id}>
+                        <td style={{ fontWeight: 600 }}>{r.usuario?.nombre || r.usuario?.email || '-'}</td>
+                        <td>{formatFecha(r.created_at)}</td>
+                        <td style={{ fontWeight: 600 }}>{formatMoneda(r.monto)}</td>
+                        <td style={{ fontSize: 12 }}>{r.cuenta_bancaria_iban || '-'}</td>
+                        <td><span className={`wt-badge ${estado.className}`}>{estado.label}</span></td>
+                        <td>
+                          {r.estado === 'pendiente' && (
+                            <div className="wt-actions-cell">
+                              <button className="wt-action-btn wt-action-approve" onClick={() => setModal({ type: 'aprobar', retiro: r })}>
+                                <CheckIcon /> Aprobar
+                              </button>
+                              <button className="wt-action-btn wt-action-reject" onClick={() => setModal({ type: 'rechazar', retiro: r })}>
+                                <XIcon /> Rechazar
+                              </button>
+                            </div>
+                          )}
+                          {r.estado !== 'pendiente' && '-'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile */}
+          <div className="wt-mobile-only">
+            {retiros.map(r => {
+              const estado = estadoConfig[r.estado] || estadoConfig.pendiente
+              return (
+                <div key={r.id} className="wt-admin-card">
+                  <div className="wt-admin-card-top">
+                    <span className={`wt-badge ${estado.className}`}>{estado.label}</span>
+                    <span style={{ fontWeight: 700 }}>{formatMoneda(r.monto)}</span>
+                  </div>
+                  <div style={{ fontWeight: 600, marginBottom: 4 }}>{r.usuario?.nombre || '-'}</div>
+                  <div className="wt-admin-card-meta">
+                    <span>{formatFecha(r.created_at)}</span>
+                    <span style={{ fontSize: 11 }}>{r.cuenta_bancaria_iban || '-'}</span>
+                  </div>
+                  {r.estado === 'pendiente' && (
+                    <div className="wt-admin-card-actions">
+                      <button className="wt-action-btn wt-action-approve" onClick={() => setModal({ type: 'aprobar', retiro: r })}>
+                        <CheckIcon /> Aprobar
+                      </button>
+                      <button className="wt-action-btn wt-action-reject" onClick={() => setModal({ type: 'rechazar', retiro: r })}>
+                        <XIcon /> Rechazar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Modal aprobar */}
+      {modal?.type === 'aprobar' && (
+        <>
+          <div className="wt-modal-overlay" onClick={() => setModal(null)} />
+          <div className="wt-modal wt-modal-confirm">
+            <div className="wt-modal-header">
+              <h2>Aprobar retiro</h2>
+              <button className="wt-modal-close" onClick={() => setModal(null)}><CloseIcon /></button>
+            </div>
+            <div className="wt-modal-body">
+              <p>
+                \u00bfAprobar el retiro de <strong>{formatMoneda(modal.retiro.monto)}</strong> para <strong>{modal.retiro.usuario?.nombre || '-'}</strong>?
+              </p>
+              <p className="wt-modal-hint">Se generar\u00e1 la factura autom\u00e1ticamente.</p>
+              {modalError && <div className="wt-error-general">{modalError}</div>}
+            </div>
+            <div className="wt-modal-actions">
+              <button className="wt-btn-ghost" onClick={() => setModal(null)} disabled={submitting}>Cancelar</button>
+              <button className="wt-btn-success" onClick={() => handleAprobar(modal.retiro.id)} disabled={submitting}>
+                {submitting ? 'Aprobando...' : 'Aprobar'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Modal rechazar */}
+      {modal?.type === 'rechazar' && (
+        <>
+          <div className="wt-modal-overlay" onClick={() => setModal(null)} />
+          <div className="wt-modal wt-modal-confirm">
+            <div className="wt-modal-header">
+              <h2>Rechazar retiro</h2>
+              <button className="wt-modal-close" onClick={() => setModal(null)}><CloseIcon /></button>
+            </div>
+            <div className="wt-modal-body">
+              <p>
+                \u00bfRechazar el retiro de <strong>{formatMoneda(modal.retiro.monto)}</strong> para <strong>{modal.retiro.usuario?.nombre || '-'}</strong>?
+              </p>
+              <div className="wt-field">
+                <label>Motivo del rechazo *</label>
+                <textarea value={motivo} onChange={e => { setMotivo(e.target.value); setModalError(null) }} rows={3} placeholder="Escribe el motivo..." />
+              </div>
+              {modalError && <div className="wt-error-general">{modalError}</div>}
+            </div>
+            <div className="wt-modal-actions">
+              <button className="wt-btn-ghost" onClick={() => { setModal(null); setMotivo('') }} disabled={submitting}>Cancelar</button>
+              <button className="wt-btn-danger" onClick={() => handleRechazar(modal.retiro.id)} disabled={submitting}>
+                {submitting ? 'Rechazando...' : 'Rechazar'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
