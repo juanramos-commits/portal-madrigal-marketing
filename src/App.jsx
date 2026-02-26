@@ -24,6 +24,14 @@ import SecurityAlerts from './pages/SecurityAlerts'
 import SecurityDashboard from './pages/SecurityDashboard'
 import Seguridad from './pages/Seguridad'
 
+// Páginas de Ventas
+import VentasDashboard from './pages/ventas/VentasDashboard'
+import VentasNotificaciones from './pages/ventas/VentasNotificaciones'
+import VentasCRM from './pages/ventas/VentasCRM'
+import VentasBiblioteca from './pages/ventas/VentasBiblioteca'
+import VentasWallet from './pages/ventas/VentasWallet'
+import VentasAjustes from './pages/ventas/VentasAjustes'
+
 // Redirige al dashboard correcto según tipo de usuario
 function SmartRedirect() {
   const { usuario, loading } = useAuth()
@@ -58,11 +66,12 @@ function App() {
             <Route path="mi-cuenta" element={<ClienteDashboard />} />
             <Route path="clientes" element={<PermissionRoute permiso="clientes.ver_lista"><TablaClientesAvanzada /></PermissionRoute>} />
             <Route path="clientes/:id" element={<PermissionRoute permiso="clientes.ver_detalle"><ClienteDetalleAvanzado /></PermissionRoute>} />
-            <Route path="ventas/crm-setters" element={<PlaceholderPage title="CRM Setters" />} />
-            <Route path="ventas/crm-closers" element={<PlaceholderPage title="CRM Closers" />} />
-            <Route path="ventas/dashboard" element={<PlaceholderPage title="Dashboard de Ventas" />} />
-            <Route path="ventas/wallet" element={<PlaceholderPage title="Wallet" />} />
-            <Route path="ventas/calendario" element={<PlaceholderPage title="Calendario de Ventas" />} />
+            <Route path="ventas/dashboard" element={<VentasDashboard />} />
+            <Route path="ventas/notificaciones" element={<VentasNotificaciones />} />
+            <Route path="ventas/crm" element={<VentasCRM />} />
+            <Route path="ventas/biblioteca" element={<VentasBiblioteca />} />
+            <Route path="ventas/wallet" element={<VentasWallet />} />
+            <Route path="ventas/ajustes" element={<VentasAjustes />} />
             <Route path="tareas" element={<PermissionRoute permiso="tareas.ver_propias"><PlaceholderPage title="Tareas" /></PermissionRoute>} />
             <Route path="sugerencias" element={<PermissionRoute permiso="sugerencias.ver_propias"><PlaceholderPage title="Sugerencias" /></PermissionRoute>} />
 
