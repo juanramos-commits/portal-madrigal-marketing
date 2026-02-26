@@ -16,7 +16,6 @@ export default function SecurityDashboard() {
     fallidos24h: 0,
     usuariosActivos: 0,
     usuariosTotal: 0,
-    usuarios2FA: 0,
     usuariosNivel90: 0
   })
   const [recentAlerts, setRecentAlerts] = useState([])
@@ -70,7 +69,6 @@ export default function SecurityDashboard() {
       fallidos24h: fallidos.count || 0,
       usuariosActivos: activos.length,
       usuariosTotal: allUsers.length,
-      usuarios2FA: 0, // Can't query MFA status from DB
       usuariosNivel90: nivel90.length
     })
   }

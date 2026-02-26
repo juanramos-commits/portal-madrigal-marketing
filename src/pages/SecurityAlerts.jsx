@@ -16,7 +16,6 @@ const TIPO_LABELS = {
   login_fallido_multiple: 'Logins fallidos',
   escalacion_privilegios: 'Escalación privilegios',
   acceso_denegado_rls: 'Acceso denegado',
-  mfa_desactivado_admin: 'MFA desactivado',
   usuario_desactivado: 'Usuario desactivado',
   cambio_rol_critico: 'Cambio de rol',
   cambio_tipo_usuario: 'Cambio de tipo'

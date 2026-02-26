@@ -9,7 +9,6 @@ import Login from './pages/Login'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import ActivarCuenta from './pages/ActivarCuenta'
-import Configurar2FA from './pages/Configurar2FA'
 import PoliticaPrivacidad from './pages/PoliticaPrivacidad'
 import CookieConsent from './components/CookieConsent'
 
@@ -24,14 +23,6 @@ import AuditLog from './pages/AuditLog'
 import SecurityAlerts from './pages/SecurityAlerts'
 import SecurityDashboard from './pages/SecurityDashboard'
 import Seguridad from './pages/Seguridad'
-
-// Wrapper que redirige a configurar 2FA si es obligatorio
-function Require2FAWrapper({ children }) {
-  const { requiere2FA, loading } = useAuth()
-  if (loading) return null
-  if (requiere2FA) return <Navigate to="/configurar-2fa" replace />
-  return children
-}
 
 // Redirige al dashboard correcto según tipo de usuario
 function SmartRedirect() {
@@ -52,18 +43,13 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/activar-cuenta" element={<ActivarCuenta />} />
           <Route path="/privacidad" element={<PoliticaPrivacidad />} />
-          <Route path="/configurar-2fa" element={
-            <ProtectedRoute><Configurar2FA /></ProtectedRoute>
-          } />
 
           {/* Rutas protegidas */}
           <Route
             path="/"
             element={
               <ProtectedRoute>
-                <Require2FAWrapper>
-                  <Layout />
-                </Require2FAWrapper>
+                <Layout />
               </ProtectedRoute>
             }
           >
@@ -72,7 +58,8 @@ function App() {
             <Route path="mi-cuenta" element={<ClienteDashboard />} />
             <Route path="clientes" element={<PermissionRoute permiso="clientes.ver_lista"><TablaClientesAvanzada /></PermissionRoute>} />
             <Route path="clientes/:id" element={<PermissionRoute permiso="clientes.ver_detalle"><ClienteDetalleAvanzado /></PermissionRoute>} />
-            <Route path="ventas/crm" element={<PlaceholderPage title="CRM" />} />
+            <Route path="ventas/crm-setters" element={<PlaceholderPage title="CRM Setters" />} />
+            <Route path="ventas/crm-closers" element={<PlaceholderPage title="CRM Closers" />} />
             <Route path="ventas/dashboard" element={<PlaceholderPage title="Dashboard de Ventas" />} />
             <Route path="ventas/wallet" element={<PlaceholderPage title="Wallet" />} />
             <Route path="ventas/calendario" element={<PlaceholderPage title="Calendario de Ventas" />} />

@@ -272,7 +272,8 @@ export default function Layout() {
     { id: 'crm', name: 'CRM', href: '/crm', icon: Icons.UserCheck, permiso: null, onlyFor: ['cliente'], type: 'link' },
     { id: 'paquetes', name: 'Paquetes de Clientes', href: '/paquetes-clientes', icon: Icons.Package, permiso: 'clientes.ver_lista', type: 'link' },
     { id: 'ventas', name: 'Ventas', href: '/ventas', icon: Icons.ShoppingCart, permiso: null, type: 'submenu', children: [
-      { name: 'CRM', href: '/ventas/crm', icon: Icons.UserCheck },
+      { name: 'CRM Setters', href: '/ventas/crm-setters', icon: Icons.UserCheck },
+      { name: 'CRM Closers', href: '/ventas/crm-closers', icon: Icons.UserCheck },
       { name: 'Dashboard', href: '/ventas/dashboard', icon: Icons.TrendingUp },
       { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet },
       { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar },
