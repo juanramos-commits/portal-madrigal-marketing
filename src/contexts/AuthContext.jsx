@@ -1,5 +1,5 @@
 import { logger } from '../lib/logger'
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
 const AuthContext = createContext({})
@@ -12,6 +12,7 @@ export function AuthProvider({ children }) {
   const [permisos, setPermisos] = useState([])
   const [loading, setLoading] = useState(true)
   const [requiere2FA, setRequiere2FA] = useState(false)
+  const isSigningIn = useRef(false)
 
   const cargarUsuario = useCallback(async (email, { esLoginFresco = false } = {}) => {
     try {
@@ -104,10 +105,13 @@ export function AuthProvider({ children }) {
 
       if (session?.user) {
         setUser(session.user)
-        // No cargar usuario en páginas de auth
-        const isAuthPage = ['/activar-cuenta', '/reset-password'].some(p => window.location.pathname.includes(p))
-        if (!isAuthPage) {
-          await cargarUsuario(session.user.email)
+        // Si signInWithEmail está en curso, no llamar cargarUsuario aquí
+        // porque signInWithEmail ya lo maneja con esLoginFresco: true
+        if (!isSigningIn.current) {
+          const isAuthPage = ['/activar-cuenta', '/reset-password'].some(p => window.location.pathname.includes(p))
+          if (!isAuthPage) {
+            await cargarUsuario(session.user.email)
+          }
         }
       } else {
         setUser(null)
@@ -143,28 +147,33 @@ export function AuthProvider({ children }) {
   }, [usuario, permisos])
 
   const signInWithEmail = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (!error && data.user) {
-      const usuarioData = await cargarUsuario(data.user.email, { esLoginFresco: true })
-      if (usuarioData?.desactivado) {
-        await supabase.auth.signOut()
-        return { data: null, error: { message: 'CUENTA_DESACTIVADA' } }
-      }
-      // Registrar login en auditoría
-      if (usuarioData?.id) {
-        try {
-          await supabase.rpc('registrar_auditoria', {
-            p_usuario_id: usuarioData.id,
-            p_accion: 'LOGIN',
-            p_categoria: 'auth',
-            p_descripcion: `Inicio de sesión: ${usuarioData.email}`,
-          })
-        } catch (e) {
-          logger.error('Error registrando login en auditoría:', e)
+    isSigningIn.current = true
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+      if (!error && data.user) {
+        const usuarioData = await cargarUsuario(data.user.email, { esLoginFresco: true })
+        if (usuarioData?.desactivado) {
+          await supabase.auth.signOut()
+          return { data: null, error: { message: 'CUENTA_DESACTIVADA' } }
+        }
+        // Registrar login en auditoría
+        if (usuarioData?.id) {
+          try {
+            await supabase.rpc('registrar_auditoria', {
+              p_usuario_id: usuarioData.id,
+              p_accion: 'LOGIN',
+              p_categoria: 'auth',
+              p_descripcion: `Inicio de sesión: ${usuarioData.email}`,
+            })
+          } catch (e) {
+            logger.error('Error registrando login en auditoría:', e)
+          }
         }
       }
+      return { data, error }
+    } finally {
+      isSigningIn.current = false
     }
-    return { data, error }
   }
 
   const signOut = async () => {
