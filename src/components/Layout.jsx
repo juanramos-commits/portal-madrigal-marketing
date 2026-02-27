@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useNotificacionesBadge } from '../hooks/useNotificacionesBadge'
+import NotificacionesBadge from './ventas/NotificacionesBadge'
 
 // Modifier para restringir movimiento vertical
 const restrictToVerticalAxis = ({ transform }) => ({
@@ -272,6 +274,8 @@ export default function Layout() {
   const { usuario, signOut, tienePermiso } = useAuth()
   const saveTimeoutRef = useRef(null)
 
+  const { contador: notifContador } = useNotificacionesBadge()
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -466,9 +470,10 @@ export default function Layout() {
                       {isOpen && item.children && (
                         <div style={{ paddingLeft: '32px', marginTop: '2px' }}>
                           {item.children.map(child => (
-                            <Link key={child.href} to={child.href} className={`nav-item ${isActive(child.href) ? 'active' : ''}`}>
+                            <Link key={child.href} to={child.href} className={`nav-item ${isActive(child.href) ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                               <child.icon />
-                              <span className="nav-label">{child.name}</span>
+                              <span className="nav-label" style={{ flex: 1 }}>{child.name}</span>
+                              {child.name === 'Notificaciones' && <NotificacionesBadge contador={notifContador} />}
                             </Link>
                           ))}
                         </div>
