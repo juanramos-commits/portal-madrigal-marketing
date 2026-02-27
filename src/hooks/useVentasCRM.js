@@ -299,6 +299,15 @@ export function useVentasCRM() {
     }
   }, [pipelineActivo, buildLeadQuery, tablaPage, tablaSort, etapas])
 
+  // ── Reload ─────────────────────────────────────────────────────────
+  const refrescar = useCallback(() => {
+    if (vista === 'kanban') {
+      cargarLeads()
+    } else {
+      cargarLeadsTabla()
+    }
+  }, [vista, cargarLeads, cargarLeadsTabla])
+
   // ── Venta popup state ──────────────────────────────────────────────
   const [leadParaVenta, setLeadParaVenta] = useState(null)
   const [etapaVentaDestino, setEtapaVentaDestino] = useState(null)
@@ -632,15 +641,6 @@ export function useVentasCRM() {
     setLeadCounts({})
     setTablaPage(0)
   }, [])
-
-  // ── Reload ─────────────────────────────────────────────────────────
-  const refrescar = useCallback(() => {
-    if (vista === 'kanban') {
-      cargarLeads()
-    } else {
-      cargarLeadsTabla()
-    }
-  }, [vista, cargarLeads, cargarLeadsTabla])
 
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!pipelineActivo })

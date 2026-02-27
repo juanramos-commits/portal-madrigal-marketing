@@ -197,6 +197,35 @@ export function useWallet() {
     setDatosFiscales(datos)
   }, [user?.id])
 
+  // ── Refresh all ────────────────────────────────────────────────────
+  const refrescar = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await Promise.all([
+        cargarWallet(),
+        cargarSaldoDisponible(),
+        cargarDatosFiscales(),
+        cargarEmpresaFiscal(),
+        cargarComisiones(),
+        cargarRetiros(),
+        cargarFacturas(),
+        esCloser ? verificarCloserAlDia() : Promise.resolve(),
+      ])
+      if (esAdmin) {
+        await Promise.all([
+          cargarTodosRetiros(),
+          cargarContadoresRetiros(),
+          cargarTodasFacturas(),
+        ])
+      }
+    } catch (_) {
+      setError('Error al cargar datos del wallet')
+    } finally {
+      setLoading(false)
+    }
+  }, [cargarWallet, cargarSaldoDisponible, cargarDatosFiscales, cargarEmpresaFiscal, cargarComisiones, cargarRetiros, cargarFacturas, esCloser, verificarCloserAlDia, esAdmin, cargarTodosRetiros, cargarContadoresRetiros, cargarTodasFacturas])
+
   // ── Solicitar retiro ───────────────────────────────────────────────
   const solicitarRetiro = useCallback(async (monto) => {
     const { data, error: err } = await supabase.rpc('ventas_solicitar_retiro', {
@@ -281,35 +310,6 @@ export function useWallet() {
     refrescar()
     return data
   }, [refrescar])
-
-  // ── Refresh all ────────────────────────────────────────────────────
-  const refrescar = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      await Promise.all([
-        cargarWallet(),
-        cargarSaldoDisponible(),
-        cargarDatosFiscales(),
-        cargarEmpresaFiscal(),
-        cargarComisiones(),
-        cargarRetiros(),
-        cargarFacturas(),
-        esCloser ? verificarCloserAlDia() : Promise.resolve(),
-      ])
-      if (esAdmin) {
-        await Promise.all([
-          cargarTodosRetiros(),
-          cargarContadoresRetiros(),
-          cargarTodasFacturas(),
-        ])
-      }
-    } catch (_) {
-      setError('Error al cargar datos del wallet')
-    } finally {
-      setLoading(false)
-    }
-  }, [cargarWallet, cargarSaldoDisponible, cargarDatosFiscales, cargarEmpresaFiscal, cargarComisiones, cargarRetiros, cargarFacturas, esCloser, verificarCloserAlDia, esAdmin, cargarTodosRetiros, cargarContadoresRetiros, cargarTodasFacturas])
 
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })

@@ -182,6 +182,12 @@ export function useVentas() {
     return data || []
   }, [])
 
+  // ── Refresh all ────────────────────────────────────────────────────
+  const refrescar = useCallback(() => {
+    cargarVentas()
+    cargarContadores()
+  }, [cargarVentas, cargarContadores])
+
   // ── Register sale (from pop-up) ────────────────────────────────────
   const registrarVenta = useCallback(async (datos) => {
     const { data: venta, error: err } = await supabase
@@ -291,12 +297,6 @@ export function useVentas() {
     if (err) throw err
     refrescar()
   }, [refrescar])
-
-  // ── Refresh all ────────────────────────────────────────────────────
-  const refrescar = useCallback(() => {
-    cargarVentas()
-    cargarContadores()
-  }, [cargarVentas, cargarContadores])
 
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
