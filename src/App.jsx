@@ -1,50 +1,60 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import PermissionRoute from './components/PermissionRoute'
 import Layout from './components/Layout'
-
-// Páginas públicas
-import Login from './pages/Login'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import ActivarCuenta from './pages/ActivarCuenta'
-import PoliticaPrivacidad from './pages/PoliticaPrivacidad'
 import CookieConsent from './components/CookieConsent'
 
+// Páginas públicas
+const Login = lazy(() => import('./pages/Login'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const ActivarCuenta = lazy(() => import('./pages/ActivarCuenta'))
+const PoliticaPrivacidad = lazy(() => import('./pages/PoliticaPrivacidad'))
+
 // Páginas protegidas
-import Dashboard from './pages/Dashboard'
-import ClienteDashboard from './pages/ClienteDashboard'
-import TablaClientesAvanzada from './pages/TablaClientesAvanzada'
-import ClienteDetalleAvanzado from './pages/ClienteDetalleAvanzado'
-import Usuarios from './pages/Usuarios'
-import Roles from './pages/Roles'
-import AuditLog from './pages/AuditLog'
-import SecurityAlerts from './pages/SecurityAlerts'
-import SecurityDashboard from './pages/SecurityDashboard'
-import Seguridad from './pages/Seguridad'
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const ClienteDashboard = lazy(() => import('./pages/ClienteDashboard'))
+const TablaClientesAvanzada = lazy(() => import('./pages/TablaClientesAvanzada'))
+const ClienteDetalleAvanzado = lazy(() => import('./pages/ClienteDetalleAvanzado'))
+const Usuarios = lazy(() => import('./pages/Usuarios'))
+const Roles = lazy(() => import('./pages/Roles'))
+const AuditLog = lazy(() => import('./pages/AuditLog'))
+const SecurityAlerts = lazy(() => import('./pages/SecurityAlerts'))
+const SecurityDashboard = lazy(() => import('./pages/SecurityDashboard'))
+const Seguridad = lazy(() => import('./pages/Seguridad'))
 
 // Páginas de Ventas
-import VentasDashboard from './pages/ventas/VentasDashboard'
-import VentasNotificaciones from './pages/ventas/VentasNotificaciones'
-import VentasCRM from './pages/ventas/VentasCRM'
-import CRMLeadDetalle from './components/ventas/CRMLeadDetalle'
-import VentasBiblioteca from './pages/ventas/VentasBiblioteca'
-import VentasWallet from './pages/ventas/VentasWallet'
-import VentasVentas from './pages/ventas/VentasVentas'
-import VentasCalendario from './pages/ventas/Calendario'
-import VentasAjustes from './pages/ventas/VentasAjustes'
+const VentasDashboard = lazy(() => import('./pages/ventas/VentasDashboard'))
+const VentasNotificaciones = lazy(() => import('./pages/ventas/VentasNotificaciones'))
+const VentasCRM = lazy(() => import('./pages/ventas/VentasCRM'))
+const CRMLeadDetalle = lazy(() => import('./components/ventas/CRMLeadDetalle'))
+const VentasBiblioteca = lazy(() => import('./pages/ventas/VentasBiblioteca'))
+const VentasWallet = lazy(() => import('./pages/ventas/VentasWallet'))
+const VentasVentas = lazy(() => import('./pages/ventas/VentasVentas'))
+const VentasCalendario = lazy(() => import('./pages/ventas/Calendario'))
+const VentasAjustes = lazy(() => import('./pages/ventas/VentasAjustes'))
 
 // Páginas generales
-import Notificaciones from './pages/Notificaciones'
-import CRM from './pages/CRM'
-import PaquetesClientes from './pages/PaquetesClientes'
-import Facturas from './pages/documentacion/Facturas'
-import Contrato from './pages/documentacion/Contrato'
-import Reuniones from './pages/Reuniones'
-import Archivos from './pages/Archivos'
-import Madrigalito from './pages/Madrigalito'
+const Notificaciones = lazy(() => import('./pages/Notificaciones'))
+const CRM = lazy(() => import('./pages/CRM'))
+const PaquetesClientes = lazy(() => import('./pages/PaquetesClientes'))
+const Facturas = lazy(() => import('./pages/documentacion/Facturas'))
+const Contrato = lazy(() => import('./pages/documentacion/Contrato'))
+const Reuniones = lazy(() => import('./pages/Reuniones'))
+const Archivos = lazy(() => import('./pages/Archivos'))
+const Madrigalito = lazy(() => import('./pages/Madrigalito'))
+
+// Spinner de carga para Suspense
+function PageLoader() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '100px 0' }}>
+      <div className="spinner"></div>
+    </div>
+  )
+}
 
 // Redirige al primer dashboard accesible según permisos del usuario
 function SmartRedirect() {
@@ -61,6 +71,7 @@ function App() {
     <AuthProvider>
       <ToastProvider>
       <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Rutas públicas */}
           <Route path="/login" element={<Login />} />
@@ -117,6 +128,7 @@ function App() {
           {/* Ruta por defecto */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+        </Suspense>
         <CookieConsent />
       </BrowserRouter>
       </ToastProvider>
