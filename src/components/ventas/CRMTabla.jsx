@@ -46,9 +46,9 @@ export default function CRMTabla({
 
   const columns = [
     { key: 'nombre', label: 'Nombre' },
-    { key: 'telefono', label: 'Tel\u00e9fono' },
+    { key: 'telefono', label: 'Teléfono' },
     { key: 'email', label: 'Email' },
-    { key: 'categoria', label: 'Categor\u00eda', sortable: false },
+    { key: 'categoria', label: 'Categoría', sortable: false },
     { key: 'etapa', label: 'Etapa', sortable: false },
     { key: 'setter', label: 'Setter', sortable: false },
     { key: 'closer', label: 'Closer', sortable: false },
@@ -146,7 +146,7 @@ export default function CRMTabla({
       {totalPages > 1 && (
         <div className="crm-pagination">
           <span>
-            P\u00e1gina {page + 1} de {totalPages} ({totalCount} leads)
+            Página {page + 1} de {totalPages} ({totalCount} leads)
           </span>
           <div className="crm-pagination-btns">
             <button disabled={page === 0} onClick={() => onPageChange(page - 1)}>

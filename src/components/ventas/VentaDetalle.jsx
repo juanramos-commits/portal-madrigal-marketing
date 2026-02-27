@@ -76,11 +76,11 @@ export default function VentaDetalle({ venta, comisiones, loadingComisiones, onL
               <span className="vv-detalle-importe">{formatImporte(venta.importe)}</span>
             </div>
             <div className="vv-detalle-row">
-              <span>M\u00e9todo de pago</span>
+              <span>Método de pago</span>
               <span>{metodoLabels[venta.metodo_pago] || venta.metodo_pago || '-'}</span>
             </div>
             <div className="vv-detalle-row">
-              <span>Pago \u00fanico</span>
+              <span>Pago único</span>
               <span>{venta.es_pago_unico ? <CheckIcon /> : <DashIcon />}</span>
             </div>
             <div className="vv-detalle-row">
@@ -109,7 +109,7 @@ export default function VentaDetalle({ venta, comisiones, loadingComisiones, onL
             )}
             {venta.es_devolucion && (
               <div className="vv-detalle-row">
-                <span>Devoluci\u00f3n el</span>
+                <span>Devolución el</span>
                 <span>{formatDateTime(venta.fecha_devolucion)}</span>
               </div>
             )}

@@ -11,7 +11,7 @@ export default function CRMBuscador({ value, onChange }) {
       <SearchIcon />
       <input
         type="text"
-        placeholder="Buscar por nombre o tel\u00e9fono..."
+        placeholder="Buscar por nombre o teléfono..."
         value={value}
         onChange={e => onChange(e.target.value)}
       />

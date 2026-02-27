@@ -47,7 +47,7 @@ export default function PasswordStrengthMeter({ password }) {
           return (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
               <span style={{ color: cumple ? '#10b981' : 'var(--text-muted)', fontSize: '14px' }}>
-                {cumple ? '\u2713' : '\u2717'}
+                {cumple ? '✓' : '✗'}
               </span>
               <span style={{ color: cumple ? '#10b981' : 'var(--text-muted)' }}>
                 {req.label}

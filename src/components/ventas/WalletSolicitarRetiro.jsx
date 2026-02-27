@@ -117,7 +117,7 @@ export default function WalletSolicitarRetiro({
               ) : (
                 <>
                   <div className="wt-field">
-                    <label>Monto (\u20ac)</label>
+                    <label>Monto (€)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -145,7 +145,7 @@ export default function WalletSolicitarRetiro({
             <div className="wt-paso">
               <h3>Datos fiscales</h3>
               <div className="wt-paso-warning">
-                Completa tus datos de facturaci\u00f3n antes de solicitar un retiro.
+                Completa tus datos de facturación antes de solicitar un retiro.
               </div>
               <button className="wt-btn-primary" onClick={onIrDatosFiscales}>
                 Ir a datos fiscales
@@ -173,13 +173,13 @@ export default function WalletSolicitarRetiro({
                     <span>CIF: {empresaFiscal?.cif || '-'}</span>
                     <span>{empresaFiscal?.direccion || ''}</span>
                     <span>{[empresaFiscal?.ciudad, empresaFiscal?.codigo_postal].filter(Boolean).join(', ')}</span>
-                    <span>{empresaFiscal?.pais || 'Espa\u00f1a'}</span>
+                    <span>{empresaFiscal?.pais || 'España'}</span>
                   </div>
                 </div>
 
                 <div className="wt-fp-concepto">
                   <span className="wt-fp-label">Concepto</span>
-                  <span>{empresaFiscal?.concepto_factura || 'Servicios de intermediaci\u00f3n comercial'}</span>
+                  <span>{empresaFiscal?.concepto_factura || 'Servicios de intermediación comercial'}</span>
                 </div>
 
                 <div className="wt-fp-amounts">
@@ -210,7 +210,7 @@ export default function WalletSolicitarRetiro({
 
         <div className="wt-modal-actions">
           <button className="wt-btn-ghost" onClick={retroceder} disabled={submitting}>
-            {paso === 1 ? 'Cancelar' : 'Atr\u00e1s'}
+            {paso === 1 ? 'Cancelar' : 'Atrás'}
           </button>
           {paso < 3 && !sinSaldo && (
             <button className="wt-btn-primary" onClick={avanzar} disabled={paso === 2 && !datosFiscalesCompletos}>

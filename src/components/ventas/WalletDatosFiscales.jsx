@@ -77,7 +77,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
     <form className="wt-datos-fiscales" onSubmit={handleSubmit}>
       <div className="wt-df-grid">
         <div className="wt-field">
-          <label>Nombre o raz\u00f3n social *</label>
+          <label>Nombre o razón social *</label>
           <input
             type="text"
             value={form.nombre_fiscal}
@@ -97,7 +97,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
         </div>
 
         <div className="wt-field wt-field-full">
-          <label>Direcci\u00f3n *</label>
+          <label>Dirección *</label>
           <textarea
             value={form.direccion}
             onChange={e => handleChange('direccion', e.target.value)}
@@ -116,7 +116,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
         </div>
 
         <div className="wt-field">
-          <label>C\u00f3digo postal</label>
+          <label>Código postal</label>
           <input
             type="text"
             value={form.codigo_postal}
@@ -125,12 +125,12 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
         </div>
 
         <div className="wt-field">
-          <label>Pa\u00eds *</label>
+          <label>País *</label>
           <input
             type="text"
             value={form.pais}
             onChange={e => handleChange('pais', e.target.value)}
-            placeholder="Espa\u00f1a"
+            placeholder="España"
           />
           {errores.pais && <span className="wt-field-error">{errores.pais}</span>}
         </div>
@@ -149,10 +149,10 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
 
       <div className="wt-df-separator" />
 
-      <h4 className="wt-df-section-title">Facturaci\u00f3n</h4>
+      <h4 className="wt-df-section-title">Facturación</h4>
       <div className="wt-df-grid">
         <div className="wt-field">
-          <label>Serie de facturaci\u00f3n</label>
+          <label>Serie de facturación</label>
           <input
             type="text"
             value={form.serie_factura}
@@ -162,7 +162,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
         </div>
 
         <div className="wt-field">
-          <label>Siguiente n\u00famero de factura</label>
+          <label>Siguiente número de factura</label>
           <input type="text" value={siguienteNumero} readOnly className="wt-input-readonly" />
         </div>
 
@@ -186,12 +186,12 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
             <span className={`wt-toggle ${form.iva_incluido ? 'active' : ''}`}>
               <span className="wt-toggle-knob" />
             </span>
-            <span>\u00bfIVA incluido en comisi\u00f3n?</span>
+            <span>¿IVA incluido en comisión?</span>
           </label>
           <span className="wt-field-hint">
             {form.iva_incluido
-              ? 'El IVA sale del monto de la comisi\u00f3n'
-              : 'El IVA se a\u00f1ade encima del monto de la comisi\u00f3n'}
+              ? 'El IVA sale del monto de la comisión'
+              : 'El IVA se añade encima del monto de la comisión'}
           </span>
         </div>
       </div>

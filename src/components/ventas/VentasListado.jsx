@@ -104,7 +104,7 @@ export default function VentasListado({
           <thead>
             <tr>
               <th>Lead</th><th>Fecha</th><th>Paquete</th><th>Importe</th>
-              <th>M\u00e9todo</th><th>Pago \u00fan.</th><th>Setter</th><th>Closer</th>
+              <th>Método</th><th>Pago ún.</th><th>Setter</th><th>Closer</th>
               <th>Estado</th><th>Acciones</th>
             </tr>
           </thead>
@@ -141,7 +141,7 @@ export default function VentasListado({
               <div className="vv-card-paquete">{venta.paquete?.nombre || '-'}</div>
               <div className="vv-card-meta">
                 <span>{metodoLabels[venta.metodo_pago] || '-'}</span>
-                {venta.es_pago_unico && <span>Pago \u00fanico</span>}
+                {venta.es_pago_unico && <span>Pago único</span>}
               </div>
               <div className="vv-card-asignados">
                 <span>Setter: {venta.setter?.nombre || '-'}</span>
@@ -169,7 +169,7 @@ export default function VentasListado({
                       <XIcon /> Rechazar
                     </button>
                     <button className="vv-action-btn vv-action-refund" onClick={(e) => { e.stopPropagation(); setModal({ type: 'devolucion', venta }) }}>
-                      <RefundIcon /> Devoluci\u00f3n
+                      <RefundIcon /> Devolución
                     </button>
                   </>
                 )}
@@ -203,8 +203,8 @@ export default function VentasListado({
             <th>Fecha</th>
             <th>Paquete</th>
             <th>Importe</th>
-            <th>M\u00e9todo</th>
-            <th>Pago \u00fan.</th>
+            <th>Método</th>
+            <th>Pago ún.</th>
             <th>Setter</th>
             <th>Closer</th>
             <th>Estado</th>
@@ -296,7 +296,7 @@ export default function VentasListado({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="vv-pagination">
-          <span>P\u00e1gina {page + 1} de {totalPages} ({totalCount} ventas)</span>
+          <span>Página {page + 1} de {totalPages} ({totalCount} ventas)</span>
           <div className="vv-pagination-btns">
             <button disabled={page === 0} onClick={() => onPageChange(page - 1)}>
               Anterior

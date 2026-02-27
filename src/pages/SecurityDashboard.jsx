@@ -460,7 +460,7 @@ function CheckItem({ ok, label }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: '12px', color: ok ? '#10b981' : '#ef4444', flexShrink: 0
       }}>
-        {ok ? '\u2713' : '\u2717'}
+        {ok ? '✓' : '✗'}
       </span>
       <span style={{ fontSize: '13px', color: ok ? 'var(--text)' : '#ef4444' }}>{label}</span>
     </div>

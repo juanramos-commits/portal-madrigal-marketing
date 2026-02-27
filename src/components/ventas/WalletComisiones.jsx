@@ -17,7 +17,7 @@ function formatFechaCorta(d) {
 }
 
 function getTipo(c) {
-  if (c.monto < 0) return 'Devoluci\u00f3n'
+  if (c.monto < 0) return 'Devolución'
   if (c.es_bonus) return 'Bonus'
   return 'Fija'
 }
@@ -122,7 +122,7 @@ export default function WalletComisiones({
             {comisiones.map(c => (
               <div key={c.id} className="wt-comision-card">
                 <div className="wt-comision-top">
-                  <span className="wt-comision-tipo">{getTipo(c)} \u00b7 {c.rol}</span>
+                  <span className="wt-comision-tipo">{getTipo(c)} · {c.rol}</span>
                   <span className={c.monto < 0 ? 'wt-text-danger' : 'wt-text-success'} style={{ fontWeight: 700 }}>
                     {c.monto >= 0 ? '+' : ''}{formatMoneda(c.monto)}
                   </span>
@@ -139,7 +139,7 @@ export default function WalletComisiones({
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="wt-pagination">
-              <span>P\u00e1gina {pagina + 1} de {totalPages}</span>
+              <span>Página {pagina + 1} de {totalPages}</span>
               <div className="wt-pagination-btns">
                 <button disabled={pagina === 0} onClick={() => onPageChange(pagina - 1)}>Anterior</button>
                 <button disabled={pagina >= totalPages - 1} onClick={() => onPageChange(pagina + 1)}>Siguiente</button>

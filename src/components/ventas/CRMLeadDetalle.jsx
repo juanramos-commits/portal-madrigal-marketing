@@ -417,7 +417,7 @@ export default function CRMLeadDetalle() {
 
       {/* ── Contact Info ────────────────────────────────────────────── */}
       <div className="crm-section">
-        <div className="crm-section-title">Informaci\u00f3n de contacto</div>
+        <div className="crm-section-title">Información de contacto</div>
         <div className="crm-field-grid">
           <div className="crm-field">
             <label>Nombre</label>
@@ -428,7 +428,7 @@ export default function CRMLeadDetalle() {
             <input type="email" value={lead.email || ''} onChange={e => updateField('email', e.target.value)} placeholder="email@ejemplo.com" />
           </div>
           <div className="crm-field">
-            <label>Tel\u00e9fono</label>
+            <label>Teléfono</label>
             <input value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} placeholder="+34 600 000 000" />
           </div>
           <div className="crm-field">
@@ -436,9 +436,9 @@ export default function CRMLeadDetalle() {
             <input value={lead.nombre_negocio || ''} onChange={e => updateField('nombre_negocio', e.target.value)} />
           </div>
           <div className="crm-field">
-            <label>Categor\u00eda</label>
+            <label>Categoría</label>
             <select value={lead.categoria_id || ''} onChange={e => updateField('categoria_id', e.target.value || null)}>
-              <option value="">Sin categor\u00eda</option>
+              <option value="">Sin categoría</option>
               {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </select>
           </div>
@@ -509,7 +509,7 @@ export default function CRMLeadDetalle() {
 
       {/* ── Notas ───────────────────────────────────────────────────── */}
       <div className="crm-section">
-        <div className="crm-section-title">Notas y res\u00famenes</div>
+        <div className="crm-section-title">Notas y resúmenes</div>
         <div className="crm-field" style={{ marginBottom: 16 }}>
           <label>Notas</label>
           <textarea
@@ -543,9 +543,9 @@ export default function CRMLeadDetalle() {
         </div>
       </div>
 
-      {/* ── Enlace grabaci\u00f3n ────────────────────────────────────── */}
+      {/* ── Enlace grabación ────────────────────────────────────── */}
       <div className="crm-section">
-        <div className="crm-section-title">Enlace de grabaci\u00f3n</div>
+        <div className="crm-section-title">Enlace de grabación</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <div className="crm-field" style={{ flex: 1 }}>
             <input
@@ -584,7 +584,7 @@ export default function CRMLeadDetalle() {
           {availableTags.length > 0 && (
             <div style={{ position: 'relative' }}>
               <button className="crm-tag-add" onClick={() => setShowTagPicker(!showTagPicker)}>
-                + A\u00f1adir
+                + Añadir
               </button>
               {showTagPicker && (
                 <div className="crm-dropdown-menu" style={{ top: '100%', left: 0, minWidth: 160 }}>
@@ -644,7 +644,7 @@ export default function CRMLeadDetalle() {
               <div className="crm-timeline-content">
                 <div className="crm-timeline-desc">{act.descripcion}</div>
                 <div className="crm-timeline-meta">
-                  {act.usuario?.nombre || 'Sistema'} \u00b7 {formatRelative(act.created_at)}
+                  {act.usuario?.nombre || 'Sistema'} · {formatRelative(act.created_at)}
                 </div>
               </div>
             </div>
@@ -655,7 +655,7 @@ export default function CRMLeadDetalle() {
               style={{ margin: '8px auto', display: 'block' }}
               onClick={cargarMasActividad}
             >
-              Cargar m\u00e1s
+              Cargar más
             </button>
           )}
         </div>
@@ -671,7 +671,7 @@ export default function CRMLeadDetalle() {
             </div>
             <div className="crm-modal-body">
               <div className="crm-confirm">
-                <p>¿Est\u00e1s seguro de que quieres eliminar a <strong>{lead.nombre}</strong>? Esta acci\u00f3n no se puede deshacer.</p>
+                <p>¿Estás seguro de que quieres eliminar a <strong>{lead.nombre}</strong>? Esta acción no se puede deshacer.</p>
               </div>
             </div>
             <div className="crm-modal-footer">

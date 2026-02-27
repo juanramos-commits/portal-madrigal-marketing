@@ -59,7 +59,7 @@ export default function CRMKanbanColumn({
         {hasMore && !loadingMore && leads.length > 0 && (
           <div className="crm-load-more">
             <button onClick={() => onLoadMore?.(etapa.id)}>
-              Cargar m\u00e1s
+              Cargar más
             </button>
           </div>
         )}
