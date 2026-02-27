@@ -110,8 +110,8 @@ export default function AjustesPerfil({
 
       <div className="aj-perfil-avatar-row">
         <div className="aj-avatar" onClick={handleFotoClick}>
-          {perfil?.foto_url ? (
-            <img src={perfil.foto_url} alt="Avatar" />
+          {perfil?.avatar_url ? (
+            <img src={perfil.avatar_url} alt="Avatar" />
           ) : (
             <span>{getInitial()}</span>
           )}

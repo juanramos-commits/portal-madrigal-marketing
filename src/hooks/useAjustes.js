@@ -83,7 +83,7 @@ export function useAjustes() {
       nombre: usuario?.nombre || '',
       email: usuario?.email || user.email || '',
       tipo: usuario?.tipo,
-      foto_url: usuario?.foto_url || null,
+      avatar_url: usuario?.avatar_url || null,
     })
   }, [user, usuario])
 
@@ -113,11 +113,11 @@ export function useAjustes() {
     const fotoUrl = urlData.publicUrl + '?t=' + Date.now()
     const { error: updateError } = await supabase
       .from('usuarios')
-      .update({ foto_url: fotoUrl, updated_at: new Date().toISOString() })
+      .update({ avatar_url: fotoUrl, updated_at: new Date().toISOString() })
       .eq('id', user.id)
     if (updateError) throw updateError
 
-    setPerfil(prev => ({ ...prev, foto_url: fotoUrl }))
+    setPerfil(prev => ({ ...prev, avatar_url: fotoUrl }))
     return fotoUrl
   }, [user?.id])
 
@@ -413,7 +413,7 @@ export function useAjustes() {
   const cargarEquipo = useCallback(async () => {
     const { data } = await supabase
       .from('ventas_roles_comerciales')
-      .select('*, usuario:usuarios(id, nombre, email, foto_url)')
+      .select('*, usuario:usuarios(id, nombre, email, avatar_url)')
       .order('created_at', { ascending: false })
     // Group by usuario
     const map = {}

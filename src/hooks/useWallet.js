@@ -197,47 +197,6 @@ export function useWallet() {
     setDatosFiscales(datos)
   }, [user?.id])
 
-  // ── Refresh all ────────────────────────────────────────────────────
-  const refrescar = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      await Promise.all([
-        cargarWallet(),
-        cargarSaldoDisponible(),
-        cargarDatosFiscales(),
-        cargarEmpresaFiscal(),
-        cargarComisiones(),
-        cargarRetiros(),
-        cargarFacturas(),
-        esCloser ? verificarCloserAlDia() : Promise.resolve(),
-      ])
-      if (esAdmin) {
-        await Promise.all([
-          cargarTodosRetiros(),
-          cargarContadoresRetiros(),
-          cargarTodasFacturas(),
-        ])
-      }
-    } catch (_) {
-      setError('Error al cargar datos del wallet')
-    } finally {
-      setLoading(false)
-    }
-  }, [cargarWallet, cargarSaldoDisponible, cargarDatosFiscales, cargarEmpresaFiscal, cargarComisiones, cargarRetiros, cargarFacturas, esCloser, verificarCloserAlDia, esAdmin, cargarTodosRetiros, cargarContadoresRetiros, cargarTodasFacturas])
-
-  // ── Solicitar retiro ───────────────────────────────────────────────
-  const solicitarRetiro = useCallback(async (monto) => {
-    const { data, error: err } = await supabase.rpc('ventas_solicitar_retiro', {
-      p_usuario_id: user.id,
-      p_monto: monto,
-    })
-    if (err) throw err
-    if (data && !data.ok) throw new Error(data.error || 'Error al solicitar retiro')
-    refrescar()
-    return data
-  }, [user?.id, refrescar])
-
   // ── Admin: load all retiros ────────────────────────────────────────
   const cargarTodosRetiros = useCallback(async () => {
     let query = supabase
@@ -289,6 +248,47 @@ export function useWallet() {
     setTodasFacturas(data || [])
     setTodasFacturasTotal(count || 0)
   }, [todasFacturasFiltroUsuario])
+
+  // ── Refresh all ────────────────────────────────────────────────────
+  const refrescar = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await Promise.all([
+        cargarWallet(),
+        cargarSaldoDisponible(),
+        cargarDatosFiscales(),
+        cargarEmpresaFiscal(),
+        cargarComisiones(),
+        cargarRetiros(),
+        cargarFacturas(),
+        esCloser ? verificarCloserAlDia() : Promise.resolve(),
+      ])
+      if (esAdmin) {
+        await Promise.all([
+          cargarTodosRetiros(),
+          cargarContadoresRetiros(),
+          cargarTodasFacturas(),
+        ])
+      }
+    } catch (_) {
+      setError('Error al cargar datos del wallet')
+    } finally {
+      setLoading(false)
+    }
+  }, [cargarWallet, cargarSaldoDisponible, cargarDatosFiscales, cargarEmpresaFiscal, cargarComisiones, cargarRetiros, cargarFacturas, esCloser, verificarCloserAlDia, esAdmin, cargarTodosRetiros, cargarContadoresRetiros, cargarTodasFacturas])
+
+  // ── Solicitar retiro ───────────────────────────────────────────────
+  const solicitarRetiro = useCallback(async (monto) => {
+    const { data, error: err } = await supabase.rpc('ventas_solicitar_retiro', {
+      p_usuario_id: user.id,
+      p_monto: monto,
+    })
+    if (err) throw err
+    if (data && !data.ok) throw new Error(data.error || 'Error al solicitar retiro')
+    refrescar()
+    return data
+  }, [user?.id, refrescar])
 
   // ── Admin: aprobar retiro ──────────────────────────────────────────
   const aprobarRetiro = useCallback(async (retiroId) => {
