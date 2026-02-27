@@ -1,0 +1,164 @@
+import { useState, useEffect } from 'react'
+
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+  </svg>
+)
+
+const TIPOS = [
+  { value: 'enlace_pago', label: 'Enlace de pago' },
+  { value: 'contrato', label: 'Contrato' },
+  { value: 'video', label: 'Vídeo' },
+  { value: 'onboarding', label: 'Onboarding' },
+  { value: 'otro', label: 'Otro' },
+]
+
+const ROLES_OPTIONS = [
+  { value: 'setter', label: 'Setter' },
+  { value: 'closer', label: 'Closer' },
+  { value: 'director_ventas', label: 'Director de ventas' },
+  { value: 'super_admin', label: 'Super admin' },
+]
+
+export default function BibliotecaFormRecurso({ recurso, secciones, seccionIdInicial, onGuardar, onCerrar }) {
+  const [nombre, setNombre] = useState('')
+  const [descripcion, setDescripcion] = useState('')
+  const [url, setUrl] = useState('')
+  const [tipo, setTipo] = useState('otro')
+  const [seccionId, setSeccionId] = useState('')
+  const [visiblePara, setVisiblePara] = useState(['setter', 'closer', 'director_ventas', 'super_admin'])
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (recurso) {
+      setNombre(recurso.nombre || '')
+      setDescripcion(recurso.descripcion || '')
+      setUrl(recurso.url || '')
+      setTipo(recurso.tipo || 'otro')
+      setSeccionId(recurso.seccion_id || '')
+      setVisiblePara(recurso.visible_para || ['setter', 'closer', 'director_ventas', 'super_admin'])
+    } else if (seccionIdInicial) {
+      setSeccionId(seccionIdInicial)
+    }
+  }, [recurso, seccionIdInicial])
+
+  const toggleRol = (rol) => {
+    setVisiblePara(prev =>
+      prev.includes(rol)
+        ? prev.filter(r => r !== rol)
+        : [...prev, rol]
+    )
+  }
+
+  const handleGuardar = async () => {
+    if (!nombre.trim()) {
+      setError('El nombre es obligatorio')
+      return
+    }
+    if (!seccionId) {
+      setError('Selecciona una sección')
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      await onGuardar({
+        nombre: nombre.trim(),
+        descripcion: descripcion.trim() || null,
+        url: url.trim() || null,
+        tipo,
+        seccion_id: seccionId,
+        visible_para: visiblePara,
+      })
+      onCerrar()
+    } catch (e) {
+      setError(e.message || 'Error al guardar recurso')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="bib-modal-overlay" onClick={onCerrar} />
+      <div className="bib-modal">
+        <div className="bib-modal-header">
+          <h2>{recurso ? 'Editar recurso' : 'Nuevo recurso'}</h2>
+          <button className="bib-modal-close" onClick={onCerrar}><CloseIcon /></button>
+        </div>
+        <div className="bib-modal-body">
+          <div className="bib-field">
+            <label>Nombre *</label>
+            <input
+              type="text"
+              value={nombre}
+              onChange={e => setNombre(e.target.value)}
+              placeholder="Ej: Enlace de pago mensual"
+            />
+          </div>
+          <div className="bib-field">
+            <label>Descripción</label>
+            <textarea
+              value={descripcion}
+              onChange={e => setDescripcion(e.target.value)}
+              placeholder="Descripción opcional"
+              rows={2}
+            />
+          </div>
+          <div className="bib-field">
+            <label>URL</label>
+            <input
+              type="url"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+          <div className="bib-form-row">
+            <div className="bib-field">
+              <label>Tipo</label>
+              <select value={tipo} onChange={e => setTipo(e.target.value)}>
+                {TIPOS.map(t => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="bib-field">
+              <label>Sección *</label>
+              <select value={seccionId} onChange={e => setSeccionId(e.target.value)}>
+                <option value="">Seleccionar sección</option>
+                {secciones.map(s => (
+                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="bib-field">
+            <label>Visibilidad por rol</label>
+            <div className="bib-roles-selector">
+              {ROLES_OPTIONS.map(r => (
+                <label key={r.value} className="bib-role-check">
+                  <input
+                    type="checkbox"
+                    checked={visiblePara.includes(r.value)}
+                    onChange={() => toggleRol(r.value)}
+                  />
+                  <span>{r.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          {error && <div className="bib-error-msg">{error}</div>}
+        </div>
+        <div className="bib-modal-actions">
+          <button className="bib-btn-ghost" onClick={onCerrar} disabled={saving}>Cancelar</button>
+          <button className="bib-btn-primary" onClick={handleGuardar} disabled={saving}>
+            {saving ? 'Guardando...' : recurso ? 'Guardar cambios' : 'Crear recurso'}
+          </button>
+        </div>
+      </div>
+    </>
+  )
+}
