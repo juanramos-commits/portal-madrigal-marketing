@@ -42,7 +42,7 @@ export function AuthProvider({ children }) {
       }
 
       // Actualizar ultimo acceso (fire-and-forget, no bloquea la carga)
-      supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id).then()
+      supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id).then(() => {}, () => {})
 
       return usuarioData
     } catch (error) {
