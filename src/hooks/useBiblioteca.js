@@ -1,0 +1,381 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
+
+const ROLES_VISIBLES = ['setter', 'closer', 'director_ventas', 'super_admin']
+
+export function useBiblioteca() {
+  const { user, usuario } = useAuth()
+
+  const [secciones, setSecciones] = useState([])
+  const [recursos, setRecursos] = useState([])
+  const [busqueda, setBusqueda] = useState('')
+  const [busquedaDebounced, setBusquedaDebounced] = useState('')
+  const [modoGestion, setModoGestion] = useState(false)
+  const [seccionesAbiertas, setSeccionesAbiertas] = useState(new Set())
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  const debounceRef = useRef(null)
+
+  // Roles
+  const [rolesComerciales, setRolesComerciales] = useState([])
+  const esAdmin = usuario?.tipo === 'super_admin'
+  const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
+  const esCloser = misRoles.some(r => r.rol === 'closer')
+  const esSetter = misRoles.some(r => r.rol === 'setter')
+  const esDirector = misRoles.some(r => r.rol === 'director_ventas') || esAdmin
+  const puedeGestionar = esDirector || esAdmin
+
+  // My role keys for visibility filtering
+  const misRolesKeys = []
+  if (esSetter) misRolesKeys.push('setter')
+  if (esCloser) misRolesKeys.push('closer')
+  if (esDirector) misRolesKeys.push('director_ventas')
+  if (esAdmin) misRolesKeys.push('super_admin')
+
+  // Load roles
+  useEffect(() => {
+    if (!user?.id) return
+    const cargar = async () => {
+      const { data } = await supabase
+        .from('ventas_roles_comerciales')
+        .select('*')
+        .eq('activo', true)
+      setRolesComerciales(data || [])
+    }
+    cargar()
+  }, [user?.id])
+
+  // Debounce search
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setBusquedaDebounced(busqueda)
+    }, 300)
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [busqueda])
+
+  // Auto-expand sections that have matching resources when searching
+  useEffect(() => {
+    if (!busquedaDebounced.trim()) return
+    const term = busquedaDebounced.toLowerCase()
+    const matchingSecciones = new Set()
+    for (const r of recursos) {
+      if (
+        r.nombre?.toLowerCase().includes(term) ||
+        r.descripcion?.toLowerCase().includes(term) ||
+        r.url?.toLowerCase().includes(term)
+      ) {
+        matchingSecciones.add(r.seccion_id)
+      }
+    }
+    // Also match section names
+    for (const s of secciones) {
+      if (s.nombre?.toLowerCase().includes(term) || s.descripcion?.toLowerCase().includes(term)) {
+        matchingSecciones.add(s.id)
+      }
+    }
+    if (matchingSecciones.size > 0) {
+      setSeccionesAbiertas(matchingSecciones)
+    }
+  }, [busquedaDebounced, recursos, secciones])
+
+  // Load secciones
+  const cargarSecciones = useCallback(async () => {
+    const { data, error: err } = await supabase
+      .from('ventas_biblioteca_secciones')
+      .select('*')
+      .eq('activo', true)
+      .order('orden', { ascending: true })
+    if (err) { setError('Error al cargar secciones'); return }
+    setSecciones(data || [])
+  }, [])
+
+  // Load recursos
+  const cargarRecursos = useCallback(async () => {
+    let query = supabase
+      .from('ventas_biblioteca_recursos')
+      .select('*')
+      .eq('activo', true)
+      .order('orden', { ascending: true })
+
+    const { data, error: err } = await query
+    if (err) { setError('Error al cargar recursos'); return }
+    setRecursos(data || [])
+  }, [])
+
+  // Initial load
+  useEffect(() => {
+    if (user?.id && rolesComerciales.length > 0) {
+      const cargar = async () => {
+        setLoading(true)
+        setError(null)
+        try {
+          await Promise.all([cargarSecciones(), cargarRecursos()])
+        } catch (_) {
+          setError('Error al cargar la biblioteca')
+        } finally {
+          setLoading(false)
+        }
+      }
+      cargar()
+    }
+  }, [user?.id, rolesComerciales.length, cargarSecciones, cargarRecursos])
+
+  // Filter recursos by visibility (unless admin/director or in management mode)
+  const recursosFiltrados = useCallback(() => {
+    let filtered = recursos
+
+    // Visibility filter: non-admins only see resources where their role is in visible_para
+    if (!puedeGestionar) {
+      filtered = filtered.filter(r => {
+        if (!r.visible_para || r.visible_para.length === 0) return true
+        return r.visible_para.some(vp => misRolesKeys.includes(vp))
+      })
+    }
+
+    // Search filter
+    if (busquedaDebounced.trim()) {
+      const term = busquedaDebounced.toLowerCase()
+      filtered = filtered.filter(r =>
+        r.nombre?.toLowerCase().includes(term) ||
+        r.descripcion?.toLowerCase().includes(term) ||
+        r.url?.toLowerCase().includes(term)
+      )
+    }
+
+    return filtered
+  }, [recursos, puedeGestionar, misRolesKeys, busquedaDebounced])
+
+  // Filtered secciones (hide empty secciones when searching, unless admin)
+  const seccionesFiltradas = useCallback(() => {
+    const recs = recursosFiltrados()
+    if (!busquedaDebounced.trim() && !modoGestion) return secciones
+
+    const term = busquedaDebounced.toLowerCase()
+    return secciones.filter(s => {
+      // Section matches by name/description
+      const seccionMatch = term && (
+        s.nombre?.toLowerCase().includes(term) ||
+        s.descripcion?.toLowerCase().includes(term)
+      )
+      // Section has matching recursos
+      const tieneRecursos = recs.some(r => r.seccion_id === s.id)
+      // In management mode, show all
+      if (modoGestion) return true
+      if (!term) return true
+      return seccionMatch || tieneRecursos
+    })
+  }, [secciones, recursosFiltrados, busquedaDebounced, modoGestion])
+
+  // Toggle section open/closed
+  const toggleSeccion = useCallback((seccionId) => {
+    setSeccionesAbiertas(prev => {
+      const next = new Set(prev)
+      if (next.has(seccionId)) {
+        next.delete(seccionId)
+      } else {
+        next.add(seccionId)
+      }
+      return next
+    })
+  }, [])
+
+  // Expand all
+  const expandirTodas = useCallback(() => {
+    setSeccionesAbiertas(new Set(secciones.map(s => s.id)))
+  }, [secciones])
+
+  // Collapse all
+  const colapsarTodas = useCallback(() => {
+    setSeccionesAbiertas(new Set())
+  }, [])
+
+  // CRUD: Create sección
+  const crearSeccion = useCallback(async (datos) => {
+    const maxOrden = secciones.reduce((max, s) => Math.max(max, s.orden || 0), 0)
+    const { data, error: err } = await supabase
+      .from('ventas_biblioteca_secciones')
+      .insert({
+        nombre: datos.nombre,
+        descripcion: datos.descripcion || null,
+        orden: maxOrden + 1,
+        activo: true,
+      })
+      .select()
+      .single()
+    if (err) throw err
+    setSecciones(prev => [...prev, data])
+    return data
+  }, [secciones])
+
+  // CRUD: Update sección
+  const actualizarSeccion = useCallback(async (seccionId, datos) => {
+    const { data, error: err } = await supabase
+      .from('ventas_biblioteca_secciones')
+      .update({ ...datos, updated_at: new Date().toISOString() })
+      .eq('id', seccionId)
+      .select()
+      .single()
+    if (err) throw err
+    setSecciones(prev => prev.map(s => s.id === seccionId ? data : s))
+    return data
+  }, [])
+
+  // CRUD: Delete sección (soft delete)
+  const eliminarSeccion = useCallback(async (seccionId) => {
+    const { error: err } = await supabase
+      .from('ventas_biblioteca_secciones')
+      .update({ activo: false, updated_at: new Date().toISOString() })
+      .eq('id', seccionId)
+    if (err) throw err
+    setSecciones(prev => prev.filter(s => s.id !== seccionId))
+    // Also soft delete recursos in this section
+    await supabase
+      .from('ventas_biblioteca_recursos')
+      .update({ activo: false, updated_at: new Date().toISOString() })
+      .eq('seccion_id', seccionId)
+    setRecursos(prev => prev.filter(r => r.seccion_id !== seccionId))
+  }, [])
+
+  // CRUD: Create recurso
+  const crearRecurso = useCallback(async (datos) => {
+    const recursosEnSeccion = recursos.filter(r => r.seccion_id === datos.seccion_id)
+    const maxOrden = recursosEnSeccion.reduce((max, r) => Math.max(max, r.orden || 0), 0)
+    const { data, error: err } = await supabase
+      .from('ventas_biblioteca_recursos')
+      .insert({
+        seccion_id: datos.seccion_id,
+        nombre: datos.nombre,
+        descripcion: datos.descripcion || null,
+        url: datos.url || null,
+        tipo: datos.tipo || 'otro',
+        visible_para: datos.visible_para || ROLES_VISIBLES,
+        orden: maxOrden + 1,
+        activo: true,
+      })
+      .select()
+      .single()
+    if (err) throw err
+    setRecursos(prev => [...prev, data])
+    return data
+  }, [recursos])
+
+  // CRUD: Update recurso
+  const actualizarRecurso = useCallback(async (recursoId, datos) => {
+    const { data, error: err } = await supabase
+      .from('ventas_biblioteca_recursos')
+      .update({ ...datos, updated_at: new Date().toISOString() })
+      .eq('id', recursoId)
+      .select()
+      .single()
+    if (err) throw err
+    setRecursos(prev => prev.map(r => r.id === recursoId ? data : r))
+    return data
+  }, [])
+
+  // CRUD: Delete recurso (soft delete)
+  const eliminarRecurso = useCallback(async (recursoId) => {
+    const { error: err } = await supabase
+      .from('ventas_biblioteca_recursos')
+      .update({ activo: false, updated_at: new Date().toISOString() })
+      .eq('id', recursoId)
+    if (err) throw err
+    setRecursos(prev => prev.filter(r => r.id !== recursoId))
+  }, [])
+
+  // Reorder secciones
+  const reordenarSecciones = useCallback(async (nuevasIds) => {
+    // Optimistic update
+    const nuevasSecciones = nuevasIds.map((id, i) => {
+      const s = secciones.find(x => x.id === id)
+      return { ...s, orden: i + 1 }
+    })
+    setSecciones(nuevasSecciones)
+
+    // Persist
+    const updates = nuevasIds.map((id, i) =>
+      supabase
+        .from('ventas_biblioteca_secciones')
+        .update({ orden: i + 1, updated_at: new Date().toISOString() })
+        .eq('id', id)
+    )
+    try {
+      await Promise.all(updates)
+    } catch (_) {
+      await cargarSecciones()
+    }
+  }, [secciones, cargarSecciones])
+
+  // Reorder recursos within a section
+  const reordenarRecursos = useCallback(async (seccionId, nuevasIds) => {
+    // Optimistic update
+    const otrosRecursos = recursos.filter(r => r.seccion_id !== seccionId)
+    const nuevosRecursos = nuevasIds.map((id, i) => {
+      const r = recursos.find(x => x.id === id)
+      return { ...r, orden: i + 1 }
+    })
+    setRecursos([...otrosRecursos, ...nuevosRecursos].sort((a, b) => (a.orden || 0) - (b.orden || 0)))
+
+    // Persist
+    const updates = nuevasIds.map((id, i) =>
+      supabase
+        .from('ventas_biblioteca_recursos')
+        .update({ orden: i + 1, updated_at: new Date().toISOString() })
+        .eq('id', id)
+    )
+    try {
+      await Promise.all(updates)
+    } catch (_) {
+      await cargarRecursos()
+    }
+  }, [recursos, cargarRecursos])
+
+  // Copy URL to clipboard
+  const copiarAlPortapapeles = useCallback(async (texto) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(texto)
+        return true
+      }
+    } catch (_) {
+      // fallback
+    }
+    // Fallback for older browsers
+    try {
+      const textarea = document.createElement('textarea')
+      textarea.value = texto
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      return true
+    } catch (_) {
+      return false
+    }
+  }, [])
+
+  return {
+    secciones, recursos, loading, error,
+    busqueda, setBusqueda, busquedaDebounced,
+    modoGestion, setModoGestion,
+    seccionesAbiertas, toggleSeccion, expandirTodas, colapsarTodas,
+    puedeGestionar, esAdmin, esDirector, esCloser, esSetter,
+    misRolesKeys,
+
+    recursosFiltrados,
+    seccionesFiltradas,
+
+    crearSeccion, actualizarSeccion, eliminarSeccion,
+    crearRecurso, actualizarRecurso, eliminarRecurso,
+    reordenarSecciones, reordenarRecursos,
+    copiarAlPortapapeles,
+
+    rolesVisibles: ROLES_VISIBLES,
+  }
+}
