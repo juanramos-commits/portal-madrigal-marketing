@@ -1,3 +1,5 @@
+import Select from '../ui/Select'
+
 const CloseIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
@@ -45,7 +47,7 @@ export default function CRMFiltros({
             <>
               <div className="crm-field">
                 <label>Setter asignado</label>
-                <select
+                <Select
                   value={filtros.setter_id || ''}
                   onChange={e => handleChange('setter_id', e.target.value || null)}
                 >
@@ -55,12 +57,12 @@ export default function CRMFiltros({
                       {s.usuario?.nombre || s.usuario?.email}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
 
               <div className="crm-field">
                 <label>Closer asignado</label>
-                <select
+                <Select
                   value={filtros.closer_id || ''}
                   onChange={e => handleChange('closer_id', e.target.value || null)}
                 >
@@ -70,14 +72,14 @@ export default function CRMFiltros({
                       {c.usuario?.nombre || c.usuario?.email}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </>
           )}
 
           <div className="crm-field">
             <label>Categoría</label>
-            <select
+            <Select
               value={filtros.categoria_id || ''}
               onChange={e => handleChange('categoria_id', e.target.value || null)}
             >
@@ -85,12 +87,12 @@ export default function CRMFiltros({
               {categorias.map(c => (
                 <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="crm-field">
             <label>Fuente</label>
-            <select
+            <Select
               value={filtros.fuente || ''}
               onChange={e => handleChange('fuente', e.target.value || null)}
             >
@@ -98,12 +100,12 @@ export default function CRMFiltros({
               {fuentes.map(f => (
                 <option key={f} value={f}>{f}</option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="crm-field">
             <label>Etapa</label>
-            <select
+            <Select
               value={(filtros.etapa_ids && filtros.etapa_ids[0]) || ''}
               onChange={e => handleChange('etapa_ids', e.target.value ? [e.target.value] : null)}
             >
@@ -111,7 +113,7 @@ export default function CRMFiltros({
               {etapas.map(e => (
                 <option key={e.id} value={e.id}>{e.nombre}</option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="crm-field">

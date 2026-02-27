@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
+import Modal from '../ui/Modal'
 
 function formatMoneda(v) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
 }
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
 
 export default function WalletSolicitarRetiro({
   saldoDisponible,
@@ -91,124 +86,12 @@ export default function WalletSolicitarRetiro({
   }
 
   return (
-    <>
-      <div className="wt-modal-overlay" onClick={onCancel} />
-      <div className="wt-modal wt-modal-retiro">
-        <div className="wt-modal-header">
-          <h2>Solicitar retiro</h2>
-          <div className="wt-steps-indicator">
-            {[1, 2, 3].map(s => (
-              <span key={s} className={`wt-step ${paso >= s ? 'active' : ''}`}>{s}</span>
-            ))}
-          </div>
-          <button className="wt-modal-close" onClick={onCancel}><CloseIcon /></button>
-        </div>
-
-        <div className="wt-modal-body">
-          {/* PASO 1: Importe */}
-          {paso === 1 && (
-            <div className="wt-paso">
-              <h3>Importe a retirar</h3>
-
-              {sinSaldo ? (
-                <div className="wt-paso-bloqueado">
-                  No tienes saldo disponible para retirar.
-                </div>
-              ) : (
-                <>
-                  <div className="wt-field">
-                    <label>Monto (€)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max={saldoDisponible}
-                      value={monto}
-                      onChange={e => { setMonto(e.target.value); setError(null) }}
-                      placeholder="0,00"
-                      autoFocus
-                    />
-                  </div>
-                  <div className="wt-saldo-ref">
-                    Saldo disponible: <strong>{formatMoneda(saldoDisponible)}</strong>
-                  </div>
-                  <button className="wt-btn-max" onClick={() => setMonto(String(saldoDisponible))}>
-                    Retirar todo
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* PASO 2: Verificación fiscal */}
-          {paso === 2 && (
-            <div className="wt-paso">
-              <h3>Datos fiscales</h3>
-              <div className="wt-paso-warning">
-                Completa tus datos de facturación antes de solicitar un retiro.
-              </div>
-              <button className="wt-btn-primary" onClick={onIrDatosFiscales}>
-                Ir a datos fiscales
-              </button>
-            </div>
-          )}
-
-          {/* PASO 3: Preview factura */}
-          {paso === 3 && (
-            <div className="wt-paso">
-              <h3>Preview de factura</h3>
-              <div className="wt-factura-preview">
-                <div className="wt-fp-row">
-                  <div className="wt-fp-col">
-                    <span className="wt-fp-label">Emisor</span>
-                    <strong>{datosFiscales?.nombre_fiscal}</strong>
-                    <span>NIF: {datosFiscales?.nif_cif}</span>
-                    <span>{datosFiscales?.direccion}</span>
-                    <span>{[datosFiscales?.ciudad, datosFiscales?.codigo_postal].filter(Boolean).join(', ')}</span>
-                    <span>{datosFiscales?.pais}</span>
-                  </div>
-                  <div className="wt-fp-col">
-                    <span className="wt-fp-label">Receptor</span>
-                    <strong>{empresaFiscal?.nombre_fiscal || 'Madrigal Marketing S.L.'}</strong>
-                    <span>CIF: {empresaFiscal?.cif || '-'}</span>
-                    <span>{empresaFiscal?.direccion || ''}</span>
-                    <span>{[empresaFiscal?.ciudad, empresaFiscal?.codigo_postal].filter(Boolean).join(', ')}</span>
-                    <span>{empresaFiscal?.pais || 'España'}</span>
-                  </div>
-                </div>
-
-                <div className="wt-fp-concepto">
-                  <span className="wt-fp-label">Concepto</span>
-                  <span>{empresaFiscal?.concepto_factura || 'Servicios de intermediación comercial'}</span>
-                </div>
-
-                <div className="wt-fp-amounts">
-                  <div className="wt-fp-amount-row">
-                    <span>Base imponible</span>
-                    <span className="wt-fp-mono">{formatMoneda(baseImponible)}</span>
-                  </div>
-                  <div className="wt-fp-amount-row">
-                    <span>IVA ({ivaPct}%)</span>
-                    <span className="wt-fp-mono">{formatMoneda(ivaMonto)}</span>
-                  </div>
-                  <div className="wt-fp-amount-row wt-fp-total">
-                    <span>TOTAL</span>
-                    <span className="wt-fp-mono">{formatMoneda(total)}</span>
-                  </div>
-                </div>
-
-                <div className="wt-fp-footer">
-                  <span>Serie: {numeroFactura}</span>
-                  <span>IBAN: {datosFiscales?.cuenta_bancaria_iban || '-'}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {error && <div className="wt-error-general">{error}</div>}
-        </div>
-
-        <div className="wt-modal-actions">
+    <Modal
+      open={true}
+      onClose={onCancel}
+      title="Solicitar retiro"
+      footer={
+        <>
           <button className="wt-btn-ghost" onClick={retroceder} disabled={submitting}>
             {paso === 1 ? 'Cancelar' : 'Atrás'}
           </button>
@@ -222,8 +105,116 @@ export default function WalletSolicitarRetiro({
               {submitting ? 'Solicitando...' : 'Confirmar solicitud'}
             </button>
           )}
-        </div>
+        </>
+      }
+    >
+      <div className="wt-steps-indicator">
+        {[1, 2, 3].map(s => (
+          <span key={s} className={`wt-step ${paso >= s ? 'active' : ''}`}>{s}</span>
+        ))}
       </div>
-    </>
+
+      {/* PASO 1: Importe */}
+      {paso === 1 && (
+        <div className="wt-paso">
+          <h3>Importe a retirar</h3>
+
+          {sinSaldo ? (
+            <div className="wt-paso-bloqueado">
+              No tienes saldo disponible para retirar.
+            </div>
+          ) : (
+            <>
+              <div className="wt-field">
+                <label>Monto (€)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max={saldoDisponible}
+                  value={monto}
+                  onChange={e => { setMonto(e.target.value); setError(null) }}
+                  placeholder="0,00"
+                  autoFocus
+                />
+              </div>
+              <div className="wt-saldo-ref">
+                Saldo disponible: <strong>{formatMoneda(saldoDisponible)}</strong>
+              </div>
+              <button className="wt-btn-max" onClick={() => setMonto(String(saldoDisponible))}>
+                Retirar todo
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* PASO 2: Verificación fiscal */}
+      {paso === 2 && (
+        <div className="wt-paso">
+          <h3>Datos fiscales</h3>
+          <div className="wt-paso-warning">
+            Completa tus datos de facturación antes de solicitar un retiro.
+          </div>
+          <button className="wt-btn-primary" onClick={onIrDatosFiscales}>
+            Ir a datos fiscales
+          </button>
+        </div>
+      )}
+
+      {/* PASO 3: Preview factura */}
+      {paso === 3 && (
+        <div className="wt-paso">
+          <h3>Preview de factura</h3>
+          <div className="wt-factura-preview">
+            <div className="wt-fp-row">
+              <div className="wt-fp-col">
+                <span className="wt-fp-label">Emisor</span>
+                <strong>{datosFiscales?.nombre_fiscal}</strong>
+                <span>NIF: {datosFiscales?.nif_cif}</span>
+                <span>{datosFiscales?.direccion}</span>
+                <span>{[datosFiscales?.ciudad, datosFiscales?.codigo_postal].filter(Boolean).join(', ')}</span>
+                <span>{datosFiscales?.pais}</span>
+              </div>
+              <div className="wt-fp-col">
+                <span className="wt-fp-label">Receptor</span>
+                <strong>{empresaFiscal?.nombre_fiscal || 'Madrigal Marketing S.L.'}</strong>
+                <span>CIF: {empresaFiscal?.cif || '-'}</span>
+                <span>{empresaFiscal?.direccion || ''}</span>
+                <span>{[empresaFiscal?.ciudad, empresaFiscal?.codigo_postal].filter(Boolean).join(', ')}</span>
+                <span>{empresaFiscal?.pais || 'España'}</span>
+              </div>
+            </div>
+
+            <div className="wt-fp-concepto">
+              <span className="wt-fp-label">Concepto</span>
+              <span>{empresaFiscal?.concepto_factura || 'Servicios de intermediación comercial'}</span>
+            </div>
+
+            <div className="wt-fp-amounts">
+              <div className="wt-fp-amount-row">
+                <span>Base imponible</span>
+                <span className="wt-fp-mono">{formatMoneda(baseImponible)}</span>
+              </div>
+              <div className="wt-fp-amount-row">
+                <span>IVA ({ivaPct}%)</span>
+                <span className="wt-fp-mono">{formatMoneda(ivaMonto)}</span>
+              </div>
+              <div className="wt-fp-amount-row wt-fp-total">
+                <span>TOTAL</span>
+                <span className="wt-fp-mono">{formatMoneda(total)}</span>
+              </div>
+            </div>
+
+            <div className="wt-fp-footer">
+              <span>Serie: {numeroFactura}</span>
+              <span>IBAN: {datosFiscales?.cuenta_bancaria_iban || '-'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {error && <div className="wt-error-general">{error}</div>}
+    </Modal>
   )
 }

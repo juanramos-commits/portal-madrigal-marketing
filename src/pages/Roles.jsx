@@ -2,6 +2,9 @@ import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import Modal from '../components/ui/Modal'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
+import Checkbox from '../components/ui/Checkbox'
 
 // Iconos
 const Icons = {
@@ -76,6 +79,7 @@ export default function Roles() {
   const [permisosSeleccionados, setPermisosSeleccionados] = useState([])
   const [editLoading, setEditLoading] = useState(false)
   const [modulosExpandidos, setModulosExpandidos] = useState({})
+  const [confirmEliminar, setConfirmEliminar] = useState(null)
 
   useEffect(() => {
     cargarDatos()
@@ -191,9 +195,9 @@ export default function Roles() {
   }
 
   const eliminarRol = async (rolId) => {
-    if (!confirm('¿Eliminar este rol?')) return
     try {
       await supabase.from('roles').delete().eq('id', rolId)
+      setConfirmEliminar(null)
       cargarDatos()
     } catch (error) {
       logger.error('Error eliminando rol:', error)
@@ -257,7 +261,7 @@ export default function Roles() {
               {!rol.es_sistema && rol.nombre !== 'Super Admin' && (
                 <div style={{ display: 'flex', gap: '4px' }}>
                   {tienePermiso('roles.editar') && <button onClick={() => abrirModalEditar(rol)} className="btn btn-icon btn-sm"><Icons.Edit /></button>}
-                  {tienePermiso('roles.eliminar') && <button onClick={() => eliminarRol(rol.id)} className="btn btn-icon btn-sm" style={{ color: 'var(--error)' }}><Icons.Trash /></button>}
+                  {tienePermiso('roles.eliminar') && <button onClick={() => setConfirmEliminar(rol.id)} className="btn btn-icon btn-sm" style={{ color: 'var(--error)' }}><Icons.Trash /></button>}
                 </div>
               )}
             </div>
@@ -276,88 +280,90 @@ export default function Roles() {
         ))}
       </div>
 
-      {modalEditar && (
-        <div className="modal-overlay" onClick={() => setModalEditar(null)}>
-          <div className="modal-content modal-lg" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="h3">{modalEditar === 'nuevo' ? 'Crear Rol' : `Editar ${modalEditar.nombre}`}</h2>
-              <button onClick={() => setModalEditar(null)} className="btn btn-icon"><Icons.X /></button>
+      <Modal
+        open={!!modalEditar}
+        onClose={() => setModalEditar(null)}
+        title={modalEditar === 'nuevo' ? 'Crear Rol' : `Editar ${modalEditar?.nombre || ''}`}
+        size="lg"
+        footer={
+          <>
+            <button type="button" onClick={() => setModalEditar(null)} className="btn">Cancelar</button>
+            <button type="submit" form="roles-edit-form" disabled={editLoading} className="btn primary">{editLoading ? 'Guardando...' : 'Guardar'}</button>
+          </>
+        }
+      >
+        <form id="roles-edit-form" onSubmit={guardarRol}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+            <div className="field">
+              <label className="field-label">Nombre</label>
+              <input type="text" value={editForm.nombre} onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })} className="input" required />
             </div>
-            <form onSubmit={guardarRol}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-                <div className="field">
-                  <label className="field-label">Nombre</label>
-                  <input type="text" value={editForm.nombre} onChange={(e) => setEditForm({ ...editForm, nombre: e.target.value })} className="input" required />
-                </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div className="field" style={{ flex: 1 }}>
-                    <label className="field-label">Color</label>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <input type="color" value={editForm.color} onChange={(e) => setEditForm({ ...editForm, color: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', borderRadius: '8px', cursor: 'pointer' }} />
-                      <input type="text" value={editForm.color} onChange={(e) => setEditForm({ ...editForm, color: e.target.value })} className="input" style={{ flex: 1 }} />
-                    </div>
-                  </div>
-                  <div className="field" style={{ width: '100px' }}>
-                    <label className="field-label">Nivel</label>
-                    <input type="number" value={editForm.nivel} onChange={(e) => setEditForm({ ...editForm, nivel: parseInt(e.target.value) || 0 })} className="input" min="0" max="99" />
-                  </div>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div className="field" style={{ flex: 1 }}>
+                <label className="field-label">Color</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input type="color" value={editForm.color} onChange={(e) => setEditForm({ ...editForm, color: e.target.value })} style={{ width: '40px', height: '40px', border: 'none', borderRadius: '8px', cursor: 'pointer' }} />
+                  <input type="text" value={editForm.color} onChange={(e) => setEditForm({ ...editForm, color: e.target.value })} className="input" style={{ flex: 1 }} />
                 </div>
               </div>
-              <div className="field" style={{ marginBottom: '24px' }}>
-                <label className="field-label">Descripción</label>
-                <input type="text" value={editForm.descripcion} onChange={(e) => setEditForm({ ...editForm, descripcion: e.target.value })} className="input" />
+              <div className="field" style={{ width: '100px' }}>
+                <label className="field-label">Nivel</label>
+                <input type="number" value={editForm.nivel} onChange={(e) => setEditForm({ ...editForm, nivel: parseInt(e.target.value) || 0 })} className="input" min="0" max="99" />
               </div>
-              <div style={{ marginBottom: '24px' }}>
-                <label className="field-label" style={{ marginBottom: '12px', display: 'block' }}>Permisos ({permisosSeleccionados.length})</label>
-                <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                  {Object.entries(permisosPorModulo).map(([modulo, perms]) => {
-                    const expandido = modulosExpandidos[modulo]
-                    const todos = perms.every(p => permisosSeleccionados.includes(p.id))
-                    const algunos = perms.some(p => permisosSeleccionados.includes(p.id))
-                    return (
-                      <div key={modulo}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setModulosExpandidos(prev => ({ ...prev, [modulo]: !prev[modulo] }))}>
-                          <span style={{ color: 'var(--text-muted)' }}>{expandido ? <Icons.ChevronDown /> : <Icons.ChevronRight />}</span>
-                          <span style={{ fontSize: '16px' }}>{MODULOS[modulo]?.icono || '📁'}</span>
-                          <span style={{ flex: 1, fontWeight: 500 }}>{MODULOS[modulo]?.nombre || modulo}</span>
-                          <button type="button" onClick={(e) => { e.stopPropagation(); toggleModulo(modulo) }} style={{ padding: '4px 8px', fontSize: '12px', background: todos ? 'var(--success)' : algunos ? 'var(--warning)' : 'rgba(255,255,255,0.1)', color: todos || algunos ? '#000' : 'var(--text)', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                            {todos ? 'Todos' : algunos ? 'Algunos' : 'Ninguno'}
-                          </button>
-                        </div>
-                        {expandido && (
-                          <div style={{ padding: '8px 16px 8px 48px' }}>
-                            {perms.map(p => (
-                              <label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', cursor: 'pointer' }}>
-                                <input type="checkbox" checked={permisosSeleccionados.includes(p.id)} onChange={() => togglePermiso(p.id)} style={{ width: '18px', height: '18px', accentColor: 'var(--primary)' }} />
-                                <div>
-                                  <div style={{ fontSize: '14px', color: 'var(--text)' }}>{p.nombre}</div>
-                                  {p.descripcion && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.descripcion}</div>}
-                                </div>
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setModalEditar(null)} className="btn">Cancelar</button>
-                <button type="submit" disabled={editLoading} className="btn primary">{editLoading ? 'Guardando...' : 'Guardar'}</button>
-              </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
+          <div className="field" style={{ marginBottom: '24px' }}>
+            <label className="field-label">Descripción</label>
+            <input type="text" value={editForm.descripcion} onChange={(e) => setEditForm({ ...editForm, descripcion: e.target.value })} className="input" />
+          </div>
+          <div style={{ marginBottom: '24px' }}>
+            <label className="field-label" style={{ marginBottom: '12px', display: 'block' }}>Permisos ({permisosSeleccionados.length})</label>
+            <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
+              {Object.entries(permisosPorModulo).map(([modulo, perms]) => {
+                const expandido = modulosExpandidos[modulo]
+                const todos = perms.every(p => permisosSeleccionados.includes(p.id))
+                const algunos = perms.some(p => permisosSeleccionados.includes(p.id))
+                return (
+                  <div key={modulo}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setModulosExpandidos(prev => ({ ...prev, [modulo]: !prev[modulo] }))}>
+                      <span style={{ color: 'var(--text-muted)' }}>{expandido ? <Icons.ChevronDown /> : <Icons.ChevronRight />}</span>
+                      <span style={{ fontSize: '16px' }}>{MODULOS[modulo]?.icono || '📁'}</span>
+                      <span style={{ flex: 1, fontWeight: 500 }}>{MODULOS[modulo]?.nombre || modulo}</span>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); toggleModulo(modulo) }} style={{ padding: '4px 8px', fontSize: '12px', background: todos ? 'var(--success)' : algunos ? 'var(--warning)' : 'rgba(255,255,255,0.1)', color: todos || algunos ? '#000' : 'var(--text)', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                        {todos ? 'Todos' : algunos ? 'Algunos' : 'Ninguno'}
+                      </button>
+                    </div>
+                    {expandido && (
+                      <div style={{ padding: '8px 16px 8px 48px' }}>
+                        {perms.map(p => (
+                          <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', padding: '8px 0' }}>
+                            <Checkbox checked={permisosSeleccionados.includes(p.id)} onChange={() => togglePermiso(p.id)} />
+                            <div style={{ cursor: 'pointer' }} onClick={() => togglePermiso(p.id)}>
+                              <div style={{ fontSize: '14px', color: 'var(--text)' }}>{p.nombre}</div>
+                              {p.descripcion && <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{p.descripcion}</div>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </form>
+      </Modal>
 
-      <style>{`
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
-        .modal-content { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
-        .modal-content.modal-lg { max-width: 700px; }
-        .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-        .modal-header h2 { margin: 0; }
-      `}</style>
+      <ConfirmDialog
+        open={!!confirmEliminar}
+        title="Eliminar rol"
+        message="¿Eliminar este rol? Los usuarios asignados perderán sus permisos asociados."
+        variant="danger"
+        confirmText="Eliminar"
+        onConfirm={() => eliminarRol(confirmEliminar)}
+        onCancel={() => setConfirmEliminar(null)}
+      />
+
     </div>
   )
 }

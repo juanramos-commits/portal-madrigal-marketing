@@ -1,12 +1,9 @@
 import { useState } from 'react'
+import Toggle from '../ui/Toggle'
+import Select from '../ui/Select'
+import Modal from '../ui/Modal'
 
 const BASE_URL = 'https://app.madrigalmarketing.es/reservar/'
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
 
 const CopyIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
@@ -155,12 +152,7 @@ export default function CalendarioEnlaces({
                       <td>{e.setter?.nombre || e.setter?.email || 'Sin setter'}</td>
                       <td>{e.fuente || '-'}</td>
                       <td>
-                        <button
-                          className={`vc-toggle-mini${e.activo ? ' active' : ''}`}
-                          onClick={() => handleToggleActivo(e)}
-                        >
-                          <span className="vc-toggle-mini-knob" />
-                        </button>
+                        <Toggle checked={e.activo} onChange={() => handleToggleActivo(e)} />
                       </td>
                       <td>
                         <button className="vc-btn-copy" onClick={() => copiarUrl(e.slug)}>
@@ -186,12 +178,7 @@ export default function CalendarioEnlaces({
               <div key={e.id} className="vc-enlace-card">
                 <div className="vc-enlace-card-top">
                   <span style={{ fontWeight: 600 }}>{e.nombre}</span>
-                  <button
-                    className={`vc-toggle-mini${e.activo ? ' active' : ''}`}
-                    onClick={() => handleToggleActivo(e)}
-                  >
-                    <span className="vc-toggle-mini-knob" />
-                  </button>
+                  <Toggle checked={e.activo} onChange={() => handleToggleActivo(e)} />
                 </div>
                 <div className="vc-enlace-card-meta">
                   <span>/{e.slug}</span>
@@ -212,48 +199,44 @@ export default function CalendarioEnlaces({
       )}
 
       {/* Modal crear/editar */}
-      {showModal && (
-        <>
-          <div className="vc-modal-overlay" onClick={() => setShowModal(false)} />
-          <div className="vc-modal vc-modal-sm">
-            <div className="vc-modal-header">
-              <h2>{editando ? 'Editar enlace' : 'Nuevo enlace'}</h2>
-              <button className="vc-modal-close" onClick={() => setShowModal(false)}><CloseIcon /></button>
-            </div>
-            <div className="vc-modal-body">
-              <div className="vc-field">
-                <label>Nombre *</label>
-                <input type="text" value={nombre} onChange={e => handleNombreChange(e.target.value)} placeholder="Ej: Enlace Setter Mireia" />
-              </div>
-              <div className="vc-field">
-                <label>Slug *</label>
-                <input type="text" value={slug} onChange={e => setSlug(e.target.value)} placeholder="enlace-setter-mireia" />
-                <span className="vc-field-hint">{BASE_URL}{slug || '...'}</span>
-              </div>
-              <div className="vc-field">
-                <label>Setter vinculado</label>
-                <select value={setterId} onChange={e => setSetterId(e.target.value)}>
-                  <option value="">Ninguno</option>
-                  {setters?.map(s => (
-                    <option key={s.id} value={s.id}>{s.nombre || s.email}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="vc-field">
-                <label>Fuente</label>
-                <input type="text" value={fuente} onChange={e => setFuente(e.target.value)} placeholder="Ej: Instagram, Email Marketing..." />
-              </div>
-              {error && <div className="vc-error-msg">{error}</div>}
-            </div>
-            <div className="vc-modal-actions">
-              <button className="vc-btn-ghost" onClick={() => setShowModal(false)} disabled={saving}>Cancelar</button>
-              <button className="vc-btn-primary" onClick={handleGuardar} disabled={saving}>
-                {saving ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear enlace'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editando ? 'Editar enlace' : 'Nuevo enlace'}
+        size="sm"
+        footer={
+          <>
+            <button className="vc-btn-ghost" onClick={() => setShowModal(false)} disabled={saving}>Cancelar</button>
+            <button className="vc-btn-primary" onClick={handleGuardar} disabled={saving}>
+              {saving ? 'Guardando...' : editando ? 'Guardar cambios' : 'Crear enlace'}
+            </button>
+          </>
+        }
+      >
+        <div className="vc-field">
+          <label>Nombre *</label>
+          <input type="text" value={nombre} onChange={e => handleNombreChange(e.target.value)} placeholder="Ej: Enlace Setter Mireia" />
+        </div>
+        <div className="vc-field">
+          <label>Slug *</label>
+          <input type="text" value={slug} onChange={e => setSlug(e.target.value)} placeholder="enlace-setter-mireia" />
+          <span className="vc-field-hint">{BASE_URL}{slug || '...'}</span>
+        </div>
+        <div className="vc-field">
+          <label>Setter vinculado</label>
+          <Select value={setterId} onChange={e => setSetterId(e.target.value)}>
+            <option value="">Ninguno</option>
+            {setters?.map(s => (
+              <option key={s.id} value={s.id}>{s.nombre || s.email}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="vc-field">
+          <label>Fuente</label>
+          <input type="text" value={fuente} onChange={e => setFuente(e.target.value)} placeholder="Ej: Instagram, Email Marketing..." />
+        </div>
+        {error && <div className="vc-error-msg">{error}</div>}
+      </Modal>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ToastProvider } from './contexts/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import PermissionRoute from './components/PermissionRoute'
 import Layout from './components/Layout'
@@ -45,17 +46,20 @@ import Reuniones from './pages/Reuniones'
 import Archivos from './pages/Archivos'
 import Madrigalito from './pages/Madrigalito'
 
-// Redirige al dashboard correcto según tipo de usuario
+// Redirige al primer dashboard accesible según permisos del usuario
 function SmartRedirect() {
-  const { usuario, loading } = useAuth()
+  const { usuario, tienePermiso, loading } = useAuth()
   if (loading) return null
   if (usuario?.tipo === 'cliente') return <Navigate to="/mi-cuenta" replace />
-  return <Navigate to="/dashboard" replace />
+  if (tienePermiso('ventas.ver_dashboard')) return <Navigate to="/ventas/dashboard" replace />
+  if (tienePermiso('dashboard.ver')) return <Navigate to="/dashboard" replace />
+  return <Navigate to="/mi-seguridad" replace />
 }
 
 function App() {
   return (
     <AuthProvider>
+      <ToastProvider>
       <BrowserRouter>
         <Routes>
           {/* Rutas públicas */}
@@ -79,25 +83,25 @@ function App() {
             <Route path="mi-cuenta" element={<ClienteDashboard />} />
             <Route path="clientes" element={<PermissionRoute permiso="clientes.ver_lista"><TablaClientesAvanzada /></PermissionRoute>} />
             <Route path="clientes/:id" element={<PermissionRoute permiso="clientes.ver_detalle"><ClienteDetalleAvanzado /></PermissionRoute>} />
-            <Route path="ventas/dashboard" element={<VentasDashboard />} />
-            <Route path="ventas/notificaciones" element={<VentasNotificaciones />} />
-            <Route path="ventas/crm" element={<VentasCRM />} />
-            <Route path="ventas/crm/lead/:id" element={<CRMLeadDetalle />} />
-            <Route path="ventas/ventas" element={<VentasVentas />} />
-            <Route path="ventas/biblioteca" element={<VentasBiblioteca />} />
-            <Route path="ventas/wallet" element={<VentasWallet />} />
-            <Route path="ventas/calendario" element={<VentasCalendario />} />
-            <Route path="ventas/ajustes" element={<VentasAjustes />} />
+            <Route path="ventas/dashboard" element={<PermissionRoute permiso="ventas.ver_dashboard"><VentasDashboard /></PermissionRoute>} />
+            <Route path="ventas/notificaciones" element={<PermissionRoute permiso="ventas.ver_notificaciones"><VentasNotificaciones /></PermissionRoute>} />
+            <Route path="ventas/crm" element={<PermissionRoute permiso="ventas.ver_crm"><VentasCRM /></PermissionRoute>} />
+            <Route path="ventas/crm/lead/:id" element={<PermissionRoute permiso="ventas.ver_crm"><CRMLeadDetalle /></PermissionRoute>} />
+            <Route path="ventas/ventas" element={<PermissionRoute permiso="ventas.ver_ventas"><VentasVentas /></PermissionRoute>} />
+            <Route path="ventas/biblioteca" element={<PermissionRoute permiso="ventas.ver_biblioteca"><VentasBiblioteca /></PermissionRoute>} />
+            <Route path="ventas/wallet" element={<PermissionRoute permiso="ventas.ver_wallet"><VentasWallet /></PermissionRoute>} />
+            <Route path="ventas/calendario" element={<PermissionRoute permiso="ventas.ver_calendario"><VentasCalendario /></PermissionRoute>} />
+            <Route path="ventas/ajustes" element={<PermissionRoute permiso="ventas.ver_ajustes"><VentasAjustes /></PermissionRoute>} />
 
             {/* Generales */}
             <Route path="notificaciones" element={<Notificaciones />} />
-            <Route path="crm" element={<CRM />} />
-            <Route path="paquetes-clientes" element={<PaquetesClientes />} />
-            <Route path="documentacion/facturas" element={<Facturas />} />
-            <Route path="documentacion/contrato" element={<Contrato />} />
-            <Route path="reuniones" element={<Reuniones />} />
-            <Route path="archivos" element={<Archivos />} />
-            <Route path="madrigalito" element={<Madrigalito />} />
+            <Route path="crm" element={<PermissionRoute permiso="crm.ver"><CRM /></PermissionRoute>} />
+            <Route path="paquetes-clientes" element={<PermissionRoute permiso="paquetes.ver"><PaquetesClientes /></PermissionRoute>} />
+            <Route path="documentacion/facturas" element={<PermissionRoute permiso="documentacion.ver"><Facturas /></PermissionRoute>} />
+            <Route path="documentacion/contrato" element={<PermissionRoute permiso="documentacion.ver"><Contrato /></PermissionRoute>} />
+            <Route path="reuniones" element={<PermissionRoute permiso="reuniones.ver"><Reuniones /></PermissionRoute>} />
+            <Route path="archivos" element={<PermissionRoute permiso="archivos.ver"><Archivos /></PermissionRoute>} />
+            <Route path="madrigalito" element={<PermissionRoute permiso="madrigalito.ver"><Madrigalito /></PermissionRoute>} />
             <Route path="tareas" element={<PermissionRoute permiso="tareas.ver_propias"><PlaceholderPage title="Tareas" /></PermissionRoute>} />
             <Route path="sugerencias" element={<PermissionRoute permiso="sugerencias.ver_propias"><PlaceholderPage title="Sugerencias" /></PermissionRoute>} />
 
@@ -115,6 +119,7 @@ function App() {
         </Routes>
         <CookieConsent />
       </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   )
 }

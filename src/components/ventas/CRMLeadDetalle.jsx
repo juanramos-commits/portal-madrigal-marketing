@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import Select from '../ui/Select'
+import ConfirmDialog from '../ui/ConfirmDialog'
 import '../../styles/ventas-crm.css'
 
 const ArrowLeftIcon = () => (
@@ -373,7 +375,7 @@ export default function CRMLeadDetalle() {
                     <div className="crm-dropdown-sep" />
                     <div style={{ position: 'relative' }}>
                       <button className="crm-dropdown-item" onClick={e => e.stopPropagation()}>
-                        <select
+                        <Select
                           style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, width: '100%', cursor: 'pointer' }}
                           value={lead.setter_asignado_id || ''}
                           onChange={e => asignarSetter(e.target.value)}
@@ -384,12 +386,12 @@ export default function CRMLeadDetalle() {
                               Setter: {s.usuario?.nombre || s.usuario?.email}
                             </option>
                           ))}
-                        </select>
+                        </Select>
                       </button>
                     </div>
                     <div style={{ position: 'relative' }}>
                       <button className="crm-dropdown-item" onClick={e => e.stopPropagation()}>
-                        <select
+                        <Select
                           style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, width: '100%', cursor: 'pointer' }}
                           value={lead.closer_asignado_id || ''}
                           onChange={e => asignarCloser(e.target.value)}
@@ -400,7 +402,7 @@ export default function CRMLeadDetalle() {
                               Closer: {c.usuario?.nombre || c.usuario?.email}
                             </option>
                           ))}
-                        </select>
+                        </Select>
                       </button>
                     </div>
                     <div className="crm-dropdown-sep" />
@@ -437,10 +439,10 @@ export default function CRMLeadDetalle() {
           </div>
           <div className="crm-field">
             <label>Categoría</label>
-            <select value={lead.categoria_id || ''} onChange={e => updateField('categoria_id', e.target.value || null)}>
+            <Select value={lead.categoria_id || ''} onChange={e => updateField('categoria_id', e.target.value || null)}>
               <option value="">Sin categoría</option>
               {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            </select>
+            </Select>
           </div>
           <div className="crm-field">
             <label>Fuente</label>
@@ -485,10 +487,10 @@ export default function CRMLeadDetalle() {
           <div className="crm-field">
             <label>Setter asignado</label>
             {esAdminODirector ? (
-              <select value={lead.setter_asignado_id || ''} onChange={e => asignarSetter(e.target.value)}>
+              <Select value={lead.setter_asignado_id || ''} onChange={e => asignarSetter(e.target.value)}>
                 <option value="">Sin setter</option>
                 {setters.map(s => <option key={s.usuario_id} value={s.usuario_id}>{s.usuario?.nombre}</option>)}
-              </select>
+              </Select>
             ) : (
               <input value={lead.setter?.nombre || 'Sin asignar'} readOnly style={{ opacity: 0.7 }} />
             )}
@@ -496,10 +498,10 @@ export default function CRMLeadDetalle() {
           <div className="crm-field">
             <label>Closer asignado</label>
             {esAdminODirector ? (
-              <select value={lead.closer_asignado_id || ''} onChange={e => asignarCloser(e.target.value)}>
+              <Select value={lead.closer_asignado_id || ''} onChange={e => asignarCloser(e.target.value)}>
                 <option value="">Sin closer</option>
                 {closers.map(c => <option key={c.usuario_id} value={c.usuario_id}>{c.usuario?.nombre}</option>)}
-              </select>
+              </Select>
             ) : (
               <input value={lead.closer?.nombre || 'Sin asignar'} readOnly style={{ opacity: 0.7 }} />
             )}
@@ -662,25 +664,15 @@ export default function CRMLeadDetalle() {
       </div>
 
       {/* ── Confirm Delete Modal ────────────────────────────────────── */}
-      {showConfirmDelete && (
-        <div className="crm-modal-overlay" onClick={() => setShowConfirmDelete(false)}>
-          <div className="crm-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 380 }}>
-            <div className="crm-modal-header">
-              <h2>Eliminar Lead</h2>
-              <button className="crm-modal-close" onClick={() => setShowConfirmDelete(false)}>&times;</button>
-            </div>
-            <div className="crm-modal-body">
-              <div className="crm-confirm">
-                <p>¿Estás seguro de que quieres eliminar a <strong>{lead.nombre}</strong>? Esta acción no se puede deshacer.</p>
-              </div>
-            </div>
-            <div className="crm-modal-footer">
-              <button className="btn" onClick={() => setShowConfirmDelete(false)}>Cancelar</button>
-              <button className="btn danger" onClick={eliminar}>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={showConfirmDelete}
+        title="Eliminar Lead"
+        message={<>¿Estás seguro de que quieres eliminar a <strong>{lead?.nombre}</strong>? Esta acción no se puede deshacer.</>}
+        variant="danger"
+        confirmText="Eliminar"
+        onConfirm={eliminar}
+        onCancel={() => setShowConfirmDelete(false)}
+      />
 
       {/* ── Toast ───────────────────────────────────────────────────── */}
       {toast && (

@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react'
+import Select from '../ui/Select'
+import Modal from '../ui/Modal'
+import ConfirmDialog from '../ui/ConfirmDialog'
 
 const SUPABASE_URL = 'https://ootncgtcvwnrskqtamak.supabase.co'
 const CRM_FIELDS = ['nombre', 'email', 'telefono', 'nombre_negocio', 'fuente', 'ciudad', 'pais', 'notas']
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
 
 const CopyIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
@@ -160,118 +157,99 @@ export default function AjustesWebhooks({
       )}
 
       {/* Form modal */}
-      {showForm && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setShowForm(false)} />
-          <div className="aj-modal aj-modal-sm">
-            <div className="aj-modal-header">
-              <h2>{editando ? 'Editar webhook' : 'Nuevo webhook'}</h2>
-              <button className="aj-modal-close" onClick={() => setShowForm(false)}><CloseIcon /></button>
-            </div>
-            <div className="aj-modal-body">
-              <div className="aj-field"><label>Nombre *</label><input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} /></div>
-              <div className="aj-field"><label>Fuente</label><input type="text" value={form.fuente} onChange={e => setForm(p => ({ ...p, fuente: e.target.value }))} placeholder="Instagram Ads, Facebook Ads..." /></div>
-              {error && <div className="aj-error">{error}</div>}
-            </div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setShowForm(false)}>Cancelar</button>
-              <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>{saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear'}</button>
-            </div>
-          </div>
-        </>
-      )}
+      <Modal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title={editando ? 'Editar webhook' : 'Nuevo webhook'}
+        size="sm"
+        footer={
+          <>
+            <button className="aj-btn-ghost" onClick={() => setShowForm(false)}>Cancelar</button>
+            <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>{saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear'}</button>
+          </>
+        }
+      >
+        <div className="aj-field"><label>Nombre *</label><input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} /></div>
+        <div className="aj-field"><label>Fuente</label><input type="text" value={form.fuente} onChange={e => setForm(p => ({ ...p, fuente: e.target.value }))} placeholder="Instagram Ads, Facebook Ads..." /></div>
+        {error && <div className="aj-error">{error}</div>}
+      </Modal>
 
       {/* Mapeo modal */}
-      {showMapeo && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setShowMapeo(null)} />
-          <div className="aj-modal">
-            <div className="aj-modal-header">
-              <h2>Mapeo de campos — {showMapeo.nombre}</h2>
-              <button className="aj-modal-close" onClick={() => setShowMapeo(null)}><CloseIcon /></button>
-            </div>
-            <div className="aj-modal-body">
-              <div className="aj-mapeo-header">
-                <span>Campo del webhook</span>
-                <span />
-                <span>Campo del CRM</span>
-                <span />
-              </div>
-              {mapeo.map((r, i) => (
-                <div key={i} className="aj-mapeo-row">
-                  <input type="text" value={r.webhook} onChange={e => updateMapeo(i, 'webhook', e.target.value)} placeholder="name" />
-                  <span className="aj-mapeo-arrow">→</span>
-                  <select value={r.crm} onChange={e => updateMapeo(i, 'crm', e.target.value)}>
-                    <option value="">Seleccionar</option>
-                    {CRM_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                  <button className="aj-btn-icon-danger" onClick={() => removeMapeoRow(i)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </div>
-              ))}
-              <button className="aj-btn-sm aj-mt" onClick={addMapeoRow}>+ Añadir campo</button>
-            </div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setShowMapeo(null)}>Cancelar</button>
-              <button className="aj-btn-primary" onClick={handleGuardarMapeo} disabled={savingMapeo}>{savingMapeo ? 'Guardando...' : 'Guardar mapeo'}</button>
-            </div>
+      <Modal
+        open={!!showMapeo}
+        onClose={() => setShowMapeo(null)}
+        title={`Mapeo de campos — ${showMapeo?.nombre || ''}`}
+        footer={
+          <>
+            <button className="aj-btn-ghost" onClick={() => setShowMapeo(null)}>Cancelar</button>
+            <button className="aj-btn-primary" onClick={handleGuardarMapeo} disabled={savingMapeo}>{savingMapeo ? 'Guardando...' : 'Guardar mapeo'}</button>
+          </>
+        }
+      >
+        <div className="aj-mapeo-header">
+          <span>Campo del webhook</span>
+          <span />
+          <span>Campo del CRM</span>
+          <span />
+        </div>
+        {mapeo.map((r, i) => (
+          <div key={i} className="aj-mapeo-row">
+            <input type="text" value={r.webhook} onChange={e => updateMapeo(i, 'webhook', e.target.value)} placeholder="name" />
+            <span className="aj-mapeo-arrow">→</span>
+            <Select value={r.crm} onChange={e => updateMapeo(i, 'crm', e.target.value)}>
+              <option value="">Seleccionar</option>
+              {CRM_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}
+            </Select>
+            <button className="aj-btn-icon-danger" onClick={() => removeMapeoRow(i)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
-        </>
-      )}
+        ))}
+        <button className="aj-btn-sm aj-mt" onClick={addMapeoRow}>+ Añadir campo</button>
+      </Modal>
 
       {/* Logs modal */}
-      {showLogs && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setShowLogs(null)} />
-          <div className="aj-modal aj-modal-lg">
-            <div className="aj-modal-header">
-              <h2>Logs — {showLogs.nombre}</h2>
-              <button className="aj-modal-close" onClick={() => setShowLogs(null)}><CloseIcon /></button>
-            </div>
-            <div className="aj-modal-body">
-              {logsLoading ? (
-                <div className="aj-loading">Cargando...</div>
-              ) : logs.length === 0 ? (
-                <div className="aj-empty">Sin registros</div>
-              ) : (
-                <div className="aj-logs-list">
-                  {logs.map(l => (
-                    <div key={l.id} className="aj-log-row" onClick={() => setExpandedLog(expandedLog === l.id ? null : l.id)}>
-                      <div className="aj-log-main">
-                        <span className="aj-log-fecha">{new Date(l.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
-                        <span className={`aj-log-resultado ${l.resultado === 'exito' ? 'aj-text-success' : 'aj-text-error'}`}>
-                          {l.resultado === 'exito' ? '✓ Éxito' : '✗ Error'}
-                        </span>
-                        {l.lead_nombre && <span>{l.lead_nombre}</span>}
-                        {l.error_mensaje && <span className="aj-text-error">{l.error_mensaje}</span>}
-                      </div>
-                      {expandedLog === l.id && l.payload && (
-                        <pre className="aj-log-payload">{JSON.stringify(l.payload, null, 2)}</pre>
-                      )}
-                    </div>
-                  ))}
+      <Modal
+        open={!!showLogs}
+        onClose={() => setShowLogs(null)}
+        title={`Logs — ${showLogs?.nombre || ''}`}
+        size="lg"
+      >
+        {logsLoading ? (
+          <div className="aj-loading">Cargando...</div>
+        ) : logs.length === 0 ? (
+          <div className="aj-empty">Sin registros</div>
+        ) : (
+          <div className="aj-logs-list">
+            {logs.map(l => (
+              <div key={l.id} className="aj-log-row" onClick={() => setExpandedLog(expandedLog === l.id ? null : l.id)}>
+                <div className="aj-log-main">
+                  <span className="aj-log-fecha">{new Date(l.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className={`aj-log-resultado ${l.resultado === 'exito' ? 'aj-text-success' : 'aj-text-error'}`}>
+                    {l.resultado === 'exito' ? '✓ Éxito' : '✗ Error'}
+                  </span>
+                  {l.lead_nombre && <span>{l.lead_nombre}</span>}
+                  {l.error_mensaje && <span className="aj-text-error">{l.error_mensaje}</span>}
                 </div>
-              )}
-            </div>
+                {expandedLog === l.id && l.payload && (
+                  <pre className="aj-log-payload">{JSON.stringify(l.payload, null, 2)}</pre>
+                )}
+              </div>
+            ))}
           </div>
-        </>
-      )}
+        )}
+      </Modal>
 
       {/* Confirm delete */}
-      {confirmDelete && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setConfirmDelete(null)} />
-          <div className="aj-modal aj-modal-sm">
-            <div className="aj-modal-header"><h2>Eliminar webhook</h2></div>
-            <div className="aj-modal-body"><p>¿Eliminar <strong>{confirmDelete.nombre}</strong>?</p></div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className="aj-btn-danger" onClick={handleEliminar}>Eliminar</button>
-            </div>
-          </div>
-        </>
-      )}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Eliminar webhook"
+        message={<>¿Eliminar <strong>{confirmDelete?.nombre}</strong>?</>}
+        variant="danger"
+        confirmText="Eliminar"
+        onConfirm={handleEliminar}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   )
 }

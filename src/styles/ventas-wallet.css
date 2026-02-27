@@ -106,7 +106,7 @@
 
 .wt-icon-success {
   background: rgba(46, 229, 157, 0.12);
-  color: #2ee59d;
+  color: var(--success);
 }
 
 .wt-icon-muted {
@@ -140,7 +140,7 @@
   padding: 10px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  background: #2ee59d;
+  background: var(--success);
   color: #0a0a0b;
   font-size: 14px;
   font-weight: 600;
@@ -262,8 +262,8 @@
   vertical-align: middle;
 }
 
-.wt-text-success { color: #2ee59d; }
-.wt-text-danger { color: #ff6b6b; }
+.wt-text-success { color: var(--success); }
+.wt-text-danger { color: var(--error); }
 
 /* ── Badges ───────────────────────────────────────────────────────── */
 .wt-badge {
@@ -279,17 +279,17 @@
 
 .wt-badge-pendiente {
   background: rgba(255, 169, 77, 0.15);
-  color: #ffa94d;
+  color: var(--warning);
 }
 
 .wt-badge-aprobado {
   background: rgba(46, 229, 157, 0.15);
-  color: #2ee59d;
+  color: var(--success);
 }
 
 .wt-badge-rechazado {
   background: rgba(255, 107, 107, 0.15);
-  color: #ff6b6b;
+  color: var(--error);
 }
 
 /* ── Filters row ──────────────────────────────────────────────────── */
@@ -384,7 +384,7 @@
 }
 
 .wt-action-approve {
-  color: #2ee59d;
+  color: var(--success);
   border-color: rgba(46, 229, 157, 0.3);
 }
 .wt-action-approve:hover {
@@ -392,7 +392,7 @@
 }
 
 .wt-action-reject {
-  color: #ff6b6b;
+  color: var(--error);
   border-color: rgba(255, 107, 107, 0.3);
 }
 .wt-action-reject:hover {
@@ -411,7 +411,7 @@
   gap: 4px;
   background: transparent;
   border: none;
-  color: #6495ed;
+  color: var(--info);
   font-size: 12px;
   cursor: pointer;
   padding: 2px 6px;
@@ -470,7 +470,7 @@
   padding: 8px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  background: #2ee59d;
+  background: var(--success);
   color: #0a0a0b;
   font-size: 13px;
   font-weight: 600;
@@ -491,7 +491,7 @@
   padding: 8px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  background: #ff6b6b;
+  background: var(--error);
   color: white;
   font-size: 13px;
   font-weight: 600;
@@ -526,120 +526,10 @@
   color: var(--text);
 }
 
-/* ── Modals ───────────────────────────────────────────────────────── */
-.wt-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 100;
-  animation: wt-fadeIn 0.2s ease;
-}
-
-@keyframes wt-fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.wt-modal {
-  position: fixed;
-  z-index: 101;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
-}
-
-.wt-modal-confirm {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 440px;
-  animation: wt-fadeScaleIn 0.2s ease;
-}
-
-@keyframes wt-fadeScaleIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-.wt-modal-retiro {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 560px;
-  animation: wt-fadeScaleIn 0.2s ease;
-}
-
-.wt-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  gap: var(--space-md);
-}
-
-.wt-modal-header h2 {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-  color: var(--text);
-  flex-shrink: 0;
-}
-
-.wt-modal-close {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  display: flex;
-  transition: all var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.wt-modal-close svg {
-  width: 18px;
-  height: 18px;
-}
-
-.wt-modal-close:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text);
-}
-
-.wt-modal-body {
-  padding: var(--space-lg);
-  overflow-y: auto;
-  flex: 1;
-}
-
-.wt-modal-body p {
-  font-size: 14px;
-  color: var(--text);
-  margin: 0 0 var(--space-sm);
-  line-height: 1.5;
-}
-
+/* ── Modal utility classes (used inside shared Modal) ────────────── */
 .wt-modal-hint {
   font-size: 13px !important;
   color: var(--text-muted) !important;
-}
-
-.wt-modal-actions {
-  display: flex;
-  gap: var(--space-sm);
-  justify-content: flex-end;
-  padding: var(--space-md) var(--space-lg);
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
 }
 
 /* ── Steps indicator ──────────────────────────────────────────────── */
@@ -851,48 +741,6 @@
 /* ── Toggle ───────────────────────────────────────────────────────── */
 .wt-field-toggle-wrap {
   margin-bottom: var(--space-md);
-}
-
-.wt-toggle-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
-  color: var(--text);
-  text-transform: none;
-  font-weight: 500;
-  letter-spacing: 0;
-}
-
-.wt-toggle {
-  width: 40px;
-  height: 22px;
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.1);
-  position: relative;
-  transition: background var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.wt-toggle.active {
-  background: #2ee59d;
-}
-
-.wt-toggle-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: white;
-  transition: transform var(--transition-fast);
-}
-
-.wt-toggle.active .wt-toggle-knob {
-  transform: translateX(18px);
 }
 
 /* ── Datos Fiscales form ──────────────────────────────────────────── */
@@ -1166,25 +1014,5 @@
   .wt-fp-row {
     grid-template-columns: 1fr;
     gap: var(--space-md);
-  }
-
-  /* Modal bottom sheet on mobile */
-  .wt-modal-confirm,
-  .wt-modal-retiro {
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    transform: none;
-    width: 100%;
-    max-width: 100%;
-    max-height: 85vh;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    animation: wt-slideUpMobile 0.3s ease;
-  }
-
-  @keyframes wt-slideUpMobile {
-    from { opacity: 0; transform: translateY(100%); }
-    to { opacity: 1; transform: translateY(0); }
   }
 }

@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react'
+import Checkbox from '../ui/Checkbox'
+import Modal from '../ui/Modal'
+import ConfirmDialog from '../ui/ConfirmDialog'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core'
@@ -103,53 +106,40 @@ export default function AjustesReunionEstados({
         </DndContext>
       )}
 
-      {showModal && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setShowModal(false)} />
-          <div className="aj-modal aj-modal-sm">
-            <div className="aj-modal-header">
-              <h2>{editando ? 'Editar estado' : 'Nuevo estado'}</h2>
-              <button className="aj-modal-close" onClick={() => setShowModal(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-              </button>
-            </div>
-            <div className="aj-modal-body">
-              <div className="aj-field"><label>Nombre *</label><input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} /></div>
-              <div className="aj-field">
-                <label>Color</label>
-                <div className="aj-color-picker">
-                  <input type="color" value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))} />
-                  <span className="aj-color-preview" style={{ background: form.color }} />
-                  <span>{form.color}</span>
-                </div>
-              </div>
-              <label className="aj-check-label">
-                <input type="checkbox" checked={form.es_obligatorio_grabacion} onChange={e => setForm(p => ({ ...p, es_obligatorio_grabacion: e.target.checked }))} />
-                <span>Grabación obligatoria</span>
-              </label>
-              {error && <div className="aj-error">{error}</div>}
-            </div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
-              <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>{saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear'}</button>
-            </div>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editando ? 'Editar estado' : 'Nuevo estado'}
+        size="sm"
+        footer={
+          <>
+            <button className="aj-btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
+            <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>{saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear'}</button>
+          </>
+        }
+      >
+        <div className="aj-field"><label>Nombre *</label><input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} /></div>
+        <div className="aj-field">
+          <label>Color</label>
+          <div className="aj-color-picker">
+            <input type="color" value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))} />
+            <span className="aj-color-preview" style={{ background: form.color }} />
+            <span>{form.color}</span>
           </div>
-        </>
-      )}
+        </div>
+        <Checkbox checked={form.es_obligatorio_grabacion} onChange={v => setForm(p => ({ ...p, es_obligatorio_grabacion: v }))} label="Grabación obligatoria" />
+        {error && <div className="aj-error">{error}</div>}
+      </Modal>
 
-      {confirmDelete && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setConfirmDelete(null)} />
-          <div className="aj-modal aj-modal-sm">
-            <div className="aj-modal-header"><h2>Eliminar estado</h2></div>
-            <div className="aj-modal-body"><p>¿Eliminar <strong>{confirmDelete.nombre}</strong>?</p></div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className="aj-btn-danger" onClick={handleEliminar}>Eliminar</button>
-            </div>
-          </div>
-        </>
-      )}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Eliminar estado"
+        message={<>¿Eliminar <strong>{confirmDelete?.nombre}</strong>?</>}
+        variant="danger"
+        confirmText="Eliminar"
+        onConfirm={handleEliminar}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   )
 }

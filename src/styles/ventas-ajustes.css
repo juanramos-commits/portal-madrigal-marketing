@@ -406,17 +406,17 @@
 
 .aj-role-setter {
   background: rgba(100, 149, 237, 0.15);
-  color: #6495ed;
+  color: var(--info);
 }
 
 .aj-role-closer {
   background: rgba(46, 229, 157, 0.15);
-  color: #2ee59d;
+  color: var(--success);
 }
 
 .aj-role-director_ventas {
   background: rgba(255, 169, 77, 0.15);
-  color: #ffa94d;
+  color: var(--warning);
 }
 
 /* ═══ ETAPAS / SORTABLE LIST ═══ */
@@ -479,47 +479,6 @@
   margin-right: var(--space-sm);
 }
 
-/* ═══ TOGGLE ═══ */
-.aj-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--bg-input);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  position: relative;
-}
-
-.aj-toggle.active {
-  background: rgba(46, 229, 157, 0.15);
-  border-color: rgba(46, 229, 157, 0.3);
-}
-
-.aj-toggle-knob {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  transition: all var(--transition-fast);
-}
-
-.aj-toggle.active .aj-toggle-knob {
-  background: var(--success);
-}
-
-.aj-toggle-text {
-  font-size: 0.78rem;
-  font-weight: 500;
-  color: var(--text-muted);
-}
-
-.aj-toggle.active .aj-toggle-text {
-  color: var(--success);
-}
-
 /* ═══ CAMPOS LIST ═══ */
 .aj-campos-list {
   display: flex;
@@ -564,83 +523,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-}
-
-/* ═══ MODALS ═══ */
-.aj-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 100;
-}
-
-.aj-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 560px;
-  max-height: 85vh;
-  overflow-y: auto;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  z-index: 101;
-  display: flex;
-  flex-direction: column;
-}
-
-.aj-modal-sm { max-width: 420px; }
-.aj-modal-lg { max-width: 720px; }
-
-.aj-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--border);
-}
-
-.aj-modal-header h2 {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0;
-}
-
-.aj-modal-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  background: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-}
-
-.aj-modal-close:hover { color: var(--text); background: var(--bg-input); }
-
-.aj-modal-body {
-  padding: var(--space-lg);
-  overflow-y: auto;
-}
-
-.aj-modal-body p {
-  margin: 0 0 var(--space-md);
-  color: var(--text);
-  font-size: 0.875rem;
-}
-
-.aj-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-sm);
-  padding: var(--space-md) var(--space-lg);
-  border-top: 1px solid var(--border);
 }
 
 /* ═══ COLOR PICKER ═══ */
@@ -1394,10 +1276,5 @@
   .aj-log-filtros select,
   .aj-log-filtros input[type="date"] {
     width: 100%;
-  }
-
-  .aj-modal {
-    width: 95%;
-    max-height: 90vh;
   }
 }

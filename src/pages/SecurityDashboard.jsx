@@ -2,10 +2,12 @@ import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import Papa from 'papaparse'
 import JSZip from 'jszip'
 import { saveAs } from 'file-saver'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 
 export default function SecurityDashboard() {
   const { usuario, tienePermiso } = useAuth()
@@ -24,6 +26,8 @@ export default function SecurityDashboard() {
   const [activityData, setActivityData] = useState([])
   const [exporting, setExporting] = useState(false)
   const [emergencyMode, setEmergencyMode] = useState(false)
+  const [confirmEmergency, setConfirmEmergency] = useState(0)
+  const { showToast } = useToast()
 
   useEffect(() => {
     loadDashboardData()
@@ -196,16 +200,13 @@ export default function SecurityDashboard() {
       } catch (_) {}
     } catch (e) {
       logger.error('Error exporting:', e)
-      alert('Error al exportar datos')
+      showToast('Error al exportar datos', 'error')
     } finally {
       setExporting(false)
     }
   }
 
   const handleEmergencyMode = async () => {
-    if (!confirm('MODO EMERGENCIA: Se desactivarán TODOS los usuarios excepto super_admin. ¿Confirmar?')) return
-    if (!confirm('SEGUNDA CONFIRMACIÓN: Esta acción bloqueará el acceso a todos los usuarios no super_admin. ¿Estás seguro?')) return
-
     setEmergencyMode(true)
     try {
       const { error } = await supabase
@@ -234,11 +235,12 @@ export default function SecurityDashboard() {
         })
       } catch (_) {}
 
-      alert('Modo emergencia activado. Todos los usuarios no super_admin han sido desactivados.')
+      setConfirmEmergency(0)
+      showToast('Modo emergencia activado. Todos los usuarios no super_admin han sido desactivados.', 'warning', 5000)
       await loadDashboardData()
     } catch (e) {
       logger.error('Error activating emergency mode:', e)
-      alert('Error al activar modo emergencia')
+      showToast('Error al activar modo emergencia', 'error')
     } finally {
       setEmergencyMode(false)
     }
@@ -273,11 +275,11 @@ export default function SecurityDashboard() {
           )}
           {usuario?.tipo === 'super_admin' && (
             <button
-              onClick={handleEmergencyMode}
+              onClick={() => setConfirmEmergency(1)}
               className="btn"
               disabled={emergencyMode}
               style={{
-                background: '#ef4444',
+                background: 'var(--error)',
                 color: 'white',
                 border: 'none',
                 fontWeight: 600
@@ -432,6 +434,26 @@ export default function SecurityDashboard() {
           <CheckItem ok={true} label="Anti-escalación de privilegios" />
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmEmergency === 1}
+        title="Modo Emergencia"
+        message="Se desactivarán TODOS los usuarios excepto super_admin. ¿Confirmar?"
+        variant="danger"
+        confirmText="Continuar"
+        onConfirm={() => setConfirmEmergency(2)}
+        onCancel={() => setConfirmEmergency(0)}
+      />
+      <ConfirmDialog
+        open={confirmEmergency === 2}
+        title="Segunda confirmación"
+        message="Esta acción bloqueará el acceso a todos los usuarios no super_admin. ¿Estás seguro?"
+        variant="danger"
+        confirmText="Activar modo emergencia"
+        loading={emergencyMode}
+        onConfirm={handleEmergencyMode}
+        onCancel={() => setConfirmEmergency(0)}
+      />
     </div>
   )
 }

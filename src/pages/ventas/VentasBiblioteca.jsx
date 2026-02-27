@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Toggle from '../../components/ui/Toggle'
 import { useBiblioteca } from '../../hooks/useBiblioteca'
 import BibliotecaBuscador from '../../components/ventas/BibliotecaBuscador'
 import BibliotecaSecciones from '../../components/ventas/BibliotecaSecciones'
@@ -51,16 +52,10 @@ export default function VentasBiblioteca() {
         <h1>Biblioteca</h1>
         <div className="bib-header-actions">
           {bib.puedeGestionar && (
-            <label className="bib-toggle-gestion">
+            <div className="bib-toggle-gestion">
               <SettingsIcon />
-              <span>Gestionar</span>
-              <div
-                className={`bib-toggle-switch${bib.modoGestion ? ' active' : ''}`}
-                onClick={() => bib.setModoGestion(!bib.modoGestion)}
-              >
-                <span className="bib-toggle-switch-knob" />
-              </div>
-            </label>
+              <Toggle checked={bib.modoGestion} onChange={v => bib.setModoGestion(v)} label="Gestionar" />
+            </div>
           )}
         </div>
       </div>

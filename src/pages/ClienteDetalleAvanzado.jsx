@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import Toggle from '../components/ui/Toggle'
+import Select from '../components/ui/Select'
 
 // Lista de especialidades
 const ESPECIALIDADES = [
@@ -551,7 +553,7 @@ function EditableField({ label, value, campo, onSave, type = 'text', options = n
         <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px' }}>{label}</div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {type === 'select' && options ? (
-            <select
+            <Select
               value={tempValue}
               onChange={handleSelectChange}
               className="select"
@@ -560,7 +562,7 @@ function EditableField({ label, value, campo, onSave, type = 'text', options = n
             >
               <option value="">Seleccionar...</option>
               {options.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
+            </Select>
           ) : type === 'multiselect' && options ? (
             <MultiSelect value={tempValue} onChange={setTempValue} options={options} />
           ) : type === 'textarea' ? (
@@ -1177,10 +1179,10 @@ function LeadsTab({ leads, paquetes, setPaquetes, clienteId, tienePermiso }) {
       <Card title="📋 Lista de Leads">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
           <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="input" />
-          <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} className="select">
+          <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} className="select">
             <option value="">Todos los estados</option>
             {estadosUnicos.map(estado => <option key={estado} value={estado}>{estado}</option>)}
-          </select>
+          </Select>
           <input type="date" value={filtroFechaDesde} onChange={(e) => setFiltroFechaDesde(e.target.value)} className="input" />
           <input type="date" value={filtroFechaHasta} onChange={(e) => setFiltroFechaHasta(e.target.value)} className="input" />
         </div>
@@ -1282,10 +1284,9 @@ function CampanasTab({ campanas, clienteId, setCampanas, tienePermiso }) {
             <label style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '6px', display: 'block' }}>Nombre de la Campaña</label>
             <input type="text" value={formData.nombre} onChange={(e) => setFormData(prev => ({ ...prev, nombre: e.target.value }))} className="input" placeholder="Nombre de la campaña" />
           </div>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px 16px', background: formData.activa ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', border: `1px solid ${formData.activa ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`, borderRadius: '8px' }}>
-            <input type="checkbox" checked={formData.activa} onChange={(e) => setFormData(prev => ({ ...prev, activa: e.target.checked }))} />
-            <span style={{ color: formData.activa ? '#10b981' : '#ef4444', fontWeight: '600' }}>{formData.activa ? 'Activa' : 'Pausada'}</span>
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: formData.activa ? 'var(--success-bg)' : 'var(--error-bg)', border: `1px solid ${formData.activa ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`, borderRadius: '8px' }}>
+            <Toggle checked={formData.activa} onChange={v => setFormData(prev => ({ ...prev, activa: v }))} label={formData.activa ? 'Activa' : 'Pausada'} />
+          </div>
         </div>
 
         <div>

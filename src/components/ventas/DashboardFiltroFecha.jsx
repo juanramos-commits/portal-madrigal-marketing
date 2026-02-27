@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Select from '../ui/Select'
 
 const OPCIONES = [
   { value: 'este_mes', label: 'Este mes' },
@@ -44,11 +45,11 @@ export default function DashboardFiltroFecha({
 
   return (
     <div className="db-filtro-fecha">
-      <select value={periodo} onChange={handleSelect} className="db-select-periodo">
+      <Select value={periodo} onChange={handleSelect} className="db-select-periodo">
         {OPCIONES.map(o => (
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
-      </select>
+      </Select>
       {periodo === 'personalizado' && (
         <div className="db-fechas-custom">
           <input type="date" value={desde} onChange={handleDesde} className="db-input-fecha" />

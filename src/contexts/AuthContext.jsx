@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
         .single()
 
       if (usuarioError) {
-        logger.error('Error cargando usuario:', usuarioError)
+        console.error('Error cargando usuario:', usuarioError)
         return null
       }
 
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
 
       return usuarioData
     } catch (error) {
-      logger.error('Error en cargarUsuario:', error)
+      console.error('Error en cargarUsuario:', error)
       return null
     }
   }, [])
@@ -64,11 +64,22 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         setUser(session.user)
         if (!isAuthPage()) {
-          await cargarUsuario(session.user.email)
+          const resultado = await cargarUsuario(session.user.email)
+          // Si no se pudo cargar el usuario, la sesión puede estar corrupta
+          if (!resultado) {
+            console.warn('No se pudo cargar usuario, verificando sesión...')
+            const { data: { user: validUser }, error: userError } = await supabase.auth.getUser()
+            if (userError || !validUser) {
+              console.warn('Sesión inválida, limpiando...')
+              await supabase.auth.signOut()
+              setUser(null)
+            }
+          }
         }
       }
       setLoading(false)
-    }).catch(() => {
+    }).catch((err) => {
+      console.error('Error en getSession:', err)
       if (mounted) setLoading(false)
     })
 

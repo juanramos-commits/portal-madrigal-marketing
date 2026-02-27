@@ -1,4 +1,5 @@
 import { generarFacturaPDF, generarCSVFacturas } from '../../utils/generarFacturaPDF'
+import Select from '../ui/Select'
 
 function formatMoneda(v) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
@@ -40,12 +41,12 @@ export default function WalletAdminFacturas({
     <div className="wt-admin-facturas">
       {/* Filters */}
       <div className="wt-filtros-row">
-        <select value={filtroUsuario} onChange={e => onFiltroUsuarioChange(e.target.value)}>
+        <Select value={filtroUsuario} onChange={e => onFiltroUsuarioChange(e.target.value)}>
           <option value="">Todos los miembros</option>
           {miembros.map(m => (
             <option key={m.id} value={m.id}>{m.nombre || m.email}</option>
           ))}
-        </select>
+        </Select>
 
         <button className="wt-action-btn" onClick={handleExportCSV} disabled={facturas.length === 0}>
           <CsvIcon /> Exportar CSV

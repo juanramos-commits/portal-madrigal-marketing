@@ -2,6 +2,9 @@ import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
+import Select from '../components/ui/Select'
+import Modal from '../components/ui/Modal'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 
 const TIPOS_USUARIO = {
   super_admin: { label: 'Super Admin', color: '#EF4444' },
@@ -273,19 +276,19 @@ export default function Usuarios() {
       <div className="card" style={{ marginBottom: '24px', padding: '16px' }}>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="input" style={{ flex: 1, minWidth: '200px' }} />
-          <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} className="select" style={{ width: '150px' }}>
+          <Select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} className="select" style={{ width: '150px' }}>
             <option value="">Todos los tipos</option>
             {Object.entries(TIPOS_USUARIO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-          </select>
-          <select value={filtroRol} onChange={e => setFiltroRol(e.target.value)} className="select" style={{ width: '180px' }}>
+          </Select>
+          <Select value={filtroRol} onChange={e => setFiltroRol(e.target.value)} className="select" style={{ width: '180px' }}>
             <option value="">Todos los roles</option>
             {roles.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
-          </select>
-          <select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="select" style={{ width: '130px' }}>
+          </Select>
+          <Select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="select" style={{ width: '130px' }}>
             <option value="">Todos</option>
             <option value="activo">Activos</option>
             <option value="inactivo">Inactivos</option>
-          </select>
+          </Select>
         </div>
       </div>
 
@@ -328,18 +331,17 @@ export default function Usuarios() {
                   <td><span className="badge" style={{ background: `${TIPOS_USUARIO[u.tipo]?.color}20`, color: TIPOS_USUARIO[u.tipo]?.color }}>{TIPOS_USUARIO[u.tipo]?.label}</span></td>
                   <td>
                     {u.tipo !== 'cliente' && u.tipo !== 'super_admin' ? (
-                      <select value={u.rol_id || ''} onChange={e => cambiarRol(u.id, e.target.value)} className="select" style={{ height: '32px', fontSize: '13px', background: 'transparent' }} disabled={!tienePermiso('usuarios.editar') || u.id === currentUser?.id}>
+                      <Select value={u.rol_id || ''} onChange={e => cambiarRol(u.id, e.target.value)} className="select" style={{ height: '32px', fontSize: '13px', background: 'transparent' }} disabled={!tienePermiso('usuarios.editar') || u.id === currentUser?.id}>
                         <option value="">Sin rol</option>
                         {roles.filter(r => {
                           if (r.nombre === 'Super Admin') return false
-                          // Solo mostrar roles con nivel menor al del usuario actual
                           if (currentUser?.tipo !== 'super_admin') {
                             const nivelActual = currentUser?.rol?.nivel ?? 0
                             if (r.nivel >= nivelActual) return false
                           }
                           return true
                         }).map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
-                      </select>
+                      </Select>
                     ) : <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{u.tipo === 'super_admin' ? 'Super Admin' : 'N/A'}</span>}
                   </td>
                   <td><span className={`badge ${u.activo ? 'active' : 'inactive'}`}>{u.activo ? 'Activo' : 'Inactivo'}</span></td>
@@ -361,128 +363,112 @@ export default function Usuarios() {
       </div>
 
       {/* Modal Invitar */}
-      {modalInvitar && (
-        <div className="modal-overlay" onClick={() => !inviteLoading && setModalInvitar(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="h3">Invitar Usuario</h2>
-              <button onClick={() => !inviteLoading && setModalInvitar(false)} className="btn btn-icon">✕</button>
-            </div>
-            <form onSubmit={handleInvitar}>
-              {inviteError && <div className="alert error" style={{ marginBottom: '16px' }}>{inviteError}</div>}
-              {inviteSuccess && <div className="alert success" style={{ marginBottom: '16px' }}>{inviteSuccess}</div>}
-              <div className="field" style={{ marginBottom: '16px' }}>
-                <label className="field-label">Nombre</label>
-                <input type="text" value={inviteForm.nombre} onChange={e => setInviteForm({...inviteForm, nombre: e.target.value})} className="input" required disabled={inviteLoading} />
-              </div>
-              <div className="field" style={{ marginBottom: '16px' }}>
-                <label className="field-label">Email</label>
-                <input type="email" value={inviteForm.email} onChange={e => setInviteForm({...inviteForm, email: e.target.value})} className="input" required disabled={inviteLoading} />
-              </div>
-              <div className="field" style={{ marginBottom: '16px' }}>
-                <label className="field-label">Tipo</label>
-                <select value={inviteForm.tipo} onChange={e => setInviteForm({...inviteForm, tipo: e.target.value})} className="select" disabled={inviteLoading}>
-                  <option value="equipo">Equipo</option>
-                  <option value="admin">Admin</option>
-                  <option value="cliente">Cliente</option>
-                </select>
-              </div>
-              {inviteForm.tipo !== 'cliente' && (
-                <div className="field" style={{ marginBottom: '24px' }}>
-                  <label className="field-label">Rol</label>
-                  <select value={inviteForm.rol_id} onChange={e => setInviteForm({...inviteForm, rol_id: e.target.value})} className="select" disabled={inviteLoading}>
-                    <option value="">Seleccionar...</option>
-                    {roles.filter(r => r.nombre !== 'Super Admin').map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
-                  </select>
-                </div>
-              )}
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setModalInvitar(false)} className="btn" disabled={inviteLoading}>Cancelar</button>
-                <button type="submit" className="btn primary" disabled={inviteLoading}>{inviteLoading ? 'Enviando...' : 'Enviar Invitación'}</button>
-              </div>
-            </form>
+      <Modal
+        open={modalInvitar}
+        onClose={() => !inviteLoading && setModalInvitar(false)}
+        title="Invitar Usuario"
+        footer={
+          <>
+            <button type="button" onClick={() => setModalInvitar(false)} className="btn" disabled={inviteLoading}>Cancelar</button>
+            <button type="submit" form="usuarios-invite-form" className="btn primary" disabled={inviteLoading}>{inviteLoading ? 'Enviando...' : 'Enviar Invitación'}</button>
+          </>
+        }
+      >
+        <form id="usuarios-invite-form" onSubmit={handleInvitar}>
+          {inviteError && <div className="alert error" style={{ marginBottom: '16px' }}>{inviteError}</div>}
+          {inviteSuccess && <div className="alert success" style={{ marginBottom: '16px' }}>{inviteSuccess}</div>}
+          <div className="field" style={{ marginBottom: '16px' }}>
+            <label className="field-label">Nombre</label>
+            <input type="text" value={inviteForm.nombre} onChange={e => setInviteForm({...inviteForm, nombre: e.target.value})} className="input" required disabled={inviteLoading} />
           </div>
-        </div>
-      )}
+          <div className="field" style={{ marginBottom: '16px' }}>
+            <label className="field-label">Email</label>
+            <input type="email" value={inviteForm.email} onChange={e => setInviteForm({...inviteForm, email: e.target.value})} className="input" required disabled={inviteLoading} />
+          </div>
+          <div className="field" style={{ marginBottom: '16px' }}>
+            <label className="field-label">Tipo</label>
+            <Select value={inviteForm.tipo} onChange={e => setInviteForm({...inviteForm, tipo: e.target.value})} className="select" disabled={inviteLoading}>
+              <option value="equipo">Equipo</option>
+              <option value="admin">Admin</option>
+              <option value="cliente">Cliente</option>
+            </Select>
+          </div>
+          {inviteForm.tipo !== 'cliente' && (
+            <div className="field" style={{ marginBottom: '24px' }}>
+              <label className="field-label">Rol</label>
+              <Select value={inviteForm.rol_id} onChange={e => setInviteForm({...inviteForm, rol_id: e.target.value})} className="select" disabled={inviteLoading}>
+                <option value="">Seleccionar...</option>
+                {roles.filter(r => r.nombre !== 'Super Admin').map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
+              </Select>
+            </div>
+          )}
+        </form>
+      </Modal>
 
       {/* Modal Permisos */}
-      {modalPermisos && (
-        <div className="modal-overlay" onClick={() => setModalPermisos(null)}>
-          <div className="modal-content modal-lg" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h2 className="h3">Permisos de {modalPermisos.nombre}</h2>
-                <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>Rol: {modalPermisos.rol?.nombre || 'Sin rol'}</p>
-              </div>
-              <button onClick={() => setModalPermisos(null)} className="btn btn-icon">✕</button>
-            </div>
+      <Modal
+        open={!!modalPermisos}
+        onClose={() => setModalPermisos(null)}
+        title={`Permisos de ${modalPermisos?.nombre || ''}`}
+        size="lg"
+      >
+        {modalPermisos && (
+          <p style={{ margin: '-8px 0 16px', fontSize: '13px', color: 'var(--text-muted)' }}>Rol: {modalPermisos.rol?.nombre || 'Sin rol'}</p>
+        )}
 
-            {permisosLoading ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '48px' }}><div className="spinner"></div></div>
-            ) : (
-              <div style={{ maxHeight: '500px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
-                {Object.entries(permisosPorModulo).map(([modulo, perms]) => (
-                  <div key={modulo}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setModulosExpandidos(prev => ({...prev, [modulo]: !prev[modulo]}))}>
-                      <span>{modulosExpandidos[modulo] ? '▼' : '▶'}</span>
-                      <span>{MODULOS[modulo]?.icono || '📁'}</span>
-                      <span style={{ flex: 1, fontWeight: 500 }}>{MODULOS[modulo]?.nombre || modulo}</span>
-                    </div>
-                    {modulosExpandidos[modulo] && (
-                      <div style={{ padding: '8px 16px 8px 48px' }}>
-                        {perms.map(p => {
-                          const estado = getPermisoEstado(p.id)
-                          return (
-                            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0' }}>
-                              <button onClick={() => togglePermisoUsuario(p.id)} style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: estado === 'permitido' ? 'var(--success)' : estado === 'heredado' ? 'var(--primary)' : estado === 'denegado' ? 'var(--error)' : 'rgba(255,255,255,0.1)', color: estado === 'sin_acceso' ? 'var(--text-muted)' : '#000', fontWeight: 600 }}>
-                                {estado === 'permitido' ? '✓' : estado === 'heredado' ? 'R' : estado === 'denegado' ? '✕' : '−'}
-                              </button>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: '14px' }}>{p.nombre}</div>
-                                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                                  {estado === 'heredado' ? 'Del rol' : estado === 'permitido' ? 'Permitido' : estado === 'denegado' ? 'Denegado' : 'Sin acceso'}
-                                </div>
-                              </div>
+        {permisosLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '48px' }}><div className="spinner"></div></div>
+        ) : (
+          <div style={{ maxHeight: '500px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
+            {Object.entries(permisosPorModulo).map(([modulo, perms]) => (
+              <div key={modulo}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)', cursor: 'pointer' }} onClick={() => setModulosExpandidos(prev => ({...prev, [modulo]: !prev[modulo]}))}>
+                  <span>{modulosExpandidos[modulo] ? '▼' : '▶'}</span>
+                  <span>{MODULOS[modulo]?.icono || '📁'}</span>
+                  <span style={{ flex: 1, fontWeight: 500 }}>{MODULOS[modulo]?.nombre || modulo}</span>
+                </div>
+                {modulosExpandidos[modulo] && (
+                  <div style={{ padding: '8px 16px 8px 48px' }}>
+                    {perms.map(p => {
+                      const estado = getPermisoEstado(p.id)
+                      return (
+                        <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0' }}>
+                          <button onClick={() => togglePermisoUsuario(p.id)} style={{ width: '28px', height: '28px', borderRadius: '6px', border: 'none', cursor: 'pointer', background: estado === 'permitido' ? 'var(--success)' : estado === 'heredado' ? 'var(--primary)' : estado === 'denegado' ? 'var(--error)' : 'rgba(255,255,255,0.1)', color: estado === 'sin_acceso' ? 'var(--text-muted)' : '#000', fontWeight: 600 }}>
+                            {estado === 'permitido' ? '✓' : estado === 'heredado' ? 'R' : estado === 'denegado' ? '✕' : '−'}
+                          </button>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '14px' }}>{p.nombre}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              {estado === 'heredado' ? 'Del rol' : estado === 'permitido' ? 'Permitido' : estado === 'denegado' ? 'Denegado' : 'Sin acceso'}
                             </div>
-                          )
-                        })}
-                      </div>
-                    )}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Modal Confirmar */}
-      {modalConfirmar && (
-        <div className="modal-overlay" onClick={() => setModalConfirmar(null)}>
-          <div className="modal-content modal-sm" onClick={e => e.stopPropagation()}>
-            <h3 className="h3" style={{ marginBottom: '16px' }}>
-              {modalConfirmar.tipo === 'eliminar' ? 'Eliminar usuario' : modalConfirmar.usuario.activo ? 'Desactivar usuario' : 'Activar usuario'}
-            </h3>
-            <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-              {modalConfirmar.tipo === 'eliminar' 
-                ? `¿Eliminar a ${modalConfirmar.usuario.nombre}? No se puede deshacer.`
-                : `¿${modalConfirmar.usuario.activo ? 'Desactivar' : 'Activar'} a ${modalConfirmar.usuario.nombre}?`}
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setModalConfirmar(null)} className="btn">Cancelar</button>
-              <button onClick={() => modalConfirmar.tipo === 'eliminar' ? eliminarUsuario(modalConfirmar.usuario.id) : toggleActivo(modalConfirmar.usuario.id, modalConfirmar.usuario.activo)} className={`btn ${modalConfirmar.tipo === 'eliminar' ? 'danger' : 'primary'}`}>Confirmar</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDialog
+        open={!!modalConfirmar}
+        title={modalConfirmar?.tipo === 'eliminar' ? 'Eliminar usuario' : modalConfirmar?.usuario?.activo ? 'Desactivar usuario' : 'Activar usuario'}
+        message={
+          modalConfirmar?.tipo === 'eliminar'
+            ? `¿Eliminar a ${modalConfirmar?.usuario?.nombre}? No se puede deshacer.`
+            : `¿${modalConfirmar?.usuario?.activo ? 'Desactivar' : 'Activar'} a ${modalConfirmar?.usuario?.nombre}?`
+        }
+        variant={modalConfirmar?.tipo === 'eliminar' ? 'danger' : 'default'}
+        confirmText="Confirmar"
+        onConfirm={() => modalConfirmar?.tipo === 'eliminar' ? eliminarUsuario(modalConfirmar.usuario.id) : toggleActivo(modalConfirmar.usuario.id, modalConfirmar.usuario.activo)}
+        onCancel={() => setModalConfirmar(null)}
+      />
 
       <style>{`
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 24px; }
-        .modal-content { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
-        .modal-content.modal-sm { max-width: 400px; }
-        .modal-content.modal-lg { max-width: 700px; }
-        .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
-        .modal-header h2, .modal-header h3 { margin: 0; }
         .alert.success { background: rgba(46,229,157,0.1); border: 1px solid rgba(46,229,157,0.3); color: var(--success); padding: 12px; border-radius: 8px; }
         .alert.error { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3); color: var(--error); padding: 12px; border-radius: 8px; }
       `}</style>
