@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useRefreshOnFocus } from './useRefreshOnFocus'
 
 const PAGE_SIZE = 25
 
@@ -228,8 +229,9 @@ export function useVentas() {
       await supabase.from('ventas_notificaciones').insert(notificaciones)
     }
 
+    refrescar()
     return venta
-  }, [user?.id])
+  }, [user?.id, refrescar])
 
   // ── Move lead to venta stage in both pipelines ─────────────────────
   const moverLeadAVenta = useCallback(async (leadId, pipelineId, etapaVentaId) => {
@@ -273,25 +275,49 @@ export function useVentas() {
   const aprobarVenta = useCallback(async (ventaId) => {
     const { error: err } = await supabase.rpc('ventas_aprobar_venta', { p_venta_id: ventaId })
     if (err) throw err
-  }, [])
+    refrescar()
+  }, [refrescar])
 
   // ── Reject sale ────────────────────────────────────────────────────
   const rechazarVenta = useCallback(async (ventaId) => {
     const { error: err } = await supabase.rpc('ventas_rechazar_venta', { p_venta_id: ventaId })
     if (err) throw err
-  }, [])
+    refrescar()
+  }, [refrescar])
 
   // ── Mark refund ────────────────────────────────────────────────────
   const marcarDevolucion = useCallback(async (ventaId) => {
     const { error: err } = await supabase.rpc('ventas_marcar_devolucion', { p_venta_id: ventaId })
     if (err) throw err
-  }, [])
+    refrescar()
+  }, [refrescar])
 
   // ── Refresh all ────────────────────────────────────────────────────
   const refrescar = useCallback(() => {
     cargarVentas()
     cargarContadores()
   }, [cargarVentas, cargarContadores])
+
+  // ── Refresh on tab focus ───────────────────────────────────────────
+  useRefreshOnFocus(refrescar, { enabled: !!user?.id })
+
+  // ── Realtime: listen to ventas changes ─────────────────────────────
+  useEffect(() => {
+    if (!user?.id) return
+
+    const channel = supabase
+      .channel('ventas-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'ventas_ventas',
+      }, () => {
+        refrescar()
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [user?.id, refrescar])
 
   // ── Initial load ───────────────────────────────────────────────────
   useEffect(() => {

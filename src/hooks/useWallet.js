@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useRefreshOnFocus } from './useRefreshOnFocus'
 
 const COMISIONES_PAGE_SIZE = 20
 const RETIROS_PAGE_SIZE = 25
@@ -204,8 +205,9 @@ export function useWallet() {
     })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error || 'Error al solicitar retiro')
+    refrescar()
     return data
-  }, [user?.id])
+  }, [user?.id, refrescar])
 
   // ── Admin: load all retiros ────────────────────────────────────────
   const cargarTodosRetiros = useCallback(async () => {
@@ -264,8 +266,9 @@ export function useWallet() {
     const { data, error: err } = await supabase.rpc('ventas_aprobar_retiro', { p_retiro_id: retiroId })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error || 'Error al aprobar retiro')
+    refrescar()
     return data
-  }, [])
+  }, [refrescar])
 
   // ── Admin: rechazar retiro ─────────────────────────────────────────
   const rechazarRetiro = useCallback(async (retiroId, motivo) => {
@@ -275,8 +278,9 @@ export function useWallet() {
     })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error || 'Error al rechazar retiro')
+    refrescar()
     return data
-  }, [])
+  }, [refrescar])
 
   // ── Refresh all ────────────────────────────────────────────────────
   const refrescar = useCallback(async () => {
@@ -306,6 +310,9 @@ export function useWallet() {
       setLoading(false)
     }
   }, [cargarWallet, cargarSaldoDisponible, cargarDatosFiscales, cargarEmpresaFiscal, cargarComisiones, cargarRetiros, cargarFacturas, esCloser, verificarCloserAlDia, esAdmin, cargarTodosRetiros, cargarContadoresRetiros, cargarTodasFacturas])
+
+  // ── Refresh on tab focus ───────────────────────────────────────────
+  useRefreshOnFocus(refrescar, { enabled: !!user?.id })
 
   // ── Initial load ───────────────────────────────────────────────────
   useEffect(() => {

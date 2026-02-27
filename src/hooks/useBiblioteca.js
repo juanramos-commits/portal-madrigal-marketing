@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useRefreshOnFocus } from './useRefreshOnFocus'
 
 const ROLES_VISIBLES = ['setter', 'closer', 'director_ventas', 'super_admin']
 
@@ -333,6 +334,14 @@ export function useBiblioteca() {
       await cargarRecursos()
     }
   }, [recursos, cargarRecursos])
+
+  // Refresh all data
+  const refrescar = useCallback(async () => {
+    await Promise.all([cargarSecciones(), cargarRecursos()])
+  }, [cargarSecciones, cargarRecursos])
+
+  // Refresh on tab focus
+  useRefreshOnFocus(refrescar, { enabled: !!user?.id })
 
   // Copy URL to clipboard
   const copiarAlPortapapeles = useCallback(async (texto) => {
