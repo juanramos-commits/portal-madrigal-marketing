@@ -244,6 +244,10 @@ export function useDashboard() {
     setLoading(false)
   }, [user?.id, fechaInicio, fechaFin, esCloser, esSetter, esDirector, esAdmin, cargarKPIs, cargarGraficoVentas, cargarFunnel, cargarRanking, cargarActividad, cargarCitasHoy, cargarPendientes])
 
+  const refrescar = useCallback(() => {
+    cargarTodo()
+  }, [cargarTodo])
+
   // Refresh on tab focus
   useRefreshOnFocus(refrescar, { enabled: !!user?.id && !!fechaInicio })
 
@@ -252,10 +256,6 @@ export function useDashboard() {
       cargarTodo()
     }
   }, [fechaInicio, fechaFin, rolesComerciales, user?.id])
-
-  const refrescar = useCallback(() => {
-    cargarTodo()
-  }, [cargarTodo])
 
   return {
     periodo, setPeriodo,
