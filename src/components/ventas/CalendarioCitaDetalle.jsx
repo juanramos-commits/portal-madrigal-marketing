@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Select from '../ui/Select'
+import Modal from '../ui/Modal'
 
 function formatFechaLarga(d) {
   if (!d) return '-'
@@ -18,12 +20,6 @@ function formatHoraFin(d, duracion) {
   const fin = new Date(new Date(d).getTime() + (duracion || 60) * 60000)
   return formatHora(fin)
 }
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
 
 const LinkIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
@@ -146,127 +142,121 @@ export default function CalendarioCitaDetalle({
   }
 
   return (
-    <>
-      <div className="vc-modal-overlay" onClick={onClose} />
-      <div className="vc-modal vc-modal-detalle">
-        <div className="vc-modal-header" style={{ borderLeftColor: estadoActual?.color || 'var(--border)' }}>
-          <h2>Detalle de cita</h2>
-          <button className="vc-modal-close" onClick={onClose}><CloseIcon /></button>
+    <Modal
+      open={true}
+      onClose={onClose}
+      title="Detalle de cita"
+    >
+      {/* Lead info */}
+      <div className="vc-detalle-section">
+        <div className="vc-detalle-row">
+          <span className="vc-detalle-label">Lead</span>
+          <button className="vc-link-btn" onClick={() => navigate(`/ventas/crm/lead/${cita.lead?.id}`)}>
+            {cita.lead?.nombre || 'Sin nombre'} <LinkIcon />
+          </button>
         </div>
 
-        <div className="vc-modal-body">
-          {/* Lead info */}
+        <div className="vc-detalle-row">
+          <span className="vc-detalle-label">Fecha y hora</span>
+          <span>{formatFechaLarga(cita.fecha_hora)}, {formatHora(cita.fecha_hora)} - {formatHoraFin(cita.fecha_hora, cita.duracion_minutos)}</span>
+        </div>
+
+        <div className="vc-detalle-row">
+          <span className="vc-detalle-label">Closer</span>
+          <span>{cita.closer?.nombre || cita.closer?.email || 'Sin asignar'}</span>
+        </div>
+
+        <div className="vc-detalle-row">
+          <span className="vc-detalle-label">Setter origen</span>
+          <span>{cita.setter_origen?.nombre || cita.setter_origen?.email || 'Sin setter asignado'}</span>
+        </div>
+
+        {cita.enlace?.fuente && (
+          <div className="vc-detalle-row">
+            <span className="vc-detalle-label">Fuente</span>
+            <span>{cita.enlace.fuente}</span>
+          </div>
+        )}
+
+        <div className="vc-detalle-row">
+          <span className="vc-detalle-label">Estado reunión</span>
+          {estadoActual ? (
+            <span className="vc-badge" style={{ background: `${estadoActual.color}20`, color: estadoActual.color }}>
+              {estadoActual.nombre}
+            </span>
+          ) : (
+            <span style={{ color: 'var(--text-muted)' }}>Sin estado</span>
+          )}
+        </div>
+
+        {cita.google_meet_url && (
+          <div className="vc-detalle-row">
+            <span className="vc-detalle-label">Google Meet</span>
+            <a href={cita.google_meet_url} target="_blank" rel="noopener noreferrer" className="vc-meet-link">
+              <CameraIcon /> Abrir Meet
+            </a>
+          </div>
+        )}
+      </div>
+
+      {/* Closer actions */}
+      {puedeEditar && (
+        <>
+          <div className="vc-detalle-separator" />
           <div className="vc-detalle-section">
-            <div className="vc-detalle-row">
-              <span className="vc-detalle-label">Lead</span>
-              <button className="vc-link-btn" onClick={() => navigate(`/ventas/crm/lead/${cita.lead?.id}`)}>
-                {cita.lead?.nombre || 'Sin nombre'} <LinkIcon />
+            <div className="vc-field">
+              <label>Marcar estado de reunión</label>
+              <Select value={estadoId} onChange={e => guardarEstado(e.target.value)} disabled={saving}>
+                <option value="">Sin estado</option>
+                {reunionEstados?.map(e => (
+                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="vc-field">
+              <label>Notas del closer</label>
+              <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={3} placeholder="Escribe notas sobre la reunión..." />
+              <button className="vc-btn-sm" onClick={guardarNotas} disabled={saving}>Guardar notas</button>
+            </div>
+
+            <div className="vc-field">
+              <label>Enlace de grabación</label>
+              <div className="vc-field-inline">
+                <input type="url" value={enlaceGrabacion} onChange={e => setEnlaceGrabacion(e.target.value)} placeholder="https://..." />
+                <button className="vc-btn-sm" onClick={guardarEnlace} disabled={saving || !enlaceGrabacion.trim()}>Guardar</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Director actions */}
+      {esDirector && (
+        <>
+          <div className="vc-detalle-separator" />
+          <div className="vc-detalle-section">
+            <div className="vc-field">
+              <label>Reasignar closer</label>
+              <Select value={closerId} onChange={e => handleReasignar(e.target.value)} disabled={saving}>
+                <option value="">Sin asignar</option>
+                {closers?.map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre || c.email}</option>
+                ))}
+              </Select>
+            </div>
+
+            {cita.estado !== 'cancelada' && (
+              <button className="vc-btn-danger" onClick={handleCancelar} disabled={saving}>
+                Cancelar cita
               </button>
-            </div>
-
-            <div className="vc-detalle-row">
-              <span className="vc-detalle-label">Fecha y hora</span>
-              <span>{formatFechaLarga(cita.fecha_hora)}, {formatHora(cita.fecha_hora)} - {formatHoraFin(cita.fecha_hora, cita.duracion_minutos)}</span>
-            </div>
-
-            <div className="vc-detalle-row">
-              <span className="vc-detalle-label">Closer</span>
-              <span>{cita.closer?.nombre || cita.closer?.email || 'Sin asignar'}</span>
-            </div>
-
-            <div className="vc-detalle-row">
-              <span className="vc-detalle-label">Setter origen</span>
-              <span>{cita.setter_origen?.nombre || cita.setter_origen?.email || 'Sin setter asignado'}</span>
-            </div>
-
-            {cita.enlace?.fuente && (
-              <div className="vc-detalle-row">
-                <span className="vc-detalle-label">Fuente</span>
-                <span>{cita.enlace.fuente}</span>
-              </div>
-            )}
-
-            <div className="vc-detalle-row">
-              <span className="vc-detalle-label">Estado reunión</span>
-              {estadoActual ? (
-                <span className="vc-badge" style={{ background: `${estadoActual.color}20`, color: estadoActual.color }}>
-                  {estadoActual.nombre}
-                </span>
-              ) : (
-                <span style={{ color: 'var(--text-muted)' }}>Sin estado</span>
-              )}
-            </div>
-
-            {cita.google_meet_url && (
-              <div className="vc-detalle-row">
-                <span className="vc-detalle-label">Google Meet</span>
-                <a href={cita.google_meet_url} target="_blank" rel="noopener noreferrer" className="vc-meet-link">
-                  <CameraIcon /> Abrir Meet
-                </a>
-              </div>
             )}
           </div>
+        </>
+      )}
 
-          {/* Closer actions */}
-          {puedeEditar && (
-            <>
-              <div className="vc-detalle-separator" />
-              <div className="vc-detalle-section">
-                <div className="vc-field">
-                  <label>Marcar estado de reunión</label>
-                  <select value={estadoId} onChange={e => guardarEstado(e.target.value)} disabled={saving}>
-                    <option value="">Sin estado</option>
-                    {reunionEstados?.map(e => (
-                      <option key={e.id} value={e.id}>{e.nombre}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="vc-field">
-                  <label>Notas del closer</label>
-                  <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={3} placeholder="Escribe notas sobre la reunión..." />
-                  <button className="vc-btn-sm" onClick={guardarNotas} disabled={saving}>Guardar notas</button>
-                </div>
-
-                <div className="vc-field">
-                  <label>Enlace de grabación</label>
-                  <div className="vc-field-inline">
-                    <input type="url" value={enlaceGrabacion} onChange={e => setEnlaceGrabacion(e.target.value)} placeholder="https://..." />
-                    <button className="vc-btn-sm" onClick={guardarEnlace} disabled={saving || !enlaceGrabacion.trim()}>Guardar</button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Director actions */}
-          {esDirector && (
-            <>
-              <div className="vc-detalle-separator" />
-              <div className="vc-detalle-section">
-                <div className="vc-field">
-                  <label>Reasignar closer</label>
-                  <select value={closerId} onChange={e => handleReasignar(e.target.value)} disabled={saving}>
-                    <option value="">Sin asignar</option>
-                    {closers?.map(c => (
-                      <option key={c.id} value={c.id}>{c.nombre || c.email}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {cita.estado !== 'cancelada' && (
-                  <button className="vc-btn-danger" onClick={handleCancelar} disabled={saving}>
-                    Cancelar cita
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-
-          {error && <div className="vc-error-msg">{error}</div>}
-          {successMsg && <div className="vc-success-msg">{successMsg}</div>}
-        </div>
-      </div>
-    </>
+      {error && <div className="vc-error-msg">{error}</div>}
+      {successMsg && <div className="vc-success-msg">{successMsg}</div>}
+    </Modal>
   )
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import Select from '../ui/Select'
 
 const TIPOS_ACCION = [
   { value: '', label: 'Todas las acciones' },
@@ -53,17 +54,17 @@ export default function AjustesLog({
       <h3>Log de actividad</h3>
 
       <div className="aj-log-filtros">
-        <select value={filtroUsuario} onChange={e => { setFiltroUsuario(e.target.value); setPagina(0) }}>
+        <Select value={filtroUsuario} onChange={e => { setFiltroUsuario(e.target.value); setPagina(0) }}>
           <option value="">Todos los usuarios</option>
           {usuarios.map(u => (
             <option key={u.id} value={u.id}>{u.nombre || u.email}</option>
           ))}
-        </select>
-        <select value={filtroTipo} onChange={e => { setFiltroTipo(e.target.value); setPagina(0) }}>
+        </Select>
+        <Select value={filtroTipo} onChange={e => { setFiltroTipo(e.target.value); setPagina(0) }}>
           {TIPOS_ACCION.map(t => (
             <option key={t.value} value={t.value}>{t.label}</option>
           ))}
-        </select>
+        </Select>
         <input type="date" value={filtroDesde} onChange={e => { setFiltroDesde(e.target.value); setPagina(0) }} />
         <input type="date" value={filtroHasta} onChange={e => { setFiltroHasta(e.target.value); setPagina(0) }} />
       </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Modal from '../ui/Modal'
 
 function formatFechaHora(d) {
   if (!d) return '-'
@@ -7,12 +8,6 @@ function formatFechaHora(d) {
     hour: '2-digit', minute: '2-digit', hour12: false,
   })
 }
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
 
 const TrashIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
@@ -95,38 +90,34 @@ export default function CalendarioBloqueos({
       )}
 
       {/* Modal nuevo bloqueo */}
-      {showModal && (
-        <>
-          <div className="vc-modal-overlay" onClick={() => setShowModal(false)} />
-          <div className="vc-modal vc-modal-sm">
-            <div className="vc-modal-header">
-              <h2>Nuevo bloqueo</h2>
-              <button className="vc-modal-close" onClick={() => setShowModal(false)}><CloseIcon /></button>
-            </div>
-            <div className="vc-modal-body">
-              <div className="vc-field">
-                <label>Fecha inicio *</label>
-                <input type="datetime-local" value={fechaInicio} onChange={e => { setFechaInicio(e.target.value); setError(null) }} />
-              </div>
-              <div className="vc-field">
-                <label>Fecha fin *</label>
-                <input type="datetime-local" value={fechaFin} onChange={e => { setFechaFin(e.target.value); setError(null) }} />
-              </div>
-              <div className="vc-field">
-                <label>Motivo</label>
-                <input type="text" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Ej: Vacaciones, Cita médica..." />
-              </div>
-              {error && <div className="vc-error-msg">{error}</div>}
-            </div>
-            <div className="vc-modal-actions">
-              <button className="vc-btn-ghost" onClick={() => setShowModal(false)} disabled={saving}>Cancelar</button>
-              <button className="vc-btn-primary" onClick={handleCrear} disabled={saving}>
-                {saving ? 'Creando...' : 'Crear bloqueo'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title="Nuevo bloqueo"
+        size="sm"
+        footer={
+          <>
+            <button className="vc-btn-ghost" onClick={() => setShowModal(false)} disabled={saving}>Cancelar</button>
+            <button className="vc-btn-primary" onClick={handleCrear} disabled={saving}>
+              {saving ? 'Creando...' : 'Crear bloqueo'}
+            </button>
+          </>
+        }
+      >
+        <div className="vc-field">
+          <label>Fecha inicio *</label>
+          <input type="datetime-local" value={fechaInicio} onChange={e => { setFechaInicio(e.target.value); setError(null) }} />
+        </div>
+        <div className="vc-field">
+          <label>Fecha fin *</label>
+          <input type="datetime-local" value={fechaFin} onChange={e => { setFechaFin(e.target.value); setError(null) }} />
+        </div>
+        <div className="vc-field">
+          <label>Motivo</label>
+          <input type="text" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Ej: Vacaciones, Cita médica..." />
+        </div>
+        {error && <div className="vc-error-msg">{error}</div>}
+      </Modal>
     </div>
   )
 }

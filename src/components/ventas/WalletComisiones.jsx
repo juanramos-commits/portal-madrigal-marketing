@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Select from '../ui/Select'
 
 function formatMoneda(v) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
@@ -53,21 +54,21 @@ export default function WalletComisiones({
     <div className="wt-comisiones">
       {/* Filters */}
       <div className="wt-filtros-row">
-        <select value={filtroTipo} onChange={e => onFiltroTipoChange(e.target.value)}>
+        <Select value={filtroTipo} onChange={e => onFiltroTipoChange(e.target.value)}>
           <option value="todas">Todas</option>
           <option value="fijas">Fijas</option>
           <option value="bonus">Bonus</option>
           <option value="negativas">Devoluciones</option>
-        </select>
+        </Select>
         <input type="date" value={filtroDesde} onChange={e => onFiltroDesdeChange(e.target.value)} placeholder="Desde" />
         <input type="date" value={filtroHasta} onChange={e => onFiltroHastaChange(e.target.value)} placeholder="Hasta" />
         {esAdmin && miembros.length > 0 && (
-          <select value={usuarioId} onChange={e => onUsuarioIdChange(e.target.value)}>
+          <Select value={usuarioId} onChange={e => onUsuarioIdChange(e.target.value)}>
             <option value="">Mis comisiones</option>
             {miembros.map(m => (
               <option key={m.id} value={m.id}>{m.nombre || m.email}</option>
             ))}
-          </select>
+          </Select>
         )}
       </div>
 

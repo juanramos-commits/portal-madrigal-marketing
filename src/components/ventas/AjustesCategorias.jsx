@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import Modal from '../ui/Modal'
+import ConfirmDialog from '../ui/ConfirmDialog'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core'
@@ -99,46 +101,36 @@ export default function AjustesCategorias({
         </DndContext>
       )}
 
-      {showModal && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setShowModal(false)} />
-          <div className="aj-modal aj-modal-sm">
-            <div className="aj-modal-header">
-              <h2>{editando ? 'Editar categoría' : 'Nueva categoría'}</h2>
-              <button className="aj-modal-close" onClick={() => setShowModal(false)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-              </button>
-            </div>
-            <div className="aj-modal-body">
-              <div className="aj-field">
-                <label>Nombre *</label>
-                <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: Fotógrafo" />
-              </div>
-              {error && <div className="aj-error">{error}</div>}
-            </div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
-              <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
-                {saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editando ? 'Editar categoría' : 'Nueva categoría'}
+        size="sm"
+        footer={
+          <>
+            <button className="aj-btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
+            <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
+              {saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear'}
+            </button>
+          </>
+        }
+      >
+        <div className="aj-field">
+          <label>Nombre *</label>
+          <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: Fotógrafo" />
+        </div>
+        {error && <div className="aj-error">{error}</div>}
+      </Modal>
 
-      {confirmDelete && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setConfirmDelete(null)} />
-          <div className="aj-modal aj-modal-sm">
-            <div className="aj-modal-header"><h2>Eliminar categoría</h2></div>
-            <div className="aj-modal-body"><p>¿Eliminar <strong>{confirmDelete.nombre}</strong>?</p></div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className="aj-btn-danger" onClick={handleEliminar}>Eliminar</button>
-            </div>
-          </div>
-        </>
-      )}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Eliminar categoría"
+        message={<>¿Eliminar <strong>{confirmDelete?.nombre}</strong>?</>}
+        variant="danger"
+        confirmText="Eliminar"
+        onConfirm={handleEliminar}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   )
 }

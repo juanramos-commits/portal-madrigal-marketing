@@ -1,11 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
+import Toggle from '../ui/Toggle'
+import Select from '../ui/Select'
+import Modal from '../ui/Modal'
 
 export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
   const [paquetes, setPaquetes] = useState([])
@@ -90,120 +87,112 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
   }
 
   return (
-    <>
-      <div className="vv-modal-overlay" onClick={onCancel} />
-      <div className="vv-modal vv-modal-cierre">
-        <div className="vv-modal-header">
-          <h2>Registrar venta</h2>
-          <button className="vv-modal-close" onClick={onCancel}><CloseIcon /></button>
+    <Modal
+      open={true}
+      onClose={onCancel}
+      title="Registrar venta"
+      footer={
+        <>
+          <button type="button" className="vv-btn-ghost" onClick={onCancel} disabled={submitting}>
+            Cancelar
+          </button>
+          <button type="submit" form="venta-cierre-form" className="vv-btn-success" disabled={submitting}>
+            {submitting ? 'Registrando...' : 'Registrar venta'}
+          </button>
+        </>
+      }
+    >
+      <form id="venta-cierre-form" onSubmit={handleSubmit}>
+        {/* Lead name */}
+        <div className="vv-field">
+          <label>Lead</label>
+          <div className="vv-field-readonly">{lead.nombre}</div>
         </div>
 
-        <form onSubmit={handleSubmit} className="vv-modal-body">
-          {/* Lead name */}
+        {/* Setter / Closer info */}
+        <div className="vv-field-row">
           <div className="vv-field">
-            <label>Lead</label>
-            <div className="vv-field-readonly">{lead.nombre}</div>
-          </div>
-
-          {/* Setter / Closer info */}
-          <div className="vv-field-row">
-            <div className="vv-field">
-              <label>Setter</label>
-              <div className="vv-field-readonly">
-                {lead.setter?.nombre || lead.setter?.email || 'Sin asignar'}
-              </div>
-            </div>
-            <div className="vv-field">
-              <label>Closer</label>
-              <div className="vv-field-readonly">
-                {lead.closer?.nombre || lead.closer?.email || 'Sin asignar'}
-              </div>
+            <label>Setter</label>
+            <div className="vv-field-readonly">
+              {lead.setter?.nombre || lead.setter?.email || 'Sin asignar'}
             </div>
           </div>
-
-          {/* Date */}
           <div className="vv-field">
-            <label>Fecha de la venta</label>
-            <input
-              type="date"
-              value={form.fecha_venta}
-              onChange={e => handleChange('fecha_venta', e.target.value)}
-            />
-            {errores.fecha_venta && <span className="vv-field-error">{errores.fecha_venta}</span>}
+            <label>Closer</label>
+            <div className="vv-field-readonly">
+              {lead.closer?.nombre || lead.closer?.email || 'Sin asignar'}
+            </div>
           </div>
+        </div>
 
-          {/* Package */}
-          <div className="vv-field">
-            <label>Producto / Paquete</label>
-            {loadingPaquetes ? (
-              <div className="vv-field-readonly">Cargando paquetes...</div>
-            ) : (
-              <select
-                value={form.paquete_id}
-                onChange={e => handlePaqueteChange(e.target.value)}
-              >
-                <option value="">Seleccionar paquete</option>
-                {paquetes.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre} — {Number(p.precio).toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
-                  </option>
-                ))}
-              </select>
-            )}
-            {errores.paquete_id && <span className="vv-field-error">{errores.paquete_id}</span>}
-          </div>
+        {/* Date */}
+        <div className="vv-field">
+          <label>Fecha de la venta</label>
+          <input
+            type="date"
+            value={form.fecha_venta}
+            onChange={e => handleChange('fecha_venta', e.target.value)}
+          />
+          {errores.fecha_venta && <span className="vv-field-error">{errores.fecha_venta}</span>}
+        </div>
 
-          {/* Amount */}
-          <div className="vv-field">
-            <label>Importe total (€)</label>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              value={form.importe}
-              onChange={e => handleChange('importe', e.target.value)}
-              placeholder="0,00"
-            />
-            {errores.importe && <span className="vv-field-error">{errores.importe}</span>}
-          </div>
-
-          {/* Payment method */}
-          <div className="vv-field">
-            <label>Método de pago</label>
-            <select
-              value={form.metodo_pago}
-              onChange={e => handleChange('metodo_pago', e.target.value)}
+        {/* Package */}
+        <div className="vv-field">
+          <label>Producto / Paquete</label>
+          {loadingPaquetes ? (
+            <div className="vv-field-readonly">Cargando paquetes...</div>
+          ) : (
+            <Select
+              value={form.paquete_id}
+              onChange={e => handlePaqueteChange(e.target.value)}
             >
-              <option value="">Seleccionar método</option>
-              <option value="stripe">Stripe</option>
-              <option value="sequra">SeQura</option>
-              <option value="transferencia">Transferencia</option>
-            </select>
-            {errores.metodo_pago && <span className="vv-field-error">{errores.metodo_pago}</span>}
-          </div>
+              <option value="">Seleccionar paquete</option>
+              {paquetes.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre} — {Number(p.precio).toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
+                </option>
+              ))}
+            </Select>
+          )}
+          {errores.paquete_id && <span className="vv-field-error">{errores.paquete_id}</span>}
+        </div>
 
-          {/* Single payment toggle */}
-          <div className="vv-field vv-field-toggle">
-            <label className="vv-toggle-label" onClick={() => handleChange('es_pago_unico', !form.es_pago_unico)}>
-              <span className={`vv-toggle ${form.es_pago_unico ? 'active' : ''}`}>
-                <span className="vv-toggle-knob" />
-              </span>
-              <span>¿Es pago único?</span>
-            </label>
-          </div>
+        {/* Amount */}
+        <div className="vv-field">
+          <label>Importe total (€)</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={form.importe}
+            onChange={e => handleChange('importe', e.target.value)}
+            placeholder="0,00"
+          />
+          {errores.importe && <span className="vv-field-error">{errores.importe}</span>}
+        </div>
 
-          {errorGeneral && <div className="vv-error-general">{errorGeneral}</div>}
+        {/* Payment method */}
+        <div className="vv-field">
+          <label>Método de pago</label>
+          <Select
+            value={form.metodo_pago}
+            onChange={e => handleChange('metodo_pago', e.target.value)}
+          >
+            <option value="">Seleccionar método</option>
+            <option value="stripe">Stripe</option>
+            <option value="sequra">SeQura</option>
+            <option value="transferencia">Transferencia</option>
+          </Select>
+          {errores.metodo_pago && <span className="vv-field-error">{errores.metodo_pago}</span>}
+        </div>
 
-          <div className="vv-modal-actions">
-            <button type="button" className="vv-btn-ghost" onClick={onCancel} disabled={submitting}>
-              Cancelar
-            </button>
-            <button type="submit" className="vv-btn-success" disabled={submitting}>
-              {submitting ? 'Registrando...' : 'Registrar venta'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </>
+        {/* Single payment toggle */}
+        <div className="vv-field vv-field-toggle">
+          <Toggle checked={form.es_pago_unico} onChange={v => handleChange('es_pago_unico', v)} label="¿Es pago único?" />
+        </div>
+
+        {errorGeneral && <div className="vv-error-general">{errorGeneral}</div>}
+      </form>
+    </Modal>
   )
 }

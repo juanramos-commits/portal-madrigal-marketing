@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import Toggle from '../ui/Toggle'
 
 const CAMPO_LABELS = {
   estado_reunion: 'Estado de la reunión',
@@ -23,15 +24,7 @@ export default function AjustesCamposObligatorios({
           {camposObligatorios.map(c => (
             <div key={c.id} className="aj-campo-row">
               <span className="aj-campo-nombre">{CAMPO_LABELS[c.campo] || c.campo}</span>
-              <button
-                className={`aj-toggle${c.es_obligatorio ? ' active' : ''}`}
-                onClick={() => onToggle(c.id, !c.es_obligatorio)}
-              >
-                <span className="aj-toggle-knob" />
-                <span className="aj-toggle-text">
-                  {c.es_obligatorio ? 'Obligatorio' : 'Opcional'}
-                </span>
-              </button>
+              <Toggle checked={c.es_obligatorio} onChange={v => onToggle(c.id, v)} label={c.es_obligatorio ? 'Obligatorio' : 'Opcional'} />
             </div>
           ))}
         </div>

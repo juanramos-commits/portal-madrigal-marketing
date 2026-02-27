@@ -1,14 +1,17 @@
 import { logger } from '../lib/logger'
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 
 export default function Seguridad() {
   const { usuario } = useAuth()
+  const { showToast } = useToast()
   const [downloadingData, setDownloadingData] = useState(false)
+  const [confirmSessions, setConfirmSessions] = useState(false)
 
   const handleCloseAllSessions = async () => {
-    if (!confirm('Se cerrarán todas tus sesiones activas. Tendrás que volver a iniciar sesión.')) return
     try {
       await supabase.rpc('registrar_auditoria', {
         p_usuario_id: usuario.id,
@@ -60,7 +63,7 @@ export default function Seguridad() {
       } catch (_) {}
     } catch (e) {
       logger.error('Error downloading personal data:', e)
-      alert('Error al descargar datos. Inténtalo de nuevo.')
+      showToast('Error al descargar datos. Inténtalo de nuevo.', 'error')
     } finally {
       setDownloadingData(false)
     }
@@ -109,10 +112,20 @@ export default function Seguridad() {
           }} />
         </div>
 
-        <button onClick={handleCloseAllSessions} className="btn" style={{ color: '#ef4444' }}>
+        <button onClick={() => setConfirmSessions(true)} className="btn" style={{ color: 'var(--error)' }}>
           Cerrar todas las sesiones
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmSessions}
+        title="Cerrar todas las sesiones"
+        message="Se cerrarán todas tus sesiones activas. Tendrás que volver a iniciar sesión."
+        variant="danger"
+        confirmText="Cerrar sesiones"
+        onConfirm={handleCloseAllSessions}
+        onCancel={() => setConfirmSessions(false)}
+      />
 
       {/* GDPR - Derecho de acceso */}
       <div style={{

@@ -7,6 +7,7 @@ import CalendarioBloqueos from '../../components/ventas/CalendarioBloqueos'
 import CalendarioConfig from '../../components/ventas/CalendarioConfig'
 import CalendarioEnlaces from '../../components/ventas/CalendarioEnlaces'
 import CalendarioAdminPanel from '../../components/ventas/CalendarioAdminPanel'
+import Select from '../../components/ui/Select'
 import '../../styles/ventas-calendario.css'
 
 const ChevronLeft = () => (
@@ -124,7 +125,7 @@ export default function VentasCalendario() {
 
             {/* Closer filter (admin only) */}
             {cal.esDirector && cal.closers.length > 0 && (
-              <select
+              <Select
                 className="vc-closer-filtro"
                 value={cal.closerFiltro || ''}
                 onChange={e => cal.setCloserFiltro(e.target.value || null)}
@@ -133,7 +134,7 @@ export default function VentasCalendario() {
                 {cal.closers.map(c => (
                   <option key={c.id} value={c.id}>{c.nombre || c.email}</option>
                 ))}
-              </select>
+              </Select>
             )}
           </div>
         </div>

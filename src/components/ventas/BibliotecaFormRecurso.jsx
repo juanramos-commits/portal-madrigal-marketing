@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react'
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
+import Checkbox from '../ui/Checkbox'
+import Select from '../ui/Select'
+import Modal from '../ui/Modal'
 
 const TIPOS = [
   { value: 'enlace_pago', label: 'Enlace de pago' },
@@ -81,84 +78,80 @@ export default function BibliotecaFormRecurso({ recurso, secciones, seccionIdIni
   }
 
   return (
-    <>
-      <div className="bib-modal-overlay" onClick={onCerrar} />
-      <div className="bib-modal">
-        <div className="bib-modal-header">
-          <h2>{recurso ? 'Editar recurso' : 'Nuevo recurso'}</h2>
-          <button className="bib-modal-close" onClick={onCerrar}><CloseIcon /></button>
-        </div>
-        <div className="bib-modal-body">
-          <div className="bib-field">
-            <label>Nombre *</label>
-            <input
-              type="text"
-              value={nombre}
-              onChange={e => setNombre(e.target.value)}
-              placeholder="Ej: Enlace de pago mensual"
-            />
-          </div>
-          <div className="bib-field">
-            <label>Descripción</label>
-            <textarea
-              value={descripcion}
-              onChange={e => setDescripcion(e.target.value)}
-              placeholder="Descripción opcional"
-              rows={2}
-            />
-          </div>
-          <div className="bib-field">
-            <label>URL</label>
-            <input
-              type="url"
-              value={url}
-              onChange={e => setUrl(e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
-          <div className="bib-form-row">
-            <div className="bib-field">
-              <label>Tipo</label>
-              <select value={tipo} onChange={e => setTipo(e.target.value)}>
-                {TIPOS.map(t => (
-                  <option key={t.value} value={t.value}>{t.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="bib-field">
-              <label>Sección *</label>
-              <select value={seccionId} onChange={e => setSeccionId(e.target.value)}>
-                <option value="">Seleccionar sección</option>
-                {secciones.map(s => (
-                  <option key={s.id} value={s.id}>{s.nombre}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="bib-field">
-            <label>Visibilidad por rol</label>
-            <div className="bib-roles-selector">
-              {ROLES_OPTIONS.map(r => (
-                <label key={r.value} className="bib-role-check">
-                  <input
-                    type="checkbox"
-                    checked={visiblePara.includes(r.value)}
-                    onChange={() => toggleRol(r.value)}
-                  />
-                  <span>{r.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          {error && <div className="bib-error-msg">{error}</div>}
-        </div>
-        <div className="bib-modal-actions">
+    <Modal
+      open={true}
+      onClose={onCerrar}
+      title={recurso ? 'Editar recurso' : 'Nuevo recurso'}
+      footer={
+        <>
           <button className="bib-btn-ghost" onClick={onCerrar} disabled={saving}>Cancelar</button>
           <button className="bib-btn-primary" onClick={handleGuardar} disabled={saving}>
             {saving ? 'Guardando...' : recurso ? 'Guardar cambios' : 'Crear recurso'}
           </button>
+        </>
+      }
+    >
+      <div className="bib-field">
+        <label>Nombre *</label>
+        <input
+          type="text"
+          value={nombre}
+          onChange={e => setNombre(e.target.value)}
+          placeholder="Ej: Enlace de pago mensual"
+        />
+      </div>
+      <div className="bib-field">
+        <label>Descripción</label>
+        <textarea
+          value={descripcion}
+          onChange={e => setDescripcion(e.target.value)}
+          placeholder="Descripción opcional"
+          rows={2}
+        />
+      </div>
+      <div className="bib-field">
+        <label>URL</label>
+        <input
+          type="url"
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          placeholder="https://..."
+        />
+      </div>
+      <div className="bib-form-row">
+        <div className="bib-field">
+          <label>Tipo</label>
+          <Select value={tipo} onChange={e => setTipo(e.target.value)}>
+            {TIPOS.map(t => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="bib-field">
+          <label>Sección *</label>
+          <Select value={seccionId} onChange={e => setSeccionId(e.target.value)}>
+            <option value="">Seleccionar sección</option>
+            {secciones.map(s => (
+              <option key={s.id} value={s.id}>{s.nombre}</option>
+            ))}
+          </Select>
         </div>
       </div>
-    </>
+      <div className="bib-field">
+        <label>Visibilidad por rol</label>
+        <div className="bib-roles-selector">
+          {ROLES_OPTIONS.map(r => (
+            <label key={r.value} className="bib-role-check">
+              <Checkbox
+                checked={visiblePara.includes(r.value)}
+                onChange={() => toggleRol(r.value)}
+              />
+              <span>{r.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      {error && <div className="bib-error-msg">{error}</div>}
+    </Modal>
   )
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Toggle from '../ui/Toggle'
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
@@ -131,12 +132,7 @@ export default function CalendarioDisponibilidad({
             <div key={dia} className={`vc-disp-dia${activo ? ' vc-disp-activo' : ''}`}>
               <div className="vc-disp-dia-header">
                 <span className="vc-disp-dia-nombre">{nombre}</span>
-                <button
-                  className={`vc-toggle-mini${activo ? ' active' : ''}`}
-                  onClick={() => toggleDia(dia)}
-                >
-                  <span className="vc-toggle-mini-knob" />
-                </button>
+                <Toggle checked={activo} onChange={() => toggleDia(dia)} />
               </div>
 
               {activo && (

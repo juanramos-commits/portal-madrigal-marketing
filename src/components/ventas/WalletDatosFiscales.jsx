@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Toggle from '../ui/Toggle'
 
 export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
   const [form, setForm] = useState({
@@ -179,15 +180,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
         </div>
 
         <div className="wt-field wt-field-toggle-wrap">
-          <label
-            className="wt-toggle-label"
-            onClick={() => handleChange('iva_incluido', !form.iva_incluido)}
-          >
-            <span className={`wt-toggle ${form.iva_incluido ? 'active' : ''}`}>
-              <span className="wt-toggle-knob" />
-            </span>
-            <span>¿IVA incluido en comisión?</span>
-          </label>
+          <Toggle checked={form.iva_incluido} onChange={v => handleChange('iva_incluido', v)} label="¿IVA incluido en comisión?" />
           <span className="wt-field-hint">
             {form.iva_incluido
               ? 'El IVA sale del monto de la comisión'

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ConfirmDialog from '../ui/ConfirmDialog'
 import {
   DndContext,
   closestCenter,
@@ -186,24 +187,15 @@ export default function BibliotecaAdminRecursos({
         </>
       )}
 
-      {confirmEliminar && (
-        <>
-          <div className="bib-modal-overlay" onClick={() => setConfirmEliminar(null)} />
-          <div className="bib-modal bib-modal-sm">
-            <div className="bib-modal-header">
-              <h2>Eliminar recurso</h2>
-            </div>
-            <div className="bib-modal-body">
-              <p>¿Eliminar el recurso <strong>{confirmEliminar.nombre}</strong>?</p>
-              <p className="bib-text-muted">Esta acción no se puede deshacer.</p>
-            </div>
-            <div className="bib-modal-actions">
-              <button className="bib-btn-ghost" onClick={() => setConfirmEliminar(null)}>Cancelar</button>
-              <button className="bib-btn-danger" onClick={handleConfirmEliminar}>Eliminar</button>
-            </div>
-          </div>
-        </>
-      )}
+      <ConfirmDialog
+        open={!!confirmEliminar}
+        title="Eliminar recurso"
+        message={<>¿Eliminar el recurso <strong>{confirmEliminar?.nombre}</strong>?<br /><span className="bib-text-muted">Esta acción no se puede deshacer.</span></>}
+        variant="danger"
+        confirmText="Eliminar"
+        onConfirm={handleConfirmEliminar}
+        onCancel={() => setConfirmEliminar(null)}
+      />
     </div>
   )
 }

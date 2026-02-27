@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react'
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
+import Modal from '../ui/Modal'
+import ConfirmDialog from '../ui/ConfirmDialog'
 
 function formatPrecio(n) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n || 0)
@@ -92,54 +88,43 @@ export default function AjustesPaquetes({
         </div>
       )}
 
-      {showModal && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setShowModal(false)} />
-          <div className="aj-modal">
-            <div className="aj-modal-header">
-              <h2>{editando ? 'Editar paquete' : 'Nuevo paquete'}</h2>
-              <button className="aj-modal-close" onClick={() => setShowModal(false)}><CloseIcon /></button>
-            </div>
-            <div className="aj-modal-body">
-              <div className="aj-field">
-                <label>Nombre *</label>
-                <input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} />
-              </div>
-              <div className="aj-field">
-                <label>Descripción</label>
-                <textarea value={form.descripcion} onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))} rows={2} />
-              </div>
-              <div className="aj-field">
-                <label>Precio (€) *</label>
-                <input type="number" min="0" step="0.01" value={form.precio} onChange={e => setForm(p => ({ ...p, precio: e.target.value }))} />
-              </div>
-              {error && <div className="aj-error">{error}</div>}
-            </div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
-              <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
-                {saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear paquete'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editando ? 'Editar paquete' : 'Nuevo paquete'}
+        footer={
+          <>
+            <button className="aj-btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
+            <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
+              {saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear paquete'}
+            </button>
+          </>
+        }
+      >
+        <div className="aj-field">
+          <label>Nombre *</label>
+          <input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} />
+        </div>
+        <div className="aj-field">
+          <label>Descripción</label>
+          <textarea value={form.descripcion} onChange={e => setForm(p => ({ ...p, descripcion: e.target.value }))} rows={2} />
+        </div>
+        <div className="aj-field">
+          <label>Precio (€) *</label>
+          <input type="number" min="0" step="0.01" value={form.precio} onChange={e => setForm(p => ({ ...p, precio: e.target.value }))} />
+        </div>
+        {error && <div className="aj-error">{error}</div>}
+      </Modal>
 
-      {confirmDelete && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setConfirmDelete(null)} />
-          <div className="aj-modal aj-modal-sm">
-            <div className="aj-modal-header"><h2>Eliminar paquete</h2></div>
-            <div className="aj-modal-body">
-              <p>¿Eliminar <strong>{confirmDelete.nombre}</strong>? Las ventas existentes no se verán afectadas.</p>
-            </div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setConfirmDelete(null)}>Cancelar</button>
-              <button className="aj-btn-danger" onClick={handleEliminar}>Eliminar</button>
-            </div>
-          </div>
-        </>
-      )}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Eliminar paquete"
+        message={<>¿Eliminar <strong>{confirmDelete?.nombre}</strong>? Las ventas existentes no se verán afectadas.</>}
+        variant="danger"
+        confirmText="Eliminar"
+        onConfirm={handleEliminar}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   )
 }

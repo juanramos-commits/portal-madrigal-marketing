@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Modal from '../ui/Modal'
 
 function formatMoneda(v) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
@@ -17,12 +18,6 @@ const CheckIcon = () => (
 
 const XIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
   </svg>
 )
@@ -181,59 +176,51 @@ export default function WalletAdminRetiros({
       )}
 
       {/* Modal aprobar */}
-      {modal?.type === 'aprobar' && (
-        <>
-          <div className="wt-modal-overlay" onClick={() => setModal(null)} />
-          <div className="wt-modal wt-modal-confirm">
-            <div className="wt-modal-header">
-              <h2>Aprobar retiro</h2>
-              <button className="wt-modal-close" onClick={() => setModal(null)}><CloseIcon /></button>
-            </div>
-            <div className="wt-modal-body">
-              <p>
-                ¿Aprobar el retiro de <strong>{formatMoneda(modal.retiro.monto)}</strong> para <strong>{modal.retiro.usuario?.nombre || '-'}</strong>?
-              </p>
-              <p className="wt-modal-hint">Se generará la factura automáticamente.</p>
-              {modalError && <div className="wt-error-general">{modalError}</div>}
-            </div>
-            <div className="wt-modal-actions">
-              <button className="wt-btn-ghost" onClick={() => setModal(null)} disabled={submitting}>Cancelar</button>
-              <button className="wt-btn-success" onClick={() => handleAprobar(modal.retiro.id)} disabled={submitting}>
-                {submitting ? 'Aprobando...' : 'Aprobar'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <Modal
+        open={modal?.type === 'aprobar'}
+        onClose={() => setModal(null)}
+        title="Aprobar retiro"
+        size="sm"
+        footer={
+          <>
+            <button className="wt-btn-ghost" onClick={() => setModal(null)} disabled={submitting}>Cancelar</button>
+            <button className="wt-btn-success" onClick={() => handleAprobar(modal?.retiro?.id)} disabled={submitting}>
+              {submitting ? 'Aprobando...' : 'Aprobar'}
+            </button>
+          </>
+        }
+      >
+        <p>
+          ¿Aprobar el retiro de <strong>{formatMoneda(modal?.retiro?.monto)}</strong> para <strong>{modal?.retiro?.usuario?.nombre || '-'}</strong>?
+        </p>
+        <p className="wt-modal-hint">Se generará la factura automáticamente.</p>
+        {modalError && <div className="wt-error-general">{modalError}</div>}
+      </Modal>
 
       {/* Modal rechazar */}
-      {modal?.type === 'rechazar' && (
-        <>
-          <div className="wt-modal-overlay" onClick={() => setModal(null)} />
-          <div className="wt-modal wt-modal-confirm">
-            <div className="wt-modal-header">
-              <h2>Rechazar retiro</h2>
-              <button className="wt-modal-close" onClick={() => setModal(null)}><CloseIcon /></button>
-            </div>
-            <div className="wt-modal-body">
-              <p>
-                ¿Rechazar el retiro de <strong>{formatMoneda(modal.retiro.monto)}</strong> para <strong>{modal.retiro.usuario?.nombre || '-'}</strong>?
-              </p>
-              <div className="wt-field">
-                <label>Motivo del rechazo *</label>
-                <textarea value={motivo} onChange={e => { setMotivo(e.target.value); setModalError(null) }} rows={3} placeholder="Escribe el motivo..." />
-              </div>
-              {modalError && <div className="wt-error-general">{modalError}</div>}
-            </div>
-            <div className="wt-modal-actions">
-              <button className="wt-btn-ghost" onClick={() => { setModal(null); setMotivo('') }} disabled={submitting}>Cancelar</button>
-              <button className="wt-btn-danger" onClick={() => handleRechazar(modal.retiro.id)} disabled={submitting}>
-                {submitting ? 'Rechazando...' : 'Rechazar'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <Modal
+        open={modal?.type === 'rechazar'}
+        onClose={() => { setModal(null); setMotivo('') }}
+        title="Rechazar retiro"
+        size="sm"
+        footer={
+          <>
+            <button className="wt-btn-ghost" onClick={() => { setModal(null); setMotivo('') }} disabled={submitting}>Cancelar</button>
+            <button className="wt-btn-danger" onClick={() => handleRechazar(modal?.retiro?.id)} disabled={submitting}>
+              {submitting ? 'Rechazando...' : 'Rechazar'}
+            </button>
+          </>
+        }
+      >
+        <p>
+          ¿Rechazar el retiro de <strong>{formatMoneda(modal?.retiro?.monto)}</strong> para <strong>{modal?.retiro?.usuario?.nombre || '-'}</strong>?
+        </p>
+        <div className="wt-field">
+          <label>Motivo del rechazo *</label>
+          <textarea value={motivo} onChange={e => { setMotivo(e.target.value); setModalError(null) }} rows={3} placeholder="Escribe el motivo..." />
+        </div>
+        {modalError && <div className="wt-error-general">{modalError}</div>}
+      </Modal>
     </div>
   )
 }

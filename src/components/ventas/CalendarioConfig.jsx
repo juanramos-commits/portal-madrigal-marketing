@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Select from '../ui/Select'
 
 export default function CalendarioConfig({ config, onGuardar }) {
   const [duracion, setDuracion] = useState(60)
@@ -39,23 +40,23 @@ export default function CalendarioConfig({ config, onGuardar }) {
       <div className="vc-config-grid">
         <div className="vc-field">
           <label>Duración del slot</label>
-          <select value={duracion} onChange={e => { setDuracion(e.target.value); setGuardado(false) }}>
+          <Select value={duracion} onChange={e => { setDuracion(e.target.value); setGuardado(false) }}>
             <option value={30}>30 minutos</option>
             <option value={45}>45 minutos</option>
             <option value={60}>60 minutos</option>
             <option value={90}>90 minutos</option>
-          </select>
+          </Select>
         </div>
 
         <div className="vc-field">
           <label>Descanso entre citas</label>
-          <select value={descanso} onChange={e => { setDescanso(e.target.value); setGuardado(false) }}>
+          <Select value={descanso} onChange={e => { setDescanso(e.target.value); setGuardado(false) }}>
             <option value={0}>Sin descanso</option>
             <option value={5}>5 minutos</option>
             <option value={10}>10 minutos</option>
             <option value={15}>15 minutos</option>
             <option value={30}>30 minutos</option>
-          </select>
+          </Select>
         </div>
       </div>
 

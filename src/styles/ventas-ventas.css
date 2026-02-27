@@ -149,17 +149,17 @@
 
 .vv-badge-pendiente {
   background: rgba(255, 169, 77, 0.15);
-  color: #ffa94d;
+  color: var(--warning);
 }
 
 .vv-badge-aprobada {
   background: rgba(46, 229, 157, 0.15);
-  color: #2ee59d;
+  color: var(--success);
 }
 
 .vv-badge-rechazada {
   background: rgba(255, 107, 107, 0.15);
-  color: #ff6b6b;
+  color: var(--error);
 }
 
 .vv-badge-devolucion {
@@ -180,7 +180,7 @@
 
 .vv-metodo-stripe { color: #635bff; background: rgba(99, 91, 255, 0.12); }
 .vv-metodo-sequra { color: #00c4b4; background: rgba(0, 196, 180, 0.12); }
-.vv-metodo-transferencia { color: #ffa94d; background: rgba(255, 169, 77, 0.12); }
+.vv-metodo-transferencia { color: var(--warning); background: rgba(255, 169, 77, 0.12); }
 
 /* ── Desktop table ────────────────────────────────────────────────── */
 .vv-table-wrap {
@@ -259,7 +259,7 @@
 }
 
 .vv-action-approve {
-  color: #2ee59d;
+  color: var(--success);
   border-color: rgba(46, 229, 157, 0.3);
 }
 .vv-action-approve:hover {
@@ -267,7 +267,7 @@
 }
 
 .vv-action-reject {
-  color: #ff6b6b;
+  color: var(--error);
   border-color: rgba(255, 107, 107, 0.3);
 }
 .vv-action-reject:hover {
@@ -519,7 +519,7 @@
   gap: 4px;
   background: transparent;
   border: none;
-  color: #6495ed;
+  color: var(--info);
   font-size: 12px;
   cursor: pointer;
   padding: 2px 6px;
@@ -566,137 +566,10 @@
   opacity: 0.7;
 }
 
-.vv-text-success { color: #2ee59d; }
-.vv-text-danger { color: #ff6b6b; }
+.vv-text-success { color: var(--success); }
+.vv-text-danger { color: var(--error); }
 
-/* ── Modals ───────────────────────────────────────────────────────── */
-.vv-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 100;
-  animation: vv-fadeIn 0.2s ease;
-}
-
-@keyframes vv-fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.vv-modal {
-  position: fixed;
-  z-index: 101;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  animation: vv-slideUp 0.25s ease;
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh;
-}
-
-@keyframes vv-slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Centered modal (desktop) */
-.vv-modal-confirm {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 440px;
-  animation: vv-fadeScaleIn 0.2s ease;
-}
-
-@keyframes vv-fadeScaleIn {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-/* Sale closure modal (larger) */
-.vv-modal-cierre {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 500px;
-  animation: vv-fadeScaleIn 0.2s ease;
-}
-
-@media (max-width: 768px) {
-  .vv-modal-cierre,
-  .vv-modal-confirm {
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    transform: none;
-    width: 100%;
-    max-width: 100%;
-    max-height: 85vh;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    animation: vv-slideUpMobile 0.3s ease;
-  }
-
-  @keyframes vv-slideUpMobile {
-    from { opacity: 0; transform: translateY(100%); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-}
-
-.vv-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.vv-modal-header h2 {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-  color: var(--text);
-}
-
-.vv-modal-close {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  display: flex;
-  transition: all var(--transition-fast);
-}
-
-.vv-modal-close svg {
-  width: 18px;
-  height: 18px;
-}
-
-.vv-modal-close:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text);
-}
-
-.vv-modal-body {
-  padding: var(--space-lg);
-  overflow-y: auto;
-  flex: 1;
-}
-
-.vv-modal-body p {
-  font-size: 14px;
-  color: var(--text);
-  margin: 0 0 var(--space-sm);
-  line-height: 1.5;
-}
-
+/* ── Modal utility classes (used inside shared Modal) ────────────── */
 .vv-modal-hint {
   font-size: 13px !important;
   color: var(--text-muted) !important;
@@ -709,15 +582,6 @@
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--warning);
-}
-
-.vv-modal-actions {
-  display: flex;
-  gap: var(--space-sm);
-  justify-content: flex-end;
-  padding: var(--space-md) var(--space-lg);
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
 }
 
 /* ── Form fields ──────────────────────────────────────────────────── */
@@ -790,48 +654,6 @@
   margin-bottom: var(--space-md);
 }
 
-.vv-toggle-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  cursor: pointer;
-  user-select: none;
-  font-size: 14px;
-  color: var(--text);
-  text-transform: none;
-  font-weight: 500;
-  letter-spacing: 0;
-}
-
-.vv-toggle {
-  width: 40px;
-  height: 22px;
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.1);
-  position: relative;
-  transition: background var(--transition-fast);
-  flex-shrink: 0;
-}
-
-.vv-toggle.active {
-  background: #2ee59d;
-}
-
-.vv-toggle-knob {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: white;
-  transition: transform var(--transition-fast);
-}
-
-.vv-toggle.active .vv-toggle-knob {
-  transform: translateX(18px);
-}
-
 /* ── Buttons ──────────────────────────────────────────────────────── */
 .vv-btn-ghost {
   padding: 8px 16px;
@@ -858,7 +680,7 @@
   padding: 8px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  background: #2ee59d;
+  background: var(--success);
   color: #0a0a0b;
   font-size: 13px;
   font-weight: 600;
@@ -879,7 +701,7 @@
   padding: 8px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  background: #ff6b6b;
+  background: var(--error);
   color: white;
   font-size: 13px;
   font-weight: 600;

@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react'
+import Checkbox from '../ui/Checkbox'
+import Select from '../ui/Select'
+import Modal from '../ui/Modal'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core'
@@ -199,56 +202,48 @@ export default function AjustesPipelines({
 
       <button className="aj-btn-sm aj-mt" onClick={abrirNueva}>+ Nueva etapa</button>
 
-      {showModal && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setShowModal(false)} />
-          <div className="aj-modal">
-            <div className="aj-modal-header">
-              <h2>{editando ? 'Editar etapa' : 'Nueva etapa'}</h2>
-              <button className="aj-modal-close" onClick={() => setShowModal(false)}><CloseIcon /></button>
-            </div>
-            <div className="aj-modal-body">
-              <div className="aj-field">
-                <label>Nombre *</label>
-                <input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} />
-              </div>
-              <div className="aj-form-row">
-                <div className="aj-field">
-                  <label>Color</label>
-                  <div className="aj-color-picker">
-                    <input type="color" value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))} />
-                    <span className="aj-color-preview" style={{ background: form.color }} />
-                    <span>{form.color}</span>
-                  </div>
-                </div>
-                <div className="aj-field">
-                  <label>Tipo</label>
-                  <select value={form.tipo} onChange={e => setForm(p => ({ ...p, tipo: e.target.value }))}>
-                    {TIPO_OPTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                  </select>
-                </div>
-              </div>
-              {form.tipo === 'ghosting' && (
-                <div className="aj-field">
-                  <label>Máximo intentos</label>
-                  <input type="number" min="1" value={form.max_intentos || ''} onChange={e => setForm(p => ({ ...p, max_intentos: e.target.value }))} placeholder="3" />
-                </div>
-              )}
-              <label className="aj-check-label">
-                <input type="checkbox" checked={form.es_final} onChange={e => setForm(p => ({ ...p, es_final: e.target.checked }))} />
-                <span>Es etapa final</span>
-              </label>
-              {error && <div className="aj-error">{error}</div>}
-            </div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
-              <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
-                {saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear etapa'}
-              </button>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title={editando ? 'Editar etapa' : 'Nueva etapa'}
+        footer={
+          <>
+            <button className="aj-btn-ghost" onClick={() => setShowModal(false)}>Cancelar</button>
+            <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
+              {saving ? 'Guardando...' : editando ? 'Guardar' : 'Crear etapa'}
+            </button>
+          </>
+        }
+      >
+        <div className="aj-field">
+          <label>Nombre *</label>
+          <input type="text" value={form.nombre} onChange={e => setForm(p => ({ ...p, nombre: e.target.value }))} />
+        </div>
+        <div className="aj-form-row">
+          <div className="aj-field">
+            <label>Color</label>
+            <div className="aj-color-picker">
+              <input type="color" value={form.color} onChange={e => setForm(p => ({ ...p, color: e.target.value }))} />
+              <span className="aj-color-preview" style={{ background: form.color }} />
+              <span>{form.color}</span>
             </div>
           </div>
-        </>
-      )}
+          <div className="aj-field">
+            <label>Tipo</label>
+            <Select value={form.tipo} onChange={e => setForm(p => ({ ...p, tipo: e.target.value }))}>
+              {TIPO_OPTIONS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </Select>
+          </div>
+        </div>
+        {form.tipo === 'ghosting' && (
+          <div className="aj-field">
+            <label>Máximo intentos</label>
+            <input type="number" min="1" value={form.max_intentos || ''} onChange={e => setForm(p => ({ ...p, max_intentos: e.target.value }))} placeholder="3" />
+          </div>
+        )}
+        <Checkbox checked={form.es_final} onChange={v => setForm(p => ({ ...p, es_final: v }))} label="Es etapa final" />
+        {error && <div className="aj-error">{error}</div>}
+      </Modal>
     </div>
   )
 }

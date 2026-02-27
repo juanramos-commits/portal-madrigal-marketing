@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
+import Checkbox from '../ui/Checkbox'
+import Modal from '../ui/Modal'
+import Select from '../ui/Select'
 
 const CloseIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
@@ -123,78 +126,61 @@ export default function AjustesEquipo({
         </div>
       )}
 
-      {/* Add modal */}
-      {showAdd && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setShowAdd(false)} />
-          <div className="aj-modal">
-            <div className="aj-modal-header">
-              <h2>Añadir miembro</h2>
-              <button className="aj-modal-close" onClick={() => setShowAdd(false)}><CloseIcon /></button>
-            </div>
-            <div className="aj-modal-body">
-              <div className="aj-field">
-                <label>Usuario</label>
-                <select value={selectedUser} onChange={e => setSelectedUser(e.target.value)}>
-                  <option value="">Seleccionar usuario</option>
-                  {usuarios.map(u => (
-                    <option key={u.id} value={u.id}>{u.nombre || u.email}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="aj-field">
-                <label>Roles</label>
-                <div className="aj-roles-checks">
-                  {ALL_ROLES.map(r => (
-                    <label key={r} className="aj-check-label">
-                      <input type="checkbox" checked={selectedRoles.includes(r)} onChange={() => toggleRol(r)} />
-                      <span>{ROL_LABELS[r]}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              {error && <div className="aj-error">{error}</div>}
-            </div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setShowAdd(false)}>Cancelar</button>
-              <button className="aj-btn-primary" onClick={handleAddSave} disabled={saving}>
-                {saving ? 'Guardando...' : 'Añadir'}
-              </button>
-            </div>
+      <Modal
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        title="Añadir miembro"
+        footer={
+          <>
+            <button className="aj-btn-ghost" onClick={() => setShowAdd(false)}>Cancelar</button>
+            <button className="aj-btn-primary" onClick={handleAddSave} disabled={saving}>
+              {saving ? 'Guardando...' : 'Añadir'}
+            </button>
+          </>
+        }
+      >
+        <div className="aj-field">
+          <label>Usuario</label>
+          <Select value={selectedUser} onChange={e => setSelectedUser(e.target.value)}>
+            <option value="">Seleccionar usuario</option>
+            {usuarios.map(u => (
+              <option key={u.id} value={u.id}>{u.nombre || u.email}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="aj-field">
+          <label>Roles</label>
+          <div className="aj-roles-checks">
+            {ALL_ROLES.map(r => (
+              <Checkbox key={r} checked={selectedRoles.includes(r)} onChange={() => toggleRol(r)} label={ROL_LABELS[r]} />
+            ))}
           </div>
-        </>
-      )}
+        </div>
+        {error && <div className="aj-error">{error}</div>}
+      </Modal>
 
-      {/* Edit roles modal */}
-      {showEdit && (
-        <>
-          <div className="aj-modal-overlay" onClick={() => setShowEdit(null)} />
-          <div className="aj-modal aj-modal-sm">
-            <div className="aj-modal-header">
-              <h2>Editar roles</h2>
-              <button className="aj-modal-close" onClick={() => setShowEdit(null)}><CloseIcon /></button>
-            </div>
-            <div className="aj-modal-body">
-              <p><strong>{showEdit.usuario?.nombre || showEdit.usuario?.email}</strong></p>
-              <div className="aj-roles-checks">
-                {ALL_ROLES.map(r => (
-                  <label key={r} className="aj-check-label">
-                    <input type="checkbox" checked={selectedRoles.includes(r)} onChange={() => toggleRol(r)} />
-                    <span>{ROL_LABELS[r]}</span>
-                  </label>
-                ))}
-              </div>
-              {error && <div className="aj-error">{error}</div>}
-            </div>
-            <div className="aj-modal-actions">
-              <button className="aj-btn-ghost" onClick={() => setShowEdit(null)}>Cancelar</button>
-              <button className="aj-btn-primary" onClick={handleEditSave} disabled={saving}>
-                {saving ? 'Guardando...' : 'Guardar'}
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      <Modal
+        open={!!showEdit}
+        onClose={() => setShowEdit(null)}
+        title="Editar roles"
+        size="sm"
+        footer={
+          <>
+            <button className="aj-btn-ghost" onClick={() => setShowEdit(null)}>Cancelar</button>
+            <button className="aj-btn-primary" onClick={handleEditSave} disabled={saving}>
+              {saving ? 'Guardando...' : 'Guardar'}
+            </button>
+          </>
+        }
+      >
+        <p><strong>{showEdit?.usuario?.nombre || showEdit?.usuario?.email}</strong></p>
+        <div className="aj-roles-checks">
+          {ALL_ROLES.map(r => (
+            <Checkbox key={r} checked={selectedRoles.includes(r)} onChange={() => toggleRol(r)} label={ROL_LABELS[r]} />
+          ))}
+        </div>
+        {error && <div className="aj-error">{error}</div>}
+      </Modal>
     </div>
   )
 }

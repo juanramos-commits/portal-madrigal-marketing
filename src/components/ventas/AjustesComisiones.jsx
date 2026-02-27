@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import Select from '../ui/Select'
 
 const ROL_LABELS = { setter: 'Setter', closer: 'Closer', director_ventas: 'Director ventas' }
 
@@ -109,14 +110,14 @@ export default function AjustesComisiones({
       <div className="aj-form">
         <div className="aj-field">
           <label>Usuario</label>
-          <select value={bonusUsuario} onChange={e => setBonusUsuario(e.target.value)}>
+          <Select value={bonusUsuario} onChange={e => setBonusUsuario(e.target.value)}>
             <option value="">Seleccionar usuario</option>
             {directores.map(m => (
               <option key={m.usuario_id} value={m.usuario_id}>
                 {m.usuario?.nombre || m.usuario?.email}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="aj-form-row">
           <div className="aj-field">

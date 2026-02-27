@@ -815,7 +815,7 @@
 
 .db-pendiente-retiros {
   background: rgba(100, 149, 237, 0.15);
-  color: #6495ed;
+  color: var(--info);
 }
 
 .db-pendiente-text {
