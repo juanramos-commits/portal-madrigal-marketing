@@ -26,7 +26,7 @@ export function generarFacturaPDF(factura) {
   doc.setFont('Helvetica', 'bold')
   doc.setFontSize(18)
   doc.setTextColor(30, 30, 30)
-  doc.text(`FACTURA N\u00ba ${factura.numero_factura}`, pageW / 2, y, { align: 'center' })
+  doc.text(`FACTURA Nº ${factura.numero_factura}`, pageW / 2, y, { align: 'center' })
   y += 8
 
   doc.setFont('Helvetica', 'normal')
@@ -94,7 +94,7 @@ export function generarFacturaPDF(factura) {
 
   doc.setFontSize(11)
   doc.setTextColor(30, 30, 30)
-  doc.text(factura.concepto || 'Servicios de intermediaci\u00f3n comercial', margin, y)
+  doc.text(factura.concepto || 'Servicios de intermediación comercial', margin, y)
   y += 12
 
   // ── Separator ──────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ export function generarFacturaPDF(factura) {
 }
 
 export function generarCSVFacturas(facturas) {
-  const headers = ['N\u00ba Factura', 'Fecha', 'Emisor', 'NIF Emisor', 'Receptor', 'CIF Receptor', 'Concepto', 'Base Imponible', 'IVA %', 'IVA Monto', 'Total']
+  const headers = ['Nº Factura', 'Fecha', 'Emisor', 'NIF Emisor', 'Receptor', 'CIF Receptor', 'Concepto', 'Base Imponible', 'IVA %', 'IVA Monto', 'Total']
   const rows = facturas.map(f => [
     f.numero_factura,
     f.fecha_emision,

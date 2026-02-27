@@ -76,12 +76,12 @@ export default function CRMFiltros({
           )}
 
           <div className="crm-field">
-            <label>Categor\u00eda</label>
+            <label>Categoría</label>
             <select
               value={filtros.categoria_id || ''}
               onChange={e => handleChange('categoria_id', e.target.value || null)}
             >
-              <option value="">Todas las categor\u00edas</option>
+              <option value="">Todas las categorías</option>
               {categorias.map(c => (
                 <option key={c.id} value={c.id}>{c.nombre}</option>
               ))}

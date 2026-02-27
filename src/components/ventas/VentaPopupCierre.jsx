@@ -56,7 +56,7 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
     if (!form.fecha_venta) e.fecha_venta = 'La fecha es obligatoria'
     if (!form.paquete_id) e.paquete_id = 'Selecciona un paquete'
     if (!form.importe || Number(form.importe) <= 0) e.importe = 'El importe debe ser mayor que 0'
-    if (!form.metodo_pago) e.metodo_pago = 'Selecciona el m\u00e9todo de pago'
+    if (!form.metodo_pago) e.metodo_pago = 'Selecciona el método de pago'
     setErrores(e)
     return Object.keys(e).length === 0
   }
@@ -169,12 +169,12 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
 
           {/* Payment method */}
           <div className="vv-field">
-            <label>M\u00e9todo de pago</label>
+            <label>Método de pago</label>
             <select
               value={form.metodo_pago}
               onChange={e => handleChange('metodo_pago', e.target.value)}
             >
-              <option value="">Seleccionar m\u00e9todo</option>
+              <option value="">Seleccionar método</option>
               <option value="stripe">Stripe</option>
               <option value="sequra">SeQura</option>
               <option value="transferencia">Transferencia</option>
@@ -188,7 +188,7 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
               <span className={`vv-toggle ${form.es_pago_unico ? 'active' : ''}`}>
                 <span className="vv-toggle-knob" />
               </span>
-              <span>\u00bfEs pago \u00fanico?</span>
+              <span>¿Es pago único?</span>
             </label>
           </div>
 

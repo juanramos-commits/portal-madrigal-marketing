@@ -74,7 +74,7 @@ export default function CRMNuevoLead({ categorias = [], onCrear, onCerrar }) {
             </div>
 
             <div className="crm-field">
-              <label>Tel\u00e9fono</label>
+              <label>Teléfono</label>
               <input
                 type="tel"
                 value={form.telefono}
@@ -94,12 +94,12 @@ export default function CRMNuevoLead({ categorias = [], onCrear, onCerrar }) {
             </div>
 
             <div className="crm-field">
-              <label>Categor\u00eda</label>
+              <label>Categoría</label>
               <select
                 value={form.categoria_id}
                 onChange={e => handleChange('categoria_id', e.target.value)}
               >
-                <option value="">Sin categor\u00eda</option>
+                <option value="">Sin categoría</option>
                 {categorias.map(c => (
                   <option key={c.id} value={c.id}>{c.nombre}</option>
                 ))}

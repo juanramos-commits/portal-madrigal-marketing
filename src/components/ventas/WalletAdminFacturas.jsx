@@ -65,7 +65,7 @@ export default function WalletAdminFacturas({
                 <thead>
                   <tr>
                     <th>Miembro</th>
-                    <th>N\u00ba Factura</th>
+                    <th>Nº Factura</th>
                     <th>Fecha</th>
                     <th>Base</th>
                     <th>IVA</th>

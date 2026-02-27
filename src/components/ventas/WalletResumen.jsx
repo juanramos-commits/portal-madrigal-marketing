@@ -68,7 +68,7 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
         <span>Saldo disponible para retiro: <strong>{formatMoneda(saldoDisponible)}</strong></span>
         {disponibleDiferente && saldoDisponible < saldo && (
           <span className="wt-saldo-note">
-            Algunas comisiones a\u00fan no est\u00e1n disponibles (periodo de 48h)
+            Algunas comisiones aún no están disponibles (periodo de 48h)
           </span>
         )}
       </div>

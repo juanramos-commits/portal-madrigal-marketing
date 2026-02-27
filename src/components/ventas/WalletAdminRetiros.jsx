@@ -191,9 +191,9 @@ export default function WalletAdminRetiros({
             </div>
             <div className="wt-modal-body">
               <p>
-                \u00bfAprobar el retiro de <strong>{formatMoneda(modal.retiro.monto)}</strong> para <strong>{modal.retiro.usuario?.nombre || '-'}</strong>?
+                ¿Aprobar el retiro de <strong>{formatMoneda(modal.retiro.monto)}</strong> para <strong>{modal.retiro.usuario?.nombre || '-'}</strong>?
               </p>
-              <p className="wt-modal-hint">Se generar\u00e1 la factura autom\u00e1ticamente.</p>
+              <p className="wt-modal-hint">Se generará la factura automáticamente.</p>
               {modalError && <div className="wt-error-general">{modalError}</div>}
             </div>
             <div className="wt-modal-actions">
@@ -217,7 +217,7 @@ export default function WalletAdminRetiros({
             </div>
             <div className="wt-modal-body">
               <p>
-                \u00bfRechazar el retiro de <strong>{formatMoneda(modal.retiro.monto)}</strong> para <strong>{modal.retiro.usuario?.nombre || '-'}</strong>?
+                ¿Rechazar el retiro de <strong>{formatMoneda(modal.retiro.monto)}</strong> para <strong>{modal.retiro.usuario?.nombre || '-'}</strong>?
               </p>
               <div className="wt-field">
                 <label>Motivo del rechazo *</label>
