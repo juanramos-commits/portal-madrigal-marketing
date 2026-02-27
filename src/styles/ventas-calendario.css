@@ -132,7 +132,7 @@
   font-size: 13px;
   cursor: pointer;
 }
-.vc-closer-filtro:focus { outline: none; border-color: rgba(255,255,255,0.2); }
+.vc-closer-filtro:focus { outline: none; border-color: var(--border-focus); }
 
 /* ── VISTA MENSUAL ────────────────────────────────────────────────── */
 .vc-mes {
@@ -578,7 +578,7 @@
 .vc-field select:focus,
 .vc-field textarea:focus {
   outline: none;
-  border-color: rgba(255,255,255,0.2);
+  border-color: var(--border-focus);
 }
 
 .vc-field-inline {
@@ -595,7 +595,7 @@
   color: var(--text);
   font-size: 14px;
 }
-.vc-field-inline input:focus { outline: none; border-color: rgba(255,255,255,0.2); }
+.vc-field-inline input:focus { outline: none; border-color: var(--border-focus); }
 
 .vc-field-hint {
   font-size: 12px;
@@ -609,7 +609,7 @@
   border-radius: var(--radius-sm);
   border: none;
   background: var(--primary);
-  color: #0a0a0b;
+  color: var(--text-inverse);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -643,7 +643,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.vc-btn-danger:hover:not(:disabled) { background: #f05a5a; }
+.vc-btn-danger:hover:not(:disabled) { background: var(--error); }
 .vc-btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .vc-btn-sm {
@@ -808,7 +808,7 @@
   color: var(--text);
   font-size: 13px;
 }
-.vc-disp-franja input[type="time"]:focus { outline: none; border-color: rgba(255,255,255,0.2); }
+.vc-disp-franja input[type="time"]:focus { outline: none; border-color: var(--border-focus); }
 
 .vc-disp-del {
   display: flex;
@@ -1119,7 +1119,7 @@
   font-size: 13px;
   text-align: center;
 }
-.vc-admin-minimo-input input:focus { outline: none; border-color: rgba(255,255,255,0.2); }
+.vc-admin-minimo-input input:focus { outline: none; border-color: var(--border-focus); }
 
 .vc-admin-ver-btn {
   margin: var(--space-sm) var(--space-md) var(--space-md);

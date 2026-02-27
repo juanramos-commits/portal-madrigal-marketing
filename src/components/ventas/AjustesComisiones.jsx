@@ -47,7 +47,7 @@ export default function AjustesComisiones({
 
   const handleAsignarBonus = async () => {
     if (!bonusUsuario) { setBonusError('Selecciona un usuario'); return }
-    if (!bonusMonto || Number(bonusMonto) <= 0) { setBonusError('Introduce un monto válido'); return }
+    if (!bonusMonto || Number(bonusMonto) <= 0) { setBonusError('Introduce un importe válido'); return }
     setBonusSaving(true); setBonusError(null)
     try {
       await onAsignarBonus({
@@ -121,7 +121,7 @@ export default function AjustesComisiones({
         </div>
         <div className="aj-form-row">
           <div className="aj-field">
-            <label>Monto (€)</label>
+            <label>Importe (€)</label>
             <input type="number" min="0" step="0.01" value={bonusMonto} onChange={e => setBonusMonto(e.target.value)} />
           </div>
           <div className="aj-field">

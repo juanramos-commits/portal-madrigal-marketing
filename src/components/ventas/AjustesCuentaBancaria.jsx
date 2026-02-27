@@ -66,7 +66,7 @@ export default function AjustesCuentaBancaria() {
             value={formatIban(iban)}
             onChange={e => { setIban(e.target.value.replace(/\s/g, '')); setGuardado(false) }}
             placeholder="ES00 0000 0000 0000 0000 0000"
-            maxLength={34}
+            maxLength={42}
           />
           <span className="aj-field-hint">Tu cuenta para recibir retiros de comisiones</span>
         </div>

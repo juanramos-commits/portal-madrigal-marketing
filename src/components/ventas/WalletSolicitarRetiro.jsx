@@ -50,7 +50,7 @@ export default function WalletSolicitarRetiro({
 
   const validarPaso1 = () => {
     if (sinSaldo) { setError('No tienes saldo disponible para retirar'); return false }
-    if (montoNum <= 0) { setError('El monto debe ser mayor que 0'); return false }
+    if (montoNum <= 0) { setError('El importe debe ser mayor que 0'); return false }
     if (montoNum > saldoDisponible) { setError(`Saldo insuficiente. Disponible: ${formatMoneda(saldoDisponible)}`); return false }
     setError(null)
     return true
@@ -126,7 +126,7 @@ export default function WalletSolicitarRetiro({
           ) : (
             <>
               <div className="wt-field">
-                <label>Monto (€)</label>
+                <label>Importe (€)</label>
                 <input
                   type="number"
                   step="0.01"

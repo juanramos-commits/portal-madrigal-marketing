@@ -88,7 +88,7 @@ export default function WalletComisiones({
                     <th>Concepto</th>
                     <th>Rol</th>
                     <th>Tipo</th>
-                    <th>Monto</th>
+                    <th>Importe</th>
                     <th>Disponible desde</th>
                     <th></th>
                   </tr>

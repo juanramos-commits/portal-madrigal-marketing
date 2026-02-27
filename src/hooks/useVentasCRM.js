@@ -67,8 +67,8 @@ export function useVentasCRM() {
       setEtiquetas(etiquetasData || [])
       setRolesComerciales(rolesData || [])
 
-      const settersList = (rolesData || []).filter(r => r.rol === 'setter')
-      const closersList = (rolesData || []).filter(r => r.rol === 'closer')
+      const settersList = (rolesData || []).filter(r => r.rol === 'setter' && r.activo)
+      const closersList = (rolesData || []).filter(r => r.rol === 'closer' && r.activo)
       setSetters(settersList)
       setClosers(closersList)
 

@@ -420,7 +420,7 @@
   border: none;
   border-radius: 8px;
   background: var(--info);
-  color: #fff;
+  color: var(--text-inverse);
   cursor: pointer;
   transition: opacity 0.15s;
 }
@@ -462,7 +462,7 @@
   border: none;
   border-radius: 8px;
   background: var(--error);
-  color: #fff;
+  color: var(--text-inverse);
   cursor: pointer;
   transition: opacity 0.15s;
 }
@@ -478,7 +478,7 @@
   left: 50%;
   transform: translateX(-50%);
   background: var(--info);
-  color: #fff;
+  color: var(--text-inverse);
   font-size: 0.688rem;
   padding: 0.125rem 0.5rem;
   border-radius: 4px;
@@ -803,7 +803,7 @@
 .bib-admin-seccion-tab.active {
   background: var(--info);
   border-color: var(--info);
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .bib-admin-tab-count {

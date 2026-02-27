@@ -131,8 +131,8 @@ export default function CRMLeadDetalle() {
       setEtiquetasDisponibles(etqs || [])
       setRolesComerciales(roles || [])
       setAllEtapas(etapasAll || [])
-      setSetters((roles || []).filter(r => r.rol === 'setter'))
-      setClosers((roles || []).filter(r => r.rol === 'closer'))
+      setSetters((roles || []).filter(r => r.rol === 'setter' && r.activo))
+      setClosers((roles || []).filter(r => r.rol === 'closer' && r.activo))
 
       // Load initial activity
       const { data: actData } = await supabase.from('ventas_actividad')
@@ -184,10 +184,21 @@ export default function CRMLeadDetalle() {
   const cambiarEtapa = async (pipelineId, nuevaEtapaId) => {
     setShowEtapaDropdown(null)
     try {
+      const ps = lead.pipeline_states?.find(p => p.pipeline_id === pipelineId)
+      const etapaAnterior = ps?.etapa?.nombre || 'Sin etapa'
+      const etapaNueva = allEtapas.find(e => e.id === nuevaEtapaId)?.nombre || 'Sin etapa'
+      const pipelineNombre = ps?.pipeline?.nombre || ''
+
       await supabase.from('ventas_lead_pipeline')
         .update({ etapa_id: nuevaEtapaId, fecha_entrada: new Date().toISOString() })
         .eq('lead_id', id)
         .eq('pipeline_id', pipelineId)
+
+      await supabase.from('ventas_actividad').insert({
+        lead_id: id, usuario_id: user.id, tipo: 'cambio_etapa',
+        descripcion: `${pipelineNombre}: ${etapaAnterior} → ${etapaNueva}`,
+        datos: { pipeline_id: pipelineId, etapa_anterior_id: ps?.etapa_id, etapa_nueva_id: nuevaEtapaId },
+      })
 
       showToast('Etapa actualizada')
       cargarLead()
@@ -199,10 +210,14 @@ export default function CRMLeadDetalle() {
   // ── Assign setter/closer ───────────────────────────────────────────
   const asignarSetter = async (setterId) => {
     try {
+      const prevNombre = lead.setter?.nombre || 'Ninguno'
+      const nuevoSetter = setters.find(s => s.usuario_id === setterId)
+      const nuevoNombre = nuevoSetter?.usuario?.nombre || 'Ninguno'
       await supabase.from('ventas_leads').update({ setter_asignado_id: setterId || null }).eq('id', id)
       await supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'asignacion',
-        descripcion: 'Setter reasignado', datos: { setter_id: setterId },
+        descripcion: `Setter: ${prevNombre} → ${nuevoNombre}`,
+        datos: { setter_id: setterId, anterior: lead.setter_asignado_id },
       })
       showToast('Setter actualizado')
       cargarLead()
@@ -213,10 +228,14 @@ export default function CRMLeadDetalle() {
 
   const asignarCloser = async (closerId) => {
     try {
+      const prevNombre = lead.closer?.nombre || 'Ninguno'
+      const nuevoCloser = closers.find(c => c.usuario_id === closerId)
+      const nuevoNombre = nuevoCloser?.usuario?.nombre || 'Ninguno'
       await supabase.from('ventas_leads').update({ closer_asignado_id: closerId || null }).eq('id', id)
       await supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'asignacion',
-        descripcion: 'Closer reasignado', datos: { closer_id: closerId },
+        descripcion: `Closer: ${prevNombre} → ${nuevoNombre}`,
+        datos: { closer_id: closerId, anterior: lead.closer_asignado_id },
       })
       showToast('Closer actualizado')
       cargarLead()
@@ -261,6 +280,19 @@ export default function CRMLeadDetalle() {
     document.addEventListener('click', handler)
     return () => document.removeEventListener('click', handler)
   }, [showMenu])
+
+  // ── Close tag picker on outside click ────────────────────────────
+  const tagPickerRef = useRef(null)
+  useEffect(() => {
+    if (!showTagPicker) return
+    const handler = (e) => {
+      if (tagPickerRef.current && !tagPickerRef.current.contains(e.target)) {
+        setShowTagPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showTagPicker])
 
   // ── Loading / Error states ─────────────────────────────────────────
   if (loading) {
@@ -431,7 +463,7 @@ export default function CRMLeadDetalle() {
           </div>
           <div className="crm-field">
             <label>Teléfono</label>
-            <input value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} placeholder="+34 600 000 000" />
+            <input type="tel" value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} placeholder="+34 600 000 000" />
           </div>
           <div className="crm-field">
             <label>Nombre del negocio</label>
@@ -584,7 +616,7 @@ export default function CRMLeadDetalle() {
             </span>
           ))}
           {availableTags.length > 0 && (
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative' }} ref={tagPickerRef}>
               <button className="crm-tag-add" onClick={() => setShowTagPicker(!showTagPicker)}>
                 + Añadir
               </button>

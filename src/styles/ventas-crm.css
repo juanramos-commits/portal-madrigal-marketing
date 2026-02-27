@@ -86,7 +86,7 @@
 
 .crm-pipeline-tab.active {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-active);
 }
 
 /* ── View Toggle ────────────────────────────────────────────────────────── */
@@ -119,7 +119,7 @@
 
 .crm-view-btn.active {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-active);
 }
 
 .crm-view-btn svg {
@@ -152,7 +152,7 @@
   padding: 0 12px 0 32px;
   font-size: 13px;
   color: var(--text);
-  background: var(--bg-card);
+  background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   outline: none;
@@ -164,7 +164,7 @@
 }
 
 .crm-search input:focus {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
 }
 
 /* ── Filter Button ──────────────────────────────────────────────────────── */
@@ -203,7 +203,7 @@
   height: 18px;
   border-radius: 50%;
   background: var(--success);
-  color: #000;
+  color: var(--text-inverse);
   font-size: 10px;
   font-weight: 700;
   display: flex;
@@ -220,7 +220,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #000;
+  color: var(--text-inverse);
   background: #fff;
   border: none;
   border-radius: var(--radius-sm);
@@ -278,7 +278,7 @@
 }
 
 .crm-column.drag-over {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
   background: rgba(255, 255, 255, 0.025);
 }
 
@@ -319,7 +319,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
   padding: 1px 7px;
   border-radius: 10px;
   flex-shrink: 0;
@@ -340,7 +340,7 @@
 }
 
 .crm-column-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-active);
   border-radius: 2px;
 }
 
@@ -380,7 +380,7 @@
 
 .crm-card:hover {
   border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
 }
 
 .crm-card.dragging {
@@ -502,7 +502,7 @@
 .crm-table th {
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
   padding: 10px 14px;
   font-size: 11px;
   font-weight: 600;
@@ -545,7 +545,7 @@
 }
 
 .crm-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
 }
 
 .crm-table-etapa {
@@ -555,7 +555,7 @@
   font-size: 12px;
   padding: 3px 10px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
 }
 
 .crm-table-etapa-dot {
@@ -760,7 +760,7 @@
 .crm-field input:focus,
 .crm-field textarea:focus,
 .crm-field select:focus {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
 }
 
 .crm-field textarea {
@@ -865,7 +865,7 @@
   font-weight: 500;
   border-radius: 10px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
   color: var(--text);
 }
 
@@ -954,7 +954,7 @@
 
 .crm-modal-close:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
 }
 
 /* ── Filter Panel ───────────────────────────────────────────────────────── */
@@ -962,7 +962,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: var(--z-overlay);
   animation: crm-fade-in 0.15s ease;
 }
 
@@ -1052,7 +1052,7 @@
 }
 
 .crm-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
 }
 
 .crm-dropdown-item.danger {
@@ -1155,10 +1155,10 @@
 
 .crm-toast.error {
   background: var(--error);
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .crm-toast.success {
   background: var(--success);
-  color: #000;
+  color: var(--text-inverse);
 }

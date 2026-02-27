@@ -102,7 +102,7 @@
 }
 
 .vv-tab.active {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-active);
   color: var(--text);
   border-color: rgba(255, 255, 255, 0.15);
 }
@@ -216,7 +216,7 @@
 }
 
 .vv-table-row:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-card);
 }
 
 .vv-table-row.expanded {
@@ -614,7 +614,7 @@
 .vv-field input:focus,
 .vv-field select:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
 }
 
 .vv-field select {
@@ -681,7 +681,7 @@
   border-radius: var(--radius-sm);
   border: none;
   background: var(--success);
-  color: #0a0a0b;
+  color: var(--text-inverse);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -689,7 +689,7 @@
 }
 
 .vv-btn-success:hover:not(:disabled) {
-  background: #26d48e;
+  background: var(--success);
 }
 
 .vv-btn-success:disabled {
@@ -710,7 +710,7 @@
 }
 
 .vv-btn-danger:hover:not(:disabled) {
-  background: #f05a5a;
+  background: var(--error);
 }
 
 .vv-btn-danger:disabled {

@@ -31,7 +31,7 @@ export default function WalletRetiros({ retiros, loading }) {
             <thead>
               <tr>
                 <th>Fecha</th>
-                <th>Monto</th>
+                <th>Importe</th>
                 <th>Estado</th>
                 <th>Factura</th>
                 <th>Motivo rechazo</th>

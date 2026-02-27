@@ -82,7 +82,7 @@
 }
 
 .db-select-periodo:focus {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
 }
 
 .db-fechas-custom {
@@ -102,7 +102,7 @@
 }
 
 .db-input-fecha:focus {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
 }
 
 .db-fecha-sep {
@@ -660,7 +660,7 @@
 }
 
 .db-activity-dot svg {
-  color: #fff;
+  color: var(--text-inverse);
 }
 
 .db-activity-content {

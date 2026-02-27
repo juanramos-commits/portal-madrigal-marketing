@@ -19,7 +19,7 @@ export default function Facturas() {
               <tr style={{ borderBottom: '2px solid #eee', textAlign: 'left' }}>
                 <th style={{ padding: '0.75rem' }}>Folio</th>
                 <th style={{ padding: '0.75rem' }}>Cliente</th>
-                <th style={{ padding: '0.75rem' }}>Monto</th>
+                <th style={{ padding: '0.75rem' }}>Importe</th>
                 <th style={{ padding: '0.75rem' }}>Fecha</th>
                 <th style={{ padding: '0.75rem' }}>Estado</th>
               </tr>

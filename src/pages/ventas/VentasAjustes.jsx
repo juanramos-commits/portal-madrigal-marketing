@@ -168,8 +168,7 @@ export default function VentasAjustes() {
           <AjustesPerfil
             perfil={ajustes.perfil}
             rolesComerciales={ajustes.rolesComerciales}
-            onCargar={ajustes.cargarPerfil}
-            onGuardar={ajustes.guardarPerfil}
+            onGuardarPerfil={ajustes.guardarPerfil}
             onSubirFoto={ajustes.subirFotoPerfil}
             onCambiarContrasena={ajustes.cambiarContrasena}
           />
@@ -187,20 +186,19 @@ export default function VentasAjustes() {
             etapas={ajustes.etapas}
             onCargarPipelines={ajustes.cargarPipelines}
             onCargarEtapas={ajustes.cargarEtapas}
-            onCrear={ajustes.crearEtapa}
-            onEditar={ajustes.editarEtapa}
-            onEliminar={ajustes.eliminarEtapa}
-            onReordenar={ajustes.reordenarEtapas}
+            onCrearEtapa={ajustes.crearEtapa}
+            onEditarEtapa={ajustes.editarEtapa}
+            onEliminarEtapa={ajustes.eliminarEtapa}
+            onReordenarEtapas={ajustes.reordenarEtapas}
           />
         )
       case 'reparto':
         return (
           <AjustesReparto
             repartoConfig={ajustes.repartoConfig}
-            equipo={ajustes.equipo}
-            onCargar={ajustes.cargarReparto}
-            onCargarEquipo={ajustes.cargarEquipo}
-            onGuardar={ajustes.guardarReparto}
+            setters={(ajustes.rolesComerciales || []).filter(r => r.rol === 'setter' && r.activo)}
+            onCargarReparto={ajustes.cargarReparto}
+            onGuardarReparto={ajustes.guardarReparto}
           />
         )
       case 'paquetes':
@@ -230,9 +228,8 @@ export default function VentasAjustes() {
             comisionesConfig={ajustes.comisionesConfig}
             equipo={ajustes.equipo}
             onCargar={ajustes.cargarComisionesConfig}
-            onCargarEquipo={ajustes.cargarEquipo}
             onGuardar={ajustes.guardarComisionesConfig}
-            onBonusManual={ajustes.asignarBonusManual}
+            onAsignarBonus={ajustes.asignarBonusManual}
           />
         )
       case 'empresa_fiscal':

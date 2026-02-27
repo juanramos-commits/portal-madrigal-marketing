@@ -114,7 +114,7 @@
 .ui-btn--secondary:hover:not(:disabled) { background: var(--bg-hover); border-color: var(--border-focus); }
 .ui-btn--ghost { background: transparent; color: var(--text-muted); }
 .ui-btn--ghost:hover:not(:disabled) { background: var(--bg-hover); color: var(--text); }
-.ui-btn--danger { background: var(--error); color: #fff; }
+.ui-btn--danger { background: var(--error); color: var(--text-inverse); }
 .ui-btn--danger:hover:not(:disabled) { opacity: 0.9; }
 .ui-btn--success { background: var(--success); color: var(--text-inverse); }
 .ui-btn--success:hover:not(:disabled) { opacity: 0.9; }
@@ -219,7 +219,7 @@
   transition: background var(--transition-fast), border-color var(--transition-fast);
   flex-shrink: 0;
 }
-.ui-checkbox-box svg { width: 14px; height: 14px; color: #fff; }
+.ui-checkbox-box svg { width: 14px; height: 14px; color: var(--text-inverse); }
 .ui-checkbox-box--checked { background: var(--success); border-color: var(--success); }
 .ui-checkbox-label { font-size: var(--font-base); color: var(--text); }
 
@@ -425,7 +425,7 @@
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-md);
   background: var(--bg-tooltip);
-  color: #fff;
+  color: var(--text-inverse);
   font-size: var(--font-sm);
   box-shadow: var(--shadow-lg);
   pointer-events: auto;

@@ -4,7 +4,18 @@ import Modal from '../ui/Modal'
 import ConfirmDialog from '../ui/ConfirmDialog'
 
 const SUPABASE_URL = 'https://ootncgtcvwnrskqtamak.supabase.co'
-const CRM_FIELDS = ['nombre', 'email', 'telefono', 'nombre_negocio', 'fuente', 'ciudad', 'pais', 'notas']
+const CRM_FIELDS = [
+  { value: 'nombre', label: 'Nombre' },
+  { value: 'email', label: 'Email' },
+  { value: 'telefono', label: 'Teléfono' },
+  { value: 'nombre_negocio', label: 'Nombre del negocio' },
+  { value: 'fuente', label: 'Fuente' },
+  { value: 'ciudad', label: 'Ciudad' },
+  { value: 'pais', label: 'País' },
+  { value: 'notas', label: 'Notas' },
+  { value: 'valor_estimado', label: 'Valor estimado' },
+  { value: 'categoria_id', label: 'Categoría' },
+]
 
 const CopyIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
@@ -198,7 +209,7 @@ export default function AjustesWebhooks({
             <span className="aj-mapeo-arrow">→</span>
             <Select value={r.crm} onChange={e => updateMapeo(i, 'crm', e.target.value)}>
               <option value="">Seleccionar</option>
-              {CRM_FIELDS.map(f => <option key={f} value={f}>{f}</option>)}
+              {CRM_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </Select>
             <button className="aj-btn-icon-danger" onClick={() => removeMapeoRow(i)}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>

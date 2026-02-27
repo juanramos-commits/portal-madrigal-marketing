@@ -128,7 +128,7 @@ export default function VentaDetalle({ venta, comisiones, loadingComisiones, onL
                   <tr>
                     <th>Usuario</th>
                     <th>Rol</th>
-                    <th>Monto</th>
+                    <th>Importe</th>
                     <th>Tipo</th>
                     <th>Disponible desde</th>
                   </tr>

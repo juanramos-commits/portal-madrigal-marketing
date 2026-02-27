@@ -191,7 +191,7 @@
 .aj-field input:focus,
 .aj-field textarea:focus,
 .aj-field select:focus {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
 }
 
 .aj-field input:disabled,
@@ -622,7 +622,7 @@
   outline: none;
 }
 
-.aj-reparto-input:focus { border-color: rgba(255, 255, 255, 0.2); }
+.aj-reparto-input:focus { border-color: var(--border-focus); }
 
 .aj-reparto-bar {
   width: 100px;
@@ -705,7 +705,7 @@
 }
 
 .aj-comisiones-table input[type="number"]:focus {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
 }
 
 /* ═══ BONUS SECTION ═══ */
@@ -800,7 +800,7 @@
 
 .aj-mapeo-row input:focus,
 .aj-mapeo-row select:focus {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
 }
 
 .aj-mapeo-arrow {
@@ -833,7 +833,7 @@
 
 .aj-log-filtros select:focus,
 .aj-log-filtros input[type="date"]:focus {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--border-focus);
 }
 
 .aj-log-table-wrap {

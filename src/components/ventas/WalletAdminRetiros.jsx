@@ -106,7 +106,7 @@ export default function WalletAdminRetiros({
                   <tr>
                     <th>Miembro</th>
                     <th>Fecha</th>
-                    <th>Monto</th>
+                    <th>Importe</th>
                     <th>IBAN</th>
                     <th>Estado</th>
                     <th>Acciones</th>

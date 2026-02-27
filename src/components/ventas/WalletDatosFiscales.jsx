@@ -12,7 +12,6 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
     serie_factura: 'F',
     iva_porcentaje: 0,
     iva_incluido: false,
-    cuenta_bancaria_iban: '',
   })
   const [errores, setErrores] = useState({})
   const [saving, setSaving] = useState(false)
@@ -30,7 +29,6 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
         serie_factura: datosFiscales.serie_factura || 'F',
         iva_porcentaje: datosFiscales.iva_porcentaje ?? 0,
         iva_incluido: datosFiscales.iva_incluido || false,
-        cuenta_bancaria_iban: datosFiscales.cuenta_bancaria_iban || '',
       })
     }
   }, [datosFiscales])
@@ -47,7 +45,6 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
     if (!form.nif_cif.trim()) e.nif_cif = 'Obligatorio'
     if (!form.direccion.trim()) e.direccion = 'Obligatorio'
     if (!form.pais.trim()) e.pais = 'Obligatorio'
-    if (!form.cuenta_bancaria_iban.trim()) e.cuenta_bancaria_iban = 'Obligatorio para retiros'
     setErrores(e)
     return Object.keys(e).length === 0
   }
@@ -136,16 +133,6 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
           {errores.pais && <span className="wt-field-error">{errores.pais}</span>}
         </div>
 
-        <div className="wt-field">
-          <label>IBAN *</label>
-          <input
-            type="text"
-            value={form.cuenta_bancaria_iban}
-            onChange={e => handleChange('cuenta_bancaria_iban', e.target.value)}
-            placeholder="ES00 0000 0000 0000 0000"
-          />
-          {errores.cuenta_bancaria_iban && <span className="wt-field-error">{errores.cuenta_bancaria_iban}</span>}
-        </div>
       </div>
 
       <div className="wt-df-separator" />
@@ -183,8 +170,8 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
           <Toggle checked={form.iva_incluido} onChange={v => handleChange('iva_incluido', v)} label="¿IVA incluido en comisión?" />
           <span className="wt-field-hint">
             {form.iva_incluido
-              ? 'El IVA sale del monto de la comisión'
-              : 'El IVA se añade encima del monto de la comisión'}
+              ? 'El IVA sale del importe de la comisión'
+              : 'El IVA se añade encima del importe de la comisión'}
           </span>
         </div>
       </div>
