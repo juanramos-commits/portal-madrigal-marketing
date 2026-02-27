@@ -78,9 +78,18 @@ export function AuthProvider({ children }) {
         }
       }
       setLoading(false)
-    }).catch((err) => {
+    }).catch(async (err) => {
       console.error('Error en getSession:', err)
-      if (mounted) setLoading(false)
+      // Sesión corrupta (AbortError, etc.) — limpiar para evitar bucle infinito
+      try {
+        await supabase.auth.signOut()
+      } catch (_) { /* ignore */ }
+      if (mounted) {
+        setUser(null)
+        setUsuario(null)
+        setPermisos([])
+        setLoading(false)
+      }
     })
 
     // Escuchar cambios de auth posteriores (login, logout, token refresh)
