@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import Checkbox from '../components/ui/Checkbox'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
@@ -90,6 +91,7 @@ const DEFAULT_VISIBLE = ['numero_cliente', 'nombre_comercial', 'email_portal', '
 export default function TablaClientesAvanzada() {
   const navigate = useNavigate()
   const { tienePermiso } = useAuth()
+  const { showToast } = useToast()
 
   const [clientes, setClientes] = useState([])
   const [loading, setLoading] = useState(true)
@@ -186,7 +188,7 @@ export default function TablaClientesAvanzada() {
       navigate(`/clientes/${data.id}`)
     } catch (error) {
       logger.error('Error creando cliente:', error)
-      alert('Error al crear el cliente')
+      showToast('Error al crear el cliente', 'error')
     } finally {
       setGuardando(false)
     }

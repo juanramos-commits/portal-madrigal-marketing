@@ -1,6 +1,7 @@
 import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
@@ -36,6 +37,7 @@ const MODULOS = {
 
 export default function Usuarios() {
   const { usuario: currentUser, tienePermiso } = useAuth()
+  const { showToast } = useToast()
   const [usuarios, setUsuarios] = useState([])
   const [roles, setRoles] = useState([])
   const [permisos, setPermisos] = useState([])
@@ -231,7 +233,7 @@ export default function Usuarios() {
       setUsuarios(prev => prev.map(u => u.id === id ? { ...u, activo: false } : u))
     } catch (error) {
       logger.error('Error eliminando usuario:', error)
-      alert(error.message || 'Error al eliminar usuario')
+      showToast(error.message || 'Error al eliminar usuario', 'error')
     }
     setModalConfirmar(null)
   }
@@ -247,7 +249,7 @@ export default function Usuarios() {
       setUsuarios(prev => prev.map(u => u.id === id ? { ...u, rol_id: rolId, rol } : u))
     } catch (error) {
       logger.error('Error cambiando rol:', error)
-      alert(error.message || 'Error al cambiar rol')
+      showToast(error.message || 'Error al cambiar rol', 'error')
       cargarDatos() // Recargar para reflejar estado real
     }
   }

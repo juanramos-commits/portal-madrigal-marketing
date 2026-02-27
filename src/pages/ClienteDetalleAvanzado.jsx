@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import Toggle from '../components/ui/Toggle'
 import Select from '../components/ui/Select'
 
@@ -70,6 +71,7 @@ export default function ClienteDetalleAvanzado() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { usuario, tienePermiso } = useAuth()
+  const { showToast } = useToast()
 
   const [cliente, setCliente] = useState(null)
   const [branding, setBranding] = useState(null)
@@ -320,7 +322,7 @@ export default function ClienteDetalleAvanzado() {
       navigate('/clientes')
     } catch (error) {
       logger.error('Error eliminando cliente:', error)
-      alert(error.message || 'Error al eliminar cliente')
+      showToast(error.message || 'Error al eliminar cliente', 'error')
     }
   }
 
@@ -1635,7 +1637,7 @@ function AvatarEditable({ cliente, onSave }) {
       setShowMenu(false)
     } catch (error) {
       logger.error('Error subiendo imagen:', error)
-      alert('Error al subir la imagen. Intenta de nuevo.')
+      showToast('Error al subir la imagen. Intenta de nuevo.', 'error')
     } finally {
       setUploading(false)
     }

@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
         .single()
 
       if (usuarioError) {
-        console.error('Error cargando usuario:', usuarioError)
+        logger.error('Error cargando usuario:', usuarioError)
         return null
       }
 
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
 
       return usuarioData
     } catch (error) {
-      console.error('Error en cargarUsuario:', error)
+      logger.error('Error en cargarUsuario:', error)
       return null
     }
   }, [])
@@ -67,10 +67,10 @@ export function AuthProvider({ children }) {
           const resultado = await cargarUsuario(session.user.email)
           // Si no se pudo cargar el usuario, la sesión puede estar corrupta
           if (!resultado) {
-            console.warn('No se pudo cargar usuario, verificando sesión...')
+            logger.warn('No se pudo cargar usuario, verificando sesión...')
             const { data: { user: validUser }, error: userError } = await supabase.auth.getUser()
             if (userError || !validUser) {
-              console.warn('Sesión inválida, limpiando...')
+              logger.warn('Sesión inválida, limpiando...')
               await supabase.auth.signOut()
               setUser(null)
             }
@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
       }
       setLoading(false)
     }).catch(async (err) => {
-      console.error('Error en getSession:', err)
+      logger.error('Error en getSession:', err)
       // Sesión corrupta (AbortError, etc.) — limpiar para evitar bucle infinito
       try {
         await supabase.auth.signOut()

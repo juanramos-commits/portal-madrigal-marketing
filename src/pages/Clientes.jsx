@@ -2,6 +2,7 @@ import { logger } from '../lib/logger'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import Checkbox from '../components/ui/Checkbox'
 import Select from '../components/ui/Select'
@@ -23,6 +24,7 @@ const normalizar = (texto) => {
 
 export default function Clientes() {
   const { tienePermiso } = useAuth()
+  const { showToast } = useToast()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [clientes, setClientes] = useState([])
@@ -101,7 +103,7 @@ export default function Clientes() {
       navigate(`/clientes/${data.id}`)
     } catch (error) {
       logger.error('Error creando cliente:', error)
-      alert('Error al crear el cliente')
+      showToast('Error al crear el cliente', 'error')
     } finally {
       setGuardando(false)
     }
