@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useRefreshOnFocus } from './useRefreshOnFocus'
 
 function calcularPeriodo(tipo) {
   const hoy = new Date()
@@ -242,6 +243,9 @@ export function useDashboard() {
     await Promise.allSettled(promesas)
     setLoading(false)
   }, [user?.id, fechaInicio, fechaFin, esCloser, esSetter, esDirector, esAdmin, cargarKPIs, cargarGraficoVentas, cargarFunnel, cargarRanking, cargarActividad, cargarCitasHoy, cargarPendientes])
+
+  // Refresh on tab focus
+  useRefreshOnFocus(refrescar, { enabled: !!user?.id && !!fechaInicio })
 
   useEffect(() => {
     if (fechaInicio && fechaFin && rolesComerciales.length >= 0 && user?.id) {

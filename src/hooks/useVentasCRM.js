@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useRefreshOnFocus } from './useRefreshOnFocus'
 
 const LEADS_PER_BATCH = 20
 const TABLE_PAGE_SIZE = 50
@@ -476,8 +477,11 @@ export function useVentasCRM() {
       datos: {},
     })
 
+    // Refetch leads to show the new lead
+    refrescar()
+
     return lead
-  }, [etapas, pipelineActivo, user?.id])
+  }, [etapas, pipelineActivo, user?.id, refrescar])
 
   // ── Update lead fields ─────────────────────────────────────────────
   const actualizarLead = useCallback(async (leadId, campos) => {
@@ -487,7 +491,8 @@ export function useVentasCRM() {
       .eq('id', leadId)
 
     if (err) throw err
-  }, [])
+    refrescar()
+  }, [refrescar])
 
   // ── Delete lead ────────────────────────────────────────────────────
   const eliminarLead = useCallback(async (leadId) => {
@@ -497,7 +502,8 @@ export function useVentasCRM() {
       .eq('id', leadId)
 
     if (err) throw err
-  }, [])
+    refrescar()
+  }, [refrescar])
 
   // ── Load lead detail ───────────────────────────────────────────────
   const cargarLeadDetalle = useCallback(async (leadId) => {
@@ -573,7 +579,8 @@ export function useVentasCRM() {
       descripcion: 'Setter reasignado',
       datos: { setter_id: setterId },
     })
-  }, [user?.id])
+    refrescar()
+  }, [user?.id, refrescar])
 
   const cambiarCloserAsignado = useCallback(async (leadId, closerId) => {
     await supabase.from('ventas_leads').update({ closer_asignado_id: closerId }).eq('id', leadId)
@@ -584,7 +591,8 @@ export function useVentasCRM() {
       descripcion: 'Closer reasignado',
       datos: { closer_id: closerId },
     })
-  }, [user?.id])
+    refrescar()
+  }, [user?.id, refrescar])
 
   // ── Tags ───────────────────────────────────────────────────────────
   const añadirEtiqueta = useCallback(async (leadId, etiquetaId) => {
@@ -634,10 +642,32 @@ export function useVentasCRM() {
     }
   }, [vista, cargarLeads, cargarLeadsTabla])
 
+  // ── Refresh on tab focus ───────────────────────────────────────────
+  useRefreshOnFocus(refrescar, { enabled: !!pipelineActivo })
+
   // ── Initial load ───────────────────────────────────────────────────
   useEffect(() => {
     if (user?.id) cargarDatosIniciales()
   }, [user?.id, cargarDatosIniciales])
+
+  // ── Realtime: listen to pipeline changes from other users ──────────
+  useEffect(() => {
+    if (!pipelineActivo?.id) return
+
+    const channel = supabase
+      .channel(`crm-pipeline-${pipelineActivo.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'ventas_lead_pipeline',
+        filter: `pipeline_id=eq.${pipelineActivo.id}`,
+      }, () => {
+        refrescar()
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [pipelineActivo?.id, refrescar])
 
   // ── Reload leads on pipeline/filters/search change ─────────────────
   useEffect(() => {

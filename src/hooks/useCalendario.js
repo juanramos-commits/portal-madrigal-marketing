@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useRefreshOnFocus } from './useRefreshOnFocus'
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
@@ -181,7 +182,8 @@ export function useCalendario() {
       .eq('id', citaId)
     if (err) throw err
     setCitas(prev => prev.map(c => c.id === citaId ? { ...c, estado_reunion_id: estadoReunionId, estado_reunion: reunionEstados.find(e => e.id === estadoReunionId) || c.estado_reunion } : c))
-  }, [reunionEstados])
+    cargarCitas()
+  }, [reunionEstados, cargarCitas])
 
   // Update cita notas
   const actualizarNotasCita = useCallback(async (citaId, notas) => {
@@ -210,7 +212,8 @@ export function useCalendario() {
       .eq('id', citaId)
     if (err) throw err
     setCitas(prev => prev.map(c => c.id === citaId ? { ...c, estado: 'cancelada', cancelada_por: 'admin' } : c))
-  }, [])
+    cargarCitas()
+  }, [cargarCitas])
 
   // Reasignar closer (admin)
   const reasignarCloser = useCallback(async (citaId, nuevoCloserId) => {
@@ -484,6 +487,27 @@ export function useCalendario() {
       setLoading(false)
     }
   }, [cargarCitas, cargarReunionEstados, esCloser, esDirector, cargarDisponibilidad, cargarBloqueos, cargarConfig, cargarEnlaces])
+
+  // Refresh on tab focus
+  useRefreshOnFocus(refrescar, { enabled: !!user?.id })
+
+  // Realtime: listen to citas changes
+  useEffect(() => {
+    if (!user?.id) return
+
+    const channel = supabase
+      .channel('calendario-citas')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'ventas_citas',
+      }, () => {
+        cargarCitas()
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [user?.id, cargarCitas])
 
   // Initial load
   useEffect(() => {

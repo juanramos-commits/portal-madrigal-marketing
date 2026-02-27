@@ -15,8 +15,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     storage: window.localStorage,
+    storageKey: 'madrigal-auth',
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
   }
 })
 export { supabaseUrl, supabaseAnonKey }
