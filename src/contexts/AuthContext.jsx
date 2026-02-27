@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
         .single()
 
       if (usuarioError) {
-        logger.error('Error cargando usuario:', usuarioError)
+        console.error('Error cargando usuario:', usuarioError)
         return null
       }
 
@@ -41,26 +41,12 @@ export function AuthProvider({ children }) {
         setPermisos(permisosData?.map(p => p.codigo) || [])
       }
 
-      // Verificar expiración de sesión (72h desde último acceso)
-      // Solo aplicar en restauración de sesión, no en login fresco
-      if (!esLoginFresco) {
-        const SESION_MAX_HORAS = 72
-        if (usuarioData.ultimo_acceso) {
-          const horasDesdeUltimoAcceso = (Date.now() - new Date(usuarioData.ultimo_acceso).getTime()) / (1000 * 60 * 60)
-          if (horasDesdeUltimoAcceso > SESION_MAX_HORAS) {
-            logger.log('Sesión expirada por inactividad')
-            await supabase.auth.signOut()
-            return null
-          }
-        }
-      }
-
-      // Actualizar último acceso
-      await supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id)
+      // Actualizar ultimo acceso (fire-and-forget, no bloquea la carga)
+      supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id).then(() => {}, () => {})
 
       return usuarioData
     } catch (error) {
-      logger.error('Error en cargarUsuario:', error)
+      console.error('Error en cargarUsuario:', error)
       return null
     }
   }, [])
@@ -78,12 +64,32 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         setUser(session.user)
         if (!isAuthPage()) {
-          await cargarUsuario(session.user.email)
+          const resultado = await cargarUsuario(session.user.email)
+          // Si no se pudo cargar el usuario, la sesión puede estar corrupta
+          if (!resultado) {
+            console.warn('No se pudo cargar usuario, verificando sesión...')
+            const { data: { user: validUser }, error: userError } = await supabase.auth.getUser()
+            if (userError || !validUser) {
+              console.warn('Sesión inválida, limpiando...')
+              await supabase.auth.signOut()
+              setUser(null)
+            }
+          }
         }
       }
       setLoading(false)
-    }).catch(() => {
-      if (mounted) setLoading(false)
+    }).catch(async (err) => {
+      console.error('Error en getSession:', err)
+      // Sesión corrupta (AbortError, etc.) — limpiar para evitar bucle infinito
+      try {
+        await supabase.auth.signOut()
+      } catch (_) { /* ignore */ }
+      if (mounted) {
+        setUser(null)
+        setUsuario(null)
+        setPermisos([])
+        setLoading(false)
+      }
     })
 
     // Escuchar cambios de auth posteriores (login, logout, token refresh)

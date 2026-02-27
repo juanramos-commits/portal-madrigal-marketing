@@ -1,11 +1,13 @@
 import { logger } from '../lib/logger'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useNotificacionesBadge } from '../hooks/useNotificacionesBadge'
+import NotificacionesBadge from './ventas/NotificacionesBadge'
 
 // Modifier para restringir movimiento vertical
 const restrictToVerticalAxis = ({ transform }) => ({
@@ -148,6 +150,11 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
+  ),
+  DollarSign: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+    </svg>
   )
 }
 
@@ -264,8 +271,10 @@ export default function Layout() {
   const [menuItems, setMenuItems] = useState([])
   const location = useLocation()
   const navigate = useNavigate()
-  const { usuario, signOut, tienePermiso } = useAuth()
+  const { usuario, permisos, signOut, tienePermiso } = useAuth()
   const saveTimeoutRef = useRef(null)
+
+  const { contador: notifContador } = useNotificacionesBadge()
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -276,33 +285,34 @@ export default function Layout() {
 
   const defaultNavigation = [
     { id: 'ventas', name: 'Ventas', href: '/ventas', icon: Icons.ShoppingCart, permiso: null, type: 'submenu', children: [
-      { name: 'Dashboard', href: '/ventas/dashboard', icon: Icons.TrendingUp },
-      { name: 'Notificaciones', href: '/ventas/notificaciones', icon: Icons.Bell },
-      { name: 'CRM', href: '/ventas/crm', icon: Icons.UserCheck },
-      { name: 'Biblioteca', href: '/ventas/biblioteca', icon: Icons.BookOpen },
-      { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet },
-      { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar },
-      { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings },
+      { name: 'Dashboard', href: '/ventas/dashboard', icon: Icons.TrendingUp, permiso: 'ventas.ver_dashboard' },
+      { name: 'Notificaciones', href: '/ventas/notificaciones', icon: Icons.Bell, permiso: 'ventas.ver_notificaciones' },
+      { name: 'CRM', href: '/ventas/crm', icon: Icons.UserCheck, permiso: 'ventas.ver_crm' },
+      { name: 'Ventas', href: '/ventas/ventas', icon: Icons.DollarSign, permiso: 'ventas.ver_ventas' },
+      { name: 'Biblioteca', href: '/ventas/biblioteca', icon: Icons.BookOpen, permiso: 'ventas.ver_biblioteca' },
+      { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet, permiso: 'ventas.ver_wallet' },
+      { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar, permiso: 'ventas.ver_calendario' },
+      { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ver_ajustes' },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [
-      { name: 'Dashboard', href: '/dashboard', icon: Icons.Dashboard },
-      { name: 'Notificaciones', href: '/notificaciones', icon: Icons.Bell },
-      { name: 'Tareas', href: '/tareas', icon: Icons.Tasks },
-      { name: 'Clientes', href: '/clientes', icon: Icons.Users },
-      { name: 'CRM', href: '/crm', icon: Icons.UserCheck },
-      { name: 'Paquetes de Clientes', href: '/paquetes-clientes', icon: Icons.Package },
-      { name: 'Facturas', href: '/documentacion/facturas', icon: Icons.File },
-      { name: 'Contrato', href: '/documentacion/contrato', icon: Icons.File },
-      { name: 'Reuniones', href: '/reuniones', icon: Icons.Calendar },
-      { name: 'Archivos', href: '/archivos', icon: Icons.Folder },
-      { name: 'Madrigalito', href: '/madrigalito', icon: Icons.Target },
-      { name: 'Usuarios', href: '/usuarios', icon: Icons.UserCog },
-      { name: 'Roles', href: '/roles', icon: Icons.Shield },
-      { name: 'Sugerencias', href: '/sugerencias', icon: Icons.Messages },
-      { name: 'Registro de Actividad', href: '/audit-log', icon: Icons.ScrollText },
-      { name: 'Alertas de Seguridad', href: '/alertas-seguridad', icon: Icons.ShieldAlert },
-      { name: 'Seguridad', href: '/seguridad-dashboard', icon: Icons.BarChart },
-      { name: 'Mi Seguridad', href: '/mi-seguridad', icon: Icons.Lock },
+      { name: 'Dashboard', href: '/dashboard', icon: Icons.Dashboard, permiso: 'dashboard.ver' },
+      { name: 'Notificaciones', href: '/notificaciones', icon: Icons.Bell, permiso: null },
+      { name: 'Tareas', href: '/tareas', icon: Icons.Tasks, permiso: 'tareas.ver_propias' },
+      { name: 'Clientes', href: '/clientes', icon: Icons.Users, permiso: 'clientes.ver_lista' },
+      { name: 'CRM', href: '/crm', icon: Icons.UserCheck, permiso: 'crm.ver' },
+      { name: 'Paquetes de Clientes', href: '/paquetes-clientes', icon: Icons.Package, permiso: 'paquetes.ver' },
+      { name: 'Facturas', href: '/documentacion/facturas', icon: Icons.File, permiso: 'documentacion.ver' },
+      { name: 'Contrato', href: '/documentacion/contrato', icon: Icons.File, permiso: 'documentacion.ver' },
+      { name: 'Reuniones', href: '/reuniones', icon: Icons.Calendar, permiso: 'reuniones.ver' },
+      { name: 'Archivos', href: '/archivos', icon: Icons.Folder, permiso: 'archivos.ver' },
+      { name: 'Madrigalito', href: '/madrigalito', icon: Icons.Target, permiso: 'madrigalito.ver' },
+      { name: 'Usuarios', href: '/usuarios', icon: Icons.UserCog, permiso: 'usuarios.ver' },
+      { name: 'Roles', href: '/roles', icon: Icons.Shield, permiso: 'roles.ver' },
+      { name: 'Sugerencias', href: '/sugerencias', icon: Icons.Messages, permiso: 'sugerencias.ver_propias' },
+      { name: 'Registro de Actividad', href: '/audit-log', icon: Icons.ScrollText, permiso: 'sistema.logs' },
+      { name: 'Alertas de Seguridad', href: '/alertas-seguridad', icon: Icons.ShieldAlert, permiso: 'sistema.logs' },
+      { name: 'Seguridad', href: '/seguridad-dashboard', icon: Icons.BarChart, permiso: 'sistema.configuracion' },
+      { name: 'Mi Seguridad', href: '/mi-seguridad', icon: Icons.Lock, permiso: null },
     ]}
   ]
 
@@ -390,6 +400,41 @@ export default function Layout() {
     return true
   }
 
+  const getVisibleChildren = (item) => {
+    if (!item.children) return []
+    return item.children.filter(child => {
+      if (!child.permiso) return true
+      return tienePermiso(child.permiso)
+    })
+  }
+
+  const visibleSections = useMemo(() => {
+    return menuItems
+      .filter(item => {
+        if (!shouldShowItem(item)) return false
+        if (item.type === 'submenu') {
+          return getVisibleChildren(item).length > 0
+        }
+        return true
+      })
+      .map(item => {
+        if (item.type === 'submenu') {
+          return { ...item, children: getVisibleChildren(item) }
+        }
+        return item
+      })
+  }, [menuItems, usuario, permisos])
+
+  const sectionCount = visibleSections.filter(item => item.type === 'submenu').length
+  const shouldFlatten = sectionCount === 1
+
+  const flattenedItems = useMemo(() => {
+    if (!shouldFlatten) return null
+    const section = visibleSections.find(item => item.type === 'submenu')
+    if (!section) return null
+    return section.children
+  }, [shouldFlatten, visibleSections])
+
   const handleDragEnd = (event) => {
     const { active, over } = event
 
@@ -439,52 +484,72 @@ export default function Layout() {
         </div>
 
         <nav className="nav">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
-            <SortableContext items={menuItems.map(item => item.id)} strategy={verticalListSortingStrategy}>
-              {menuItems.map((item) => {
-                if (item.type === 'submenu') {
-                  const isOpen = item.id === 'ventas' ? ventasMenuOpen
-                    : item.id === 'por-organizar' ? porOrganizarMenuOpen
-                    : false
-                  const toggleOpen = item.id === 'ventas' ? () => setVentasMenuOpen(!ventasMenuOpen)
-                    : item.id === 'por-organizar' ? () => setPorOrganizarMenuOpen(!porOrganizarMenuOpen)
-                    : () => {}
+          {shouldFlatten && flattenedItems ? (
+            flattenedItems.map(child => {
+              const Icon = child.icon
+              return (
+                <Link
+                  key={child.href}
+                  to={child.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`nav-item ${isActive(child.href) ? 'active' : ''}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
+                >
+                  <Icon />
+                  <span className="nav-label" style={{ flex: 1 }}>{child.name}</span>
+                  {child.name === 'Notificaciones' && <NotificacionesBadge contador={notifContador} />}
+                </Link>
+              )
+            })
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
+              <SortableContext items={visibleSections.map(item => item.id)} strategy={verticalListSortingStrategy}>
+                {visibleSections.map((item) => {
+                  if (item.type === 'submenu') {
+                    const isOpen = item.id === 'ventas' ? ventasMenuOpen
+                      : item.id === 'por-organizar' ? porOrganizarMenuOpen
+                      : false
+                    const toggleOpen = item.id === 'ventas' ? () => setVentasMenuOpen(!ventasMenuOpen)
+                      : item.id === 'por-organizar' ? () => setPorOrganizarMenuOpen(!porOrganizarMenuOpen)
+                      : () => {}
+
+                    return (
+                      <div key={item.id}>
+                        <SortableDocMenuItem
+                          item={{ ...item, isOpen }}
+                          isActive={false}
+                          onClick={toggleOpen}
+                        />
+                        {isOpen && item.children && (
+                          <div style={{ paddingLeft: '32px', marginTop: '2px' }}>
+                            {item.children.map(child => (
+                              <Link key={child.href} to={child.href} className={`nav-item ${isActive(child.href) ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <child.icon />
+                                <span className="nav-label" style={{ flex: 1 }}>{child.name}</span>
+                                {child.name === 'Notificaciones' && <NotificacionesBadge contador={notifContador} />}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
 
                   return (
-                    <div key={item.id}>
-                      <SortableDocMenuItem
-                        item={{ ...item, isOpen }}
-                        isActive={false}
-                        onClick={toggleOpen}
-                      />
-                      {isOpen && item.children && (
-                        <div style={{ paddingLeft: '32px', marginTop: '2px' }}>
-                          {item.children.map(child => (
-                            <Link key={child.href} to={child.href} className={`nav-item ${isActive(child.href) ? 'active' : ''}`}>
-                              <child.icon />
-                              <span className="nav-label">{child.name}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <SortableMenuItem
+                      key={item.id}
+                      item={item}
+                      isActive={isActive(item.href)}
+                      onNavigate={(href) => {
+                        setMobileMenuOpen(false)
+                        navigate(href)
+                      }}
+                    />
                   )
-                }
-                
-                return (
-                  <SortableMenuItem
-                    key={item.id}
-                    item={item}
-                    isActive={isActive(item.href)}
-                    onNavigate={(href) => {
-                      setMobileMenuOpen(false)
-                      navigate(href)
-                    }}
-                  />
-                )
-              })}
-            </SortableContext>
-          </DndContext>
+                })}
+              </SortableContext>
+            </DndContext>
+          )}
         </nav>
 
         <div className="sidebar-footer">

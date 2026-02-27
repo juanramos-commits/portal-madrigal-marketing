@@ -1,8 +1,14 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 
 export default function ProtectedRoute({ children }) {
   const { user, usuario, loading, refrescarUsuario } = useAuth()
+
+  const handleCerrarSesion = async () => {
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
 
   if (loading) {
     return (
@@ -65,26 +71,43 @@ export default function ProtectedRoute({ children }) {
           }}>
             Hubo un problema al cargar los datos de tu cuenta. Puede ser un error temporal de conexión.
           </p>
-          <button
-            onClick={() => refrescarUsuario()}
-            style={{
-              background: '#6c5ce7',
-              color: '#fff',
-              border: 'none',
-              padding: '10px 24px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: 600,
-              marginBottom: '12px'
-            }}
-          >
-            Reintentar
-          </button>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => refrescarUsuario()}
+              style={{
+                background: '#6c5ce7',
+                color: '#fff',
+                border: 'none',
+                padding: '10px 24px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 600
+              }}
+            >
+              Reintentar
+            </button>
+            <button
+              onClick={handleCerrarSesion}
+              style={{
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border)',
+                padding: '10px 24px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 600
+              }}
+            >
+              Cerrar sesión
+            </button>
+          </div>
           <p style={{
             fontSize: '13px',
             color: 'var(--text-muted)',
-            opacity: 0.7
+            opacity: 0.7,
+            marginTop: '12px'
           }}>
             Email: {user.email}
           </p>

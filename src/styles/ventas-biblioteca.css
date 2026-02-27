@@ -1,0 +1,855 @@
+/* ── Biblioteca ── */
+.bib-page {
+  padding: 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.bib-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.bib-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.bib-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Toggle gestión ── */
+.bib-toggle-gestion {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.813rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ── Search ── */
+.bib-buscador {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.bib-buscador-icono {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.bib-buscador-icono svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bib-buscador-input {
+  width: 100%;
+  padding: 0.625rem 2.5rem 0.625rem 2.25rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.bib-buscador-input::placeholder {
+  color: var(--text-muted);
+}
+
+.bib-buscador-input:focus {
+  border-color: var(--info);
+}
+
+.bib-buscador-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bib-buscador-clear svg {
+  width: 14px;
+  height: 14px;
+}
+
+.bib-buscador-clear:hover {
+  color: var(--text);
+}
+
+/* ── Expand/Collapse controls ── */
+.bib-expand-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.bib-expand-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.bib-expand-btn:hover {
+  color: var(--text);
+  background: var(--bg-input);
+}
+
+/* ── Accordion sections ── */
+.bib-secciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bib-seccion {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.bib-seccion.abierta {
+  border-color: var(--border-focus);
+}
+
+.bib-seccion-header {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+
+.bib-seccion-header:hover {
+  background: var(--bg-input);
+}
+
+.bib-seccion-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.bib-seccion-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.bib-seccion-chevron svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bib-seccion-chevron.rotado {
+  transform: rotate(180deg);
+}
+
+.bib-seccion-nombre {
+  font-weight: 600;
+  font-size: 0.938rem;
+}
+
+.bib-seccion-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  padding: 0.125rem 0.5rem;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.bib-seccion-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding-left: 1.5rem;
+}
+
+.bib-seccion-body {
+  border-top: 1px solid var(--border);
+  padding: 0.5rem;
+}
+
+.bib-seccion-vacia {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.813rem;
+  color: var(--text-muted);
+}
+
+/* ── Recurso card ── */
+.bib-recursos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bib-recurso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.bib-recurso:hover {
+  background: var(--bg-input);
+}
+
+.bib-recurso-icono {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--bg-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--info);
+}
+
+.bib-recurso-icono svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bib-recurso-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bib-recurso-nombre {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.bib-recurso-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+  line-height: 1.4;
+}
+
+.bib-recurso-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.bib-recurso-tipo {
+  font-size: 0.688rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bib-recurso-badges {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.bib-recurso-acciones {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+/* ── Badges ── */
+.bib-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.bib-badge-xs {
+  font-size: 0.563rem;
+  padding: 0.0625rem 0.25rem;
+}
+
+.bib-badge-setter {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.bib-badge-closer {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--success);
+}
+
+.bib-badge-director {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+
+.bib-badge-admin {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+
+/* ── Buttons ── */
+.bib-btn-icon {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+}
+
+.bib-btn-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.bib-btn-icon:hover {
+  background: var(--bg-input);
+  color: var(--text);
+}
+
+.bib-btn-icon-danger {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.375rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.bib-btn-icon-danger svg {
+  width: 15px;
+  height: 15px;
+}
+
+.bib-btn-icon-danger:hover {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.bib-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.813rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.bib-btn-sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+.bib-btn-sm:hover {
+  background: var(--bg-input);
+  border-color: var(--border-focus);
+}
+
+.bib-btn-primary {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: var(--info);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.bib-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.bib-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bib-btn-ghost {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bib-btn-ghost:hover {
+  background: var(--bg-input);
+}
+
+.bib-btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bib-btn-danger {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: var(--error);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.bib-btn-danger:hover {
+  opacity: 0.9;
+}
+
+/* ── Copiado tooltip ── */
+.bib-copiado {
+  position: absolute;
+  top: -1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--info);
+  color: #fff;
+  font-size: 0.688rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: bib-fade-in 0.15s;
+}
+
+@keyframes bib-fade-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Empty states ── */
+.bib-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.bib-empty svg {
+  width: 40px;
+  height: 40px;
+  opacity: 0.4;
+}
+
+.bib-empty p {
+  font-size: 0.938rem;
+  margin: 0;
+}
+
+.bib-empty-sm {
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.813rem;
+  color: var(--text-muted);
+}
+
+/* ── Loading ── */
+.bib-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* ── Error ── */
+.bib-error-msg {
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.813rem;
+  margin-top: 0.5rem;
+}
+
+/* ── Fields ── */
+.bib-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 1rem;
+}
+
+.bib-field:last-child {
+  margin-bottom: 0;
+}
+
+.bib-field label {
+  font-size: 0.813rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.bib-field input,
+.bib-field select,
+.bib-field textarea {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.bib-field input:focus,
+.bib-field select:focus,
+.bib-field textarea:focus {
+  border-color: var(--info);
+}
+
+.bib-field textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.bib-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* ── Roles selector (checkboxes) ── */
+.bib-roles-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.bib-role-check {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.813rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.bib-role-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--info);
+  cursor: pointer;
+}
+
+/* ── Utility ── */
+.bib-text-muted {
+  color: var(--text-muted) !important;
+  font-size: 0.813rem !important;
+}
+
+/* ── Admin panel ── */
+.bib-admin-panel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.bib-admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.bib-admin-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+/* ── Admin section list ── */
+.bib-admin-secciones-list,
+.bib-admin-recursos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bib-admin-seccion-row,
+.bib-admin-recurso-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  transition: border-color 0.15s;
+}
+
+.bib-admin-seccion-row:hover,
+.bib-admin-recurso-row:hover {
+  border-color: var(--border-focus);
+}
+
+.bib-drag-handle {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: grab;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  touch-action: none;
+}
+
+.bib-drag-handle:active {
+  cursor: grabbing;
+}
+
+.bib-drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bib-drag-handle:hover {
+  color: var(--text-muted);
+  background: var(--bg-input);
+}
+
+.bib-admin-seccion-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.bib-admin-seccion-nombre {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.bib-admin-seccion-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bib-admin-seccion-count {
+  font-size: 0.688rem;
+  color: var(--text-muted);
+}
+
+.bib-admin-seccion-actions,
+.bib-admin-recurso-actions {
+  display: flex;
+  gap: 0.125rem;
+  flex-shrink: 0;
+}
+
+/* ── Admin recurso info ── */
+.bib-admin-recurso-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.bib-admin-recurso-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bib-admin-recurso-nombre {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.bib-admin-recurso-tipo {
+  font-size: 0.688rem;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  padding: 0.0625rem 0.375rem;
+  border-radius: 4px;
+}
+
+.bib-admin-recurso-url {
+  font-size: 0.688rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bib-admin-recurso-badges {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  margin-top: 0.125rem;
+}
+
+/* ── Admin section tabs (for recursos) ── */
+.bib-admin-seccion-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bib-admin-seccion-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.813rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bib-admin-seccion-tab:hover {
+  background: var(--bg-input);
+}
+
+.bib-admin-seccion-tab.active {
+  background: var(--info);
+  border-color: var(--info);
+  color: #fff;
+}
+
+.bib-admin-tab-count {
+  font-size: 0.688rem;
+  opacity: 0.7;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .bib-page {
+    padding: 1rem;
+  }
+
+  .bib-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .bib-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .bib-admin-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .bib-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .bib-recurso {
+    padding: 0.625rem 0.5rem;
+  }
+
+  .bib-recurso-acciones {
+    flex-direction: column;
+  }
+
+  .bib-admin-seccion-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.25rem;
+  }
+
+  .bib-admin-seccion-tab {
+    white-space: nowrap;
+  }
+}

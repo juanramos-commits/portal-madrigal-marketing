@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import Select from '../components/ui/Select'
 
 // Iconos
 const Icons = {
@@ -257,9 +258,9 @@ function CampoEditable({ label, valor, campo, tipo = 'text', opciones, tienePerm
         <label className="field-label">{label}</label>
         <div style={{ display: 'flex', gap: '8px' }}>
           {tipo === 'select' ? (
-            <select value={valorTemp || ''} onChange={(e) => setValorTemp(e.target.value)} className="select" style={{ flex: 1 }}>
+            <Select value={valorTemp || ''} onChange={(e) => setValorTemp(e.target.value)} className="select" style={{ flex: 1 }}>
               {opciones.map(op => <option key={op.value} value={op.value}>{op.label}</option>)}
-            </select>
+            </Select>
           ) : (
             <input type={tipo} value={valorTemp || ''} onChange={(e) => setValorTemp(e.target.value)} className="input" style={{ flex: 1 }} />
           )}

@@ -1,0 +1,683 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
+import { supabase } from '../../lib/supabase'
+import Select from '../ui/Select'
+import ConfirmDialog from '../ui/ConfirmDialog'
+import '../../styles/ventas-crm.css'
+
+const ArrowLeftIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+  </svg>
+)
+
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 16, height: 16 }}>
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+  </svg>
+)
+
+const MoreIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+  </svg>
+)
+
+const ExternalIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+  </svg>
+)
+
+function formatDateTime(d) {
+  if (!d) return '-'
+  return new Date(d).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+function formatRelative(d) {
+  if (!d) return ''
+  const now = new Date()
+  const date = new Date(d)
+  const diff = Math.floor((now - date) / 1000)
+  if (diff < 60) return 'hace unos segundos'
+  if (diff < 3600) return `hace ${Math.floor(diff / 60)} min`
+  if (diff < 86400) return `hace ${Math.floor(diff / 3600)}h`
+  if (diff < 604800) return `hace ${Math.floor(diff / 86400)}d`
+  return formatDateTime(d)
+}
+
+export default function CRMLeadDetalle() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const { user, usuario } = useAuth()
+
+  const [lead, setLead] = useState(null)
+  const [categorias, setCategorias] = useState([])
+  const [etiquetasDisponibles, setEtiquetasDisponibles] = useState([])
+  const [actividad, setActividad] = useState([])
+  const [actividadOffset, setActividadOffset] = useState(0)
+  const [hasMoreActividad, setHasMoreActividad] = useState(true)
+  const [rolesComerciales, setRolesComerciales] = useState([])
+  const [allEtapas, setAllEtapas] = useState([])
+  const [setters, setSetters] = useState([])
+  const [closers, setClosers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [showMenu, setShowMenu] = useState(false)
+  const [showEtapaDropdown, setShowEtapaDropdown] = useState(null)
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const [showTagPicker, setShowTagPicker] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  const debounceRefs = useRef({})
+
+  const esAdmin = usuario?.tipo === 'super_admin'
+  const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
+  const esDirector = misRoles.some(r => r.rol === 'director_ventas' || r.rol === 'super_admin')
+  const esAdminODirector = esAdmin || esDirector
+  const esMiLeadSetter = lead?.setter_asignado_id === user?.id
+  const esMiLeadCloser = lead?.closer_asignado_id === user?.id
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  // ── Load lead detail ───────────────────────────────────────────────
+  const cargarLead = useCallback(async () => {
+    try {
+      setLoading(true)
+      const [
+        { data: leadData, error: leadErr },
+        { data: pipelineStates },
+        { data: citas },
+        { data: leadEtiquetas },
+        { data: cats },
+        { data: etqs },
+        { data: roles },
+        { data: etapasAll },
+      ] = await Promise.all([
+        supabase.from('ventas_leads').select(`
+          *,
+          categoria:ventas_categorias(id, nombre),
+          setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
+          closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
+        `).eq('id', id).single(),
+        supabase.from('ventas_lead_pipeline').select(`
+          *, pipeline:ventas_pipelines(id, nombre),
+          etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
+        `).eq('lead_id', id),
+        supabase.from('ventas_citas').select(`
+          *, closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
+          estado_reunion:ventas_reunion_estados(id, nombre, color)
+        `).eq('lead_id', id).order('fecha_hora', { ascending: false }),
+        supabase.from('ventas_lead_etiquetas').select('*, etiqueta:ventas_etiquetas(*)').eq('lead_id', id),
+        supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
+        supabase.from('ventas_etiquetas').select('*').eq('activo', true),
+        supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
+        supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
+      ])
+
+      if (leadErr) throw leadErr
+
+      setLead({
+        ...leadData,
+        pipeline_states: pipelineStates || [],
+        citas: citas || [],
+        lead_etiquetas: (leadEtiquetas || []).map(le => le.etiqueta),
+      })
+      setCategorias(cats || [])
+      setEtiquetasDisponibles(etqs || [])
+      setRolesComerciales(roles || [])
+      setAllEtapas(etapasAll || [])
+      setSetters((roles || []).filter(r => r.rol === 'setter'))
+      setClosers((roles || []).filter(r => r.rol === 'closer'))
+
+      // Load initial activity
+      const { data: actData } = await supabase.from('ventas_actividad')
+        .select('*, usuario:usuarios(id, nombre)')
+        .eq('lead_id', id)
+        .order('created_at', { ascending: false })
+        .range(0, 19)
+
+      setActividad(actData || [])
+      setActividadOffset(20)
+      setHasMoreActividad((actData || []).length >= 20)
+    } catch (err) {
+      setError(err.message || 'Error al cargar el lead')
+    } finally {
+      setLoading(false)
+    }
+  }, [id])
+
+  useEffect(() => { cargarLead() }, [cargarLead])
+
+  // ── Load more activity ─────────────────────────────────────────────
+  const cargarMasActividad = async () => {
+    const { data } = await supabase.from('ventas_actividad')
+      .select('*, usuario:usuarios(id, nombre)')
+      .eq('lead_id', id)
+      .order('created_at', { ascending: false })
+      .range(actividadOffset, actividadOffset + 19)
+
+    setActividad(prev => [...prev, ...(data || [])])
+    setActividadOffset(prev => prev + 20)
+    setHasMoreActividad((data || []).length >= 20)
+  }
+
+  // ── Update lead field with debounce ────────────────────────────────
+  const updateField = (field, value) => {
+    setLead(prev => ({ ...prev, [field]: value }))
+
+    if (debounceRefs.current[field]) clearTimeout(debounceRefs.current[field])
+    debounceRefs.current[field] = setTimeout(async () => {
+      try {
+        await supabase.from('ventas_leads').update({ [field]: value }).eq('id', id)
+      } catch (_) {
+        showToast('Error al guardar', 'error')
+      }
+    }, 800)
+  }
+
+  // ── Change stage ───────────────────────────────────────────────────
+  const cambiarEtapa = async (pipelineId, nuevaEtapaId) => {
+    setShowEtapaDropdown(null)
+    try {
+      await supabase.from('ventas_lead_pipeline')
+        .update({ etapa_id: nuevaEtapaId, fecha_entrada: new Date().toISOString() })
+        .eq('lead_id', id)
+        .eq('pipeline_id', pipelineId)
+
+      showToast('Etapa actualizada')
+      cargarLead()
+    } catch (_) {
+      showToast('Error al cambiar etapa', 'error')
+    }
+  }
+
+  // ── Assign setter/closer ───────────────────────────────────────────
+  const asignarSetter = async (setterId) => {
+    try {
+      await supabase.from('ventas_leads').update({ setter_asignado_id: setterId || null }).eq('id', id)
+      await supabase.from('ventas_actividad').insert({
+        lead_id: id, usuario_id: user.id, tipo: 'asignacion',
+        descripcion: 'Setter reasignado', datos: { setter_id: setterId },
+      })
+      showToast('Setter actualizado')
+      cargarLead()
+    } catch (_) {
+      showToast('Error', 'error')
+    }
+  }
+
+  const asignarCloser = async (closerId) => {
+    try {
+      await supabase.from('ventas_leads').update({ closer_asignado_id: closerId || null }).eq('id', id)
+      await supabase.from('ventas_actividad').insert({
+        lead_id: id, usuario_id: user.id, tipo: 'asignacion',
+        descripcion: 'Closer reasignado', datos: { closer_id: closerId },
+      })
+      showToast('Closer actualizado')
+      cargarLead()
+    } catch (_) {
+      showToast('Error', 'error')
+    }
+  }
+
+  // ── Delete lead ────────────────────────────────────────────────────
+  const eliminar = async () => {
+    try {
+      await supabase.from('ventas_leads').delete().eq('id', id)
+      navigate('/ventas/crm', { replace: true })
+    } catch (_) {
+      showToast('Error al eliminar', 'error')
+    }
+  }
+
+  // ── Tags ───────────────────────────────────────────────────────────
+  const addTag = async (etiquetaId) => {
+    setShowTagPicker(false)
+    try {
+      await supabase.from('ventas_lead_etiquetas').insert({ lead_id: id, etiqueta_id: etiquetaId })
+      cargarLead()
+    } catch (_) { /* duplicate */ }
+  }
+
+  const removeTag = async (etiquetaId) => {
+    try {
+      await supabase.from('ventas_lead_etiquetas').delete().eq('lead_id', id).eq('etiqueta_id', etiquetaId)
+      setLead(prev => ({
+        ...prev,
+        lead_etiquetas: prev.lead_etiquetas.filter(e => e.id !== etiquetaId),
+      }))
+    } catch (_) { /* ignore */ }
+  }
+
+  // ── Close menu on outside click ────────────────────────────────────
+  useEffect(() => {
+    if (!showMenu) return
+    const handler = () => setShowMenu(false)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [showMenu])
+
+  // ── Loading / Error states ─────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="crm-detail">
+        <div className="crm-skeleton" style={{ width: 80, height: 16, marginBottom: 16 }} />
+        <div className="crm-skeleton" style={{ width: '60%', height: 28, marginBottom: 24 }} />
+        <div className="crm-skeleton" style={{ height: 200, marginBottom: 16 }} />
+        <div className="crm-skeleton" style={{ height: 120 }} />
+      </div>
+    )
+  }
+
+  if (error || !lead) {
+    return (
+      <div className="crm-detail">
+        <button className="crm-detail-back" onClick={() => navigate('/ventas/crm')}>
+          <ArrowLeftIcon /> Volver al CRM
+        </button>
+        <div className="crm-error">
+          <p>{error || 'Lead no encontrado'}</p>
+          <button className="btn" onClick={() => navigate('/ventas/crm')}>Volver</button>
+        </div>
+      </div>
+    )
+  }
+
+  const tagIdsOnLead = new Set(lead.lead_etiquetas.map(e => e.id))
+  const availableTags = etiquetasDisponibles.filter(e => !tagIdsOnLead.has(e.id))
+
+  return (
+    <div className="crm-detail">
+      <button className="crm-detail-back" onClick={() => navigate('/ventas/crm')}>
+        <ArrowLeftIcon /> Volver al CRM
+      </button>
+
+      {/* ── Header ──────────────────────────────────────────────────── */}
+      <div className="crm-detail-header">
+        <div className="crm-detail-header-left">
+          <input
+            className="crm-detail-name"
+            value={lead.nombre || ''}
+            onChange={e => updateField('nombre', e.target.value)}
+            placeholder="Nombre del lead"
+          />
+          <div className="crm-detail-badges">
+            {lead.pipeline_states?.map(ps => ps.etapa && (
+              <span key={ps.id} className="crm-badge" style={{ background: `${ps.etapa.color}20`, color: ps.etapa.color }}>
+                <span className="crm-badge-dot" style={{ background: ps.etapa.color }} />
+                {ps.etapa.nombre}
+              </span>
+            ))}
+            {lead.categoria && (
+              <span className="crm-badge" style={{ background: 'rgba(99,102,241,0.15)', color: '#a5b4fc' }}>
+                {lead.categoria.nombre}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="crm-detail-actions">
+          {lead.telefono && (
+            <button
+              className="crm-card-wa"
+              style={{ width: 36, height: 36 }}
+              onClick={() => window.open(`https://wa.me/${lead.telefono.replace(/[^0-9+]/g, '')}`, '_blank')}
+              title="WhatsApp"
+            >
+              <WhatsAppIcon />
+            </button>
+          )}
+
+          <div className="crm-dropdown" onClick={e => e.stopPropagation()}>
+            <button
+              className="btn-icon"
+              style={{ width: 36, height: 36, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => setShowMenu(!showMenu)}
+            >
+              <MoreIcon />
+            </button>
+
+            {showMenu && (
+              <div className="crm-dropdown-menu">
+                {lead.pipeline_states?.map(ps => (
+                  <div key={ps.pipeline_id} style={{ position: 'relative' }}>
+                    <button
+                      className="crm-dropdown-item"
+                      onClick={(e) => { e.stopPropagation(); setShowEtapaDropdown(showEtapaDropdown === ps.pipeline_id ? null : ps.pipeline_id) }}
+                    >
+                      Cambiar etapa ({ps.pipeline?.nombre?.split(' ')[0]})
+                    </button>
+                    {showEtapaDropdown === ps.pipeline_id && (
+                      <div style={{ background: '#222', borderRadius: 8, margin: '0 8px 8px', maxHeight: 200, overflowY: 'auto' }}>
+                        {allEtapas.filter(e => e.pipeline?.id === ps.pipeline_id).map(e => (
+                          <button
+                            key={e.id}
+                            className="crm-dropdown-item"
+                            style={{ fontSize: 12, padding: '7px 12px' }}
+                            onClick={() => cambiarEtapa(ps.pipeline_id, e.id)}
+                          >
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: e.color || '#6B7280' }} />
+                            {e.nombre}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {esAdminODirector && (
+                  <>
+                    <div className="crm-dropdown-sep" />
+                    <div style={{ position: 'relative' }}>
+                      <button className="crm-dropdown-item" onClick={e => e.stopPropagation()}>
+                        <Select
+                          style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, width: '100%', cursor: 'pointer' }}
+                          value={lead.setter_asignado_id || ''}
+                          onChange={e => asignarSetter(e.target.value)}
+                        >
+                          <option value="">Sin setter</option>
+                          {setters.map(s => (
+                            <option key={s.usuario_id} value={s.usuario_id}>
+                              Setter: {s.usuario?.nombre || s.usuario?.email}
+                            </option>
+                          ))}
+                        </Select>
+                      </button>
+                    </div>
+                    <div style={{ position: 'relative' }}>
+                      <button className="crm-dropdown-item" onClick={e => e.stopPropagation()}>
+                        <Select
+                          style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, width: '100%', cursor: 'pointer' }}
+                          value={lead.closer_asignado_id || ''}
+                          onChange={e => asignarCloser(e.target.value)}
+                        >
+                          <option value="">Sin closer</option>
+                          {closers.map(c => (
+                            <option key={c.usuario_id} value={c.usuario_id}>
+                              Closer: {c.usuario?.nombre || c.usuario?.email}
+                            </option>
+                          ))}
+                        </Select>
+                      </button>
+                    </div>
+                    <div className="crm-dropdown-sep" />
+                    <button className="crm-dropdown-item danger" onClick={() => { setShowMenu(false); setShowConfirmDelete(true) }}>
+                      Eliminar lead
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Contact Info ────────────────────────────────────────────── */}
+      <div className="crm-section">
+        <div className="crm-section-title">Información de contacto</div>
+        <div className="crm-field-grid">
+          <div className="crm-field">
+            <label>Nombre</label>
+            <input value={lead.nombre || ''} onChange={e => updateField('nombre', e.target.value)} />
+          </div>
+          <div className="crm-field">
+            <label>Email</label>
+            <input type="email" value={lead.email || ''} onChange={e => updateField('email', e.target.value)} placeholder="email@ejemplo.com" />
+          </div>
+          <div className="crm-field">
+            <label>Teléfono</label>
+            <input value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} placeholder="+34 600 000 000" />
+          </div>
+          <div className="crm-field">
+            <label>Nombre del negocio</label>
+            <input value={lead.nombre_negocio || ''} onChange={e => updateField('nombre_negocio', e.target.value)} />
+          </div>
+          <div className="crm-field">
+            <label>Categoría</label>
+            <Select value={lead.categoria_id || ''} onChange={e => updateField('categoria_id', e.target.value || null)}>
+              <option value="">Sin categoría</option>
+              {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </Select>
+          </div>
+          <div className="crm-field">
+            <label>Fuente</label>
+            <input value={lead.fuente || ''} onChange={e => updateField('fuente', e.target.value)} />
+          </div>
+          <div className="crm-field" style={{ gridColumn: '1 / -1' }}>
+            <label>Contactos adicionales</label>
+            <textarea value={lead.contactos_adicionales || ''} onChange={e => updateField('contactos_adicionales', e.target.value)} rows={2} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Pipeline States ─────────────────────────────────────────── */}
+      <div className="crm-section">
+        <div className="crm-section-title">Estado en pipelines</div>
+        <div className="crm-pipeline-states">
+          {lead.pipeline_states?.map(ps => (
+            <div key={ps.id} className="crm-pipeline-state">
+              <div className="crm-pipeline-state-left">
+                <span className="crm-pipeline-state-name">{ps.pipeline?.nombre}</span>
+                <span className="crm-badge" style={{ background: `${ps.etapa?.color || '#6B7280'}20`, color: ps.etapa?.color || '#6B7280', fontSize: 12 }}>
+                  <span className="crm-badge-dot" style={{ background: ps.etapa?.color }} />
+                  {ps.etapa?.nombre || 'Sin etapa'}
+                </span>
+              </div>
+              {ps.contador_intentos > 0 && (ps.etapa?.tipo === 'ghosting' || ps.etapa?.tipo === 'seguimiento') && (
+                <span className="crm-card-attempts">
+                  {ps.etapa.tipo === 'ghosting' && ps.etapa.max_intentos
+                    ? `${ps.contador_intentos}/${ps.etapa.max_intentos}`
+                    : `#${ps.contador_intentos}`}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Asignaciones ────────────────────────────────────────────── */}
+      <div className="crm-section">
+        <div className="crm-section-title">Asignaciones</div>
+        <div className="crm-field-grid">
+          <div className="crm-field">
+            <label>Setter asignado</label>
+            {esAdminODirector ? (
+              <Select value={lead.setter_asignado_id || ''} onChange={e => asignarSetter(e.target.value)}>
+                <option value="">Sin setter</option>
+                {setters.map(s => <option key={s.usuario_id} value={s.usuario_id}>{s.usuario?.nombre}</option>)}
+              </Select>
+            ) : (
+              <input value={lead.setter?.nombre || 'Sin asignar'} readOnly style={{ opacity: 0.7 }} />
+            )}
+          </div>
+          <div className="crm-field">
+            <label>Closer asignado</label>
+            {esAdminODirector ? (
+              <Select value={lead.closer_asignado_id || ''} onChange={e => asignarCloser(e.target.value)}>
+                <option value="">Sin closer</option>
+                {closers.map(c => <option key={c.usuario_id} value={c.usuario_id}>{c.usuario?.nombre}</option>)}
+              </Select>
+            ) : (
+              <input value={lead.closer?.nombre || 'Sin asignar'} readOnly style={{ opacity: 0.7 }} />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Notas ───────────────────────────────────────────────────── */}
+      <div className="crm-section">
+        <div className="crm-section-title">Notas y resúmenes</div>
+        <div className="crm-field" style={{ marginBottom: 16 }}>
+          <label>Notas</label>
+          <textarea
+            value={lead.notas || ''}
+            onChange={e => updateField('notas', e.target.value)}
+            rows={3}
+            placeholder="Notas sobre el lead..."
+          />
+        </div>
+        <div className="crm-field" style={{ marginBottom: 16 }}>
+          <label>Resumen Setter</label>
+          <textarea
+            value={lead.resumen_setter || ''}
+            onChange={e => updateField('resumen_setter', e.target.value)}
+            rows={3}
+            placeholder="Resumen del setter..."
+            readOnly={!esAdminODirector && !esMiLeadSetter}
+            style={!esAdminODirector && !esMiLeadSetter ? { opacity: 0.6 } : undefined}
+          />
+        </div>
+        <div className="crm-field">
+          <label>Resumen Closer</label>
+          <textarea
+            value={lead.resumen_closer || ''}
+            onChange={e => updateField('resumen_closer', e.target.value)}
+            rows={3}
+            placeholder="Resumen del closer..."
+            readOnly={!esAdminODirector && !esMiLeadCloser}
+            style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
+          />
+        </div>
+      </div>
+
+      {/* ── Enlace grabación ────────────────────────────────────── */}
+      <div className="crm-section">
+        <div className="crm-section-title">Enlace de grabación</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div className="crm-field" style={{ flex: 1 }}>
+            <input
+              value={lead.enlace_grabacion || ''}
+              onChange={e => updateField('enlace_grabacion', e.target.value)}
+              placeholder="https://..."
+              readOnly={!esAdminODirector && !esMiLeadCloser}
+              style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
+            />
+          </div>
+          {lead.enlace_grabacion && (
+            <button
+              className="btn btn-sm"
+              style={{ flexShrink: 0, marginTop: 'auto' }}
+              onClick={() => window.open(lead.enlace_grabacion, '_blank')}
+            >
+              <ExternalIcon /> Abrir
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Etiquetas ───────────────────────────────────────────────── */}
+      <div className="crm-section">
+        <div className="crm-section-title">Etiquetas</div>
+        <div className="crm-tags">
+          {lead.lead_etiquetas?.map(etq => (
+            <span key={etq.id} className="crm-tag" style={{ borderColor: etq.color || 'var(--border)' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: etq.color || '#6B7280' }} />
+              {etq.nombre}
+              <button className="crm-tag-remove" onClick={() => removeTag(etq.id)} title="Quitar">
+                &times;
+              </button>
+            </span>
+          ))}
+          {availableTags.length > 0 && (
+            <div style={{ position: 'relative' }}>
+              <button className="crm-tag-add" onClick={() => setShowTagPicker(!showTagPicker)}>
+                + Añadir
+              </button>
+              {showTagPicker && (
+                <div className="crm-dropdown-menu" style={{ top: '100%', left: 0, minWidth: 160 }}>
+                  {availableTags.map(e => (
+                    <button key={e.id} className="crm-dropdown-item" onClick={() => addTag(e.id)}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: e.color || '#6B7280' }} />
+                      {e.nombre}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Citas ───────────────────────────────────────────────────── */}
+      {lead.citas?.length > 0 && (
+        <div className="crm-section">
+          <div className="crm-section-title">Citas ({lead.citas.length})</div>
+          {lead.citas.map(cita => (
+            <div key={cita.id} className="crm-cita">
+              <div>
+                <div className="crm-cita-fecha">{formatDateTime(cita.fecha_hora)}</div>
+                <div className="crm-cita-closer">{cita.closer?.nombre || 'Sin closer'}</div>
+                {cita.notas_closer && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{cita.notas_closer}</div>}
+              </div>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                {cita.estado_reunion ? (
+                  <span className="crm-cita-estado" style={{ background: `${cita.estado_reunion.color}20`, color: cita.estado_reunion.color }}>
+                    {cita.estado_reunion.nombre}
+                  </span>
+                ) : (
+                  <span className="crm-cita-estado" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)' }}>
+                    {cita.estado}
+                  </span>
+                )}
+                {cita.google_meet_url && (
+                  <button className="btn btn-sm" onClick={() => window.open(cita.google_meet_url, '_blank')}>Meet</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Actividad ───────────────────────────────────────────────── */}
+      <div className="crm-section">
+        <div className="crm-section-title">Historial de actividad</div>
+        <div className="crm-timeline">
+          {actividad.length === 0 && (
+            <div className="crm-empty">Sin actividad registrada</div>
+          )}
+          {actividad.map(act => (
+            <div key={act.id} className="crm-timeline-item">
+              <span className="crm-timeline-dot" />
+              <div className="crm-timeline-content">
+                <div className="crm-timeline-desc">{act.descripcion}</div>
+                <div className="crm-timeline-meta">
+                  {act.usuario?.nombre || 'Sistema'} · {formatRelative(act.created_at)}
+                </div>
+              </div>
+            </div>
+          ))}
+          {hasMoreActividad && (
+            <button
+              className="btn btn-sm"
+              style={{ margin: '8px auto', display: 'block' }}
+              onClick={cargarMasActividad}
+            >
+              Cargar más
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Confirm Delete Modal ────────────────────────────────────── */}
+      <ConfirmDialog
+        open={showConfirmDelete}
+        title="Eliminar Lead"
+        message={<>¿Estás seguro de que quieres eliminar a <strong>{lead?.nombre}</strong>? Esta acción no se puede deshacer.</>}
+        variant="danger"
+        confirmText="Eliminar"
+        onConfirm={eliminar}
+        onCancel={() => setShowConfirmDelete(false)}
+      />
+
+      {/* ── Toast ───────────────────────────────────────────────────── */}
+      {toast && (
+        <div className={`crm-toast ${toast.type}`}>{toast.msg}</div>
+      )}
+    </div>
+  )
+}

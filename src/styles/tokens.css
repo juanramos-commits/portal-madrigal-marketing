@@ -1,32 +1,49 @@
 /* ==========================================================================
    MADRIGAL CRM - DESIGN TOKENS
-   Basado en Meta Lab Design System
+   Sistema unificado de variables CSS para toda la app
    ========================================================================== */
 
 :root {
-  /* Colors - Background */
+  /* ========== COLORES - FONDO ========== */
   --bg: #0a0a0b;
   --bg-sidebar: #0a0a0b;
   --bg-card: rgba(255, 255, 255, 0.03);
+  --bg-card-hover: rgba(255, 255, 255, 0.05);
   --bg-input: rgba(255, 255, 255, 0.04);
-  
-  /* Colors - Text */
+  --bg-input-focus: rgba(255, 255, 255, 0.08);
+  --bg-overlay: rgba(0, 0, 0, 0.6);
+  --bg-tooltip: rgba(30, 30, 30, 0.95);
+  --bg-badge: rgba(255, 255, 255, 0.06);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-active: rgba(255, 255, 255, 0.08);
+
+  /* ========== COLORES - TEXTO ========== */
   --text: rgba(255, 255, 255, 0.95);
   --text-muted: rgba(255, 255, 255, 0.5);
-  
-  /* Colors - Border */
+  --text-placeholder: rgba(255, 255, 255, 0.25);
+  --text-inverse: #000000;
+
+  /* ========== COLORES - BORDE ========== */
   --border: rgba(255, 255, 255, 0.08);
-  
-  /* Colors - Primary */
+  --border-focus: rgba(255, 255, 255, 0.2);
+  --border-error: rgba(255, 107, 107, 0.5);
+
+  /* ========== COLORES - PRIMARY ========== */
   --primary: #ffffff;
   --primary-hover: #f5f5f5;
-  
-  /* Colors - States */
+  --primary-muted: rgba(255, 255, 255, 0.15);
+
+  /* ========== COLORES - ESTADOS ========== */
   --error: #ff6b6b;
+  --error-bg: rgba(255, 107, 107, 0.12);
   --success: #2ee59d;
+  --success-bg: rgba(46, 229, 157, 0.12);
   --warning: #ffa94d;
-  
-  /* Colors - Status badges */
+  --warning-bg: rgba(255, 169, 77, 0.12);
+  --info: #6495ed;
+  --info-bg: rgba(100, 149, 237, 0.12);
+
+  /* ========== COLORES - STATUS BADGES ========== */
   --status-active-bg: rgba(46, 229, 157, 0.15);
   --status-active-text: #2ee59d;
   --status-paused-bg: rgba(255, 169, 77, 0.15);
@@ -35,28 +52,118 @@
   --status-inactive-text: #ff6b6b;
   --status-onboarding-bg: rgba(100, 149, 237, 0.15);
   --status-onboarding-text: #6495ed;
-  
-  /* Spacing */
+
+  /* ========== TIPOGRAFIA ========== */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+
+  --font-xs: 0.6875rem;   /* 11px */
+  --font-sm: 0.75rem;     /* 12px */
+  --font-base: 0.875rem;  /* 14px */
+  --font-md: 1rem;        /* 16px */
+  --font-lg: 1.125rem;    /* 18px */
+  --font-xl: 1.375rem;    /* 22px */
+  --font-2xl: 1.75rem;    /* 28px */
+  --font-3xl: 2.25rem;    /* 36px */
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  /* ========== ESPACIADO ========== */
+  --space-2xs: 2px;
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
-  
-  /* Radius */
+  --space-2xl: 48px;
+
+  --page-padding-mobile: 16px;
+  --page-padding-desktop: 24px;
+  --page-max-width: 1400px;
+
+  /* ========== BORDES ========== */
+  --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
-  
-  /* Shadows */
+  --radius-full: 9999px;
+
+  /* ========== SOMBRAS ========== */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.6);
   --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 4px 24px rgba(0, 0, 0, 0.4), 0 8px 48px rgba(0, 0, 0, 0.2);
-  
-  /* Transitions */
+
+  /* ========== TRANSICIONES ========== */
   --transition-fast: 0.15s ease;
   --transition-base: 0.2s ease;
   --transition-slow: 0.3s ease;
+
+  /* ========== Z-INDEX ========== */
+  --z-dropdown: 50;
+  --z-sticky: 100;
+  --z-overlay: 1000;
+  --z-modal: 1001;
+  --z-toast: 2000;
+}
+
+/* ═══ LIGHT THEME ═══ */
+[data-theme="light"] {
+  --bg: #f5f5f7;
+  --bg-sidebar: #ffffff;
+  --bg-card: rgba(0, 0, 0, 0.02);
+  --bg-card-hover: rgba(0, 0, 0, 0.04);
+  --bg-input: rgba(0, 0, 0, 0.04);
+  --bg-input-focus: rgba(0, 0, 0, 0.06);
+  --bg-overlay: rgba(0, 0, 0, 0.4);
+  --bg-tooltip: rgba(50, 50, 50, 0.95);
+  --bg-badge: rgba(0, 0, 0, 0.06);
+  --bg-hover: rgba(0, 0, 0, 0.03);
+  --bg-active: rgba(0, 0, 0, 0.05);
+
+  --text: rgba(0, 0, 0, 0.9);
+  --text-muted: rgba(0, 0, 0, 0.5);
+  --text-placeholder: rgba(0, 0, 0, 0.25);
+  --text-inverse: #ffffff;
+
+  --border: rgba(0, 0, 0, 0.1);
+  --border-focus: rgba(0, 0, 0, 0.25);
+  --border-error: rgba(220, 53, 69, 0.5);
+
+  --primary: #1a1a1a;
+  --primary-hover: #333333;
+  --primary-muted: rgba(0, 0, 0, 0.1);
+
+  --error: #dc3545;
+  --error-bg: rgba(220, 53, 69, 0.1);
+  --success: #198754;
+  --success-bg: rgba(25, 135, 84, 0.1);
+  --warning: #e67700;
+  --warning-bg: rgba(230, 119, 0, 0.1);
+  --info: #0d6efd;
+  --info-bg: rgba(13, 110, 253, 0.1);
+
+  --status-active-bg: rgba(25, 135, 84, 0.12);
+  --status-active-text: #198754;
+  --status-paused-bg: rgba(230, 119, 0, 0.12);
+  --status-paused-text: #e67700;
+  --status-inactive-bg: rgba(220, 53, 69, 0.12);
+  --status-inactive-text: #dc3545;
+  --status-onboarding-bg: rgba(13, 110, 253, 0.12);
+  --status-onboarding-text: #0d6efd;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.15);
+  --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 12px rgba(0, 0, 0, 0.06);
 }

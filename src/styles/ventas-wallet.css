@@ -1,0 +1,1018 @@
+/* ============================================================================
+   VENTAS — WALLET SECTION
+   ============================================================================ */
+
+/* ── Page layout ──────────────────────────────────────────────────── */
+.wt-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  min-height: 100%;
+}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+.wt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.wt-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────── */
+.wt-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.wt-tabs::-webkit-scrollbar { display: none; }
+
+.wt-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wt-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.wt-tab.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Resumen cards ────────────────────────────────────────────────── */
+.wt-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.wt-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.wt-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.wt-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wt-card-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.wt-icon-success {
+  background: rgba(46, 229, 157, 0.12);
+  color: var(--success);
+}
+
+.wt-icon-muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+
+.wt-card-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.wt-card-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.wt-card-negative .wt-card-value {
+  color: var(--error);
+}
+
+.wt-btn-retiro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--success);
+  color: #0a0a0b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  align-self: flex-start;
+}
+
+.wt-btn-retiro:hover:not(:disabled) {
+  background: #26d48e;
+}
+
+.wt-btn-retiro:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.wt-btn-retiro svg {
+  width: 16px;
+  height: 16px;
+}
+
+.wt-saldo-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.wt-saldo-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.wt-saldo-ref {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: var(--space-xs);
+}
+
+/* ── Bloqueado warning ────────────────────────────────────────────── */
+.wt-bloqueado {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: rgba(255, 169, 77, 0.08);
+  border: 1px solid rgba(255, 169, 77, 0.2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--warning);
+}
+
+.wt-bloqueado svg {
+  width: 20px;
+  height: 20px;
+  color: var(--warning);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.wt-bloqueado-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ── Responsive visibility ────────────────────────────────────────── */
+.wt-desktop-only { display: block; }
+.wt-mobile-only { display: none; }
+
+/* ── Tables ───────────────────────────────────────────────────────── */
+.wt-table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.wt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.wt-table thead th {
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.wt-table tbody tr {
+  border: none;
+  transition: background var(--transition-fast);
+}
+
+.wt-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.wt-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.wt-text-success { color: var(--success); }
+.wt-text-danger { color: var(--error); }
+
+/* ── Badges ───────────────────────────────────────────────────────── */
+.wt-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.wt-badge-pendiente {
+  background: rgba(255, 169, 77, 0.15);
+  color: var(--warning);
+}
+
+.wt-badge-aprobado {
+  background: rgba(46, 229, 157, 0.15);
+  color: var(--success);
+}
+
+.wt-badge-rechazado {
+  background: rgba(255, 107, 107, 0.15);
+  color: var(--error);
+}
+
+/* ── Filters row ──────────────────────────────────────────────────── */
+.wt-filtros-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-md);
+}
+
+.wt-filtros-row select,
+.wt-filtros-row input[type="date"] {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.wt-filtros-row select:focus,
+.wt-filtros-row input[type="date"]:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Mini tabs (retiros filter) ───────────────────────────────────── */
+.wt-tabs-mini {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--space-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.wt-tabs-mini::-webkit-scrollbar { display: none; }
+
+.wt-tab-mini {
+  padding: 5px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wt-tab-mini:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.wt-tab-mini.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Action buttons ───────────────────────────────────────────────── */
+.wt-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.wt-action-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.wt-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.wt-action-approve {
+  color: var(--success);
+  border-color: rgba(46, 229, 157, 0.3);
+}
+.wt-action-approve:hover {
+  background: rgba(46, 229, 157, 0.1);
+}
+
+.wt-action-reject {
+  color: var(--error);
+  border-color: rgba(255, 107, 107, 0.3);
+}
+.wt-action-reject:hover {
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.wt-actions-cell {
+  display: flex;
+  gap: 4px;
+}
+
+/* ── Link button ──────────────────────────────────────────────────── */
+.wt-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--info);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+.wt-link-btn:hover {
+  background: rgba(100, 149, 237, 0.1);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.wt-btn-ghost {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.wt-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.wt-btn-ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.wt-btn-primary {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--primary);
+  color: #0a0a0b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.wt-btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.wt-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wt-btn-success {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--success);
+  color: #0a0a0b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.wt-btn-success:hover:not(:disabled) {
+  background: #26d48e;
+}
+
+.wt-btn-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wt-btn-danger {
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--error);
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.wt-btn-danger:hover:not(:disabled) {
+  background: #f05a5a;
+}
+
+.wt-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wt-btn-max {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  align-self: flex-start;
+}
+
+.wt-btn-max:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+/* ── Modal utility classes (used inside shared Modal) ────────────── */
+.wt-modal-hint {
+  font-size: 13px !important;
+  color: var(--text-muted) !important;
+}
+
+/* ── Steps indicator ──────────────────────────────────────────────── */
+.wt-steps-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wt-step {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.wt-step.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Paso (wizard step) ───────────────────────────────────────────── */
+.wt-paso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.wt-paso h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.wt-paso-bloqueado {
+  padding: var(--space-md);
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: 14px;
+  text-align: center;
+}
+
+.wt-paso-warning {
+  padding: var(--space-md);
+  background: rgba(255, 169, 77, 0.08);
+  border: 1px solid rgba(255, 169, 77, 0.2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--warning);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Invoice preview ──────────────────────────────────────────────── */
+.wt-factura-preview {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.wt-fp-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.wt-fp-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.wt-fp-col strong {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.wt-fp-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.wt-fp-concepto {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.wt-fp-amounts {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.wt-fp-amount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.wt-fp-total {
+  padding-top: var(--space-sm);
+  margin-top: var(--space-xs);
+  border-top: 1px solid var(--border);
+  font-weight: 700;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.wt-fp-total span {
+  color: var(--text);
+}
+
+.wt-fp-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.wt-fp-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Form fields ──────────────────────────────────────────────────── */
+.wt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: var(--space-md);
+}
+
+.wt-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.wt-field input,
+.wt-field select,
+.wt-field textarea {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+  resize: vertical;
+}
+
+.wt-field input:focus,
+.wt-field select:focus,
+.wt-field textarea:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.wt-field select {
+  cursor: pointer;
+}
+
+.wt-field-error {
+  font-size: 12px;
+  color: var(--error);
+}
+
+.wt-field-full {
+  grid-column: 1 / -1;
+}
+
+.wt-field-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.wt-input-readonly {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Toggle ───────────────────────────────────────────────────────── */
+.wt-field-toggle-wrap {
+  margin-bottom: var(--space-md);
+}
+
+/* ── Datos Fiscales form ──────────────────────────────────────────── */
+.wt-datos-fiscales {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.wt-df-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.wt-df-separator {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-sm) 0;
+}
+
+.wt-df-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.wt-df-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* ── Error & success messages ─────────────────────────────────────── */
+.wt-error-general {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--error);
+  font-size: 13px;
+  margin-top: var(--space-sm);
+}
+
+.wt-success-msg {
+  font-size: 13px;
+  color: var(--success);
+  font-weight: 500;
+}
+
+/* ── Loading & empty states ───────────────────────────────────────── */
+.wt-loading {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.wt-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* ── Pagination ───────────────────────────────────────────────────── */
+.wt-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.wt-pagination-btns {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.wt-pagination-btns button {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.wt-pagination-btns button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.wt-pagination-btns button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Mobile cards — Comisiones ────────────────────────────────────── */
+.wt-comision-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.wt-comision-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wt-comision-concepto {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.wt-comision-meta {
+  display: flex;
+  gap: var(--space-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+/* ── Mobile cards — Retiros ───────────────────────────────────────── */
+.wt-retiro-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.wt-retiro-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wt-retiro-meta {
+  display: flex;
+  gap: var(--space-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.wt-retiro-motivo {
+  font-size: 12px;
+  color: var(--error);
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+/* ── Mobile cards — Facturas ──────────────────────────────────────── */
+.wt-factura-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.wt-factura-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wt-factura-meta {
+  display: flex;
+  gap: var(--space-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+/* ── Mobile cards — Admin retiros ─────────────────────────────────── */
+.wt-admin-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.wt-admin-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wt-admin-card-meta {
+  display: flex;
+  gap: var(--space-sm);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.wt-admin-card-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+.wt-admin-card-actions .wt-action-btn {
+  flex: 1;
+  justify-content: center;
+  padding: 8px;
+}
+
+/* ── Admin facturas ───────────────────────────────────────────────── */
+.wt-admin-facturas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.wt-admin-retiros {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .wt-desktop-only { display: none; }
+  .wt-mobile-only { display: block; }
+
+  .wt-page { padding: var(--space-sm); }
+
+  .wt-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .wt-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wt-df-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wt-filtros-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wt-fp-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+}

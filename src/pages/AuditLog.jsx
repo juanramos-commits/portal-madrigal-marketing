@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { logger } from '../lib/logger'
+import Select from '../components/ui/Select'
 
 const PAGE_SIZE = 25
 
@@ -127,15 +128,15 @@ export default function AuditLog() {
       }}>
         <div style={{ flex: '1 1 160px' }}>
           <label style={labelStyle}>Categoria</label>
-          <select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)} style={inputStyle}>
+          <Select value={filtroCategoria} onChange={e => setFiltroCategoria(e.target.value)} style={inputStyle}>
             {CATEGORIAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-          </select>
+          </Select>
         </div>
         <div style={{ flex: '1 1 140px' }}>
           <label style={labelStyle}>Accion</label>
-          <select value={filtroAccion} onChange={e => setFiltroAccion(e.target.value)} style={inputStyle}>
+          <Select value={filtroAccion} onChange={e => setFiltroAccion(e.target.value)} style={inputStyle}>
             {ACCIONES.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-          </select>
+          </Select>
         </div>
         <div style={{ flex: '1 1 180px' }}>
           <label style={labelStyle}>Usuario</label>

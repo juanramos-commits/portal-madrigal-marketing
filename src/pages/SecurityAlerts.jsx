@@ -2,6 +2,7 @@ import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import Select from '../components/ui/Select'
 
 const PAGE_SIZE = 20
 
@@ -148,7 +149,7 @@ export default function SecurityAlerts() {
         border: '1px solid var(--border)',
         borderRadius: '10px'
       }}>
-        <select
+        <Select
           value={filtroEstado}
           onChange={(e) => { setFiltroEstado(e.target.value); setPage(0) }}
           style={{
@@ -159,9 +160,9 @@ export default function SecurityAlerts() {
           <option value="pendientes">Pendientes</option>
           <option value="resueltas">Resueltas</option>
           <option value="todas">Todas</option>
-        </select>
+        </Select>
 
-        <select
+        <Select
           value={filtroTipo}
           onChange={(e) => { setFiltroTipo(e.target.value); setPage(0) }}
           style={{
@@ -173,9 +174,9 @@ export default function SecurityAlerts() {
           {Object.entries(TIPO_LABELS).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
           ))}
-        </select>
+        </Select>
 
-        <select
+        <Select
           value={filtroSeveridad}
           onChange={(e) => { setFiltroSeveridad(e.target.value); setPage(0) }}
           style={{
@@ -187,7 +188,7 @@ export default function SecurityAlerts() {
           {Object.entries(SEVERIDAD_CONFIG).map(([k, v]) => (
             <option key={k} value={k}>{v.label}</option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {/* Lista de alertas */}
