@@ -265,13 +265,13 @@ function SortableDocMenuItem({ item, isActive, onClick }) {
 }
 
 export default function Layout() {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { usuario, permisos, signOut, tienePermiso } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [ventasMenuOpen, setVentasMenuOpen] = useState(() => location.pathname.startsWith('/ventas'))
   const [porOrganizarMenuOpen, setPorOrganizarMenuOpen] = useState(() => !location.pathname.startsWith('/ventas') && location.pathname !== '/')
   const [menuItems, setMenuItems] = useState([])
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { usuario, permisos, signOut, tienePermiso } = useAuth()
   const saveTimeoutRef = useRef(null)
 
   const { contador: notifContador } = useNotificacionesBadge()
