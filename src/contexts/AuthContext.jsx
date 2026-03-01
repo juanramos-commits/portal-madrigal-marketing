@@ -41,8 +41,13 @@ export function AuthProvider({ children }) {
         setPermisos(permisosData?.map(p => p.codigo) || [])
       }
 
-      // Actualizar ultimo acceso (fire-and-forget, no bloquea la carga)
-      supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id).then(() => {}, () => {})
+      // Actualizar ultimo acceso solo en login fresco (evita PATCH 400 por JWT en refresh)
+      if (esLoginFresco) {
+        supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id).then(
+          ({ error }) => { if (error) logger.error('Error actualizando ultimo_acceso:', error) },
+          (err) => logger.error('Error de red actualizando ultimo_acceso:', err)
+        )
+      }
 
       return usuarioData
     } catch (error) {
