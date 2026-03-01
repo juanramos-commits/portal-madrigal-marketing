@@ -585,16 +585,21 @@
 }
 
 /* ── Form fields ──────────────────────────────────────────────────── */
+.vv-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
 .vv-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: var(--space-md);
+  gap: var(--space-xs);
 }
 
 .vv-field label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -605,9 +610,10 @@
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  padding: var(--space-sm) var(--space-3);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--font-base);
+  font-family: inherit;
   transition: border-color var(--transition-fast);
 }
 
@@ -615,6 +621,7 @@
 .vv-field select:focus {
   outline: none;
   border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
 }
 
 .vv-field select {
@@ -622,14 +629,14 @@
 }
 
 .vv-field-readonly {
-  font-size: 14px;
+  font-size: var(--font-base);
   color: var(--text);
-  padding: 8px 0;
-  opacity: 0.8;
+  padding: var(--space-sm) 0;
+  opacity: 0.7;
 }
 
 .vv-field-error {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--error);
 }
 
@@ -640,35 +647,34 @@
 }
 
 .vv-error-general {
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  background: var(--error-bg);
+  border: 1px solid var(--border-error);
   border-radius: var(--radius-sm);
   padding: var(--space-sm) var(--space-md);
   color: var(--error);
-  font-size: 13px;
-  margin-bottom: var(--space-md);
+  font-size: var(--font-sm-md);
 }
 
 /* ── Toggle ───────────────────────────────────────────────────────── */
 .vv-field-toggle {
-  margin-bottom: var(--space-md);
+  padding-top: var(--space-xs);
 }
 
 /* ── Buttons ──────────────────────────────────────────────────────── */
 .vv-btn-ghost {
-  padding: 8px 16px;
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .vv-btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-hover);
 }
 
 .vv-btn-ghost:disabled {
@@ -677,13 +683,13 @@
 }
 
 .vv-btn-success {
-  padding: 8px 20px;
+  padding: var(--space-sm) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--success);
   color: var(--text-inverse);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
 }

@@ -102,7 +102,7 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
         </>
       }
     >
-      <form id="venta-cierre-form" onSubmit={handleSubmit}>
+      <form id="venta-cierre-form" className="vv-form" onSubmit={handleSubmit}>
         {/* Lead name */}
         <div className="vv-field">
           <label>Lead</label>

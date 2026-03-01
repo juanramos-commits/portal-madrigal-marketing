@@ -56,9 +56,9 @@ export default function CRMNuevoLead({ categorias = [], onCrear, onCerrar }) {
         </>
       }
     >
-      <form id="crm-nuevo-lead-form" onSubmit={handleSubmit}>
+      <form id="crm-nuevo-lead-form" className="crm-form" onSubmit={handleSubmit}>
         {error && (
-          <div style={{ fontSize: 13, color: 'var(--error)', padding: '8px 12px', background: 'var(--error-bg)', borderRadius: 8 }}>
+          <div className="crm-form-error">
             {error}
           </div>
         )}

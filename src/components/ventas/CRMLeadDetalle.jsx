@@ -664,7 +664,7 @@ export default function CRMLeadDetalle() {
                 <div key={ps.id} className="crm-pipeline-state">
                   <div className="crm-pipeline-state-left">
                     <span className="crm-pipeline-state-name">{ps.pipeline?.nombre}</span>
-                    <span className="crm-badge" style={{ background: `${ps.etapa?.color || 'var(--text-muted)'}20`, color: ps.etapa?.color || 'var(--text-muted)', fontSize: 12 }}>
+                    <span className="crm-badge" style={{ background: `${ps.etapa?.color || 'var(--text-muted)'}20`, color: ps.etapa?.color || 'var(--text-muted)', fontSize: 'var(--font-sm)' }}>
                       <span className="crm-badge-dot" style={{ background: ps.etapa?.color }} />
                       {ps.etapa?.nombre || 'Sin etapa'}
                     </span>
