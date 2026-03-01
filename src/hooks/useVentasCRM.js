@@ -93,10 +93,14 @@ export function useVentasCRM() {
 
       if (defaultPipeline) {
         setPipelineActivoState(defaultPipeline)
+        // Don't setLoading(false) here — let cargarLeads handle it
+        // after etapas load and leads are fetched
+      } else {
+        // No pipelines available — nothing more to load
+        setLoading(false)
       }
     } catch (err) {
       setError('Error al cargar datos iniciales')
-    } finally {
       setLoading(false)
     }
   }, [user?.id, usuario?.tipo])
@@ -105,13 +109,19 @@ export function useVentasCRM() {
   useEffect(() => {
     if (!pipelineActivo) return
     const cargarEtapas = async () => {
-      const { data } = await supabase
-        .from('ventas_etapas')
-        .select('*')
-        .eq('pipeline_id', pipelineActivo.id)
-        .eq('activo', true)
-        .order('orden')
-      setEtapas(data || [])
+      try {
+        const { data, error: err } = await supabase
+          .from('ventas_etapas')
+          .select('*')
+          .eq('pipeline_id', pipelineActivo.id)
+          .eq('activo', true)
+          .order('orden')
+        if (err) throw err
+        setEtapas(data || [])
+      } catch (err) {
+        setError('Error al cargar etapas')
+        setLoading(false)
+      }
     }
     cargarEtapas()
   }, [pipelineActivo?.id])
@@ -636,6 +646,7 @@ export function useVentasCRM() {
 
   // ── Set pipeline ───────────────────────────────────────────────────
   const setPipelineActivo = useCallback((pipeline) => {
+    setLoading(true)
     setPipelineActivoState(pipeline)
     setLeads({})
     setLeadCounts({})
