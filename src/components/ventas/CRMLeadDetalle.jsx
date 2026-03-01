@@ -101,9 +101,11 @@ export default function CRMLeadDetalle() {
   }
 
   // ── Load lead detail ───────────────────────────────────────────────
-  const cargarLead = useCallback(async () => {
+  const cargarLead = useCallback(async (cancelled) => {
     try {
       setLoading(true)
+      setError(null)
+
       const [
         { data: leadData, error: leadErr },
         { data: pipelineStates },
@@ -135,6 +137,7 @@ export default function CRMLeadDetalle() {
         supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
       ])
 
+      if (cancelled?.current) return
       if (leadErr) throw leadErr
 
       setLead({
@@ -150,6 +153,9 @@ export default function CRMLeadDetalle() {
       setSetters((roles || []).filter(r => r.rol === 'setter' && r.activo))
       setClosers((roles || []).filter(r => r.rol === 'closer' && r.activo))
 
+      // Reset snapshot para que se recree con datos frescos
+      snapshotRef.current = null
+
       // Load initial activity
       const { data: actData } = await supabase.from('ventas_actividad')
         .select('*, usuario:usuarios(id, nombre)')
@@ -157,17 +163,28 @@ export default function CRMLeadDetalle() {
         .order('created_at', { ascending: false })
         .range(0, 19)
 
+      if (cancelled?.current) return
+
       setActividad(actData || [])
       setActividadOffset(20)
       setHasMoreActividad((actData || []).length >= 20)
     } catch (err) {
-      setError(err.message || 'Error al cargar el lead')
+      if (!cancelled?.current) {
+        setError(err.message || 'Error al cargar el lead')
+      }
     } finally {
-      setLoading(false)
+      if (!cancelled?.current) {
+        setLoading(false)
+      }
     }
   }, [id])
 
-  useEffect(() => { cargarLead() }, [cargarLead])
+  useEffect(() => {
+    if (!id) return
+    const cancelled = { current: false }
+    cargarLead(cancelled)
+    return () => { cancelled.current = true }
+  }, [cargarLead])
 
   // ── Snapshot for activity tracking ────────────────────────────────
   useEffect(() => {
