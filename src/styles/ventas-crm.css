@@ -878,6 +878,11 @@
   gap: var(--space-md);
 }
 
+.crm-form .ui-field,
+.crm-form .crm-field {
+  margin-bottom: 0;
+}
+
 .crm-form-error {
   font-size: var(--font-sm-md);
   color: var(--error);
