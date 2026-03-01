@@ -959,7 +959,7 @@
 .crm-pipeline-state-left {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2xs);
+  gap: var(--space-1-5);
 }
 
 .crm-pipeline-state-name {
