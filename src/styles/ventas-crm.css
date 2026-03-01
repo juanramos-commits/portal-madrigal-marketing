@@ -28,17 +28,17 @@
 }
 
 .crm-header-top h1 {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--font-lg-xl);
+  font-weight: var(--weight-bold);
   color: var(--text);
   margin: 0;
   white-space: nowrap;
 }
 
 .crm-lead-count {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
   margin-left: var(--space-sm);
 }
 
@@ -68,9 +68,9 @@
 
 .crm-pipeline-tab {
   padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
+  border-radius: var(--radius-xs-sm);
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   background: transparent;
   border: none;
@@ -81,7 +81,7 @@
 
 .crm-pipeline-tab:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-input);
 }
 
 .crm-pipeline-tab.active {
@@ -105,7 +105,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 5px;
+  border-radius: var(--radius-xs);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -150,7 +150,7 @@
   width: 100%;
   height: 34px;
   padding: 0 12px 0 32px;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text);
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -175,8 +175,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -187,7 +187,7 @@
 
 .crm-filter-btn:hover {
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-hover);
 }
 
 .crm-filter-btn svg {
@@ -204,8 +204,8 @@
   border-radius: 50%;
   background: var(--success);
   color: var(--text-inverse);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-bold);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,10 +218,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   color: var(--text-inverse);
-  background: #fff;
+  background: var(--primary);
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -230,7 +230,7 @@
 }
 
 .crm-new-btn:hover {
-  background: #e5e5e5;
+  background: var(--primary-hover);
 }
 
 .crm-new-btn svg {
@@ -251,6 +251,11 @@
   min-height: 0;
 }
 
+.crm-kanban {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-active) transparent;
+}
+
 .crm-kanban::-webkit-scrollbar {
   height: 6px;
 }
@@ -260,8 +265,8 @@
 }
 
 .crm-kanban::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: var(--bg-active);
+  border-radius: var(--radius-xs);
 }
 
 /* ── Kanban Column ──────────────────────────────────────────────────────── */
@@ -270,7 +275,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--bg-subtle);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   scroll-snap-align: start;
@@ -279,7 +284,7 @@
 
 .crm-column.drag-over {
   border-color: var(--border-focus);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--bg-card);
 }
 
 @media (min-width: 768px) {
@@ -306,8 +311,8 @@
 }
 
 .crm-column-name {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   flex: 1;
   white-space: nowrap;
@@ -316,12 +321,12 @@
 }
 
 .crm-column-count {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   background: var(--bg-hover);
   padding: 1px 7px;
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   flex-shrink: 0;
 }
 
@@ -335,13 +340,18 @@
   min-height: 60px;
 }
 
+.crm-column-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-active) transparent;
+}
+
 .crm-column-body::-webkit-scrollbar {
   width: 4px;
 }
 
 .crm-column-body::-webkit-scrollbar-thumb {
   background: var(--bg-active);
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .crm-load-more {
@@ -350,7 +360,7 @@
 }
 
 .crm-load-more button {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   background: none;
   border: 1px dashed var(--border);
@@ -363,7 +373,7 @@
 
 .crm-load-more button:hover {
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-hover);
 }
 
 /* ── Lead Card ──────────────────────────────────────────────────────────── */
@@ -379,7 +389,7 @@
 }
 
 .crm-card:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-hover);
   background: var(--bg-hover);
 }
 
@@ -399,8 +409,8 @@
 }
 
 .crm-card-name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   line-height: 1.3;
   flex: 1;
@@ -418,16 +428,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  background: rgba(37, 211, 102, 0.15);
-  color: #25D366;
+  border-radius: var(--radius-xs-sm);
+  background: var(--color-whatsapp-subtle);
+  color: var(--color-whatsapp);
   border: none;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .crm-card-wa:hover {
-  background: rgba(37, 211, 102, 0.25);
+  background: var(--color-whatsapp-hover);
 }
 
 .crm-card-wa svg {
@@ -436,7 +446,7 @@
 }
 
 .crm-card-phone {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   margin-bottom: 6px;
 }
@@ -449,12 +459,12 @@
 }
 
 .crm-card-cat {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
   padding: 2px 8px;
-  border-radius: 10px;
-  background: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
+  border-radius: var(--radius-pill);
+  background: var(--color-category-subtle);
+  color: var(--color-category);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -462,11 +472,11 @@
 }
 
 .crm-card-attempts {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
   padding: 2px 8px;
-  border-radius: 10px;
-  background: rgba(255, 169, 77, 0.15);
+  border-radius: var(--radius-pill);
+  background: var(--warning-bg);
   color: var(--warning);
 }
 
@@ -474,10 +484,10 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-active);
   color: var(--text-muted);
-  font-size: 9px;
-  font-weight: 700;
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-bold);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -504,8 +514,8 @@
   top: 0;
   background: var(--bg-card);
   padding: 10px 14px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -530,7 +540,7 @@
 
 .crm-table td {
   padding: 10px 14px;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
@@ -552,9 +562,9 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--font-sm);
   padding: 3px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   background: var(--bg-hover);
 }
 
@@ -569,7 +579,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-md) 0 0;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
 }
 
@@ -581,7 +591,7 @@
 .crm-pagination button {
   height: 32px;
   padding: 0 14px;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -596,7 +606,7 @@
 }
 
 .crm-pagination button:not(:disabled):hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-hover);
 }
 
 /* ── Lead Detail ────────────────────────────────────────────────────────── */
@@ -610,7 +620,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
   background: none;
   border: none;
@@ -647,8 +657,8 @@
 }
 
 .crm-detail-name {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: var(--font-xl-2xl);
+  font-weight: var(--weight-bold);
   color: var(--text);
   background: none;
   border: none;
@@ -660,7 +670,7 @@
 }
 
 .crm-detail-name:focus {
-  border-bottom-color: rgba(255, 255, 255, 0.2);
+  border-bottom-color: var(--border-focus);
 }
 
 .crm-detail-badges {
@@ -673,10 +683,10 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   padding: 3px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
 }
 
 .crm-badge-dot {
@@ -701,8 +711,8 @@
 }
 
 .crm-section-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   margin-bottom: var(--space-md);
   display: flex;
@@ -735,8 +745,8 @@
 }
 
 .crm-field label {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -747,7 +757,7 @@
 .crm-field select {
   width: 100%;
   padding: 8px 12px;
-  font-size: 14px;
+  font-size: var(--font-base);
   color: var(--text);
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -776,6 +786,10 @@
   padding-right: 32px;
 }
 
+[data-theme="light"] .crm-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(0,0,0,0.4)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
 /* ── Pipeline States ────────────────────────────────────────────────────── */
 .crm-pipeline-states {
   display: flex;
@@ -788,7 +802,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-subtle);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
@@ -800,8 +814,8 @@
 }
 
 .crm-pipeline-state-name {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
 }
 
@@ -827,7 +841,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--bg-muted);
   margin-top: 5px;
   flex-shrink: 0;
 }
@@ -838,13 +852,13 @@
 }
 
 .crm-timeline-desc {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text);
   line-height: 1.4;
 }
 
 .crm-timeline-meta {
-  font-size: 11px;
+  font-size: var(--font-xs);
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -861,9 +875,9 @@
   align-items: center;
   gap: 4px;
   padding: 3px 10px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: 10px;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   background: var(--bg-card);
   color: var(--text);
@@ -889,9 +903,9 @@
 
 .crm-tag-add {
   padding: 3px 10px;
-  font-size: 12px;
+  font-size: var(--font-sm);
   border: 1px dashed var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   background: none;
   color: var(--text-muted);
   cursor: pointer;
@@ -900,7 +914,7 @@
 
 .crm-tag-add:hover {
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-hover);
 }
 
 /* ── Citas ──────────────────────────────────────────────────────────────── */
@@ -909,7 +923,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-subtle);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   gap: var(--space-sm);
@@ -921,20 +935,20 @@
 }
 
 .crm-cita-fecha {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   color: var(--text);
 }
 
 .crm-cita-closer {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
 .crm-cita-estado {
-  font-size: 11px;
+  font-size: var(--font-xs);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
 }
 
 /* ── Modal utility classes (used by CRMFiltros) ────────────────────────── */
@@ -961,7 +975,7 @@
 .crm-filters-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--bg-overlay);
   z-index: var(--z-overlay);
   animation: crm-fade-in 0.15s ease;
 }
@@ -990,8 +1004,8 @@
 }
 
 .crm-filters-header h2 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   margin: 0;
 }
@@ -1027,7 +1041,7 @@
   right: 0;
   margin-top: 4px;
   min-width: 200px;
-  background: #1a1a1b;
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-lg);
@@ -1042,7 +1056,7 @@
   gap: 8px;
   width: 100%;
   padding: 9px 14px;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text);
   background: none;
   border: none;
@@ -1067,7 +1081,7 @@
 
 /* ── Skeleton ───────────────────────────────────────────────────────────── */
 .crm-skeleton {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-skeleton);
   border-radius: var(--radius-sm);
   animation: crm-pulse 1.5s ease infinite;
 }
@@ -1089,7 +1103,7 @@
 }
 
 .crm-error p {
-  font-size: 14px;
+  font-size: var(--font-base);
   color: var(--text-muted);
 }
 
@@ -1102,7 +1116,7 @@
   padding: 32px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
 }
 
 /* ── Confirm Dialog ─────────────────────────────────────────────────────── */
@@ -1112,7 +1126,7 @@
 }
 
 .crm-confirm p {
-  font-size: 14px;
+  font-size: var(--font-base);
   color: var(--text-muted);
   margin-bottom: var(--space-lg);
 }
@@ -1146,8 +1160,8 @@
   transform: translateX(-50%);
   padding: 10px 20px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   z-index: var(--z-toast);
   animation: crm-slide-up 0.2s ease, crm-fade-in 0.2s ease;
   pointer-events: none;
@@ -1161,4 +1175,46 @@
 .crm-toast.success {
   background: var(--success);
   color: var(--text-inverse);
+}
+
+/* ── Responsive Breakpoints ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .crm-header-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crm-header-actions {
+    justify-content: space-between;
+  }
+
+  .crm-search {
+    max-width: none;
+  }
+
+  .crm-pipeline-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .crm-detail {
+    padding-bottom: var(--space-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .crm-column {
+    flex: 1 0 260px;
+    max-width: 340px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .crm-column {
+    max-width: 380px;
+  }
+
+  .crm-detail {
+    max-width: 900px;
+  }
 }

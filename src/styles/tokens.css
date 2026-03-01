@@ -9,6 +9,8 @@
   --bg-sidebar: #0a0a0b;
   --bg-card: rgba(255, 255, 255, 0.03);
   --bg-card-hover: rgba(255, 255, 255, 0.05);
+  --bg-elevated: #1a1a1b;
+  --bg-subtle: rgba(255, 255, 255, 0.02);
   --bg-input: rgba(255, 255, 255, 0.04);
   --bg-input-focus: rgba(255, 255, 255, 0.08);
   --bg-overlay: rgba(0, 0, 0, 0.6);
@@ -16,21 +18,25 @@
   --bg-badge: rgba(255, 255, 255, 0.06);
   --bg-hover: rgba(255, 255, 255, 0.05);
   --bg-active: rgba(255, 255, 255, 0.08);
+  --bg-muted: rgba(255, 255, 255, 0.15);
+  --bg-skeleton: rgba(255, 255, 255, 0.04);
 
   /* ========== COLORES - TEXTO ========== */
   --text: rgba(255, 255, 255, 0.95);
   --text-muted: rgba(255, 255, 255, 0.5);
+  --text-tertiary: rgba(255, 255, 255, 0.35);
   --text-placeholder: rgba(255, 255, 255, 0.25);
   --text-inverse: #000000;
 
   /* ========== COLORES - BORDE ========== */
   --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.15);
   --border-focus: rgba(255, 255, 255, 0.2);
   --border-error: rgba(255, 107, 107, 0.5);
 
   /* ========== COLORES - PRIMARY ========== */
   --primary: #ffffff;
-  --primary-hover: #f5f5f5;
+  --primary-hover: #e5e5e5;
   --primary-muted: rgba(255, 255, 255, 0.15);
 
   /* ========== COLORES - ESTADOS ========== */
@@ -39,7 +45,7 @@
   --success: #2ee59d;
   --success-bg: rgba(46, 229, 157, 0.12);
   --warning: #ffa94d;
-  --warning-bg: rgba(255, 169, 77, 0.12);
+  --warning-bg: rgba(255, 169, 77, 0.15);
   --info: #6495ed;
   --info-bg: rgba(100, 149, 237, 0.12);
 
@@ -53,18 +59,29 @@
   --status-onboarding-bg: rgba(100, 149, 237, 0.15);
   --status-onboarding-text: #6495ed;
 
+  /* ========== COLORES - CRM SEMÁNTICOS ========== */
+  --color-whatsapp: #25D366;
+  --color-whatsapp-subtle: rgba(37, 211, 102, 0.15);
+  --color-whatsapp-hover: rgba(37, 211, 102, 0.25);
+  --color-category: #a5b4fc;
+  --color-category-subtle: rgba(99, 102, 241, 0.15);
+
   /* ========== TIPOGRAFIA ========== */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
 
-  --font-xs: 0.6875rem;   /* 11px */
-  --font-sm: 0.75rem;     /* 12px */
-  --font-base: 0.875rem;  /* 14px */
-  --font-md: 1rem;        /* 16px */
-  --font-lg: 1.125rem;    /* 18px */
-  --font-xl: 1.375rem;    /* 22px */
-  --font-2xl: 1.75rem;    /* 28px */
-  --font-3xl: 2.25rem;    /* 36px */
+  --font-2xs: 0.625rem;    /* 10px */
+  --font-xs: 0.6875rem;    /* 11px */
+  --font-sm: 0.75rem;      /* 12px */
+  --font-sm-md: 0.8125rem; /* 13px */
+  --font-base: 0.875rem;   /* 14px */
+  --font-md: 1rem;         /* 16px */
+  --font-lg: 1.125rem;     /* 18px */
+  --font-lg-xl: 1.25rem;   /* 20px */
+  --font-xl: 1.375rem;     /* 22px */
+  --font-xl-2xl: 1.5rem;   /* 24px */
+  --font-2xl: 1.75rem;     /* 28px */
+  --font-3xl: 2.25rem;     /* 36px */
 
   --weight-normal: 400;
   --weight-medium: 500;
@@ -78,8 +95,13 @@
   /* ========== ESPACIADO ========== */
   --space-2xs: 2px;
   --space-xs: 4px;
+  --space-1-5: 6px;
   --space-sm: 8px;
+  --space-2-5: 10px;
+  --space-3: 12px;
+  --space-3-5: 14px;
   --space-md: 16px;
+  --space-5: 20px;
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
@@ -90,7 +112,9 @@
 
   /* ========== BORDES ========== */
   --radius-xs: 4px;
+  --radius-xs-sm: 6px;
   --radius-sm: 8px;
+  --radius-pill: 10px;
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
@@ -102,11 +126,13 @@
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
   --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.6);
   --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 4px 24px rgba(0, 0, 0, 0.4), 0 8px 48px rgba(0, 0, 0, 0.2);
+  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
 
   /* ========== TRANSICIONES ========== */
   --transition-fast: 0.15s ease;
   --transition-base: 0.2s ease;
   --transition-slow: 0.3s ease;
+  --transition-spring: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   /* ========== Z-INDEX ========== */
   --z-dropdown: 50;
@@ -122,6 +148,8 @@
   --bg-sidebar: #ffffff;
   --bg-card: rgba(0, 0, 0, 0.02);
   --bg-card-hover: rgba(0, 0, 0, 0.04);
+  --bg-elevated: #ffffff;
+  --bg-subtle: rgba(0, 0, 0, 0.015);
   --bg-input: rgba(0, 0, 0, 0.04);
   --bg-input-focus: rgba(0, 0, 0, 0.06);
   --bg-overlay: rgba(0, 0, 0, 0.4);
@@ -129,13 +157,17 @@
   --bg-badge: rgba(0, 0, 0, 0.06);
   --bg-hover: rgba(0, 0, 0, 0.03);
   --bg-active: rgba(0, 0, 0, 0.05);
+  --bg-muted: rgba(0, 0, 0, 0.1);
+  --bg-skeleton: rgba(0, 0, 0, 0.05);
 
   --text: rgba(0, 0, 0, 0.9);
   --text-muted: rgba(0, 0, 0, 0.5);
+  --text-tertiary: rgba(0, 0, 0, 0.35);
   --text-placeholder: rgba(0, 0, 0, 0.25);
   --text-inverse: #ffffff;
 
   --border: rgba(0, 0, 0, 0.1);
+  --border-hover: rgba(0, 0, 0, 0.2);
   --border-focus: rgba(0, 0, 0, 0.25);
   --border-error: rgba(220, 53, 69, 0.5);
 
@@ -148,7 +180,7 @@
   --success: #198754;
   --success-bg: rgba(25, 135, 84, 0.1);
   --warning: #e67700;
-  --warning-bg: rgba(230, 119, 0, 0.1);
+  --warning-bg: rgba(230, 119, 0, 0.12);
   --info: #0d6efd;
   --info-bg: rgba(13, 110, 253, 0.1);
 
@@ -161,9 +193,16 @@
   --status-onboarding-bg: rgba(13, 110, 253, 0.12);
   --status-onboarding-text: #0d6efd;
 
+  --color-whatsapp: #25D366;
+  --color-whatsapp-subtle: rgba(37, 211, 102, 0.1);
+  --color-whatsapp-hover: rgba(37, 211, 102, 0.2);
+  --color-category: #6366f1;
+  --color-category-subtle: rgba(99, 102, 241, 0.1);
+
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
   --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.15);
   --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.08);
 }

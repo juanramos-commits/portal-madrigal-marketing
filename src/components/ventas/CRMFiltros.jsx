@@ -1,10 +1,5 @@
+import { X } from 'lucide-react'
 import Select from '../ui/Select'
-
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
 
 export default function CRMFiltros({
   filtros,
@@ -38,7 +33,7 @@ export default function CRMFiltros({
         <div className="crm-filters-header">
           <h2>Filtros</h2>
           <button className="crm-modal-close" onClick={onCerrar}>
-            <CloseIcon />
+            <X />
           </button>
         </div>
 

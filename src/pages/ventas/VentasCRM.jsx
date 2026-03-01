@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { Kanban, List, Filter, Plus, RefreshCw } from 'lucide-react'
 import { useVentasCRM } from '../../hooks/useVentasCRM'
 import { useVentas } from '../../hooks/useVentas'
 import CRMKanban from '../../components/ventas/CRMKanban'
@@ -9,36 +10,6 @@ import CRMNuevoLead from '../../components/ventas/CRMNuevoLead'
 import VentaPopupCierre from '../../components/ventas/VentaPopupCierre'
 import '../../styles/ventas-crm.css'
 import '../../styles/ventas-ventas.css'
-
-const KanbanIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="10" rx="1"/>
-  </svg>
-)
-
-const TableIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/>
-  </svg>
-)
-
-const FilterIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-  </svg>
-)
-
-const PlusIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 5v14"/><path d="M5 12h14"/>
-  </svg>
-)
-
-const RefreshIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/>
-  </svg>
-)
 
 export default function VentasCRM() {
   const crm = useVentasCRM()
@@ -100,12 +71,12 @@ export default function VentasCRM() {
               title="Refrescar"
               style={{ padding: '0 8px' }}
             >
-              <RefreshIcon />
+              <RefreshCw />
             </button>
 
             {crm.esAdminODirector && (
               <button className="crm-new-btn" onClick={() => setShowNewLead(true)}>
-                <PlusIcon /> Nuevo Lead
+                <Plus /> Nuevo Lead
               </button>
             )}
           </div>
@@ -134,14 +105,14 @@ export default function VentasCRM() {
               onClick={() => crm.setVista('kanban')}
               title="Vista Kanban"
             >
-              <KanbanIcon />
+              <Kanban />
             </button>
             <button
               className={`crm-view-btn${crm.vista === 'tabla' ? ' active' : ''}`}
               onClick={() => crm.setVista('tabla')}
               title="Vista Tabla"
             >
-              <TableIcon />
+              <List />
             </button>
           </div>
 
@@ -150,7 +121,7 @@ export default function VentasCRM() {
 
           {/* Filter button */}
           <button className="crm-filter-btn" onClick={() => setShowFilters(true)}>
-            <FilterIcon />
+            <Filter />
             <span>Filtros</span>
             {filtroCount > 0 && <span className="crm-filter-badge">{filtroCount}</span>}
           </button>

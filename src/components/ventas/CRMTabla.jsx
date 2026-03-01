@@ -1,10 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-
-const SortIcon = ({ dir }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    {dir === 'asc' ? <path d="m18 15-6-6-6 6"/> : <path d="m6 9 6 6 6-6"/>}
-  </svg>
-)
+import { ChevronUp, ChevronDown } from 'lucide-react'
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" style={{ width: 14, height: 14 }}>
@@ -93,7 +88,7 @@ export default function CRMTabla({
                   style={col.sortable === false ? { cursor: 'default' } : undefined}
                 >
                   {col.label}
-                  {sort.col === col.key && <SortIcon dir={sort.dir} />}
+                  {sort.col === col.key && (sort.dir === 'asc' ? <ChevronUp /> : <ChevronDown />)}
                 </th>
               ))}
             </tr>
@@ -115,7 +110,7 @@ export default function CRMTabla({
                   <td>
                     {lead.etapa ? (
                       <span className="crm-table-etapa">
-                        <span className="crm-table-etapa-dot" style={{ background: lead.etapa.color || '#6B7280' }} />
+                        <span className="crm-table-etapa-dot" style={{ background: lead.etapa.color || 'var(--text-muted)' }} />
                         {lead.etapa.nombre}
                       </span>
                     ) : '-'}

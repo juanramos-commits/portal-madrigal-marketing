@@ -31,7 +31,7 @@ export default function CRMKanbanColumn({
   return (
     <div className={`crm-column${isOver ? ' drag-over' : ''}`} ref={setNodeRef}>
       <div className="crm-column-header">
-        <span className="crm-column-dot" style={{ background: etapa.color || '#6B7280' }} />
+        <span className="crm-column-dot" style={{ background: etapa.color || 'var(--text-muted)' }} />
         <span className="crm-column-name">{etapa.nombre}</span>
         <span className="crm-column-count">{count}</span>
       </div>
