@@ -136,7 +136,7 @@ export default function CRMKanban({
 
       <DragOverlay>
         {activeLead ? (
-          <div style={{ width: 268 }}>
+          <div className="crm-drag-overlay" style={{ width: 268, '--column-color': activeEtapa?.color }}>
             <CRMLeadCard
               lead={activeLead}
               etapa={activeEtapa}

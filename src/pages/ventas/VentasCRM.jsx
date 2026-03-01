@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Kanban, List, Filter, Plus, RefreshCw } from 'lucide-react'
+import { Kanban, List, Filter, Plus, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
 import { useVentasCRM } from '../../hooks/useVentasCRM'
 import { useVentas } from '../../hooks/useVentas'
 import CRMKanban from '../../components/ventas/CRMKanban'
@@ -204,7 +204,12 @@ export default function VentasCRM() {
 
       {/* ── Toast ───────────────────────────────────────────────────── */}
       {toast && (
-        <div className={`crm-toast ${toast.type}`}>{toast.msg}</div>
+        <div className={`crm-toast ${toast.type}`}>
+          <span className="crm-toast-icon">
+            {toast.type === 'success' ? <CheckCircle /> : <AlertCircle />}
+          </span>
+          {toast.msg}
+        </div>
       )}
     </div>
   )

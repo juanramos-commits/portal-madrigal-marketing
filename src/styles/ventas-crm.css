@@ -28,17 +28,19 @@
 }
 
 .crm-header-top h1 {
-  font-size: var(--font-lg-xl);
+  font-size: var(--font-2xl);
   font-weight: var(--weight-bold);
   color: var(--text);
   margin: 0;
   white-space: nowrap;
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
 }
 
 .crm-lead-count {
-  font-size: var(--font-sm-md);
-  color: var(--text-muted);
-  font-weight: var(--weight-medium);
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
+  font-weight: var(--weight-normal);
   margin-left: var(--space-sm);
 }
 
@@ -165,6 +167,8 @@
 
 .crm-search input:focus {
   border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
+  background: var(--bg-input-focus);
 }
 
 /* ── Filter Button ──────────────────────────────────────────────────────── */
@@ -209,6 +213,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: crm-badge-pulse 2s ease-in-out infinite;
 }
 
 /* ── New Lead Button ────────────────────────────────────────────────────── */
@@ -231,11 +236,33 @@
 
 .crm-new-btn:hover {
   background: var(--primary-hover);
+  transform: scale(1.02);
+  box-shadow: var(--shadow-md);
 }
 
 .crm-new-btn svg {
   width: 14px;
   height: 14px;
+}
+
+/* ── Refresh Button Spin ───────────────────────────────────────────────── */
+.crm-filter-btn svg {
+  transition: transform var(--transition-slow);
+}
+
+.crm-filter-btn[title="Refrescar"]:hover svg {
+  transform: rotate(180deg);
+}
+
+/* ── Focus Visible ─────────────────────────────────────────────────────── */
+.crm-filter-btn:focus-visible,
+.crm-new-btn:focus-visible,
+.crm-view-btn:focus-visible,
+.crm-pipeline-tab:focus-visible,
+.crm-card:focus-visible,
+.crm-pagination button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 /* ── Kanban ──────────────────────────────────────────────────────────────── */
@@ -280,7 +307,17 @@
   border-radius: var(--radius-md);
   scroll-snap-align: start;
   transition: border-color var(--transition-fast);
+  animation: crm-column-in var(--transition-slow) ease both;
 }
+
+.crm-column:nth-child(1) { animation-delay: 0ms; }
+.crm-column:nth-child(2) { animation-delay: 50ms; }
+.crm-column:nth-child(3) { animation-delay: 100ms; }
+.crm-column:nth-child(4) { animation-delay: 150ms; }
+.crm-column:nth-child(5) { animation-delay: 200ms; }
+.crm-column:nth-child(6) { animation-delay: 250ms; }
+.crm-column:nth-child(7) { animation-delay: 300ms; }
+.crm-column:nth-child(8) { animation-delay: 350ms; }
 
 .crm-column.drag-over {
   border-color: var(--border-focus);
@@ -301,6 +338,19 @@
   gap: var(--space-sm);
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.crm-column-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  background: var(--column-color, var(--text-muted));
+  border-radius: 1px;
+  opacity: 0.5;
 }
 
 .crm-column-dot {
@@ -308,6 +358,7 @@
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 0 8px 2px var(--column-color, transparent);
 }
 
 .crm-column-name {
@@ -380,10 +431,10 @@
 .crm-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-base);
   touch-action: manipulation;
   user-select: none;
 }
@@ -391,13 +442,19 @@
 .crm-card:hover {
   border-color: var(--border-hover);
   background: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .crm-card.dragging {
-  opacity: 0.7;
-  box-shadow: var(--shadow-lg);
-  transform: scale(1.02);
+  opacity: 0.4;
   z-index: var(--z-sticky);
+}
+
+.crm-drag-overlay .crm-card {
+  transform: rotate(2deg);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--column-color, var(--border-hover));
 }
 
 .crm-card-top {
@@ -405,7 +462,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-sm);
-  margin-bottom: 6px;
+  margin-bottom: var(--space-sm);
 }
 
 .crm-card-name {
@@ -447,14 +504,14 @@
 
 .crm-card-phone {
   font-size: var(--font-sm);
-  color: var(--text-muted);
-  margin-bottom: 6px;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-sm);
 }
 
 .crm-card-bottom {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   flex-wrap: wrap;
 }
 
@@ -481,11 +538,11 @@
 }
 
 .crm-card-avatar {
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--bg-active);
-  color: var(--text-muted);
+  color: var(--text-inverse);
   font-size: var(--font-2xs);
   font-weight: var(--weight-bold);
   display: flex;
@@ -512,11 +569,11 @@
 .crm-table th {
   position: sticky;
   top: 0;
-  background: var(--bg-card);
+  background: var(--bg-elevated);
   padding: 10px 14px;
   font-size: var(--font-xs);
   font-weight: var(--weight-semibold);
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   text-align: left;
@@ -525,6 +582,7 @@
   white-space: nowrap;
   user-select: none;
   z-index: 2;
+  transition: color var(--transition-fast);
 }
 
 .crm-table th:hover {
@@ -554,8 +612,12 @@
   transition: background var(--transition-fast);
 }
 
+.crm-table tbody tr:nth-child(even) {
+  background: var(--bg-subtle);
+}
+
 .crm-table tbody tr:hover {
-  background: var(--bg-card);
+  background: var(--bg-hover);
 }
 
 .crm-table-etapa {
@@ -579,8 +641,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-md) 0 0;
-  font-size: var(--font-sm-md);
-  color: var(--text-muted);
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
 }
 
 .crm-pagination-btns {
@@ -589,9 +651,10 @@
 }
 
 .crm-pagination button {
-  height: 32px;
-  padding: 0 14px;
+  height: 34px;
+  padding: 0 var(--space-md);
   font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -607,6 +670,7 @@
 
 .crm-pagination button:not(:disabled):hover {
   border-color: var(--border-hover);
+  background: var(--bg-hover);
 }
 
 /* ── Lead Detail ────────────────────────────────────────────────────────── */
@@ -978,6 +1042,8 @@
   background: var(--bg-overlay);
   z-index: var(--z-overlay);
   animation: crm-fade-in 0.15s ease;
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
 }
 
 .crm-filters-panel {
@@ -1081,9 +1147,10 @@
 
 /* ── Skeleton ───────────────────────────────────────────────────────────── */
 .crm-skeleton {
-  background: var(--bg-skeleton);
+  background: linear-gradient(90deg, var(--bg-skeleton) 25%, var(--bg-hover) 50%, var(--bg-skeleton) 75%);
+  background-size: 200% 100%;
   border-radius: var(--radius-sm);
-  animation: crm-pulse 1.5s ease infinite;
+  animation: crm-shimmer 1.5s ease infinite;
 }
 
 .crm-skeleton-card {
@@ -1113,10 +1180,20 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32px;
+  padding: var(--space-2xl) var(--space-lg);
   text-align: center;
-  color: var(--text-muted);
+  color: var(--text-tertiary);
   font-size: var(--font-sm-md);
+  gap: var(--space-sm);
+}
+
+.crm-empty-icon {
+  color: var(--text-placeholder);
+}
+
+.crm-empty-icon svg {
+  width: 28px;
+  height: 28px;
 }
 
 /* ── Confirm Dialog ─────────────────────────────────────────────────────── */
@@ -1152,6 +1229,26 @@
   50% { opacity: 0.7; }
 }
 
+@keyframes crm-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes crm-column-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes crm-badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+@keyframes crm-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(180deg); }
+}
+
 /* ── Toast ──────────────────────────────────────────────────────────────── */
 .crm-toast {
   position: fixed;
@@ -1159,22 +1256,38 @@
   left: 50%;
   transform: translateX(-50%);
   padding: 10px 20px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-sm-md);
   font-weight: var(--weight-medium);
   z-index: var(--z-toast);
   animation: crm-slide-up 0.2s ease, crm-fade-in 0.2s ease;
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  box-shadow: var(--shadow-toast);
 }
 
 .crm-toast.error {
-  background: var(--error);
-  color: var(--text-inverse);
+  background: var(--bg-elevated);
+  color: var(--error);
+  border: 1px solid var(--error);
 }
 
 .crm-toast.success {
-  background: var(--success);
-  color: var(--text-inverse);
+  background: var(--bg-elevated);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.crm-toast-icon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.crm-toast-icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* ── Responsive Breakpoints ────────────────────────────────────────────── */

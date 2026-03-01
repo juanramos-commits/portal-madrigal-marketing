@@ -1,6 +1,7 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useCallback, useRef } from 'react'
+import { Inbox } from 'lucide-react'
 import CRMLeadCard from './CRMLeadCard'
 
 export default function CRMKanbanColumn({
@@ -29,7 +30,7 @@ export default function CRMKanbanColumn({
   }, [hasMore, loadingMore, onLoadMore, etapa.id])
 
   return (
-    <div className={`crm-column${isOver ? ' drag-over' : ''}`} ref={setNodeRef}>
+    <div className={`crm-column${isOver ? ' drag-over' : ''}`} ref={setNodeRef} style={{ '--column-color': etapa.color || 'var(--text-muted)' }}>
       <div className="crm-column-header">
         <span className="crm-column-dot" style={{ background: etapa.color || 'var(--text-muted)' }} />
         <span className="crm-column-name">{etapa.nombre}</span>
@@ -49,7 +50,10 @@ export default function CRMKanbanColumn({
         </SortableContext>
 
         {leads.length === 0 && !loadingMore && (
-          <div className="crm-empty">Sin leads</div>
+          <div className="crm-empty">
+            <span className="crm-empty-icon"><Inbox /></span>
+            Sin leads
+          </div>
         )}
 
         {loadingMore && (

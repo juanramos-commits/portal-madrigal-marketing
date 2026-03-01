@@ -126,7 +126,11 @@
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
   --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.6);
   --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 4px 24px rgba(0, 0, 0, 0.4), 0 8px 48px rgba(0, 0, 0, 0.2);
+  --shadow-card-hover: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-toast: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);
   --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --focus-ring: 0 0 0 3px var(--primary-muted);
+  --backdrop-blur: blur(8px);
 
   /* ========== TRANSICIONES ========== */
   --transition-fast: 0.15s ease;
@@ -204,5 +208,8 @@
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
   --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.15);
   --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-card-hover: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-toast: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
   --shadow-dropdown: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  --focus-ring: 0 0 0 3px var(--primary-muted);
 }

@@ -13,6 +13,16 @@ function getInitials(name) {
   return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
+function getAvatarColor(name) {
+  if (!name) return 'var(--bg-active)'
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const hue = Math.abs(hash) % 360
+  return `hsl(${hue}, 50%, 40%)`
+}
+
 export default function CRMLeadCard({ lead, etapa, showAssignee }) {
   const navigate = useNavigate()
 
@@ -84,7 +94,7 @@ export default function CRMLeadCard({ lead, etapa, showAssignee }) {
           </span>
         )}
         {showAssignee && assignee && (
-          <span className="crm-card-avatar" title={assignee.nombre}>
+          <span className="crm-card-avatar" title={assignee.nombre} style={{ background: getAvatarColor(assignee.nombre) }}>
             {getInitials(assignee.nombre)}
           </span>
         )}
