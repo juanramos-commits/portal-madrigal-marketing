@@ -616,9 +616,9 @@ export function useAjustes() {
   const cargarReparto = useCallback(async () => {
     const { data } = await supabase
       .from('ventas_reparto_config')
-      .select('*, usuario:usuarios(id, nombre, email)')
-      .order('created_at')
-    setRepartoConfig(data || [])
+      .select('*, usuario:usuarios!ventas_reparto_config_setter_id_fkey(id, nombre, email)')
+      .order('updated_at', { ascending: false, nullsFirst: false })
+    setRepartoConfig(data?.map(r => ({ ...r, usuario_id: r.setter_id })) || [])
   }, [])
 
   const guardarReparto = useCallback(async (configs) => {
@@ -629,7 +629,7 @@ export function useAjustes() {
       const { error } = await supabase
         .from('ventas_reparto_config')
         .insert(configs.map(c => ({
-          usuario_id: c.usuario_id,
+          setter_id: c.usuario_id,
           porcentaje: c.porcentaje,
         })))
       if (error) throw error
