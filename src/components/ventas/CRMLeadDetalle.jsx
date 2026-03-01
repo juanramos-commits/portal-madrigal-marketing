@@ -5,7 +5,7 @@ import {
   User, Mail, Phone, Globe, GitBranch, Users, FileText,
   Video, Tag, Clock, Calendar,
   PlusCircle, ArrowRightCircle, UserCheck, Pencil,
-  CheckCircle, AlertCircle,
+  CheckCircle, AlertCircle, Trash2,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -528,34 +528,30 @@ export default function CRMLeadDetalle() {
           )}
 
           <div className="crm-dropdown" onClick={e => e.stopPropagation()}>
-            <button
-              className="btn-icon"
-              style={{ width: 36, height: 36, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onClick={() => setShowMenu(!showMenu)}
-            >
+            <button className="crm-detail-menu-btn" onClick={() => setShowMenu(!showMenu)}>
               <MoreVertical />
             </button>
 
             {showMenu && (
               <div className="crm-dropdown-menu">
                 {lead.pipeline_states?.map(ps => (
-                  <div key={ps.pipeline_id} style={{ position: 'relative' }}>
+                  <div key={ps.pipeline_id}>
                     <button
                       className="crm-dropdown-item"
                       onClick={(e) => { e.stopPropagation(); setShowEtapaDropdown(showEtapaDropdown === ps.pipeline_id ? null : ps.pipeline_id) }}
                     >
+                      <GitBranch size={14} />
                       Cambiar etapa ({ps.pipeline?.nombre?.split(' ')[0]})
                     </button>
                     {showEtapaDropdown === ps.pipeline_id && (
-                      <div style={{ background: 'var(--bg-elevated)', borderRadius: 8, margin: '0 8px 8px', maxHeight: 200, overflowY: 'auto' }}>
+                      <div className="crm-dropdown-submenu">
                         {allEtapas.filter(e => e.pipeline?.id === ps.pipeline_id).map(e => (
                           <button
                             key={e.id}
-                            className="crm-dropdown-item"
-                            style={{ fontSize: 12, padding: '7px 12px' }}
+                            className="crm-dropdown-item crm-dropdown-item-sm"
                             onClick={() => cambiarEtapa(ps.pipeline_id, e.id)}
                           >
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: e.color || 'var(--text-muted)' }} />
+                            <span className="crm-badge-dot" style={{ background: e.color || 'var(--text-muted)' }} />
                             {e.nombre}
                           </button>
                         ))}
@@ -567,40 +563,38 @@ export default function CRMLeadDetalle() {
                 {esAdminODirector && (
                   <>
                     <div className="crm-dropdown-sep" />
-                    <div style={{ position: 'relative' }}>
-                      <button className="crm-dropdown-item" onClick={e => e.stopPropagation()}>
-                        <Select
-                          style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, width: '100%', cursor: 'pointer' }}
-                          value={lead.setter_asignado_id || ''}
-                          onChange={e => asignarSetter(e.target.value)}
-                        >
-                          <option value="">Sin setter</option>
-                          {setters.map(s => (
-                            <option key={s.usuario_id} value={s.usuario_id}>
-                              Setter: {s.usuario?.nombre || s.usuario?.email}
-                            </option>
-                          ))}
-                        </Select>
-                      </button>
+                    <div className="crm-dropdown-label">Asignaciones</div>
+                    <div className="crm-dropdown-select-item" onClick={e => e.stopPropagation()}>
+                      <UserCheck size={14} />
+                      <Select
+                        value={lead.setter_asignado_id || ''}
+                        onChange={e => asignarSetter(e.target.value)}
+                      >
+                        <option value="">Sin setter</option>
+                        {setters.map(s => (
+                          <option key={s.usuario_id} value={s.usuario_id}>
+                            {s.usuario?.nombre || s.usuario?.email}
+                          </option>
+                        ))}
+                      </Select>
                     </div>
-                    <div style={{ position: 'relative' }}>
-                      <button className="crm-dropdown-item" onClick={e => e.stopPropagation()}>
-                        <Select
-                          style={{ background: 'none', border: 'none', color: 'var(--text)', fontSize: 13, width: '100%', cursor: 'pointer' }}
-                          value={lead.closer_asignado_id || ''}
-                          onChange={e => asignarCloser(e.target.value)}
-                        >
-                          <option value="">Sin closer</option>
-                          {closers.map(c => (
-                            <option key={c.usuario_id} value={c.usuario_id}>
-                              Closer: {c.usuario?.nombre || c.usuario?.email}
-                            </option>
-                          ))}
-                        </Select>
-                      </button>
+                    <div className="crm-dropdown-select-item" onClick={e => e.stopPropagation()}>
+                      <Users size={14} />
+                      <Select
+                        value={lead.closer_asignado_id || ''}
+                        onChange={e => asignarCloser(e.target.value)}
+                      >
+                        <option value="">Sin closer</option>
+                        {closers.map(c => (
+                          <option key={c.usuario_id} value={c.usuario_id}>
+                            {c.usuario?.nombre || c.usuario?.email}
+                          </option>
+                        ))}
+                      </Select>
                     </div>
                     <div className="crm-dropdown-sep" />
                     <button className="crm-dropdown-item danger" onClick={() => { setShowMenu(false); setShowConfirmDelete(true) }}>
+                      <Trash2 size={14} />
                       Eliminar lead
                     </button>
                   </>
