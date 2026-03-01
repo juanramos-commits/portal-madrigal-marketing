@@ -675,9 +675,9 @@
 
 /* ── Lead Detail ────────────────────────────────────────────────────────── */
 .crm-detail {
-  max-width: 800px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding-bottom: 48px;
+  padding-bottom: var(--space-2xl);
 }
 
 .crm-detail-back {
@@ -708,7 +708,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-md);
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-xl);
   flex-wrap: wrap;
 }
 
@@ -721,15 +721,17 @@
 }
 
 .crm-detail-name {
-  font-size: var(--font-xl-2xl);
+  font-size: var(--font-3xl);
   font-weight: var(--weight-bold);
   color: var(--text);
   background: none;
   border: none;
   border-bottom: 1px solid transparent;
-  padding: 0 0 2px;
+  padding: 0 0 var(--space-2xs);
   width: 100%;
   outline: none;
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
   transition: border-color var(--transition-fast);
 }
 
@@ -765,13 +767,32 @@
   flex-shrink: 0;
 }
 
+/* ── Detail Dual Layout ──────────────────────────────────────────────── */
+.crm-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.crm-detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.crm-detail-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
 /* ── Detail Sections ────────────────────────────────────────────────────── */
 .crm-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--space-md);
-  margin-bottom: var(--space-md);
+  animation: crm-section-in var(--transition-slow) ease both;
 }
 
 .crm-section-title {
@@ -788,6 +809,39 @@
   width: 16px;
   height: 16px;
   color: var(--text-muted);
+}
+
+/* ── Staggered Section Entrance ──────────────────────────────────────── */
+.crm-detail-main .crm-section:nth-child(1) { animation-delay: 0ms; }
+.crm-detail-main .crm-section:nth-child(2) { animation-delay: 60ms; }
+.crm-detail-main .crm-section:nth-child(3) { animation-delay: 120ms; }
+.crm-detail-main .crm-section:nth-child(4) { animation-delay: 180ms; }
+
+.crm-detail-sidebar .crm-section:nth-child(1) { animation-delay: 80ms; }
+.crm-detail-sidebar .crm-section:nth-child(2) { animation-delay: 140ms; }
+.crm-detail-sidebar .crm-section:nth-child(3) { animation-delay: 200ms; }
+.crm-detail-sidebar .crm-section:nth-child(4) { animation-delay: 260ms; }
+
+/* ── Input with Icon ─────────────────────────────────────────────────── */
+.crm-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.crm-input-icon {
+  position: absolute;
+  left: 10px;
+  width: 15px;
+  height: 15px;
+  color: var(--text-placeholder);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.crm-input-wrap input,
+.crm-input-wrap textarea {
+  padding-left: var(--space-xl);
 }
 
 .crm-field-grid {
@@ -885,29 +939,68 @@
 
 /* ── Activity Timeline ──────────────────────────────────────────────────── */
 .crm-timeline {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0;
+}
+
+.crm-timeline::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: var(--space-lg);
+  bottom: var(--space-lg);
+  width: 2px;
+  background: var(--border);
+  border-radius: 1px;
 }
 
 .crm-timeline-item {
   display: flex;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-3);
+  padding: var(--space-2-5) 0;
+  position: relative;
 }
 
-.crm-timeline-item:last-child {
-  border-bottom: none;
-}
-
-.crm-timeline-dot {
-  width: 8px;
-  height: 8px;
+.crm-timeline-icon {
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: var(--bg-muted);
-  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
   flex-shrink: 0;
+  z-index: 1;
+}
+
+.crm-timeline-icon svg {
+  width: 10px;
+  height: 10px;
+}
+
+.crm-timeline-icon.tipo-creacion {
+  color: var(--success);
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.crm-timeline-icon.tipo-cambio_etapa {
+  color: var(--info);
+  border-color: var(--info);
+  background: var(--info-bg);
+}
+
+.crm-timeline-icon.tipo-asignacion {
+  color: var(--warning);
+  border-color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.crm-timeline-icon.tipo-edicion {
+  color: var(--text-muted);
+  border-color: var(--border-hover);
 }
 
 .crm-timeline-content {
@@ -924,7 +1017,7 @@
 .crm-timeline-meta {
   font-size: var(--font-xs);
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: var(--space-2xs);
 }
 
 /* ── Tags ───────────────────────────────────────────────────────────────── */
@@ -1249,6 +1342,11 @@
   to { transform: rotate(180deg); }
 }
 
+@keyframes crm-section-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Toast ──────────────────────────────────────────────────────────────── */
 .crm-toast {
   position: fixed;
@@ -1313,12 +1411,47 @@
   .crm-detail {
     padding-bottom: var(--space-lg);
   }
+
+  .crm-detail-name {
+    font-size: var(--font-xl-2xl);
+  }
 }
 
 @media (min-width: 1024px) {
   .crm-column {
     flex: 1 0 260px;
     max-width: 340px;
+  }
+
+  .crm-detail-body {
+    flex-direction: row;
+    gap: var(--space-lg);
+  }
+
+  .crm-detail-main {
+    flex: 3;
+    min-width: 0;
+  }
+
+  .crm-detail-sidebar {
+    flex: 2;
+    min-width: 0;
+    position: sticky;
+    top: var(--space-md);
+    align-self: flex-start;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bg-active) transparent;
+  }
+
+  .crm-detail-sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .crm-detail-sidebar::-webkit-scrollbar-thumb {
+    background: var(--bg-active);
+    border-radius: var(--radius-xs);
   }
 }
 
@@ -1328,6 +1461,6 @@
   }
 
   .crm-detail {
-    max-width: 900px;
+    max-width: 1200px;
   }
 }

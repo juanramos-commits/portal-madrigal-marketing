@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, MoreVertical, ExternalLink } from 'lucide-react'
+import {
+  ArrowLeft, MoreVertical, ExternalLink,
+  User, Mail, Phone, Globe, GitBranch, Users, FileText,
+  Video, Tag, Clock, Calendar,
+  PlusCircle, ArrowRightCircle, UserCheck, Pencil,
+  CheckCircle, AlertCircle,
+} from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import Select from '../ui/Select'
@@ -43,6 +49,13 @@ const TRACKED_FIELDS = [
   { key: 'resumen_closer', label: 'Resumen closer' },
   { key: 'enlace_grabacion', label: 'Enlace grabación' },
 ]
+
+const ACTIVITY_ICONS = {
+  creacion: PlusCircle,
+  cambio_etapa: ArrowRightCircle,
+  asignacion: UserCheck,
+  edicion: Pencil,
+}
 
 export default function CRMLeadDetalle() {
   const { id } = useParams()
@@ -433,9 +446,23 @@ export default function CRMLeadDetalle() {
     return (
       <div className="crm-detail">
         <div className="crm-skeleton" style={{ width: 80, height: 16, marginBottom: 16 }} />
-        <div className="crm-skeleton" style={{ width: '60%', height: 28, marginBottom: 24 }} />
-        <div className="crm-skeleton" style={{ height: 200, marginBottom: 16 }} />
-        <div className="crm-skeleton" style={{ height: 120 }} />
+        <div className="crm-skeleton" style={{ width: '50%', height: 36, marginBottom: 8 }} />
+        <div style={{ display: 'flex', gap: 8, marginBottom: 32 }}>
+          <div className="crm-skeleton" style={{ width: 80, height: 24, borderRadius: 20 }} />
+          <div className="crm-skeleton" style={{ width: 100, height: 24, borderRadius: 20 }} />
+        </div>
+        <div className="crm-detail-body">
+          <div className="crm-detail-main">
+            <div className="crm-skeleton" style={{ height: 220, borderRadius: 12 }} />
+            <div className="crm-skeleton" style={{ height: 100, borderRadius: 12 }} />
+            <div className="crm-skeleton" style={{ height: 200, borderRadius: 12 }} />
+          </div>
+          <div className="crm-detail-sidebar">
+            <div className="crm-skeleton" style={{ height: 100, borderRadius: 12 }} />
+            <div className="crm-skeleton" style={{ height: 80, borderRadius: 12 }} />
+            <div className="crm-skeleton" style={{ height: 240, borderRadius: 12 }} />
+          </div>
+        </div>
       </div>
     )
   }
@@ -584,253 +611,279 @@ export default function CRMLeadDetalle() {
         </div>
       </div>
 
-      {/* ── Contact Info ────────────────────────────────────────────── */}
-      <div className="crm-section">
-        <div className="crm-section-title">Información de contacto</div>
-        <div className="crm-field-grid">
-          <div className="crm-field">
-            <label>Nombre</label>
-            <input value={lead.nombre || ''} onChange={e => updateField('nombre', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
-          </div>
-          <div className="crm-field">
-            <label>Email</label>
-            <input type="email" value={lead.email || ''} onChange={e => updateField('email', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="email@ejemplo.com" />
-          </div>
-          <div className="crm-field">
-            <label>Teléfono</label>
-            <input type="tel" value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="+34 600 000 000" />
-          </div>
-          <div className="crm-field">
-            <label>Nombre del negocio</label>
-            <input value={lead.nombre_negocio || ''} onChange={e => updateField('nombre_negocio', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
-          </div>
-          <div className="crm-field">
-            <label>Categoría</label>
-            <Select value={lead.categoria_id || ''} onChange={e => { updateField('categoria_id', e.target.value || null); registrarCambiosCamposDebounced() }}>
-              <option value="">Sin categoría</option>
-              {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            </Select>
-          </div>
-          <div className="crm-field">
-            <label>Fuente</label>
-            <input value={lead.fuente || ''} onChange={e => updateField('fuente', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
-          </div>
-          <div className="crm-field" style={{ gridColumn: '1 / -1' }}>
-            <label>Contactos adicionales</label>
-            <textarea value={lead.contactos_adicionales || ''} onChange={e => updateField('contactos_adicionales', e.target.value)} onBlur={registrarCambiosCamposDebounced} rows={2} />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Pipeline States ─────────────────────────────────────────── */}
-      <div className="crm-section">
-        <div className="crm-section-title">Estado en pipelines</div>
-        <div className="crm-pipeline-states">
-          {lead.pipeline_states?.map(ps => (
-            <div key={ps.id} className="crm-pipeline-state">
-              <div className="crm-pipeline-state-left">
-                <span className="crm-pipeline-state-name">{ps.pipeline?.nombre}</span>
-                <span className="crm-badge" style={{ background: `${ps.etapa?.color || 'var(--text-muted)'}20`, color: ps.etapa?.color || 'var(--text-muted)', fontSize: 12 }}>
-                  <span className="crm-badge-dot" style={{ background: ps.etapa?.color }} />
-                  {ps.etapa?.nombre || 'Sin etapa'}
-                </span>
+      {/* ── Dual Layout Body ─────────────────────────────────────── */}
+      <div className="crm-detail-body">
+        {/* ── Main Column ──────────────────────────────────────────── */}
+        <div className="crm-detail-main">
+          {/* ── Contact Info ──────────────────────────────────────── */}
+          <div className="crm-section">
+            <div className="crm-section-title"><User /> Información de contacto</div>
+            <div className="crm-field-grid">
+              <div className="crm-field">
+                <label>Nombre</label>
+                <input value={lead.nombre || ''} onChange={e => updateField('nombre', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
               </div>
-              {ps.contador_intentos > 0 && (ps.etapa?.tipo === 'ghosting' || ps.etapa?.tipo === 'seguimiento') && (
-                <span className="crm-card-attempts">
-                  {ps.etapa.tipo === 'ghosting' && ps.etapa.max_intentos
-                    ? `${ps.contador_intentos}/${ps.etapa.max_intentos}`
-                    : `#${ps.contador_intentos}`}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Asignaciones ────────────────────────────────────────────── */}
-      <div className="crm-section">
-        <div className="crm-section-title">Asignaciones</div>
-        <div className="crm-field-grid">
-          <div className="crm-field">
-            <label>Setter asignado</label>
-            {esAdminODirector ? (
-              <Select value={lead.setter_asignado_id || ''} onChange={e => asignarSetter(e.target.value)}>
-                <option value="">Sin setter</option>
-                {setters.map(s => <option key={s.usuario_id} value={s.usuario_id}>{s.usuario?.nombre}</option>)}
-              </Select>
-            ) : (
-              <input value={lead.setter?.nombre || 'Sin asignar'} readOnly style={{ opacity: 0.7 }} />
-            )}
-          </div>
-          <div className="crm-field">
-            <label>Closer asignado</label>
-            {esAdminODirector ? (
-              <Select value={lead.closer_asignado_id || ''} onChange={e => asignarCloser(e.target.value)}>
-                <option value="">Sin closer</option>
-                {closers.map(c => <option key={c.usuario_id} value={c.usuario_id}>{c.usuario?.nombre}</option>)}
-              </Select>
-            ) : (
-              <input value={lead.closer?.nombre || 'Sin asignar'} readOnly style={{ opacity: 0.7 }} />
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Notas ───────────────────────────────────────────────────── */}
-      <div className="crm-section">
-        <div className="crm-section-title">Notas y resúmenes</div>
-        <div className="crm-field" style={{ marginBottom: 16 }}>
-          <label>Notas</label>
-          <textarea
-            value={lead.notas || ''}
-            onChange={e => updateField('notas', e.target.value)}
-            onBlur={registrarCambiosCamposDebounced}
-            rows={3}
-            placeholder="Notas sobre el lead..."
-          />
-        </div>
-        <div className="crm-field" style={{ marginBottom: 16 }}>
-          <label>Resumen Setter</label>
-          <textarea
-            value={lead.resumen_setter || ''}
-            onChange={e => updateField('resumen_setter', e.target.value)}
-            onBlur={registrarCambiosCamposDebounced}
-            rows={3}
-            placeholder="Resumen del setter..."
-            readOnly={!esAdminODirector && !esMiLeadSetter}
-            style={!esAdminODirector && !esMiLeadSetter ? { opacity: 0.6 } : undefined}
-          />
-        </div>
-        <div className="crm-field">
-          <label>Resumen Closer</label>
-          <textarea
-            value={lead.resumen_closer || ''}
-            onChange={e => updateField('resumen_closer', e.target.value)}
-            onBlur={registrarCambiosCamposDebounced}
-            rows={3}
-            placeholder="Resumen del closer..."
-            readOnly={!esAdminODirector && !esMiLeadCloser}
-            style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
-          />
-        </div>
-      </div>
-
-      {/* ── Enlace grabación ────────────────────────────────────── */}
-      <div className="crm-section">
-        <div className="crm-section-title">Enlace de grabación</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <div className="crm-field" style={{ flex: 1 }}>
-            <input
-              value={lead.enlace_grabacion || ''}
-              onChange={e => updateField('enlace_grabacion', e.target.value)}
-              onBlur={registrarCambiosCamposDebounced}
-              placeholder="https://..."
-              readOnly={!esAdminODirector && !esMiLeadCloser}
-              style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
-            />
-          </div>
-          {lead.enlace_grabacion && (
-            <button
-              className="btn btn-sm"
-              style={{ flexShrink: 0, marginTop: 'auto' }}
-              onClick={() => window.open(lead.enlace_grabacion, '_blank')}
-            >
-              <ExternalLink size={14} /> Abrir
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ── Etiquetas ───────────────────────────────────────────────── */}
-      <div className="crm-section">
-        <div className="crm-section-title">Etiquetas</div>
-        <div className="crm-tags">
-          {lead.lead_etiquetas?.map(etq => (
-            <span key={etq.id} className="crm-tag" style={{ borderColor: etq.color || 'var(--border)' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: etq.color || 'var(--text-muted)' }} />
-              {etq.nombre}
-              <button className="crm-tag-remove" onClick={() => removeTag(etq.id)} title="Quitar">
-                &times;
-              </button>
-            </span>
-          ))}
-          {availableTags.length > 0 && (
-            <div style={{ position: 'relative' }} ref={tagPickerRef}>
-              <button className="crm-tag-add" onClick={() => setShowTagPicker(!showTagPicker)}>
-                + Añadir
-              </button>
-              {showTagPicker && (
-                <div className="crm-dropdown-menu" style={{ top: '100%', left: 0, minWidth: 160 }}>
-                  {availableTags.map(e => (
-                    <button key={e.id} className="crm-dropdown-item" onClick={() => addTag(e.id)}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: e.color || 'var(--text-muted)' }} />
-                      {e.nombre}
-                    </button>
-                  ))}
+              <div className="crm-field">
+                <label>Email</label>
+                <div className="crm-input-wrap">
+                  <Mail className="crm-input-icon" />
+                  <input type="email" value={lead.email || ''} onChange={e => updateField('email', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="email@ejemplo.com" />
                 </div>
+              </div>
+              <div className="crm-field">
+                <label>Teléfono</label>
+                <div className="crm-input-wrap">
+                  <Phone className="crm-input-icon" />
+                  <input type="tel" value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="+34 600 000 000" />
+                </div>
+              </div>
+              <div className="crm-field">
+                <label>Nombre del negocio</label>
+                <div className="crm-input-wrap">
+                  <Globe className="crm-input-icon" />
+                  <input value={lead.nombre_negocio || ''} onChange={e => updateField('nombre_negocio', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
+                </div>
+              </div>
+              <div className="crm-field">
+                <label>Categoría</label>
+                <Select value={lead.categoria_id || ''} onChange={e => { updateField('categoria_id', e.target.value || null); registrarCambiosCamposDebounced() }}>
+                  <option value="">Sin categoría</option>
+                  {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                </Select>
+              </div>
+              <div className="crm-field">
+                <label>Fuente</label>
+                <input value={lead.fuente || ''} onChange={e => updateField('fuente', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
+              </div>
+              <div className="crm-field" style={{ gridColumn: '1 / -1' }}>
+                <label>Contactos adicionales</label>
+                <textarea value={lead.contactos_adicionales || ''} onChange={e => updateField('contactos_adicionales', e.target.value)} onBlur={registrarCambiosCamposDebounced} rows={2} />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Pipeline States ───────────────────────────────────── */}
+          <div className="crm-section">
+            <div className="crm-section-title"><GitBranch /> Estado en pipelines</div>
+            <div className="crm-pipeline-states">
+              {lead.pipeline_states?.map(ps => (
+                <div key={ps.id} className="crm-pipeline-state">
+                  <div className="crm-pipeline-state-left">
+                    <span className="crm-pipeline-state-name">{ps.pipeline?.nombre}</span>
+                    <span className="crm-badge" style={{ background: `${ps.etapa?.color || 'var(--text-muted)'}20`, color: ps.etapa?.color || 'var(--text-muted)', fontSize: 12 }}>
+                      <span className="crm-badge-dot" style={{ background: ps.etapa?.color }} />
+                      {ps.etapa?.nombre || 'Sin etapa'}
+                    </span>
+                  </div>
+                  {ps.contador_intentos > 0 && (ps.etapa?.tipo === 'ghosting' || ps.etapa?.tipo === 'seguimiento') && (
+                    <span className="crm-card-attempts">
+                      {ps.etapa.tipo === 'ghosting' && ps.etapa.max_intentos
+                        ? `${ps.contador_intentos}/${ps.etapa.max_intentos}`
+                        : `#${ps.contador_intentos}`}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Notas ─────────────────────────────────────────────── */}
+          <div className="crm-section">
+            <div className="crm-section-title"><FileText /> Notas y resúmenes</div>
+            <div className="crm-field" style={{ marginBottom: 'var(--space-md)' }}>
+              <label>Notas</label>
+              <textarea
+                value={lead.notas || ''}
+                onChange={e => updateField('notas', e.target.value)}
+                onBlur={registrarCambiosCamposDebounced}
+                rows={3}
+                placeholder="Notas sobre el lead..."
+              />
+            </div>
+            <div className="crm-field" style={{ marginBottom: 'var(--space-md)' }}>
+              <label>Resumen Setter</label>
+              <textarea
+                value={lead.resumen_setter || ''}
+                onChange={e => updateField('resumen_setter', e.target.value)}
+                onBlur={registrarCambiosCamposDebounced}
+                rows={3}
+                placeholder="Resumen del setter..."
+                readOnly={!esAdminODirector && !esMiLeadSetter}
+                style={!esAdminODirector && !esMiLeadSetter ? { opacity: 0.6 } : undefined}
+              />
+            </div>
+            <div className="crm-field">
+              <label>Resumen Closer</label>
+              <textarea
+                value={lead.resumen_closer || ''}
+                onChange={e => updateField('resumen_closer', e.target.value)}
+                onBlur={registrarCambiosCamposDebounced}
+                rows={3}
+                placeholder="Resumen del closer..."
+                readOnly={!esAdminODirector && !esMiLeadCloser}
+                style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
+              />
+            </div>
+          </div>
+
+          {/* ── Enlace grabación ──────────────────────────────────── */}
+          <div className="crm-section">
+            <div className="crm-section-title"><Video /> Enlace de grabación</div>
+            <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+              <div className="crm-field" style={{ flex: 1 }}>
+                <div className="crm-input-wrap">
+                  <ExternalLink className="crm-input-icon" />
+                  <input
+                    value={lead.enlace_grabacion || ''}
+                    onChange={e => updateField('enlace_grabacion', e.target.value)}
+                    onBlur={registrarCambiosCamposDebounced}
+                    placeholder="https://..."
+                    readOnly={!esAdminODirector && !esMiLeadCloser}
+                    style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
+                  />
+                </div>
+              </div>
+              {lead.enlace_grabacion && (
+                <button
+                  className="btn btn-sm"
+                  style={{ flexShrink: 0, marginTop: 'auto' }}
+                  onClick={() => window.open(lead.enlace_grabacion, '_blank')}
+                >
+                  <ExternalLink size={14} /> Abrir
+                </button>
               )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
 
-      {/* ── Citas ───────────────────────────────────────────────────── */}
-      {lead.citas?.length > 0 && (
-        <div className="crm-section">
-          <div className="crm-section-title">Citas ({lead.citas.length})</div>
-          {lead.citas.map(cita => (
-            <div key={cita.id} className="crm-cita">
-              <div>
-                <div className="crm-cita-fecha">{formatDateTime(cita.fecha_hora)}</div>
-                <div className="crm-cita-closer">{cita.closer?.nombre || 'Sin closer'}</div>
-                {cita.notas_closer && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>{cita.notas_closer}</div>}
-              </div>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                {cita.estado_reunion ? (
-                  <span className="crm-cita-estado" style={{ background: `${cita.estado_reunion.color}20`, color: cita.estado_reunion.color }}>
-                    {cita.estado_reunion.nombre}
-                  </span>
+        {/* ── Sidebar Column ──────────────────────────────────────── */}
+        <div className="crm-detail-sidebar">
+          {/* ── Asignaciones ──────────────────────────────────────── */}
+          <div className="crm-section">
+            <div className="crm-section-title"><Users /> Asignaciones</div>
+            <div className="crm-field-grid">
+              <div className="crm-field">
+                <label>Setter asignado</label>
+                {esAdminODirector ? (
+                  <Select value={lead.setter_asignado_id || ''} onChange={e => asignarSetter(e.target.value)}>
+                    <option value="">Sin setter</option>
+                    {setters.map(s => <option key={s.usuario_id} value={s.usuario_id}>{s.usuario?.nombre}</option>)}
+                  </Select>
                 ) : (
-                  <span className="crm-cita-estado" style={{ background: 'var(--bg-hover)', color: 'var(--text-muted)' }}>
-                    {cita.estado}
-                  </span>
+                  <input value={lead.setter?.nombre || 'Sin asignar'} readOnly style={{ opacity: 0.7 }} />
                 )}
-                {cita.google_meet_url && (
-                  <button className="btn btn-sm" onClick={() => window.open(cita.google_meet_url, '_blank')}>Meet</button>
+              </div>
+              <div className="crm-field">
+                <label>Closer asignado</label>
+                {esAdminODirector ? (
+                  <Select value={lead.closer_asignado_id || ''} onChange={e => asignarCloser(e.target.value)}>
+                    <option value="">Sin closer</option>
+                    {closers.map(c => <option key={c.usuario_id} value={c.usuario_id}>{c.usuario?.nombre}</option>)}
+                  </Select>
+                ) : (
+                  <input value={lead.closer?.nombre || 'Sin asignar'} readOnly style={{ opacity: 0.7 }} />
                 )}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
 
-      {/* ── Actividad ───────────────────────────────────────────────── */}
-      <div className="crm-section">
-        <div className="crm-section-title">Historial de actividad</div>
-        <div className="crm-timeline">
-          {actividad.length === 0 && (
-            <div className="crm-empty">Sin actividad registrada</div>
-          )}
-          {actividad.map(act => (
-            <div key={act.id} className="crm-timeline-item">
-              <span className="crm-timeline-dot" />
-              <div className="crm-timeline-content">
-                <div className="crm-timeline-desc">{act.descripcion}</div>
-                <div className="crm-timeline-meta">
-                  {act.usuario?.nombre || 'Sistema'} · {formatRelative(act.created_at)}
+          {/* ── Etiquetas ─────────────────────────────────────────── */}
+          <div className="crm-section">
+            <div className="crm-section-title"><Tag /> Etiquetas</div>
+            <div className="crm-tags">
+              {lead.lead_etiquetas?.map(etq => (
+                <span key={etq.id} className="crm-tag" style={{ borderColor: etq.color || 'var(--border)' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: etq.color || 'var(--text-muted)' }} />
+                  {etq.nombre}
+                  <button className="crm-tag-remove" onClick={() => removeTag(etq.id)} title="Quitar">
+                    &times;
+                  </button>
+                </span>
+              ))}
+              {availableTags.length > 0 && (
+                <div style={{ position: 'relative' }} ref={tagPickerRef}>
+                  <button className="crm-tag-add" onClick={() => setShowTagPicker(!showTagPicker)}>
+                    + Añadir
+                  </button>
+                  {showTagPicker && (
+                    <div className="crm-dropdown-menu" style={{ top: '100%', left: 0, minWidth: 160 }}>
+                      {availableTags.map(e => (
+                        <button key={e.id} className="crm-dropdown-item" onClick={() => addTag(e.id)}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: e.color || 'var(--text-muted)' }} />
+                          {e.nombre}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
-          ))}
-          {hasMoreActividad && (
-            <button
-              className="btn btn-sm"
-              style={{ margin: '8px auto', display: 'block' }}
-              onClick={cargarMasActividad}
-            >
-              Cargar más
-            </button>
+          </div>
+
+          {/* ── Citas ─────────────────────────────────────────────── */}
+          {lead.citas?.length > 0 && (
+            <div className="crm-section">
+              <div className="crm-section-title"><Calendar /> Citas ({lead.citas.length})</div>
+              {lead.citas.map(cita => (
+                <div key={cita.id} className="crm-cita">
+                  <div>
+                    <div className="crm-cita-fecha">{formatDateTime(cita.fecha_hora)}</div>
+                    <div className="crm-cita-closer">{cita.closer?.nombre || 'Sin closer'}</div>
+                    {cita.notas_closer && <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>{cita.notas_closer}</div>}
+                  </div>
+                  <div style={{ display: 'flex', gap: 'var(--space-1-5)', alignItems: 'center' }}>
+                    {cita.estado_reunion ? (
+                      <span className="crm-cita-estado" style={{ background: `${cita.estado_reunion.color}20`, color: cita.estado_reunion.color }}>
+                        {cita.estado_reunion.nombre}
+                      </span>
+                    ) : (
+                      <span className="crm-cita-estado" style={{ background: 'var(--bg-hover)', color: 'var(--text-muted)' }}>
+                        {cita.estado}
+                      </span>
+                    )}
+                    {cita.google_meet_url && (
+                      <button className="btn btn-sm" onClick={() => window.open(cita.google_meet_url, '_blank')}>Meet</button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
+
+          {/* ── Actividad ─────────────────────────────────────────── */}
+          <div className="crm-section">
+            <div className="crm-section-title"><Clock /> Historial de actividad</div>
+            <div className="crm-timeline">
+              {actividad.length === 0 && (
+                <div className="crm-empty">Sin actividad registrada</div>
+              )}
+              {actividad.map(act => {
+                const IconComp = ACTIVITY_ICONS[act.tipo] || Clock
+                return (
+                  <div key={act.id} className="crm-timeline-item">
+                    <span className={`crm-timeline-icon tipo-${act.tipo || 'default'}`}>
+                      <IconComp />
+                    </span>
+                    <div className="crm-timeline-content">
+                      <div className="crm-timeline-desc">{act.descripcion}</div>
+                      <div className="crm-timeline-meta">
+                        {act.usuario?.nombre || 'Sistema'} · {formatRelative(act.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              {hasMoreActividad && (
+                <button
+                  className="btn btn-sm"
+                  style={{ margin: 'var(--space-sm) auto', display: 'block' }}
+                  onClick={cargarMasActividad}
+                >
+                  Cargar más
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -847,7 +900,12 @@ export default function CRMLeadDetalle() {
 
       {/* ── Toast ───────────────────────────────────────────────────── */}
       {toast && (
-        <div className={`crm-toast ${toast.type}`}>{toast.msg}</div>
+        <div className={`crm-toast ${toast.type}`}>
+          <span className="crm-toast-icon">
+            {toast.type === 'success' ? <CheckCircle /> : <AlertCircle />}
+          </span>
+          {toast.msg}
+        </div>
       )}
     </div>
   )
