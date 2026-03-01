@@ -5,6 +5,19 @@ import { useRefreshOnFocus } from './useRefreshOnFocus'
 
 const LEADS_PER_BATCH = 20
 const TABLE_PAGE_SIZE = 50
+const LOADING_TIMEOUT_MS = 15000
+
+// Helper: map lead pipeline join data to flat lead objects
+function mapLeadItems(data) {
+  return (data || []).map(item => ({
+    ...item.lead,
+    pipeline_lead_id: item.id,
+    etapa_id: item.etapa_id,
+    pipeline_id: item.pipeline_id,
+    contador_intentos: item.contador_intentos,
+    fecha_entrada: item.fecha_entrada,
+  }))
+}
 
 export function useVentasCRM() {
   const { user, usuario } = useAuth()
@@ -33,6 +46,7 @@ export function useVentasCRM() {
   const [loadingMore, setLoadingMore] = useState({})
   const [error, setError] = useState(null)
 
+  const loadRequestRef = useRef(0)
   const hasMoreRef = useRef({})
   const busquedaTimeoutRef = useRef(null)
 
@@ -44,90 +58,8 @@ export function useVentasCRM() {
   const esDirector = misRoles.some(r => r.rol === 'director_ventas')
   const esAdminODirector = esAdmin || esDirector || misRoles.some(r => r.rol === 'super_admin')
 
-  // ── Load initial data ──────────────────────────────────────────────
-  const cargarDatosIniciales = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const [
-        { data: pipelinesData },
-        { data: categoriasData },
-        { data: etiquetasData },
-        { data: rolesData },
-      ] = await Promise.all([
-        supabase.from('ventas_pipelines').select('*').eq('activo', true).order('orden'),
-        supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
-        supabase.from('ventas_etiquetas').select('*').eq('activo', true),
-        supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
-      ])
-
-      setPipelines(pipelinesData || [])
-      setCategorias(categoriasData || [])
-      setEtiquetas(etiquetasData || [])
-      setRolesComerciales(rolesData || [])
-
-      const settersList = (rolesData || []).filter(r => r.rol === 'setter' && r.activo)
-      const closersList = (rolesData || []).filter(r => r.rol === 'closer' && r.activo)
-      setSetters(settersList)
-      setClosers(closersList)
-
-      const userRoles = (rolesData || []).filter(r => r.usuario_id === user?.id && r.activo)
-      const userEsAdmin = usuario?.tipo === 'super_admin'
-      const userEsDirector = userRoles.some(r => r.rol === 'director_ventas' || r.rol === 'super_admin')
-      const userEsSetter = userRoles.some(r => r.rol === 'setter')
-      const userEsCloser = userRoles.some(r => r.rol === 'closer')
-
-      let defaultPipeline = null
-      if (pipelinesData && pipelinesData.length > 0) {
-        if (userEsAdmin || userEsDirector) {
-          defaultPipeline = pipelinesData[0]
-        } else if (userEsSetter && !userEsCloser) {
-          defaultPipeline = pipelinesData.find(p => p.nombre.toLowerCase().includes('setter')) || pipelinesData[0]
-        } else if (userEsCloser && !userEsSetter) {
-          defaultPipeline = pipelinesData.find(p => p.nombre.toLowerCase().includes('closer')) || pipelinesData[0]
-        } else {
-          defaultPipeline = pipelinesData[0]
-        }
-      }
-
-      if (defaultPipeline) {
-        setPipelineActivoState(defaultPipeline)
-        // Don't setLoading(false) here — let cargarLeads handle it
-        // after etapas load and leads are fetched
-      } else {
-        // No pipelines available — nothing more to load
-        setLoading(false)
-      }
-    } catch (err) {
-      setError('Error al cargar datos iniciales')
-      setLoading(false)
-    }
-  }, [user?.id, usuario?.tipo])
-
-  // ── Load stages when pipeline changes ──────────────────────────────
-  useEffect(() => {
-    if (!pipelineActivo) return
-    const cargarEtapas = async () => {
-      try {
-        const { data, error: err } = await supabase
-          .from('ventas_etapas')
-          .select('*')
-          .eq('pipeline_id', pipelineActivo.id)
-          .eq('activo', true)
-          .order('orden')
-        if (err) throw err
-        setEtapas(data || [])
-      } catch (err) {
-        setError('Error al cargar etapas')
-        setLoading(false)
-      }
-    }
-    cargarEtapas()
-  }, [pipelineActivo?.id])
-
-  // ── Build query with filters ───────────────────────────────────────
-  const buildLeadQuery = useCallback((etapaId = null) => {
+  // ── Build query (explicit pipeline params — no stale closures) ────────
+  const buildLeadQuery = useCallback((pipelineId, pipelineNombre, etapaId = null) => {
     let query = supabase
       .from('ventas_lead_pipeline')
       .select(`
@@ -146,7 +78,7 @@ export function useVentasCRM() {
           closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
         )
       `, { count: 'exact' })
-      .eq('pipeline_id', pipelineActivo?.id)
+      .eq('pipeline_id', pipelineId)
 
     if (etapaId) {
       query = query.eq('etapa_id', etapaId)
@@ -154,10 +86,10 @@ export function useVentasCRM() {
 
     // Role-based filtering
     if (!esAdminODirector) {
-      const pipelineNombre = pipelineActivo?.nombre?.toLowerCase() || ''
-      if (pipelineNombre.includes('setter') && esSetter) {
+      const nombre = (pipelineNombre || '').toLowerCase()
+      if (nombre.includes('setter') && esSetter) {
         query = query.eq('lead.setter_asignado_id', user.id)
-      } else if (pipelineNombre.includes('closer') && esCloser) {
+      } else if (nombre.includes('closer') && esCloser) {
         query = query.eq('lead.closer_asignado_id', user.id)
       }
     }
@@ -191,11 +123,199 @@ export function useVentasCRM() {
     }
 
     return query
-  }, [pipelineActivo?.id, pipelineActivo?.nombre, esAdminODirector, esSetter, esCloser, user?.id, filtros, busqueda])
+  }, [esAdminODirector, esSetter, esCloser, user?.id, filtros, busqueda])
 
-  // ── Load leads for Kanban ──────────────────────────────────────────
+  // ── Core: load etapas + leads for a pipeline (sequential, no useEffect chain) ──
+  const cargarPipelineCompleto = useCallback(async (pipeline, vistaActual) => {
+    if (!pipeline) return
+
+    const requestId = ++loadRequestRef.current
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Step 1: Load etapas
+      const { data: etapasData, error: etapasErr } = await supabase
+        .from('ventas_etapas')
+        .select('*')
+        .eq('pipeline_id', pipeline.id)
+        .eq('activo', true)
+        .order('orden')
+
+      if (etapasErr) throw etapasErr
+      if (requestId !== loadRequestRef.current) return
+
+      setEtapas(etapasData || [])
+
+      if ((etapasData || []).length === 0) return
+
+      // Step 2: Load leads using the etapas we just fetched (no stale state)
+      if (vistaActual === 'kanban') {
+        const newLeads = {}
+        const newCounts = {}
+        let total = 0
+
+        await Promise.all((etapasData || []).map(async (etapa) => {
+          const query = buildLeadQuery(pipeline.id, pipeline.nombre, etapa.id)
+            .order('fecha_entrada', { ascending: false })
+            .range(0, LEADS_PER_BATCH - 1)
+
+          const { data, count, error: err } = await query
+          if (err) throw err
+
+          newLeads[etapa.id] = mapLeadItems(data)
+          newCounts[etapa.id] = count || 0
+          total += count || 0
+          hasMoreRef.current[etapa.id] = (count || 0) > LEADS_PER_BATCH
+        }))
+
+        if (requestId !== loadRequestRef.current) return
+        setLeads(newLeads)
+        setLeadCounts(newCounts)
+        setTotalLeads(total)
+      } else {
+        const query = buildLeadQuery(pipeline.id, pipeline.nombre)
+          .order('fecha_entrada', { ascending: false })
+          .range(0, TABLE_PAGE_SIZE - 1)
+
+        const { data, count, error: err } = await query
+        if (err) throw err
+        if (requestId !== loadRequestRef.current) return
+
+        setLeadsTabla((data || []).map(item => ({
+          ...item.lead,
+          pipeline_lead_id: item.id,
+          etapa_id: item.etapa_id,
+          pipeline_id: item.pipeline_id,
+          contador_intentos: item.contador_intentos,
+          fecha_entrada: item.fecha_entrada,
+          etapa: (etapasData || []).find(e => e.id === item.etapa_id),
+        })))
+        setTablaTotalCount(count || 0)
+      }
+    } catch (err) {
+      if (requestId === loadRequestRef.current) {
+        setError(err.message || 'Error al cargar pipeline')
+      }
+    } finally {
+      if (requestId === loadRequestRef.current) {
+        setLoading(false)
+      }
+    }
+  }, [buildLeadQuery])
+
+  // ── Load initial data + default pipeline ──────────────────────────────
+  const cargarDatosIniciales = useCallback(async () => {
+    const requestId = ++loadRequestRef.current
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      const [
+        { data: pipelinesData },
+        { data: categoriasData },
+        { data: etiquetasData },
+        { data: rolesData },
+      ] = await Promise.all([
+        supabase.from('ventas_pipelines').select('*').eq('activo', true).order('orden'),
+        supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
+        supabase.from('ventas_etiquetas').select('*').eq('activo', true),
+        supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
+      ])
+
+      if (requestId !== loadRequestRef.current) return
+
+      setPipelines(pipelinesData || [])
+      setCategorias(categoriasData || [])
+      setEtiquetas(etiquetasData || [])
+      setRolesComerciales(rolesData || [])
+
+      const settersList = (rolesData || []).filter(r => r.rol === 'setter' && r.activo)
+      const closersList = (rolesData || []).filter(r => r.rol === 'closer' && r.activo)
+      setSetters(settersList)
+      setClosers(closersList)
+
+      const userRoles = (rolesData || []).filter(r => r.usuario_id === user?.id && r.activo)
+      const userEsAdmin = usuario?.tipo === 'super_admin'
+      const userEsDirector = userRoles.some(r => r.rol === 'director_ventas' || r.rol === 'super_admin')
+      const userEsSetter = userRoles.some(r => r.rol === 'setter')
+      const userEsCloser = userRoles.some(r => r.rol === 'closer')
+
+      let defaultPipeline = null
+      if (pipelinesData && pipelinesData.length > 0) {
+        if (userEsAdmin || userEsDirector) {
+          defaultPipeline = pipelinesData[0]
+        } else if (userEsSetter && !userEsCloser) {
+          defaultPipeline = pipelinesData.find(p => p.nombre.toLowerCase().includes('setter')) || pipelinesData[0]
+        } else if (userEsCloser && !userEsSetter) {
+          defaultPipeline = pipelinesData.find(p => p.nombre.toLowerCase().includes('closer')) || pipelinesData[0]
+        } else {
+          defaultPipeline = pipelinesData[0]
+        }
+      }
+
+      if (!defaultPipeline) {
+        // No pipelines — nothing more to load
+        return
+      }
+
+      setPipelineActivoState(defaultPipeline)
+
+      // Load etapas + leads in sequence (same requestId — single flow)
+      const { data: etapasData, error: etapasErr } = await supabase
+        .from('ventas_etapas')
+        .select('*')
+        .eq('pipeline_id', defaultPipeline.id)
+        .eq('activo', true)
+        .order('orden')
+
+      if (etapasErr) throw etapasErr
+      if (requestId !== loadRequestRef.current) return
+
+      setEtapas(etapasData || [])
+
+      if ((etapasData || []).length === 0) return
+
+      // Load kanban leads (initial view is always kanban)
+      const newLeads = {}
+      const newCounts = {}
+      let total = 0
+
+      await Promise.all((etapasData || []).map(async (etapa) => {
+        const query = buildLeadQuery(defaultPipeline.id, defaultPipeline.nombre, etapa.id)
+          .order('fecha_entrada', { ascending: false })
+          .range(0, LEADS_PER_BATCH - 1)
+
+        const { data, count, error: err } = await query
+        if (err) throw err
+
+        newLeads[etapa.id] = mapLeadItems(data)
+        newCounts[etapa.id] = count || 0
+        total += count || 0
+        hasMoreRef.current[etapa.id] = (count || 0) > LEADS_PER_BATCH
+      }))
+
+      if (requestId !== loadRequestRef.current) return
+      setLeads(newLeads)
+      setLeadCounts(newCounts)
+      setTotalLeads(total)
+    } catch (err) {
+      if (requestId === loadRequestRef.current) {
+        setError('Error al cargar datos iniciales')
+      }
+    } finally {
+      if (requestId === loadRequestRef.current) {
+        setLoading(false)
+      }
+    }
+  }, [user?.id, usuario?.tipo, buildLeadQuery])
+
+  // ── Load leads for Kanban (used by refrescar, filter/search changes) ──
   const cargarLeads = useCallback(async () => {
     if (!pipelineActivo || etapas.length === 0) return
+
+    const requestId = ++loadRequestRef.current
 
     try {
       setLoading(true)
@@ -205,33 +325,31 @@ export function useVentasCRM() {
       let total = 0
 
       await Promise.all(etapas.map(async (etapa) => {
-        const query = buildLeadQuery(etapa.id)
+        const query = buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre, etapa.id)
           .order('fecha_entrada', { ascending: false })
           .range(0, LEADS_PER_BATCH - 1)
 
         const { data, count, error: err } = await query
         if (err) throw err
 
-        newLeads[etapa.id] = (data || []).map(item => ({
-          ...item.lead,
-          pipeline_lead_id: item.id,
-          etapa_id: item.etapa_id,
-          pipeline_id: item.pipeline_id,
-          contador_intentos: item.contador_intentos,
-          fecha_entrada: item.fecha_entrada,
-        }))
+        newLeads[etapa.id] = mapLeadItems(data)
         newCounts[etapa.id] = count || 0
         total += count || 0
         hasMoreRef.current[etapa.id] = (count || 0) > LEADS_PER_BATCH
       }))
 
+      if (requestId !== loadRequestRef.current) return
       setLeads(newLeads)
       setLeadCounts(newCounts)
       setTotalLeads(total)
     } catch (err) {
-      setError('Error al cargar leads')
+      if (requestId === loadRequestRef.current) {
+        setError('Error al cargar leads')
+      }
     } finally {
-      setLoading(false)
+      if (requestId === loadRequestRef.current) {
+        setLoading(false)
+      }
     }
   }, [pipelineActivo, etapas, buildLeadQuery])
 
@@ -242,21 +360,14 @@ export function useVentasCRM() {
     setLoadingMore(prev => ({ ...prev, [etapaId]: true }))
     try {
       const current = leads[etapaId]?.length || 0
-      const query = buildLeadQuery(etapaId)
+      const query = buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre, etapaId)
         .order('fecha_entrada', { ascending: false })
         .range(current, current + LEADS_PER_BATCH - 1)
 
       const { data, error: err } = await query
       if (err) throw err
 
-      const mapped = (data || []).map(item => ({
-        ...item.lead,
-        pipeline_lead_id: item.id,
-        etapa_id: item.etapa_id,
-        pipeline_id: item.pipeline_id,
-        contador_intentos: item.contador_intentos,
-        fecha_entrada: item.fecha_entrada,
-      }))
+      const mapped = mapLeadItems(data)
 
       setLeads(prev => ({
         ...prev,
@@ -271,24 +382,23 @@ export function useVentasCRM() {
     } finally {
       setLoadingMore(prev => ({ ...prev, [etapaId]: false }))
     }
-  }, [leads, buildLeadQuery, loadingMore])
+  }, [leads, buildLeadQuery, loadingMore, pipelineActivo])
 
   // ── Load leads for Table view ──────────────────────────────────────
   const cargarLeadsTabla = useCallback(async () => {
     if (!pipelineActivo) return
 
+    const requestId = ++loadRequestRef.current
+
     try {
       setLoading(true)
-      const sortCol = tablaSort.col === 'created_at' ? 'lead.created_at' :
-                       tablaSort.col === 'nombre' ? 'lead.nombre' :
-                       tablaSort.col === 'fecha_entrada' ? 'fecha_entrada' : 'lead.created_at'
-
-      const query = buildLeadQuery()
+      const query = buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre)
         .order('fecha_entrada', { ascending: tablaSort.dir === 'asc' })
         .range(tablaPage * TABLE_PAGE_SIZE, (tablaPage + 1) * TABLE_PAGE_SIZE - 1)
 
       const { data, count, error: err } = await query
       if (err) throw err
+      if (requestId !== loadRequestRef.current) return
 
       const mapped = (data || []).map(item => ({
         ...item.lead,
@@ -303,9 +413,13 @@ export function useVentasCRM() {
       setLeadsTabla(mapped)
       setTablaTotalCount(count || 0)
     } catch (_) {
-      setError('Error al cargar leads')
+      if (requestId === loadRequestRef.current) {
+        setError('Error al cargar leads')
+      }
     } finally {
-      setLoading(false)
+      if (requestId === loadRequestRef.current) {
+        setLoading(false)
+      }
     }
   }, [pipelineActivo, buildLeadQuery, tablaPage, tablaSort, etapas])
 
@@ -675,14 +789,15 @@ export function useVentasCRM() {
     cargar()
   }, [])
 
-  // ── Set pipeline ───────────────────────────────────────────────────
+  // ── Set pipeline (direct orchestration — no useEffect chain) ───────
   const setPipelineActivo = useCallback((pipeline) => {
-    setLoading(true)
     setPipelineActivoState(pipeline)
     setLeads({})
     setLeadCounts({})
     setTablaPage(0)
-  }, [])
+    // Load etapas + leads directly — no reliance on chained useEffects
+    cargarPipelineCompleto(pipeline, vista)
+  }, [cargarPipelineCompleto, vista])
 
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!pipelineActivo })
@@ -711,15 +826,25 @@ export function useVentasCRM() {
     return () => { supabase.removeChannel(channel) }
   }, [pipelineActivo?.id, refrescar])
 
-  // ── Reload leads on pipeline/filters/search change ─────────────────
+  // ── Reload leads on filter or vista change ─────────────────────────
+  // Pipeline changes are handled by setPipelineActivo → cargarPipelineCompleto
+  const filtrosVistaRef = useRef({ filtros, vista })
   useEffect(() => {
+    // Skip if this is the initial render or pipeline hasn't loaded yet
     if (!pipelineActivo || etapas.length === 0) return
+
+    const prev = filtrosVistaRef.current
+    filtrosVistaRef.current = { filtros, vista }
+
+    // Only reload if filtros or vista actually changed (not due to other deps)
+    if (prev.filtros === filtros && prev.vista === vista) return
+
     if (vista === 'kanban') {
       cargarLeads()
     } else {
       cargarLeadsTabla()
     }
-  }, [pipelineActivo?.id, etapas.length, filtros, vista])
+  }, [filtros, vista, pipelineActivo, etapas.length, cargarLeads, cargarLeadsTabla])
 
   // ── Debounced search ───────────────────────────────────────────────
   useEffect(() => {
@@ -730,12 +855,23 @@ export function useVentasCRM() {
       else cargarLeadsTabla()
     }, 300)
     return () => clearTimeout(busquedaTimeoutRef.current)
-  }, [busqueda])
+  }, [busqueda]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Table pagination/sort ──────────────────────────────────────────
   useEffect(() => {
     if (vista === 'tabla' && pipelineActivo) cargarLeadsTabla()
-  }, [tablaPage, tablaSort])
+  }, [tablaPage, tablaSort]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Safety net: force loading=false after timeout ──────────────────
+  useEffect(() => {
+    if (!loading) return
+    const timeout = setTimeout(() => {
+      console.error('[CRM] Loading timeout — forcing loading=false after', LOADING_TIMEOUT_MS, 'ms')
+      setLoading(false)
+      setError('La carga tardó demasiado. Intenta refrescar.')
+    }, LOADING_TIMEOUT_MS)
+    return () => clearTimeout(timeout)
+  }, [loading])
 
   // ── Pipelines visible to user ──────────────────────────────────────
   const pipelinesVisibles = pipelines.filter(p => {

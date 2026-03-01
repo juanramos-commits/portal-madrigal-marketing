@@ -70,6 +70,7 @@ export default function CRMLeadDetalle() {
   const debounceRefs = useRef({})
   const snapshotRef = useRef(null)
   const registroTimeoutRef = useRef(null)
+  const loadDetailRef = useRef(0)
 
   const esAdmin = usuario?.tipo === 'super_admin'
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
@@ -84,7 +85,9 @@ export default function CRMLeadDetalle() {
   }
 
   // ── Load lead detail ───────────────────────────────────────────────
-  const cargarLead = useCallback(async (cancelled) => {
+  const cargarLead = useCallback(async () => {
+    const requestId = ++loadDetailRef.current
+
     try {
       setLoading(true)
       setError(null)
@@ -120,7 +123,7 @@ export default function CRMLeadDetalle() {
         supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
       ])
 
-      if (cancelled?.current) return
+      if (requestId !== loadDetailRef.current) return
       if (leadErr) throw leadErr
 
       setLead({
@@ -146,17 +149,17 @@ export default function CRMLeadDetalle() {
         .order('created_at', { ascending: false })
         .range(0, 19)
 
-      if (cancelled?.current) return
+      if (requestId !== loadDetailRef.current) return
 
       setActividad(actData || [])
       setActividadOffset(20)
       setHasMoreActividad((actData || []).length >= 20)
     } catch (err) {
-      if (!cancelled?.current) {
+      if (requestId === loadDetailRef.current) {
         setError(err.message || 'Error al cargar el lead')
       }
     } finally {
-      if (!cancelled?.current) {
+      if (requestId === loadDetailRef.current) {
         setLoading(false)
       }
     }
@@ -164,10 +167,19 @@ export default function CRMLeadDetalle() {
 
   useEffect(() => {
     if (!id) return
-    const cancelled = { current: false }
-    cargarLead(cancelled)
-    return () => { cancelled.current = true }
+    cargarLead()
   }, [cargarLead])
+
+  // ── Safety net: force loading=false after timeout ──────────────────
+  useEffect(() => {
+    if (!loading) return
+    const timeout = setTimeout(() => {
+      console.error('[CRM Detail] Loading timeout — forcing loading=false')
+      setLoading(false)
+      setError('La carga tardó demasiado. Intenta refrescar.')
+    }, 15000)
+    return () => clearTimeout(timeout)
+  }, [loading])
 
   // ── Snapshot for activity tracking ────────────────────────────────
   useEffect(() => {
