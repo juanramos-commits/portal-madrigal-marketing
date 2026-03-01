@@ -400,6 +400,15 @@ export function useVentasCRM() {
             [etapaDestinoId]: Math.max(0, (prev[etapaDestinoId] || 0) - 1),
             [etapaLost.id]: (prev[etapaLost.id] || 0) + 1,
           }))
+
+          // Log actividad (no-crítico)
+          const { error: actErr } = await supabase.from('ventas_actividad').insert({
+            lead_id: leadId, usuario_id: user.id, tipo: 'cambio_etapa',
+            descripcion: `${etapaOrigen?.nombre || '?'} → ${etapaLost.nombre} (max intentos)`,
+            datos: { etapa_anterior_id: etapaOrigenId, etapa_nueva_id: etapaLost.id, via: 'drag_drop' },
+          })
+          if (actErr) console.error('Error registrando actividad drag&drop:', actErr)
+
           return
         }
       }
@@ -415,6 +424,14 @@ export function useVentasCRM() {
         .eq('pipeline_id', pipelineActivo.id)
 
       if (err) throw err
+
+      // Log actividad (no-crítico)
+      const { error: actErr } = await supabase.from('ventas_actividad').insert({
+        lead_id: leadId, usuario_id: user.id, tipo: 'cambio_etapa',
+        descripcion: `${etapaOrigen?.nombre || '?'} → ${etapaDestino.nombre}`,
+        datos: { etapa_anterior_id: etapaOrigenId, etapa_nueva_id: etapaDestinoId, via: 'drag_drop' },
+      })
+      if (actErr) console.error('Error registrando actividad drag&drop:', actErr)
     } catch (_) {
       // Revert optimistic update
       setLeads(prev => {
@@ -430,7 +447,7 @@ export function useVentasCRM() {
       }))
       throw new Error('Error al mover el lead')
     }
-  }, [leads, etapas, pipelineActivo])
+  }, [leads, etapas, pipelineActivo, user?.id])
 
   // ── Force move lead (after venta popup confirms) ───────────────────
   const moverLeadForzado = useCallback(async (leadId, pipelineId, etapaDestinoId) => {
@@ -478,13 +495,18 @@ export function useVentasCRM() {
         etapa_id: primeraEtapa.id,
       })
 
-    if (pErr) throw pErr
+    if (pErr) {
+      // Rollback: eliminar el lead que acabamos de crear para evitar huérfano
+      await supabase.from('ventas_leads').delete().eq('id', lead.id)
+      throw new Error('Error al asignar pipeline. Lead no fue creado.')
+    }
 
-    // Auto-assign setter
+    // Auto-assign setter (no-crítico)
     try {
-      await supabase.rpc('ventas_asignar_lead_automatico', { p_lead_id: lead.id })
-    } catch (_) {
-      // Non-critical
+      const { error: rpcErr } = await supabase.rpc('ventas_asignar_lead_automatico', { p_lead_id: lead.id })
+      if (rpcErr) console.error('Auto-asignación de setter falló:', rpcErr)
+    } catch (rpcEx) {
+      console.error('Auto-asignación de setter falló:', rpcEx)
     }
 
     // Log activity
@@ -590,26 +612,34 @@ export function useVentasCRM() {
 
   // ── Change assigned setter/closer ──────────────────────────────────
   const cambiarSetterAsignado = useCallback(async (leadId, setterId) => {
-    await supabase.from('ventas_leads').update({ setter_asignado_id: setterId }).eq('id', leadId)
-    await supabase.from('ventas_actividad').insert({
+    const { error: updateErr } = await supabase.from('ventas_leads').update({ setter_asignado_id: setterId }).eq('id', leadId)
+    if (updateErr) throw updateErr
+
+    const { error: actErr } = await supabase.from('ventas_actividad').insert({
       lead_id: leadId,
       usuario_id: user.id,
       tipo: 'asignacion',
       descripcion: 'Setter reasignado',
       datos: { setter_id: setterId },
     })
+    if (actErr) console.error('Error registrando actividad setter:', actErr)
+
     refrescar()
   }, [user?.id, refrescar])
 
   const cambiarCloserAsignado = useCallback(async (leadId, closerId) => {
-    await supabase.from('ventas_leads').update({ closer_asignado_id: closerId }).eq('id', leadId)
-    await supabase.from('ventas_actividad').insert({
+    const { error: updateErr } = await supabase.from('ventas_leads').update({ closer_asignado_id: closerId }).eq('id', leadId)
+    if (updateErr) throw updateErr
+
+    const { error: actErr } = await supabase.from('ventas_actividad').insert({
       lead_id: leadId,
       usuario_id: user.id,
       tipo: 'asignacion',
       descripcion: 'Closer reasignado',
       datos: { closer_id: closerId },
     })
+    if (actErr) console.error('Error registrando actividad closer:', actErr)
+
     refrescar()
   }, [user?.id, refrescar])
 
@@ -622,11 +652,12 @@ export function useVentasCRM() {
   }, [])
 
   const quitarEtiqueta = useCallback(async (leadId, etiquetaId) => {
-    await supabase
+    const { error } = await supabase
       .from('ventas_lead_etiquetas')
       .delete()
       .eq('lead_id', leadId)
       .eq('etiqueta_id', etiquetaId)
+    if (error) throw error
   }, [])
 
   // ── Unique sources for filters ─────────────────────────────────────

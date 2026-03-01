@@ -258,19 +258,37 @@ export default function CRMLeadDetalle() {
   const addTag = async (etiquetaId) => {
     setShowTagPicker(false)
     try {
-      await supabase.from('ventas_lead_etiquetas').insert({ lead_id: id, etiqueta_id: etiquetaId })
+      const { error } = await supabase.from('ventas_lead_etiquetas').insert({ lead_id: id, etiqueta_id: etiquetaId })
+      if (error) {
+        if (error.code !== '23505') {
+          showToast('Error al añadir etiqueta', 'error')
+          console.error('Error addTag:', error)
+        }
+        return
+      }
       cargarLead()
-    } catch (_) { /* duplicate */ }
+    } catch (err) {
+      showToast('Error al añadir etiqueta', 'error')
+      console.error('Error addTag:', err)
+    }
   }
 
   const removeTag = async (etiquetaId) => {
     try {
-      await supabase.from('ventas_lead_etiquetas').delete().eq('lead_id', id).eq('etiqueta_id', etiquetaId)
+      const { error } = await supabase.from('ventas_lead_etiquetas').delete().eq('lead_id', id).eq('etiqueta_id', etiquetaId)
+      if (error) {
+        showToast('Error al quitar etiqueta', 'error')
+        console.error('Error removeTag:', error)
+        return
+      }
       setLead(prev => ({
         ...prev,
         lead_etiquetas: prev.lead_etiquetas.filter(e => e.id !== etiquetaId),
       }))
-    } catch (_) { /* ignore */ }
+    } catch (err) {
+      showToast('Error al quitar etiqueta', 'error')
+      console.error('Error removeTag:', err)
+    }
   }
 
   // ── Close menu on outside click ────────────────────────────────────
