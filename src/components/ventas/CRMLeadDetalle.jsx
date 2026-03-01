@@ -47,6 +47,20 @@ function formatRelative(d) {
   return formatDateTime(d)
 }
 
+const TRACKED_FIELDS = [
+  { key: 'nombre', label: 'Nombre' },
+  { key: 'telefono', label: 'Teléfono' },
+  { key: 'email', label: 'Email' },
+  { key: 'nombre_negocio', label: 'Nombre del negocio' },
+  { key: 'categoria_id', label: 'Categoría' },
+  { key: 'fuente', label: 'Fuente' },
+  { key: 'contactos_adicionales', label: 'Contactos adicionales' },
+  { key: 'notas', label: 'Notas' },
+  { key: 'resumen_setter', label: 'Resumen setter' },
+  { key: 'resumen_closer', label: 'Resumen closer' },
+  { key: 'enlace_grabacion', label: 'Enlace grabación' },
+]
+
 export default function CRMLeadDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -71,6 +85,8 @@ export default function CRMLeadDetalle() {
   const [toast, setToast] = useState(null)
 
   const debounceRefs = useRef({})
+  const snapshotRef = useRef(null)
+  const registroTimeoutRef = useRef(null)
 
   const esAdmin = usuario?.tipo === 'super_admin'
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
@@ -153,6 +169,16 @@ export default function CRMLeadDetalle() {
 
   useEffect(() => { cargarLead() }, [cargarLead])
 
+  // ── Snapshot for activity tracking ────────────────────────────────
+  useEffect(() => {
+    if (lead && !snapshotRef.current) {
+      snapshotRef.current = {}
+      TRACKED_FIELDS.forEach(f => {
+        snapshotRef.current[f.key] = lead[f.key] ?? null
+      })
+    }
+  }, [lead])
+
   // ── Load more activity ─────────────────────────────────────────────
   const cargarMasActividad = async () => {
     const { data } = await supabase.from('ventas_actividad')
@@ -179,6 +205,84 @@ export default function CRMLeadDetalle() {
       }
     }, 800)
   }
+
+  // ── Activity tracking for editable fields ──────────────────────
+  const formatValorParaLog = (campo, valor) => {
+    if (valor === null || valor === undefined || valor === '') return '(vacío)'
+    if (campo === 'categoria_id' && categorias?.length) {
+      const cat = categorias.find(c => c.id === valor)
+      return cat?.nombre || valor
+    }
+    if (typeof valor === 'string' && valor.length > 50) {
+      return valor.substring(0, 50) + '...'
+    }
+    return String(valor)
+  }
+
+  const registrarCambiosCampos = useCallback(async () => {
+    if (!snapshotRef.current || !lead) return
+
+    const cambios = []
+    TRACKED_FIELDS.forEach(field => {
+      const antes = (snapshotRef.current[field.key] ?? '').toString().trim()
+      const ahora = (lead[field.key] ?? '').toString().trim()
+      if (antes !== ahora) {
+        cambios.push({
+          campo: field.key,
+          label: field.label,
+          anterior: snapshotRef.current[field.key],
+          nuevo: lead[field.key],
+        })
+      }
+    })
+
+    if (cambios.length === 0) return
+
+    let descripcion
+    if (cambios.length === 1) {
+      const c = cambios[0]
+      descripcion = `${c.label} actualizado: ${formatValorParaLog(c.campo, c.anterior)} → ${formatValorParaLog(c.campo, c.nuevo)}`
+    } else {
+      descripcion = `Campos actualizados: ${cambios.map(c => c.label).join(', ')}`
+    }
+
+    const { error } = await supabase.from('ventas_actividad').insert({
+      lead_id: lead.id,
+      usuario_id: user.id,
+      tipo: 'edicion',
+      descripcion,
+      datos: {
+        cambios: cambios.map(c => ({ campo: c.campo, anterior: c.anterior, nuevo: c.nuevo })),
+        campos_modificados: cambios.map(c => c.campo),
+        via: 'detalle_inline',
+      },
+    })
+    if (error) console.error('Error registrando actividad de edición:', error)
+
+    // Actualizar snapshot
+    TRACKED_FIELDS.forEach(f => {
+      snapshotRef.current[f.key] = lead[f.key] ?? null
+    })
+  }, [lead, user, categorias])
+
+  const registrarRef = useRef(registrarCambiosCampos)
+  useEffect(() => { registrarRef.current = registrarCambiosCampos }, [registrarCambiosCampos])
+
+  const registrarCambiosCamposDebounced = useCallback(() => {
+    if (registroTimeoutRef.current) clearTimeout(registroTimeoutRef.current)
+    registroTimeoutRef.current = setTimeout(() => {
+      registrarRef.current?.()
+    }, 2000)
+  }, [])
+
+  // Cleanup: registrar cambios pendientes al desmontar
+  useEffect(() => {
+    return () => {
+      if (registroTimeoutRef.current) clearTimeout(registroTimeoutRef.current)
+      registrarRef.current?.()
+      snapshotRef.current = null
+    }
+  }, [])
 
   // ── Change stage ───────────────────────────────────────────────────
   const cambiarEtapa = async (pipelineId, nuevaEtapaId) => {
@@ -354,6 +458,7 @@ export default function CRMLeadDetalle() {
             className="crm-detail-name"
             value={lead.nombre || ''}
             onChange={e => updateField('nombre', e.target.value)}
+            onBlur={registrarCambiosCamposDebounced}
             placeholder="Nombre del lead"
           />
           <div className="crm-detail-badges">
@@ -473,34 +578,34 @@ export default function CRMLeadDetalle() {
         <div className="crm-field-grid">
           <div className="crm-field">
             <label>Nombre</label>
-            <input value={lead.nombre || ''} onChange={e => updateField('nombre', e.target.value)} />
+            <input value={lead.nombre || ''} onChange={e => updateField('nombre', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
           </div>
           <div className="crm-field">
             <label>Email</label>
-            <input type="email" value={lead.email || ''} onChange={e => updateField('email', e.target.value)} placeholder="email@ejemplo.com" />
+            <input type="email" value={lead.email || ''} onChange={e => updateField('email', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="email@ejemplo.com" />
           </div>
           <div className="crm-field">
             <label>Teléfono</label>
-            <input type="tel" value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} placeholder="+34 600 000 000" />
+            <input type="tel" value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="+34 600 000 000" />
           </div>
           <div className="crm-field">
             <label>Nombre del negocio</label>
-            <input value={lead.nombre_negocio || ''} onChange={e => updateField('nombre_negocio', e.target.value)} />
+            <input value={lead.nombre_negocio || ''} onChange={e => updateField('nombre_negocio', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
           </div>
           <div className="crm-field">
             <label>Categoría</label>
-            <Select value={lead.categoria_id || ''} onChange={e => updateField('categoria_id', e.target.value || null)}>
+            <Select value={lead.categoria_id || ''} onChange={e => { updateField('categoria_id', e.target.value || null); registrarCambiosCamposDebounced() }}>
               <option value="">Sin categoría</option>
               {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
             </Select>
           </div>
           <div className="crm-field">
             <label>Fuente</label>
-            <input value={lead.fuente || ''} onChange={e => updateField('fuente', e.target.value)} />
+            <input value={lead.fuente || ''} onChange={e => updateField('fuente', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
           </div>
           <div className="crm-field" style={{ gridColumn: '1 / -1' }}>
             <label>Contactos adicionales</label>
-            <textarea value={lead.contactos_adicionales || ''} onChange={e => updateField('contactos_adicionales', e.target.value)} rows={2} />
+            <textarea value={lead.contactos_adicionales || ''} onChange={e => updateField('contactos_adicionales', e.target.value)} onBlur={registrarCambiosCamposDebounced} rows={2} />
           </div>
         </div>
       </div>
@@ -567,6 +672,7 @@ export default function CRMLeadDetalle() {
           <textarea
             value={lead.notas || ''}
             onChange={e => updateField('notas', e.target.value)}
+            onBlur={registrarCambiosCamposDebounced}
             rows={3}
             placeholder="Notas sobre el lead..."
           />
@@ -576,6 +682,7 @@ export default function CRMLeadDetalle() {
           <textarea
             value={lead.resumen_setter || ''}
             onChange={e => updateField('resumen_setter', e.target.value)}
+            onBlur={registrarCambiosCamposDebounced}
             rows={3}
             placeholder="Resumen del setter..."
             readOnly={!esAdminODirector && !esMiLeadSetter}
@@ -587,6 +694,7 @@ export default function CRMLeadDetalle() {
           <textarea
             value={lead.resumen_closer || ''}
             onChange={e => updateField('resumen_closer', e.target.value)}
+            onBlur={registrarCambiosCamposDebounced}
             rows={3}
             placeholder="Resumen del closer..."
             readOnly={!esAdminODirector && !esMiLeadCloser}
@@ -603,6 +711,7 @@ export default function CRMLeadDetalle() {
             <input
               value={lead.enlace_grabacion || ''}
               onChange={e => updateField('enlace_grabacion', e.target.value)}
+              onBlur={registrarCambiosCamposDebounced}
               placeholder="https://..."
               readOnly={!esAdminODirector && !esMiLeadCloser}
               style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
