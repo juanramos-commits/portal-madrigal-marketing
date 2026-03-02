@@ -2,14 +2,12 @@ import { Wallet, TrendingUp, ArrowDown } from 'lucide-react'
 import WalletBloqueado from './WalletBloqueado'
 import { formatMoneda } from '../../utils/formatters'
 
-export default function WalletResumen({ wallet, saldoDisponible, esCloser, closerAlDia, onSolicitarRetiro }) {
+export default function WalletResumen({ wallet, saldoDisponible, esCloser, closerAlDia }) {
   const saldo = wallet?.saldo || 0
   const totalGanado = wallet?.total_ganado || 0
   const totalRetirado = wallet?.total_retirado || 0
   const saldoNegativo = saldo < 0
   const disponibleDiferente = Math.abs(saldoDisponible - saldo) > 0.01
-
-  const puedeRetirar = saldoDisponible > 0 && (!esCloser || closerAlDia)
 
   return (
     <div className="wt-resumen">
@@ -21,19 +19,6 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
           <span className={`wt-card-value ${saldoNegativo ? 'wt-text-danger' : ''}`}>
             {formatMoneda(saldo)}
           </span>
-          <button
-            className="wt-btn-retiro"
-            onClick={onSolicitarRetiro}
-            disabled={!puedeRetirar}
-          >
-            Solicitar retiro
-          </button>
-          {!puedeRetirar && saldoDisponible <= 0 && !saldoNegativo && (
-            <span className="wt-card-hint">Sin saldo disponible</span>
-          )}
-          {saldoNegativo && (
-            <span className="wt-card-hint wt-text-danger">Saldo negativo</span>
-          )}
         </div>
 
         {/* Total ganado */}
@@ -53,15 +38,11 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
 
       {/* Saldo disponible info */}
       <div className="wt-saldo-info">
-        <div className="wt-saldo-line">
-          <span>Saldo disponible para retiro:</span>
-          <strong>{formatMoneda(saldoDisponible)}</strong>
-        </div>
+        <span>Saldo disponible para retiro: <strong>{formatMoneda(saldoDisponible)}</strong></span>
         {disponibleDiferente && saldoDisponible < saldo && (
-          <div className="wt-saldo-line wt-saldo-retenido">
-            <span>En retención (48h) o retiros pendientes:</span>
-            <span>{formatMoneda(saldo - saldoDisponible)}</span>
-          </div>
+          <span className="wt-saldo-retenido">
+            En retención (48h) o retiros pendientes: {formatMoneda(saldo - saldoDisponible)}
+          </span>
         )}
       </div>
 

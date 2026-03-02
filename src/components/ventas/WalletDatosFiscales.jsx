@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { AlertTriangle } from 'lucide-react'
 import Toggle from '../ui/Toggle'
 
 function validarDatosBancarios(form) {
@@ -391,13 +390,6 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
           </span>
         </div>
       </div>
-
-      {Number(form.iva_porcentaje) === 0 && (
-        <div className="wt-warning-info">
-          <AlertTriangle size={14} />
-          <span>El IVA está configurado al 0%. Si eres autónomo en España, el porcentaje habitual es 21%.</span>
-        </div>
-      )}
 
       {errores._general && <div className="wt-error-general">{errores._general}</div>}
 

@@ -57,6 +57,13 @@ export default function VentasWallet() {
     <div className="wt-page">
       <div className="wt-header">
         <h1>Wallet</h1>
+        <button
+          className="wt-btn-retiro"
+          onClick={() => setShowRetiroModal(true)}
+          disabled={!(w.saldoDisponible > 0 && (!w.esCloser || w.closerAlDia))}
+        >
+          Solicitar retiro
+        </button>
       </div>
 
       <div className="wt-tabs">
