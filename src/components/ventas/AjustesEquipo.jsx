@@ -80,7 +80,9 @@ export default function AjustesEquipo({
   const handleToggleActivo = async (miembro) => {
     try {
       await onDesactivar(miembro.usuario_id, !miembro.activo)
-    } catch (_) {}
+    } catch (e) {
+      setError(e.message || 'Error al cambiar estado')
+    }
   }
 
   return (
@@ -89,6 +91,8 @@ export default function AjustesEquipo({
         <h3>Equipo comercial</h3>
         <button className="aj-btn-sm" onClick={handleOpenAdd}>+ Añadir</button>
       </div>
+
+      {error && !showAdd && !showEdit && <div className="aj-error">{error}</div>}
 
       {equipo.length === 0 ? (
         <div className="aj-empty">No hay miembros en el equipo</div>

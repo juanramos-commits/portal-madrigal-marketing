@@ -468,7 +468,7 @@ export function useAjustes() {
   const desactivarMiembro = useCallback(async (usuarioId, activar) => {
     const { error } = await supabase
       .from('ventas_roles_comerciales')
-      .update({ activo: activar, updated_at: new Date().toISOString() })
+      .update({ activo: activar })
       .eq('usuario_id', usuarioId)
     if (error) throw error
     await cargarEquipo()

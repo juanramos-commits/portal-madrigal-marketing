@@ -757,7 +757,7 @@
 }
 
 .aj-check-label input[type="checkbox"] {
-  accent-color: var(--primary);
+  accent-color: var(--info);
 }
 
 /* ═══ ROLES CHECKS ═══ */
@@ -822,7 +822,7 @@
 .aj-pipeline-tab.active {
   color: var(--text);
   font-weight: 700;
-  border-bottom: 2px solid var(--primary);
+  border-bottom: 2px solid var(--info);
 }
 
 /* ═══ REPARTO ═══ */
@@ -853,7 +853,13 @@
 }
 
 .aj-reparto-input {
-  width: 70px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.aj-reparto-input input {
+  width: 60px;
   padding: 6px 8px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
@@ -864,7 +870,13 @@
   outline: none;
 }
 
-.aj-reparto-input:focus { border-color: var(--border-focus); }
+.aj-reparto-input input:focus { border-color: var(--border-focus); }
+
+.aj-reparto-input span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
 
 .aj-reparto-bar {
   width: 100px;
@@ -1270,8 +1282,8 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--primary);
-  color: var(--bg);
+  background: var(--info);
+  color: var(--text-inverse);
   border: 2px solid var(--bg);
   display: flex;
   align-items: center;
@@ -1494,7 +1506,7 @@
     justify-content: center;
   }
 
-  .aj-tema-options {
+  .aj-tema-opciones {
     flex-direction: column;
   }
 

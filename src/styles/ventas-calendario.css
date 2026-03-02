@@ -615,14 +615,14 @@
   padding: 8px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  background: var(--primary);
+  background: var(--info);
   color: var(--text-inverse);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.vc-btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.vc-btn-primary:hover:not(:disabled) { opacity: 0.9; }
 .vc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .vc-btn-ghost {

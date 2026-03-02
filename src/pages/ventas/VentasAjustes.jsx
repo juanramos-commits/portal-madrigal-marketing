@@ -155,6 +155,8 @@ export default function VentasAjustes() {
             onSetTema={ajustes.setTema}
           />
         )
+      case 'calendario':
+        return <AjustesCalendario />
       case 'pipelines':
         return (
           <AjustesPipelines

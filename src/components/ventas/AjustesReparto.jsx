@@ -64,7 +64,7 @@ export default function AjustesReparto({
         <div className="aj-form">
           {config.map((c, i) => (
             <div key={c.usuario_id} className="aj-reparto-row">
-              <span className="aj-reparto-nombre">{c.nombre}</span>
+              <span className="aj-reparto-name">{c.nombre}</span>
               <div className="aj-reparto-input">
                 <input
                   type="number"
@@ -81,8 +81,11 @@ export default function AjustesReparto({
             </div>
           ))}
 
-          <div className={`aj-reparto-total ${esValido ? 'aj-reparto-ok' : 'aj-reparto-error'}`}>
-            Total: {total}% {esValido ? '✓' : `(debe ser 100%)`}
+          <div className="aj-reparto-total">
+            <span className="aj-reparto-total-label">Total</span>
+            <span className={`aj-reparto-total-value ${esValido ? 'valid' : 'invalid'}`}>
+              {total}% {esValido ? '' : '(debe ser 100%)'}
+            </span>
           </div>
 
           {error && <div className="aj-error">{error}</div>}
