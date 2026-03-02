@@ -176,6 +176,9 @@ export default function AjustesPerfil({
       <div className="aj-separator" />
 
       <h4>Cambiar contraseña</h4>
+      {/* Campos trampa ocultos para absorber el autofill de Chrome */}
+      <input type="text" name="fake-user" autoComplete="username" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
+      <input type="password" name="fake-pass" autoComplete="current-password" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
       <div className="aj-form">
         <div className="aj-field">
           <label>Nueva contraseña</label>
