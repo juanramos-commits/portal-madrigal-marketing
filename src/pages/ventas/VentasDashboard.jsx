@@ -1,5 +1,5 @@
-import { useMemo, useCallback } from 'react'
-import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
+import { useMemo, useCallback, useState, useRef, useLayoutEffect, useEffect } from 'react'
+import { ResponsiveGridLayout } from 'react-grid-layout'
 import { useAuth } from '../../contexts/AuthContext'
 import { useDashboard } from '../../hooks/useDashboard'
 import { WIDGET_CATALOG } from '../../config/widgetCatalog'
@@ -46,10 +46,28 @@ function renderWidget(widgetDef, data, config) {
 export default function VentasDashboard() {
   const { usuario } = useAuth()
   const db = useDashboard()
-  const { width, containerRef } = useContainerWidth({ initialWidth: 1200 })
+  const containerRef = useRef(null)
+  const [gridWidth, setGridWidth] = useState(1200)
+
+  useLayoutEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    setGridWidth(el.offsetWidth)
+  }, [])
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect?.width
+      if (w && w > 0) setGridWidth(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const nombre = usuario?.nombre?.split(' ')[0] || 'usuario'
-  const isMobile = width < 500
+  const isMobile = gridWidth < 500
 
   const rglLayouts = useMemo(() => {
     const lg = db.layout.map(item => {
@@ -99,7 +117,7 @@ export default function VentasDashboard() {
 
       <div ref={containerRef} className="db-grid-container">
         <ResponsiveGridLayout
-          width={width}
+          width={gridWidth}
           layouts={rglLayouts}
           breakpoints={{ lg: 900, md: 500, sm: 0 }}
           cols={{ lg: 12, md: 6, sm: 1 }}
