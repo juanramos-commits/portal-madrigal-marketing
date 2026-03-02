@@ -1,5 +1,6 @@
 /* ============================================================================
    VENTAS — WALLET SECTION
+   Unified with CRM/Ventas visual system
    ============================================================================ */
 
 /* ── Page layout ──────────────────────────────────────────────────── */
@@ -7,11 +8,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  padding: var(--space-md);
+  padding: var(--page-padding-desktop);
   min-height: 100%;
 }
 
-/* ── Header ───────────────────────────────────────────────────────── */
+/* ── Header — matches CRM/Ventas ─────────────────────────────────── */
 .wt-header {
   display: flex;
   align-items: center;
@@ -21,20 +22,22 @@
 }
 
 .wt-header h1 {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: var(--font-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
   margin: 0;
   color: var(--text);
 }
 
-/* ── Tabs ─────────────────────────────────────────────────────────── */
+/* ── Tabs — matches CRM/Ventas pill pattern ──────────────────────── */
 .wt-tabs {
   display: flex;
   gap: var(--space-xs);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-bottom: 2px;
+  padding-bottom: var(--space-2xs);
 }
 
 .wt-tabs::-webkit-scrollbar { display: none; }
@@ -42,14 +45,14 @@
 .wt-tab {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-3-5);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
@@ -57,14 +60,14 @@
 }
 
 .wt-tab:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-skeleton);
   color: var(--text);
 }
 
 .wt-tab.active {
   background: var(--bg-active);
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-hover);
 }
 
 /* ── Resumen cards ────────────────────────────────────────────────── */
@@ -88,43 +91,46 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  transition: all var(--transition-base);
+}
+
+.wt-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-1px);
 }
 
 .wt-card-icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.wt-card-icon svg {
-  width: 18px;
-  height: 18px;
-}
-
 .wt-icon-success {
-  background: rgba(46, 229, 157, 0.12);
+  background: var(--success-bg);
   color: var(--success);
 }
 
 .wt-icon-muted {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-badge);
   color: var(--text-muted);
 }
 
 .wt-card-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
 }
 
 .wt-card-value {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: var(--font-xl-2xl);
+  font-weight: var(--weight-bold);
   color: var(--text);
 }
 
@@ -136,21 +142,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 10px 20px;
+  gap: var(--space-1-5);
+  padding: var(--space-2-5) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--success);
   color: var(--text-inverse);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
   align-self: flex-start;
 }
 
 .wt-btn-retiro:hover:not(:disabled) {
-  background: var(--success);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .wt-btn-retiro:disabled {
@@ -158,31 +166,26 @@
   cursor: not-allowed;
 }
 
-.wt-btn-retiro svg {
-  width: 16px;
-  height: 16px;
-}
-
 .wt-saldo-info {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
   padding: var(--space-sm) var(--space-md);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-subtle);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
 
 .wt-saldo-note {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   opacity: 0.7;
 }
 
 .wt-saldo-ref {
-  font-size: 14px;
+  font-size: var(--font-base);
   color: var(--text-muted);
   margin-top: var(--space-xs);
 }
@@ -193,15 +196,13 @@
   align-items: flex-start;
   gap: var(--space-md);
   padding: var(--space-md);
-  background: rgba(255, 169, 77, 0.08);
-  border: 1px solid rgba(255, 169, 77, 0.2);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-bg);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--warning);
 }
 
 .wt-bloqueado svg {
-  width: 20px;
-  height: 20px;
   color: var(--warning);
   flex-shrink: 0;
   margin-top: 1px;
@@ -210,17 +211,17 @@
 .wt-bloqueado-text {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
+  gap: var(--space-xs);
+  font-size: var(--font-sm-md);
   color: var(--text);
-  line-height: 1.5;
+  line-height: var(--leading-normal);
 }
 
 /* ── Responsive visibility ────────────────────────────────────────── */
 .wt-desktop-only { display: block; }
 .wt-mobile-only { display: none; }
 
-/* ── Tables ───────────────────────────────────────────────────────── */
+/* ── Tables — matches CRM/Ventas ─────────────────────────────────── */
 .wt-table-wrap {
   overflow-x: auto;
   border-radius: var(--radius-md);
@@ -230,18 +231,18 @@
 .wt-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
 }
 
 .wt-table thead th {
-  padding: 10px 14px;
+  padding: var(--space-2-5) var(--space-3-5);
   text-align: left;
-  font-weight: 600;
-  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-xs);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-tertiary);
+  background: var(--bg-elevated);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
@@ -252,11 +253,11 @@
 }
 
 .wt-table tbody tr:hover {
-  background: var(--bg-card);
+  background: var(--bg-hover);
 }
 
 .wt-table tbody td {
-  padding: 10px 14px;
+  padding: var(--space-2-5) var(--space-3-5);
   border-bottom: 1px solid var(--border);
   color: var(--text);
   vertical-align: middle;
@@ -265,30 +266,57 @@
 .wt-text-success { color: var(--success); }
 .wt-text-danger { color: var(--error); }
 
-/* ── Badges ───────────────────────────────────────────────────────── */
+/* ── Utility classes for table cells ─────────────────────────────── */
+.wt-cell-bold {
+  font-weight: var(--weight-semibold);
+}
+
+.wt-cell-title {
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-2xs);
+}
+
+.wt-cell-small {
+  font-size: var(--font-sm);
+}
+
+.wt-meta {
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
+}
+
+.wt-amount-bold {
+  font-weight: var(--weight-bold);
+}
+
+.wt-block {
+  display: block;
+}
+
+/* ── Badges — matches Ventas pattern ─────────────────────────────── */
 .wt-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: var(--space-2xs) var(--space-2-5);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
 
 .wt-badge-pendiente {
-  background: rgba(255, 169, 77, 0.15);
+  background: var(--warning-bg);
   color: var(--warning);
 }
 
 .wt-badge-aprobado {
-  background: rgba(46, 229, 157, 0.15);
+  background: var(--success-bg);
   color: var(--success);
 }
 
 .wt-badge-rechazado {
-  background: rgba(255, 107, 107, 0.15);
+  background: var(--error-bg);
   color: var(--error);
 }
 
@@ -306,9 +334,9 @@
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   cursor: pointer;
   transition: border-color var(--transition-fast);
 }
@@ -322,7 +350,7 @@
 /* ── Mini tabs (retiros filter) ───────────────────────────────────── */
 .wt-tabs-mini {
   display: flex;
-  gap: 4px;
+  gap: var(--space-xs);
   margin-bottom: var(--space-md);
   overflow-x: auto;
   scrollbar-width: none;
@@ -331,13 +359,13 @@
 .wt-tabs-mini::-webkit-scrollbar { display: none; }
 
 .wt-tab-mini {
-  padding: 5px 12px;
-  border-radius: 16px;
+  padding: var(--space-1-5) var(--space-3);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
@@ -345,14 +373,14 @@
 }
 
 .wt-tab-mini:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-skeleton);
   color: var(--text);
 }
 
 .wt-tab-mini.active {
   background: var(--bg-active);
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-hover);
 }
 
 /* ── Action buttons ───────────────────────────────────────────────── */
@@ -360,21 +388,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-xs-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
 }
 
 .wt-action-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-hover);
   color: var(--text);
 }
 
@@ -385,59 +413,59 @@
 
 .wt-action-approve {
   color: var(--success);
-  border-color: rgba(46, 229, 157, 0.3);
+  border-color: var(--success-bg);
 }
-.wt-action-approve:hover {
-  background: rgba(46, 229, 157, 0.1);
+.wt-action-approve:hover:not(:disabled) {
+  background: var(--success-bg);
 }
 
 .wt-action-reject {
   color: var(--error);
-  border-color: rgba(255, 107, 107, 0.3);
+  border-color: var(--error-bg);
 }
-.wt-action-reject:hover {
-  background: rgba(255, 107, 107, 0.1);
+.wt-action-reject:hover:not(:disabled) {
+  background: var(--error-bg);
 }
 
 .wt-actions-cell {
   display: flex;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 /* ── Link button ──────────────────────────────────────────────────── */
 .wt-link-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   background: transparent;
   border: none;
   color: var(--info);
-  font-size: 12px;
+  font-size: var(--font-sm);
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: var(--space-2xs) var(--space-1-5);
+  border-radius: var(--radius-xs);
   transition: background var(--transition-fast);
 }
 
 .wt-link-btn:hover {
-  background: rgba(100, 149, 237, 0.1);
+  background: var(--info-bg);
 }
 
 /* ── Buttons ──────────────────────────────────────────────────────── */
 .wt-btn-ghost {
-  padding: 8px 16px;
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .wt-btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-hover);
 }
 
 .wt-btn-ghost:disabled {
@@ -446,13 +474,13 @@
 }
 
 .wt-btn-primary {
-  padding: 8px 20px;
+  padding: var(--space-sm) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--primary);
   color: var(--text-inverse);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -467,19 +495,20 @@
 }
 
 .wt-btn-success {
-  padding: 8px 20px;
+  padding: var(--space-sm) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--success);
   color: var(--text-inverse);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .wt-btn-success:hover:not(:disabled) {
-  background: var(--success);
+  filter: brightness(1.15);
+  transform: translateY(-1px);
 }
 
 .wt-btn-success:disabled {
@@ -488,19 +517,20 @@
 }
 
 .wt-btn-danger {
-  padding: 8px 20px;
+  padding: var(--space-sm) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--error);
-  color: white;
-  font-size: 13px;
-  font-weight: 600;
+  color: var(--text-inverse);
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .wt-btn-danger:hover:not(:disabled) {
-  background: var(--error);
+  filter: brightness(1.15);
+  transform: translateY(-1px);
 }
 
 .wt-btn-danger:disabled {
@@ -509,26 +539,26 @@
 }
 
 .wt-btn-max {
-  padding: 6px 14px;
+  padding: var(--space-1-5) var(--space-3-5);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   align-self: flex-start;
 }
 
 .wt-btn-max:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-hover);
   color: var(--text);
 }
 
 /* ── Modal utility classes (used inside shared Modal) ────────────── */
 .wt-modal-hint {
-  font-size: 13px !important;
+  font-size: var(--font-sm-md) !important;
   color: var(--text-muted) !important;
 }
 
@@ -536,7 +566,7 @@
 .wt-steps-indicator {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .wt-step {
@@ -546,8 +576,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
@@ -555,7 +585,7 @@
 }
 
 .wt-step.active {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-active);
   color: var(--text);
   border-color: var(--border-focus);
 }
@@ -568,31 +598,31 @@
 }
 
 .wt-paso h3 {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   margin: 0;
 }
 
 .wt-paso-bloqueado {
   padding: var(--space-md);
-  background: rgba(255, 107, 107, 0.08);
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  background: var(--error-bg);
+  border: 1px solid var(--error-bg);
   border-radius: var(--radius-sm);
   color: var(--error);
-  font-size: 14px;
+  font-size: var(--font-base);
   text-align: center;
 }
 
 .wt-paso-warning {
   padding: var(--space-md);
-  background: rgba(255, 169, 77, 0.08);
-  border: 1px solid rgba(255, 169, 77, 0.2);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-bg);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--warning);
   color: var(--text);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--font-base);
+  line-height: var(--leading-normal);
 }
 
 /* ── Invoice preview ──────────────────────────────────────────────── */
@@ -613,29 +643,29 @@
 .wt-fp-col {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: 12px;
+  gap: var(--space-2xs);
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
 .wt-fp-col strong {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text);
 }
 
 .wt-fp-label {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-xs);
 }
 
 .wt-fp-concepto {
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--border);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
 }
 
 .wt-fp-amounts {
@@ -647,8 +677,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 0;
-  font-size: 13px;
+  padding: var(--space-xs) 0;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
 }
 
@@ -656,9 +686,9 @@
   padding-top: var(--space-sm);
   margin-top: var(--space-xs);
   border-top: 1px solid var(--border);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   color: var(--text);
-  font-size: 15px;
+  font-size: var(--font-md);
 }
 
 .wt-fp-total span {
@@ -673,24 +703,24 @@
   display: flex;
   justify-content: space-between;
   padding: var(--space-sm) var(--space-md);
-  font-size: 11px;
+  font-size: var(--font-xs);
   color: var(--text-muted);
 }
 
-/* ── Form fields ──────────────────────────────────────────────────── */
+/* ── Form fields — matches CRM spacing ───────────────────────────── */
 .wt-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-2xs);
   margin-bottom: var(--space-md);
 }
 
 .wt-field label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
 }
 
 .wt-field input,
@@ -699,11 +729,11 @@
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  padding: var(--space-sm) var(--space-3);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--font-base);
   font-family: inherit;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   resize: vertical;
 }
 
@@ -712,6 +742,7 @@
 .wt-field textarea:focus {
   outline: none;
   border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
 }
 
 .wt-field select {
@@ -719,7 +750,7 @@
 }
 
 .wt-field-error {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--error);
 }
 
@@ -728,9 +759,8 @@
 }
 
 .wt-field-hint {
-  font-size: 12px;
-  color: var(--text-muted);
-  opacity: 0.7;
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
 }
 
 .wt-input-readonly {
@@ -763,8 +793,8 @@
 }
 
 .wt-df-section-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   margin: 0;
 }
@@ -777,34 +807,69 @@
 
 /* ── Error & success messages ─────────────────────────────────────── */
 .wt-error-general {
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  background: var(--error-bg);
+  border: 1px solid var(--error-bg);
   border-radius: var(--radius-sm);
   padding: var(--space-sm) var(--space-md);
   color: var(--error);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   margin-top: var(--space-sm);
 }
 
 .wt-success-msg {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--success);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 /* ── Loading & empty states ───────────────────────────────────────── */
 .wt-loading {
   text-align: center;
-  padding: 48px 24px;
+  padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--font-base);
 }
 
 .wt-empty {
   text-align: center;
-  padding: 48px 24px;
+  padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--font-base);
+}
+
+/* ── Skeleton shimmer ─────────────────────────────────────────────── */
+@keyframes wt-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.wt-skeleton-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2-5);
+  padding: var(--space-md);
+}
+
+.wt-skeleton-row {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.wt-skeleton-cell {
+  flex: 1;
+}
+
+.wt-skeleton-bar {
+  height: 14px;
+  border-radius: var(--radius-xs);
+  background: linear-gradient(
+    90deg,
+    var(--bg-skeleton) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-skeleton) 75%
+  );
+  background-size: 200% 100%;
+  animation: wt-shimmer 1.5s ease infinite;
 }
 
 /* ── Pagination ───────────────────────────────────────────────────── */
@@ -813,7 +878,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-sm) 0;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
   flex-wrap: wrap;
   gap: var(--space-sm);
@@ -825,18 +890,18 @@
 }
 
 .wt-pagination-btns button {
-  padding: 6px 14px;
+  padding: var(--space-1-5) var(--space-3-5);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .wt-pagination-btns button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-hover);
 }
 
 .wt-pagination-btns button:disabled {
@@ -863,7 +928,7 @@
 }
 
 .wt-comision-concepto {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text);
   line-height: 1.4;
 }
@@ -871,7 +936,7 @@
 .wt-comision-meta {
   display: flex;
   gap: var(--space-sm);
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   flex-wrap: wrap;
 }
@@ -897,15 +962,15 @@
 .wt-retiro-meta {
   display: flex;
   gap: var(--space-sm);
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
 .wt-retiro-motivo {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--error);
   opacity: 0.8;
-  margin-top: 2px;
+  margin-top: var(--space-2xs);
 }
 
 /* ── Mobile cards — Facturas ──────────────────────────────────────── */
@@ -929,7 +994,7 @@
 .wt-factura-meta {
   display: flex;
   gap: var(--space-sm);
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   flex-wrap: wrap;
 }
@@ -955,7 +1020,7 @@
 .wt-admin-card-meta {
   display: flex;
   gap: var(--space-sm);
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   flex-wrap: wrap;
 }
@@ -969,7 +1034,7 @@
 .wt-admin-card-actions .wt-action-btn {
   flex: 1;
   justify-content: center;
-  padding: 8px;
+  padding: var(--space-sm);
 }
 
 /* ── Admin facturas ───────────────────────────────────────────────── */
@@ -990,7 +1055,7 @@
   .wt-desktop-only { display: none; }
   .wt-mobile-only { display: block; }
 
-  .wt-page { padding: var(--space-sm); }
+  .wt-page { padding: var(--page-padding-mobile); }
 
   .wt-header {
     flex-direction: column;

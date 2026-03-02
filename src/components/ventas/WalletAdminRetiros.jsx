@@ -1,18 +1,8 @@
 import { useState } from 'react'
+import { Check, X } from 'lucide-react'
 import Modal from '../ui/Modal'
 import { formatMoneda, formatFecha } from '../../utils/formatters'
-
-const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-)
-
-const XIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
+import WalletTableSkeleton from './WalletTableSkeleton'
 
 const estadoConfig = {
   pendiente: { label: 'Pendiente', className: 'wt-badge-pendiente' },
@@ -85,7 +75,7 @@ export default function WalletAdminRetiros({
       </div>
 
       {loading && retiros.length === 0 ? (
-        <div className="wt-loading">Cargando retiros...</div>
+        <WalletTableSkeleton rows={5} cols={6} />
       ) : retiros.length === 0 ? (
         <div className="wt-empty">No hay retiros</div>
       ) : (
@@ -109,19 +99,19 @@ export default function WalletAdminRetiros({
                     const estado = estadoConfig[r.estado] || estadoConfig.pendiente
                     return (
                       <tr key={r.id}>
-                        <td style={{ fontWeight: 600 }}>{r.usuario?.nombre || r.usuario?.email || '-'}</td>
+                        <td className="wt-cell-bold">{r.usuario?.nombre || r.usuario?.email || '-'}</td>
                         <td>{formatFecha(r.created_at)}</td>
-                        <td style={{ fontWeight: 600 }}>{formatMoneda(r.monto)}</td>
-                        <td style={{ fontSize: 12 }}>{r.cuenta_bancaria_iban || '-'}</td>
+                        <td className="wt-cell-bold">{formatMoneda(r.monto)}</td>
+                        <td className="wt-cell-small">{r.cuenta_bancaria_iban || '-'}</td>
                         <td><span className={`wt-badge ${estado.className}`}>{estado.label}</span></td>
                         <td>
                           {r.estado === 'pendiente' && (
                             <div className="wt-actions-cell">
                               <button className="wt-action-btn wt-action-approve" onClick={() => setModal({ type: 'aprobar', retiro: r })}>
-                                <CheckIcon /> Aprobar
+                                <Check size={14} /> Aprobar
                               </button>
                               <button className="wt-action-btn wt-action-reject" onClick={() => setModal({ type: 'rechazar', retiro: r })}>
-                                <XIcon /> Rechazar
+                                <X size={14} /> Rechazar
                               </button>
                             </div>
                           )}
@@ -143,20 +133,20 @@ export default function WalletAdminRetiros({
                 <div key={r.id} className="wt-admin-card">
                   <div className="wt-admin-card-top">
                     <span className={`wt-badge ${estado.className}`}>{estado.label}</span>
-                    <span style={{ fontWeight: 700 }}>{formatMoneda(r.monto)}</span>
+                    <span className="wt-amount-bold">{formatMoneda(r.monto)}</span>
                   </div>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>{r.usuario?.nombre || '-'}</div>
+                  <div className="wt-cell-title">{r.usuario?.nombre || '-'}</div>
                   <div className="wt-admin-card-meta">
                     <span>{formatFecha(r.created_at)}</span>
-                    <span style={{ fontSize: 11 }}>{r.cuenta_bancaria_iban || '-'}</span>
+                    <span className="wt-cell-small">{r.cuenta_bancaria_iban || '-'}</span>
                   </div>
                   {r.estado === 'pendiente' && (
                     <div className="wt-admin-card-actions">
                       <button className="wt-action-btn wt-action-approve" onClick={() => setModal({ type: 'aprobar', retiro: r })}>
-                        <CheckIcon /> Aprobar
+                        <Check size={14} /> Aprobar
                       </button>
                       <button className="wt-action-btn wt-action-reject" onClick={() => setModal({ type: 'rechazar', retiro: r })}>
-                        <XIcon /> Rechazar
+                        <X size={14} /> Rechazar
                       </button>
                     </div>
                   )}

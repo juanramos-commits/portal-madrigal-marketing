@@ -1,7 +1,9 @@
 import { Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ExternalLink } from 'lucide-react'
 import Select from '../ui/Select'
 import { formatMoneda, formatFecha } from '../../utils/formatters'
+import WalletTableSkeleton from './WalletTableSkeleton'
 
 function formatFechaCorta(d) {
   if (!d) return 'Disponible'
@@ -14,12 +16,6 @@ function getTipo(c) {
   if (c.es_bonus) return 'Bonus'
   return 'Fija'
 }
-
-const LinkIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 12, height: 12 }}>
-    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-  </svg>
-)
 
 export default function WalletComisiones({
   comisiones,
@@ -65,7 +61,7 @@ export default function WalletComisiones({
       </div>
 
       {loading && comisiones.length === 0 ? (
-        <div className="wt-loading">Cargando comisiones...</div>
+        <WalletTableSkeleton rows={5} cols={7} />
       ) : comisiones.length === 0 ? (
         <div className="wt-empty">No hay comisiones registradas</div>
       ) : (
@@ -99,7 +95,7 @@ export default function WalletComisiones({
                       <td>
                         {c.venta?.lead?.id && (
                           <button className="wt-link-btn" onClick={() => navigate(`/ventas/crm/lead/${c.venta.lead.id}`)}>
-                            <LinkIcon />
+                            <ExternalLink size={12} />
                           </button>
                         )}
                       </td>
@@ -116,7 +112,7 @@ export default function WalletComisiones({
               <div key={c.id} className="wt-comision-card">
                 <div className="wt-comision-top">
                   <span className="wt-comision-tipo">{getTipo(c)} · {c.rol}</span>
-                  <span className={c.monto < 0 ? 'wt-text-danger' : 'wt-text-success'} style={{ fontWeight: 700 }}>
+                  <span className={`wt-amount-bold ${c.monto < 0 ? 'wt-text-danger' : 'wt-text-success'}`}>
                     {c.monto >= 0 ? '+' : ''}{formatMoneda(c.monto)}
                   </span>
                 </div>

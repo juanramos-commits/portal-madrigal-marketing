@@ -1,4 +1,5 @@
 import { formatMoneda, formatFecha } from '../../utils/formatters'
+import WalletTableSkeleton from './WalletTableSkeleton'
 
 const estadoConfig = {
   pendiente: { label: 'Pendiente', className: 'wt-badge-pendiente' },
@@ -9,7 +10,7 @@ const estadoConfig = {
 export default function WalletRetiros({ retiros, total, pagina, onPageChange, pageSize, loading }) {
   const totalPages = Math.ceil(total / pageSize)
   if (loading && retiros.length === 0) {
-    return <div className="wt-loading">Cargando retiros...</div>
+    return <WalletTableSkeleton rows={5} cols={5} />
   }
 
   if (retiros.length === 0) {
@@ -37,7 +38,7 @@ export default function WalletRetiros({ retiros, total, pagina, onPageChange, pa
                 return (
                   <tr key={r.id}>
                     <td>{formatFecha(r.created_at)}</td>
-                    <td style={{ fontWeight: 600 }}>{formatMoneda(r.monto)}</td>
+                    <td className="wt-cell-bold">{formatMoneda(r.monto)}</td>
                     <td><span className={`wt-badge ${estado.className}`}>{estado.label}</span></td>
                     <td>{r.factura?.numero_factura || '-'}</td>
                     <td>{r.motivo_rechazo || '-'}</td>
@@ -57,7 +58,7 @@ export default function WalletRetiros({ retiros, total, pagina, onPageChange, pa
             <div key={r.id} className="wt-retiro-card">
               <div className="wt-retiro-top">
                 <span className={`wt-badge ${estado.className}`}>{estado.label}</span>
-                <span style={{ fontWeight: 700 }}>{formatMoneda(r.monto)}</span>
+                <span className="wt-amount-bold">{formatMoneda(r.monto)}</span>
               </div>
               <div className="wt-retiro-meta">
                 <span>{formatFecha(r.created_at)}</span>

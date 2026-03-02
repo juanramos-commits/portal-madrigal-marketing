@@ -1,23 +1,6 @@
+import { Wallet, TrendingUp, ArrowDown } from 'lucide-react'
 import WalletBloqueado from './WalletBloqueado'
 import { formatMoneda } from '../../utils/formatters'
-
-const WalletIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>
-    <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/>
-  </svg>
-)
-
-const TrendUpIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>
-    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-  </svg>
-)
-
-const ArrowDownIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>
-    <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
-  </svg>
-)
 
 export default function WalletResumen({ wallet, saldoDisponible, esCloser, closerAlDia, onSolicitarRetiro }) {
   const saldo = wallet?.saldo || 0
@@ -33,7 +16,7 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
       <div className="wt-cards-grid">
         {/* Saldo actual */}
         <div className={`wt-card ${saldoNegativo ? 'wt-card-negative' : ''}`}>
-          <div className="wt-card-icon"><WalletIcon /></div>
+          <div className="wt-card-icon"><Wallet size={20} /></div>
           <span className="wt-card-label">Saldo actual</span>
           <span className={`wt-card-value ${saldoNegativo ? 'wt-text-danger' : ''}`}>
             {formatMoneda(saldo)}
@@ -47,14 +30,14 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
 
         {/* Total ganado */}
         <div className="wt-card">
-          <div className="wt-card-icon wt-icon-success"><TrendUpIcon /></div>
+          <div className="wt-card-icon wt-icon-success"><TrendingUp size={20} /></div>
           <span className="wt-card-label">Total ganado</span>
           <span className="wt-card-value">{formatMoneda(totalGanado)}</span>
         </div>
 
         {/* Total retirado */}
         <div className="wt-card">
-          <div className="wt-card-icon wt-icon-muted"><ArrowDownIcon /></div>
+          <div className="wt-card-icon wt-icon-muted"><ArrowDown size={20} /></div>
           <span className="wt-card-label">Total retirado</span>
           <span className="wt-card-value">{formatMoneda(totalRetirado)}</span>
         </div>

@@ -1,11 +1,7 @@
+import { Download } from 'lucide-react'
 import { generarFacturaPDF } from '../../utils/generarFacturaPDF'
 import { formatMoneda, formatFecha, formatDatosBancarios } from '../../utils/formatters'
-
-const DownloadIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-  </svg>
-)
+import WalletTableSkeleton from './WalletTableSkeleton'
 
 export default function WalletFacturas({ facturas, total, pagina, onPageChange, pageSize, loading, datosFiscales }) {
   const totalPages = Math.ceil(total / pageSize)
@@ -17,7 +13,7 @@ export default function WalletFacturas({ facturas, total, pagina, onPageChange, 
   }
 
   if (loading && facturas.length === 0) {
-    return <div className="wt-loading">Cargando facturas...</div>
+    return <WalletTableSkeleton rows={5} cols={7} />
   }
 
   if (facturas.length === 0) {
@@ -44,15 +40,15 @@ export default function WalletFacturas({ facturas, total, pagina, onPageChange, 
             <tbody>
               {facturas.map(f => (
                 <tr key={f.id}>
-                  <td style={{ fontWeight: 600 }}>{f.numero_factura}</td>
+                  <td className="wt-cell-bold">{f.numero_factura}</td>
                   <td>{formatFecha(f.fecha_emision)}</td>
                   <td>{f.concepto}</td>
                   <td>{formatMoneda(f.base_imponible)}</td>
                   <td>{formatMoneda(f.iva_monto)} ({f.iva_porcentaje}%)</td>
-                  <td style={{ fontWeight: 600 }}>{formatMoneda(f.total)}</td>
+                  <td className="wt-cell-bold">{formatMoneda(f.total)}</td>
                   <td>
                     <button className="wt-action-btn" onClick={() => handleDescargar(f)} title="Descargar PDF">
-                      <DownloadIcon /> PDF
+                      <Download size={14} /> PDF
                     </button>
                   </td>
                 </tr>
@@ -67,15 +63,15 @@ export default function WalletFacturas({ facturas, total, pagina, onPageChange, 
         {facturas.map(f => (
           <div key={f.id} className="wt-factura-card">
             <div className="wt-factura-top">
-              <span style={{ fontWeight: 600 }}>{f.numero_factura}</span>
-              <span style={{ fontWeight: 700 }}>{formatMoneda(f.total)}</span>
+              <span className="wt-cell-bold">{f.numero_factura}</span>
+              <span className="wt-amount-bold">{formatMoneda(f.total)}</span>
             </div>
             <div className="wt-factura-meta">
               <span>{formatFecha(f.fecha_emision)}</span>
               <span>Base: {formatMoneda(f.base_imponible)} + IVA {formatMoneda(f.iva_monto)}</span>
             </div>
             <button className="wt-action-btn" onClick={() => handleDescargar(f)}>
-              <DownloadIcon /> Descargar PDF
+              <Download size={14} /> Descargar PDF
             </button>
           </div>
         ))}
