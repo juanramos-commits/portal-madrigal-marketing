@@ -1,12 +1,38 @@
 import { useState, useEffect, useRef } from 'react'
 import PasswordStrengthMeter from '../PasswordStrengthMeter'
 
+const SunIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>
+    <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+)
+
+const MoonIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+)
+
+const MonitorIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>
+    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+  </svg>
+)
+
+const temaOpciones = [
+  { key: 'dark', label: 'Oscuro', icon: <MoonIcon /> },
+  { key: 'light', label: 'Claro', icon: <SunIcon /> },
+  { key: 'system', label: 'Sistema', icon: <MonitorIcon /> },
+]
+
 export default function AjustesPerfil({
   perfil,
   rolesComerciales,
   onGuardarPerfil,
   onCambiarContrasena,
   onSubirFoto,
+  tema,
+  onSetTema,
 }) {
   const [nombre, setNombre] = useState('')
   const [saving, setSaving] = useState(false)
@@ -178,10 +204,29 @@ export default function AjustesPerfil({
         </div>
       </div>
 
+      {/* ── Card: Apariencia ── */}
+      <div className="aj-card">
+        <div className="aj-card-section-title">Apariencia</div>
+        <p className="aj-field-hint" style={{ marginTop: 0, marginBottom: '1rem' }}>
+          Elige el modo de visualización de la aplicación.
+        </p>
+        <div className="aj-tema-opciones">
+          {temaOpciones.map(opt => (
+            <button
+              key={opt.key}
+              className={`aj-tema-opcion${tema === opt.key ? ' active' : ''}`}
+              onClick={() => onSetTema(opt.key)}
+            >
+              <div className="aj-tema-opcion-icon">{opt.icon}</div>
+              <span>{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* ── Card: Cambiar contraseña ── */}
       <div className="aj-card">
         <div className="aj-card-section-title">Cambiar contraseña</div>
-        {/* Campos trampa ocultos para absorber el autofill de Chrome */}
         <input type="text" name="fake-user" autoComplete="username" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
         <input type="password" name="fake-pass" autoComplete="current-password" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
 

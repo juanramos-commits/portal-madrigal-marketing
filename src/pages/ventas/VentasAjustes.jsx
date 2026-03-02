@@ -1,8 +1,5 @@
 import { useAjustes } from '../../hooks/useAjustes'
 import AjustesPerfil from '../../components/ventas/AjustesPerfil'
-import AjustesTema from '../../components/ventas/AjustesTema'
-import AjustesDatosFiscales from '../../components/ventas/AjustesDatosFiscales'
-import AjustesCuentaBancaria from '../../components/ventas/AjustesCuentaBancaria'
 import AjustesCalendario from '../../components/ventas/AjustesCalendario'
 import AjustesPipelines from '../../components/ventas/AjustesPipelines'
 import AjustesReparto from '../../components/ventas/AjustesReparto'
@@ -20,21 +17,6 @@ import '../../styles/ventas-ajustes.css'
 const UserIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-  </svg>
-)
-const PaletteIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
-    <circle cx="12" cy="12" r="10"/><circle cx="12" cy="8" r="1.5" fill="currentColor"/><circle cx="8" cy="12" r="1.5" fill="currentColor"/><circle cx="16" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="16" r="1.5" fill="currentColor"/>
-  </svg>
-)
-const FileTextIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-  </svg>
-)
-const BankIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
-    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
   </svg>
 )
 const CalendarIcon = () => (
@@ -109,9 +91,6 @@ const SECCIONES = [
     grupo: 'PERSONAL',
     items: [
       { id: 'perfil', label: 'Perfil', icon: UserIcon, minRole: null },
-      { id: 'tema', label: 'Tema', icon: PaletteIcon, minRole: null },
-      { id: 'datos_fiscales', label: 'Datos fiscales', icon: FileTextIcon, minRole: null },
-      { id: 'cuenta_bancaria', label: 'Cuenta bancaria', icon: BankIcon, minRole: null },
       { id: 'calendario', label: 'Calendario', icon: CalendarIcon, minRole: null },
     ],
   },
@@ -171,14 +150,10 @@ export default function VentasAjustes() {
             onGuardarPerfil={ajustes.guardarPerfil}
             onSubirFoto={ajustes.subirFotoPerfil}
             onCambiarContrasena={ajustes.cambiarContrasena}
+            tema={ajustes.tema}
+            onSetTema={ajustes.setTema}
           />
         )
-      case 'tema':
-        return <AjustesTema tema={ajustes.tema} onCambiar={ajustes.setTema} />
-      case 'datos_fiscales':
-        return <AjustesDatosFiscales />
-      case 'cuenta_bancaria':
-        return <AjustesCuentaBancaria />
       case 'pipelines':
         return (
           <AjustesPipelines

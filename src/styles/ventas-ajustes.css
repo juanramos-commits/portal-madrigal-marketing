@@ -133,15 +133,20 @@
 
 /* ═══ SECCIONES ═══ */
 .aj-seccion {
-  margin-bottom: var(--space-xl);
   max-width: 640px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
 }
 
 .aj-seccion h3 {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--text);
   margin: 0 0 var(--space-md) 0;
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--border);
 }
 
 /* ═══ PERFIL LAYOUT ═══ */
@@ -359,12 +364,13 @@
   padding: 10px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  background: var(--primary);
-  color: var(--bg);
+  background: var(--info);
+  color: var(--text-inverse);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: opacity var(--transition-fast);
+  font-family: inherit;
 }
 
 .aj-btn-primary:hover { opacity: 0.9; }
@@ -380,9 +386,20 @@
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
+  font-family: inherit;
 }
 
 .aj-btn-ghost:hover { background: var(--bg-input); }
+
+.aj-separator {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--space-md) 0;
+}
+
+.aj-cal-section {
+  margin-bottom: 0;
+}
 
 .aj-btn-danger {
   padding: 10px 20px;
