@@ -1,5 +1,5 @@
 import { generarFacturaPDF } from '../../utils/generarFacturaPDF'
-import { formatMoneda, formatFecha } from '../../utils/formatters'
+import { formatMoneda, formatFecha, formatDatosBancarios } from '../../utils/formatters'
 
 const DownloadIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
@@ -12,7 +12,7 @@ export default function WalletFacturas({ facturas, total, pagina, onPageChange, 
   const handleDescargar = (factura) => {
     generarFacturaPDF({
       ...factura,
-      iban: datosFiscales?.cuenta_bancaria_iban || '',
+      iban: formatDatosBancarios(datosFiscales),
     })
   }
 

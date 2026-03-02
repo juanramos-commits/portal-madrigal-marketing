@@ -140,7 +140,7 @@ export function generarFacturaPDF(factura) {
   y += 6
 
   if (factura.iban) {
-    doc.text(`IBAN: ${factura.iban}`, margin, y)
+    doc.text(factura.iban, margin, y)
     y += 10
   }
 

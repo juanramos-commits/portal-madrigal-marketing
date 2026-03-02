@@ -23,10 +23,16 @@ export default function AjustesDatosFiscales() {
       ciudad: '',
       codigo_postal: '',
       pais: '',
+      tipo_cuenta: 'iban',
+      cuenta_bancaria_iban: '',
+      swift_bic: '',
+      routing_number: '',
+      account_number: '',
+      sort_code: '',
+      titular_cuenta: '',
       serie_factura: 'F',
       iva_porcentaje: 0,
       iva_incluido: false,
-      cuenta_bancaria_iban: '',
     })
     setLoading(false)
   }, [user?.id])

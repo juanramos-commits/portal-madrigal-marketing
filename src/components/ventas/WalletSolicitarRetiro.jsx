@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Modal from '../ui/Modal'
-import { formatMoneda } from '../../utils/formatters'
+import { formatMoneda, tieneDatosBancariosCompletos, formatDatosBancarios } from '../../utils/formatters'
 
 export default function WalletSolicitarRetiro({
   saldoDisponible,
@@ -24,7 +24,7 @@ export default function WalletSolicitarRetiro({
     datosFiscales.nif_cif &&
     datosFiscales.direccion &&
     datosFiscales.pais &&
-    datosFiscales.cuenta_bancaria_iban
+    tieneDatosBancariosCompletos(datosFiscales)
 
   // Invoice preview calculation
   const ivaPct = Number(datosFiscales?.iva_porcentaje) || 0
@@ -205,7 +205,7 @@ export default function WalletSolicitarRetiro({
 
             <div className="wt-fp-footer">
               <span>Serie: {numeroFactura}</span>
-              <span>IBAN: {datosFiscales?.cuenta_bancaria_iban || '-'}</span>
+              <span>{formatDatosBancarios(datosFiscales)}</span>
             </div>
           </div>
         </div>

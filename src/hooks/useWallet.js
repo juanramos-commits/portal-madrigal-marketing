@@ -174,7 +174,7 @@ export function useWallet() {
         .insert({ usuario_id: user.id })
         .select()
         .single()
-      setDatosFiscales(created || { usuario_id: user.id, serie_factura: 'F', siguiente_numero_factura: 1, iva_porcentaje: 0, iva_incluido: false })
+      setDatosFiscales(created || { usuario_id: user.id, tipo_cuenta: 'iban', serie_factura: 'F', siguiente_numero_factura: 1, iva_porcentaje: 0, iva_incluido: false })
     }
   }, [user?.id])
 

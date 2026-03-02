@@ -1,6 +1,37 @@
 import { useState, useEffect } from 'react'
 import Toggle from '../ui/Toggle'
 
+function validarDatosBancarios(form) {
+  const tipo = form.tipo_cuenta || 'iban'
+  if (!form.titular_cuenta?.trim()) return { titular_cuenta: 'Obligatorio' }
+
+  switch (tipo) {
+    case 'iban':
+      if (!form.cuenta_bancaria_iban?.trim() || form.cuenta_bancaria_iban.trim().length < 15)
+        return { cuenta_bancaria_iban: 'IBAN inválido (mínimo 15 caracteres)' }
+      break
+    case 'us':
+      if (!form.routing_number?.trim() || form.routing_number.replace(/\D/g, '').length !== 9)
+        return { routing_number: 'Debe tener 9 dígitos' }
+      if (!form.account_number?.trim())
+        return { account_number: 'Obligatorio' }
+      break
+    case 'uk':
+      if (!form.sort_code?.trim() || form.sort_code.replace(/\D/g, '').length !== 6)
+        return { sort_code: 'Debe tener 6 dígitos' }
+      if (!form.account_number?.trim() || form.account_number.replace(/\D/g, '').length !== 8)
+        return { account_number: 'Debe tener 8 dígitos' }
+      break
+    case 'other':
+      if (!form.swift_bic?.trim())
+        return { swift_bic: 'Obligatorio' }
+      if (!form.account_number?.trim())
+        return { account_number: 'Obligatorio' }
+      break
+  }
+  return null
+}
+
 export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
   const [form, setForm] = useState({
     nombre_fiscal: '',
@@ -9,7 +40,13 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
     ciudad: '',
     codigo_postal: '',
     pais: '',
+    tipo_cuenta: 'iban',
     cuenta_bancaria_iban: '',
+    swift_bic: '',
+    routing_number: '',
+    account_number: '',
+    sort_code: '',
+    titular_cuenta: '',
     serie_factura: 'F',
     iva_porcentaje: 0,
     iva_incluido: false,
@@ -27,7 +64,13 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
         ciudad: datosFiscales.ciudad || '',
         codigo_postal: datosFiscales.codigo_postal || '',
         pais: datosFiscales.pais || '',
+        tipo_cuenta: datosFiscales.tipo_cuenta || 'iban',
         cuenta_bancaria_iban: datosFiscales.cuenta_bancaria_iban || '',
+        swift_bic: datosFiscales.swift_bic || '',
+        routing_number: datosFiscales.routing_number || '',
+        account_number: datosFiscales.account_number || '',
+        sort_code: datosFiscales.sort_code || '',
+        titular_cuenta: datosFiscales.titular_cuenta || '',
         serie_factura: datosFiscales.serie_factura || 'F',
         iva_porcentaje: datosFiscales.iva_porcentaje ?? 0,
         iva_incluido: datosFiscales.iva_incluido || false,
@@ -47,7 +90,10 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
     if (!form.nif_cif.trim()) e.nif_cif = 'Obligatorio'
     if (!form.direccion.trim()) e.direccion = 'Obligatorio'
     if (!form.pais.trim()) e.pais = 'Obligatorio'
-    if (!form.cuenta_bancaria_iban.trim()) e.cuenta_bancaria_iban = 'Obligatorio'
+
+    const errorBancario = validarDatosBancarios(form)
+    if (errorBancario) Object.assign(e, errorBancario)
+
     setErrores(e)
     return Object.keys(e).length === 0
   }
@@ -73,6 +119,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
   }
 
   const siguienteNumero = datosFiscales?.siguiente_numero_factura || 1
+  const tipoCuenta = form.tipo_cuenta || 'iban'
 
   return (
     <form className="wt-datos-fiscales" onSubmit={handleSubmit}>
@@ -135,19 +182,172 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
           />
           {errores.pais && <span className="wt-field-error">{errores.pais}</span>}
         </div>
+      </div>
 
-        <div className="wt-field wt-field-full">
-          <label>Cuenta bancaria (IBAN) *</label>
+      <div className="wt-df-separator" />
+
+      <h4 className="wt-df-section-title">Datos bancarios</h4>
+      <div className="wt-df-grid">
+        <div className="wt-field">
+          <label>Titular de la cuenta *</label>
           <input
             type="text"
-            value={form.cuenta_bancaria_iban}
-            onChange={e => handleChange('cuenta_bancaria_iban', e.target.value.toUpperCase())}
-            placeholder="ES00 0000 0000 0000 0000 0000"
-            maxLength={34}
+            value={form.titular_cuenta}
+            onChange={e => handleChange('titular_cuenta', e.target.value)}
+            placeholder="Nombre completo del titular"
           />
-          {errores.cuenta_bancaria_iban && <span className="wt-field-error">{errores.cuenta_bancaria_iban}</span>}
+          {errores.titular_cuenta && <span className="wt-field-error">{errores.titular_cuenta}</span>}
         </div>
 
+        <div className="wt-field">
+          <label>Tipo de cuenta *</label>
+          <select
+            value={tipoCuenta}
+            onChange={e => handleChange('tipo_cuenta', e.target.value)}
+          >
+            <option value="iban">IBAN (Europa y otros)</option>
+            <option value="us">Cuenta EEUU (Routing + Account)</option>
+            <option value="uk">Cuenta UK (Sort Code + Account)</option>
+            <option value="other">Otra (SWIFT + Account)</option>
+          </select>
+        </div>
+
+        {/* IBAN fields */}
+        {tipoCuenta === 'iban' && (
+          <>
+            <div className="wt-field wt-field-full">
+              <label>IBAN *</label>
+              <input
+                type="text"
+                value={form.cuenta_bancaria_iban}
+                onChange={e => handleChange('cuenta_bancaria_iban', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                placeholder="ES0000000000000000000000"
+                maxLength={34}
+              />
+              <span className="wt-field-hint">Sin espacios. De 15 a 34 caracteres según el país.</span>
+              {errores.cuenta_bancaria_iban && <span className="wt-field-error">{errores.cuenta_bancaria_iban}</span>}
+            </div>
+            <div className="wt-field">
+              <label>SWIFT/BIC</label>
+              <input
+                type="text"
+                value={form.swift_bic}
+                onChange={e => handleChange('swift_bic', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                placeholder="BSCHESMMXXX"
+                maxLength={11}
+              />
+              <span className="wt-field-hint">Opcional. 8 u 11 caracteres.</span>
+            </div>
+          </>
+        )}
+
+        {/* US fields */}
+        {tipoCuenta === 'us' && (
+          <>
+            <div className="wt-field">
+              <label>Routing Number (ABA) *</label>
+              <input
+                type="text"
+                value={form.routing_number}
+                onChange={e => handleChange('routing_number', e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="021000021"
+                maxLength={9}
+              />
+              <span className="wt-field-hint">9 dígitos</span>
+              {errores.routing_number && <span className="wt-field-error">{errores.routing_number}</span>}
+            </div>
+            <div className="wt-field">
+              <label>Account Number *</label>
+              <input
+                type="text"
+                value={form.account_number}
+                onChange={e => handleChange('account_number', e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="123456789012"
+                maxLength={17}
+              />
+              {errores.account_number && <span className="wt-field-error">{errores.account_number}</span>}
+            </div>
+            <div className="wt-field">
+              <label>SWIFT/BIC</label>
+              <input
+                type="text"
+                value={form.swift_bic}
+                onChange={e => handleChange('swift_bic', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                placeholder="CHASUS33"
+                maxLength={11}
+              />
+              <span className="wt-field-hint">Opcional para transferencias internacionales</span>
+            </div>
+          </>
+        )}
+
+        {/* UK fields */}
+        {tipoCuenta === 'uk' && (
+          <>
+            <div className="wt-field">
+              <label>Sort Code *</label>
+              <input
+                type="text"
+                value={form.sort_code}
+                onChange={e => handleChange('sort_code', e.target.value.replace(/[^0-9-]/g, ''))}
+                placeholder="12-34-56"
+                maxLength={8}
+              />
+              <span className="wt-field-hint">6 dígitos (con o sin guiones)</span>
+              {errores.sort_code && <span className="wt-field-error">{errores.sort_code}</span>}
+            </div>
+            <div className="wt-field">
+              <label>Account Number *</label>
+              <input
+                type="text"
+                value={form.account_number}
+                onChange={e => handleChange('account_number', e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="12345678"
+                maxLength={8}
+              />
+              <span className="wt-field-hint">8 dígitos</span>
+              {errores.account_number && <span className="wt-field-error">{errores.account_number}</span>}
+            </div>
+            <div className="wt-field">
+              <label>SWIFT/BIC</label>
+              <input
+                type="text"
+                value={form.swift_bic}
+                onChange={e => handleChange('swift_bic', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                placeholder="BUKBGB22"
+                maxLength={11}
+              />
+            </div>
+          </>
+        )}
+
+        {/* Other fields */}
+        {tipoCuenta === 'other' && (
+          <>
+            <div className="wt-field">
+              <label>SWIFT/BIC *</label>
+              <input
+                type="text"
+                value={form.swift_bic}
+                onChange={e => handleChange('swift_bic', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                placeholder="BSCHESMMXXX"
+                maxLength={11}
+              />
+              {errores.swift_bic && <span className="wt-field-error">{errores.swift_bic}</span>}
+            </div>
+            <div className="wt-field">
+              <label>Account Number *</label>
+              <input
+                type="text"
+                value={form.account_number}
+                onChange={e => handleChange('account_number', e.target.value)}
+                placeholder="Número de cuenta"
+                maxLength={34}
+              />
+              {errores.account_number && <span className="wt-field-error">{errores.account_number}</span>}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="wt-df-separator" />
