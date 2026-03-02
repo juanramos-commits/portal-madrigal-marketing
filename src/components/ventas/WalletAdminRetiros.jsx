@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, X } from 'lucide-react'
+import { Check, X, Search } from 'lucide-react'
 import Modal from '../ui/Modal'
 import { formatMoneda, formatFecha } from '../../utils/formatters'
 import WalletTableSkeleton from './WalletTableSkeleton'
@@ -25,6 +25,8 @@ export default function WalletAdminRetiros({
   onAprobar,
   onRechazar,
   loading,
+  busqueda,
+  onBusquedaChange,
 }) {
   const [modal, setModal] = useState(null)
   const [motivo, setMotivo] = useState('')
@@ -61,7 +63,7 @@ export default function WalletAdminRetiros({
 
   return (
     <div className="wt-admin-retiros">
-      {/* Tabs */}
+      {/* Tabs + search */}
       <div className="wt-tabs-mini">
         {tabs.map(t => (
           <button
@@ -72,6 +74,23 @@ export default function WalletAdminRetiros({
             {t.label} ({contadores[t.key] || 0})
           </button>
         ))}
+      </div>
+
+      <div className="wt-filtros-row">
+        <div className="wt-search">
+          <Search size={15} />
+          <input
+            type="text"
+            placeholder="Buscar retiros..."
+            value={busqueda}
+            onChange={e => onBusquedaChange(e.target.value)}
+          />
+          {busqueda && (
+            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} title="Limpiar">
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {loading && retiros.length === 0 ? (

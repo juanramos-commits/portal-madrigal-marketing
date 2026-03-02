@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Search, X, FileSpreadsheet } from 'lucide-react'
 import Select from '../ui/Select'
 import { formatMoneda, formatFecha } from '../../utils/formatters'
 import WalletTableSkeleton from './WalletTableSkeleton'
@@ -34,6 +34,9 @@ export default function WalletComisiones({
   usuarioId,
   onUsuarioIdChange,
   loading,
+  busqueda,
+  onBusquedaChange,
+  onExportCSV,
 }) {
   const navigate = useNavigate()
   const totalPages = Math.ceil(total / pageSize)
@@ -42,6 +45,20 @@ export default function WalletComisiones({
     <div className="wt-comisiones">
       {/* Filters */}
       <div className="wt-filtros-row">
+        <div className="wt-search">
+          <Search size={15} />
+          <input
+            type="text"
+            placeholder="Buscar comisiones..."
+            value={busqueda}
+            onChange={e => onBusquedaChange(e.target.value)}
+          />
+          {busqueda && (
+            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} title="Limpiar">
+              <X size={14} />
+            </button>
+          )}
+        </div>
         <Select value={filtroTipo} onChange={e => onFiltroTipoChange(e.target.value)}>
           <option value="todas">Todas</option>
           <option value="fijas">Fijas</option>
@@ -58,6 +75,9 @@ export default function WalletComisiones({
             ))}
           </Select>
         )}
+        <button className="wt-action-btn" onClick={onExportCSV} disabled={comisiones.length === 0} title="Exportar CSV">
+          <FileSpreadsheet size={14} /> CSV
+        </button>
       </div>
 
       {loading && comisiones.length === 0 ? (

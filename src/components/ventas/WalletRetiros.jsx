@@ -1,3 +1,4 @@
+import { Search, X } from 'lucide-react'
 import { formatMoneda, formatFecha } from '../../utils/formatters'
 import WalletTableSkeleton from './WalletTableSkeleton'
 
@@ -7,18 +8,34 @@ const estadoConfig = {
   rechazado: { label: 'Rechazado', className: 'wt-badge-rechazado' },
 }
 
-export default function WalletRetiros({ retiros, total, pagina, onPageChange, pageSize, loading }) {
+export default function WalletRetiros({ retiros, total, pagina, onPageChange, pageSize, loading, busqueda, onBusquedaChange }) {
   const totalPages = Math.ceil(total / pageSize)
-  if (loading && retiros.length === 0) {
-    return <WalletTableSkeleton rows={5} cols={5} />
-  }
-
-  if (retiros.length === 0) {
-    return <div className="wt-empty">No hay retiros registrados</div>
-  }
 
   return (
     <div className="wt-retiros">
+      <div className="wt-filtros-row">
+        <div className="wt-search">
+          <Search size={15} />
+          <input
+            type="text"
+            placeholder="Buscar retiros..."
+            value={busqueda}
+            onChange={e => onBusquedaChange(e.target.value)}
+          />
+          {busqueda && (
+            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} title="Limpiar">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading && retiros.length === 0 ? (
+        <WalletTableSkeleton rows={5} cols={5} />
+      ) : retiros.length === 0 ? (
+        <div className="wt-empty">{busqueda ? 'Sin resultados' : 'No hay retiros registrados'}</div>
+      ) : (
+      <>
       {/* Desktop table */}
       <div className="wt-desktop-only">
         <div className="wt-table-wrap">
@@ -81,6 +98,8 @@ export default function WalletRetiros({ retiros, total, pagina, onPageChange, pa
             <button disabled={pagina >= totalPages - 1} onClick={() => onPageChange(pagina + 1)}>Siguiente</button>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   )

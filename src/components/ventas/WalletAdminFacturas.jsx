@@ -1,4 +1,4 @@
-import { Download, FileSpreadsheet } from 'lucide-react'
+import { Download, FileSpreadsheet, Search, X } from 'lucide-react'
 import { generarFacturaPDF, generarCSVFacturas } from '../../utils/generarFacturaPDF'
 import Select from '../ui/Select'
 import { formatMoneda, formatFecha } from '../../utils/formatters'
@@ -10,6 +10,8 @@ export default function WalletAdminFacturas({
   onFiltroUsuarioChange,
   miembros,
   loading,
+  busqueda,
+  onBusquedaChange,
 }) {
   const handleDescargar = (factura) => {
     generarFacturaPDF(factura)
@@ -23,6 +25,20 @@ export default function WalletAdminFacturas({
     <div className="wt-admin-facturas">
       {/* Filters */}
       <div className="wt-filtros-row">
+        <div className="wt-search">
+          <Search size={15} />
+          <input
+            type="text"
+            placeholder="Buscar facturas..."
+            value={busqueda}
+            onChange={e => onBusquedaChange(e.target.value)}
+          />
+          {busqueda && (
+            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} title="Limpiar">
+              <X size={14} />
+            </button>
+          )}
+        </div>
         <Select value={filtroUsuario} onChange={e => onFiltroUsuarioChange(e.target.value)}>
           <option value="">Todos los miembros</option>
           {miembros.map(m => (

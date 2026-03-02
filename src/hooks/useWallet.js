@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
@@ -41,6 +41,25 @@ export function useWallet() {
   const [comisionesFiltroDesde, setComisionesFiltroDesde] = useState('')
   const [comisionesFiltroHasta, setComisionesFiltroHasta] = useState('')
   const [comisionesUsuarioId, setComisionesUsuarioId] = useState('')
+
+  // Search state
+  const [comisionesBusqueda, setComisionesBusqueda] = useState('')
+  const [retirosBusqueda, setRetirosBusqueda] = useState('')
+  const [facturasBusqueda, setFacturasBusqueda] = useState('')
+  const [adminRetirosBusqueda, setAdminRetirosBusqueda] = useState('')
+  const [adminFacturasBusqueda, setAdminFacturasBusqueda] = useState('')
+
+  // Search refs (race condition prevention + debounce)
+  const comisionesSearchRef = useRef(0)
+  const retirosSearchRef = useRef(0)
+  const facturasSearchRef = useRef(0)
+  const adminRetirosSearchRef = useRef(0)
+  const adminFacturasSearchRef = useRef(0)
+  const comisionesBusquedaTimeout = useRef(null)
+  const retirosBusquedaTimeout = useRef(null)
+  const facturasBusquedaTimeout = useRef(null)
+  const adminRetirosBusquedaTimeout = useRef(null)
+  const adminFacturasBusquedaTimeout = useRef(null)
 
   // Members list (for admin)
   const [miembros, setMiembros] = useState([])
@@ -258,6 +277,269 @@ export function useWallet() {
     setTodasFacturasTotal(count || 0)
   }, [todasFacturasFiltroUsuario])
 
+  // ── Search: comisiones ─────────────────────────────────────────────
+  const buscarComisiones = useCallback(async (query) => {
+    const requestId = ++comisionesSearchRef.current
+    try {
+      const effectiveRole = esAdmin ? 'super_admin' : ''
+      const uid = (esAdmin && comisionesUsuarioId) ? comisionesUsuarioId : user?.id
+      const { data: results, error: err } = await supabase.rpc('ventas_buscar_comisiones', {
+        p_query: query.trim(),
+        p_user_id: user?.id,
+        p_user_role: effectiveRole,
+        p_filtro_usuario_id: (esAdmin && comisionesUsuarioId) ? comisionesUsuarioId : null,
+        p_tipo: comisionesFiltroTipo,
+        p_desde: comisionesFiltroDesde || null,
+        p_hasta: comisionesFiltroHasta || null,
+        p_limit: COMISIONES_PAGE_SIZE,
+        p_offset: comisionesPagina * COMISIONES_PAGE_SIZE,
+      })
+      if (err) throw err
+      if (requestId !== comisionesSearchRef.current) return
+      if (!results || results.length === 0) {
+        setComisiones([])
+        setComisionesTotal(0)
+        return
+      }
+      const ids = results.map(r => r.comision_id)
+      const { data } = await supabase
+        .from('ventas_comisiones')
+        .select('*, venta:ventas_ventas(id, lead_id, lead:ventas_leads(id, nombre))')
+        .in('id', ids)
+      if (requestId !== comisionesSearchRef.current) return
+      // Sort by relevance
+      const relevMap = Object.fromEntries(results.map(r => [r.comision_id, r.relevancia]))
+      const sorted = (data || []).sort((a, b) => (relevMap[b.id] || 0) - (relevMap[a.id] || 0))
+      setComisiones(sorted)
+      setComisionesTotal(sorted.length)
+    } catch (err) {
+      if (requestId !== comisionesSearchRef.current) return
+      console.warn('RPC ventas_buscar_comisiones no disponible:', err.message)
+      cargarComisiones()
+    }
+  }, [user?.id, esAdmin, comisionesUsuarioId, comisionesFiltroTipo, comisionesFiltroDesde, comisionesFiltroHasta, comisionesPagina, cargarComisiones])
+
+  // ── Search: retiros (own) ─────────────────────────────────────────
+  const buscarRetiros = useCallback(async (query) => {
+    const requestId = ++retirosSearchRef.current
+    try {
+      const { data: results, error: err } = await supabase.rpc('ventas_buscar_retiros', {
+        p_query: query.trim(),
+        p_user_id: user?.id,
+        p_user_role: '',
+        p_estado: null,
+        p_limit: RETIROS_PAGE_SIZE,
+        p_offset: retirosPagina * RETIROS_PAGE_SIZE,
+      })
+      if (err) throw err
+      if (requestId !== retirosSearchRef.current) return
+      if (!results || results.length === 0) {
+        setRetiros([])
+        setRetirosTotal(0)
+        return
+      }
+      const ids = results.map(r => r.retiro_id)
+      const { data } = await supabase
+        .from('ventas_retiros')
+        .select('*, factura:ventas_facturas(id, numero_factura)')
+        .in('id', ids)
+      if (requestId !== retirosSearchRef.current) return
+      const relevMap = Object.fromEntries(results.map(r => [r.retiro_id, r.relevancia]))
+      const sorted = (data || []).sort((a, b) => (relevMap[b.id] || 0) - (relevMap[a.id] || 0))
+      setRetiros(sorted)
+      setRetirosTotal(sorted.length)
+    } catch (err) {
+      if (requestId !== retirosSearchRef.current) return
+      console.warn('RPC ventas_buscar_retiros no disponible:', err.message)
+      cargarRetiros()
+    }
+  }, [user?.id, retirosPagina, cargarRetiros])
+
+  // ── Search: facturas (own) ────────────────────────────────────────
+  const buscarFacturas = useCallback(async (query) => {
+    const requestId = ++facturasSearchRef.current
+    try {
+      const { data: results, error: err } = await supabase.rpc('ventas_buscar_facturas', {
+        p_query: query.trim(),
+        p_user_id: user?.id,
+        p_user_role: '',
+        p_filtro_usuario_id: null,
+        p_limit: FACTURAS_PAGE_SIZE,
+        p_offset: facturasPagina * FACTURAS_PAGE_SIZE,
+      })
+      if (err) throw err
+      if (requestId !== facturasSearchRef.current) return
+      if (!results || results.length === 0) {
+        setFacturas([])
+        setFacturasTotal(0)
+        return
+      }
+      const ids = results.map(r => r.factura_id)
+      const { data } = await supabase
+        .from('ventas_facturas')
+        .select('*')
+        .in('id', ids)
+      if (requestId !== facturasSearchRef.current) return
+      const relevMap = Object.fromEntries(results.map(r => [r.factura_id, r.relevancia]))
+      const sorted = (data || []).sort((a, b) => (relevMap[b.id] || 0) - (relevMap[a.id] || 0))
+      setFacturas(sorted)
+      setFacturasTotal(sorted.length)
+    } catch (err) {
+      if (requestId !== facturasSearchRef.current) return
+      console.warn('RPC ventas_buscar_facturas no disponible:', err.message)
+      cargarFacturas()
+    }
+  }, [user?.id, facturasPagina, cargarFacturas])
+
+  // ── Search: admin retiros ─────────────────────────────────────────
+  const buscarAdminRetiros = useCallback(async (query) => {
+    const requestId = ++adminRetirosSearchRef.current
+    try {
+      const { data: results, error: err } = await supabase.rpc('ventas_buscar_retiros', {
+        p_query: query.trim(),
+        p_user_id: user?.id,
+        p_user_role: 'super_admin',
+        p_estado: todosRetirosFiltro !== 'todos' ? todosRetirosFiltro : null,
+        p_limit: 200,
+        p_offset: 0,
+      })
+      if (err) throw err
+      if (requestId !== adminRetirosSearchRef.current) return
+      if (!results || results.length === 0) {
+        setTodosRetiros([])
+        setTodosRetirosTotal(0)
+        return
+      }
+      const ids = results.map(r => r.retiro_id)
+      const { data } = await supabase
+        .from('ventas_retiros')
+        .select('*, usuario:usuarios!ventas_retiros_usuario_id_fkey(id, nombre, email), factura:ventas_facturas(id, numero_factura)')
+        .in('id', ids)
+      if (requestId !== adminRetirosSearchRef.current) return
+      const relevMap = Object.fromEntries(results.map(r => [r.retiro_id, r.relevancia]))
+      const sorted = (data || []).sort((a, b) => (relevMap[b.id] || 0) - (relevMap[a.id] || 0))
+      setTodosRetiros(sorted)
+      setTodosRetirosTotal(sorted.length)
+    } catch (err) {
+      if (requestId !== adminRetirosSearchRef.current) return
+      console.warn('RPC ventas_buscar_retiros (admin) no disponible:', err.message)
+      cargarTodosRetiros()
+    }
+  }, [user?.id, todosRetirosFiltro, cargarTodosRetiros])
+
+  // ── Search: admin facturas ────────────────────────────────────────
+  const buscarAdminFacturas = useCallback(async (query) => {
+    const requestId = ++adminFacturasSearchRef.current
+    try {
+      const { data: results, error: err } = await supabase.rpc('ventas_buscar_facturas', {
+        p_query: query.trim(),
+        p_user_id: user?.id,
+        p_user_role: 'super_admin',
+        p_filtro_usuario_id: todasFacturasFiltroUsuario || null,
+        p_limit: 200,
+        p_offset: 0,
+      })
+      if (err) throw err
+      if (requestId !== adminFacturasSearchRef.current) return
+      if (!results || results.length === 0) {
+        setTodasFacturas([])
+        setTodasFacturasTotal(0)
+        return
+      }
+      const ids = results.map(r => r.factura_id)
+      const { data } = await supabase
+        .from('ventas_facturas')
+        .select('*, usuario:usuarios(id, nombre, email)')
+        .in('id', ids)
+      if (requestId !== adminFacturasSearchRef.current) return
+      const relevMap = Object.fromEntries(results.map(r => [r.factura_id, r.relevancia]))
+      const sorted = (data || []).sort((a, b) => (relevMap[b.id] || 0) - (relevMap[a.id] || 0))
+      setTodasFacturas(sorted)
+      setTodasFacturasTotal(sorted.length)
+    } catch (err) {
+      if (requestId !== adminFacturasSearchRef.current) return
+      console.warn('RPC ventas_buscar_facturas (admin) no disponible:', err.message)
+      cargarTodasFacturas()
+    }
+  }, [user?.id, todasFacturasFiltroUsuario, cargarTodasFacturas])
+
+  // ── Export comisiones CSV ─────────────────────────────────────────
+  const exportarComisionesCSV = useCallback(async () => {
+    const uid = (esAdmin && comisionesUsuarioId) ? comisionesUsuarioId : user?.id
+    if (!uid) return
+
+    let rows = []
+    if (comisionesBusqueda.trim()) {
+      const effectiveRole = esAdmin ? 'super_admin' : ''
+      const { data: results } = await supabase.rpc('ventas_buscar_comisiones', {
+        p_query: comisionesBusqueda.trim(),
+        p_user_id: user?.id,
+        p_user_role: effectiveRole,
+        p_filtro_usuario_id: (esAdmin && comisionesUsuarioId) ? comisionesUsuarioId : null,
+        p_tipo: comisionesFiltroTipo,
+        p_desde: comisionesFiltroDesde || null,
+        p_hasta: comisionesFiltroHasta || null,
+        p_limit: 10000,
+        p_offset: 0,
+      })
+      if (results && results.length > 0) {
+        const ids = results.map(r => r.comision_id)
+        const { data } = await supabase
+          .from('ventas_comisiones')
+          .select('*, venta:ventas_ventas(id, lead_id, lead:ventas_leads(id, nombre))')
+          .in('id', ids)
+          .order('created_at', { ascending: false })
+        rows = data || []
+      }
+    } else {
+      let query = supabase
+        .from('ventas_comisiones')
+        .select('*, venta:ventas_ventas(id, lead_id, lead:ventas_leads(id, nombre))')
+        .eq('usuario_id', uid)
+        .order('created_at', { ascending: false })
+      if (comisionesFiltroTipo === 'fijas') query = query.eq('es_bonus', false).gte('monto', 0)
+      if (comisionesFiltroTipo === 'bonus') query = query.eq('es_bonus', true)
+      if (comisionesFiltroTipo === 'negativas') query = query.lt('monto', 0)
+      if (comisionesFiltroDesde) query = query.gte('created_at', comisionesFiltroDesde)
+      if (comisionesFiltroHasta) query = query.lte('created_at', comisionesFiltroHasta + 'T23:59:59')
+      query = query.limit(10000)
+      const { data } = await query
+      rows = data || []
+    }
+
+    if (rows.length === 0) return
+
+    const getTipo = (c) => c.monto < 0 ? 'Devolución' : c.es_bonus ? 'Bonus' : 'Fija'
+    const headers = ['Fecha', 'Concepto', 'Rol', 'Tipo', 'Importe', 'Disponible desde', 'Lead']
+    const csvRows = rows.map(c => [
+      c.created_at ? new Date(c.created_at).toLocaleDateString('es-ES') : '',
+      c.concepto || '',
+      c.rol || '',
+      getTipo(c),
+      c.monto,
+      c.disponible_desde ? new Date(c.disponible_desde).toLocaleDateString('es-ES') : 'Disponible',
+      c.venta?.lead?.nombre || '',
+    ])
+
+    const csv = [headers, ...csvRows].map(row =>
+      row.map(cell => {
+        const str = String(cell ?? '')
+        return str.includes(';') || str.includes('"') || str.includes('\n')
+          ? `"${str.replace(/"/g, '""')}"`
+          : str
+      }).join(';')
+    ).join('\n')
+
+    const bom = '\uFEFF'
+    const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `comisiones_${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [user?.id, esAdmin, comisionesUsuarioId, comisionesFiltroTipo, comisionesFiltroDesde, comisionesFiltroHasta, comisionesBusqueda])
+
   // ── Refresh all ────────────────────────────────────────────────────
   const refrescar = useCallback(async () => {
     setLoading(true)
@@ -332,28 +614,93 @@ export function useWallet() {
 
   // ── Reload comisiones on filter change ─────────────────────────────
   useEffect(() => {
-    if (user?.id) cargarComisiones()
-  }, [comisionesFiltroTipo, comisionesFiltroDesde, comisionesFiltroHasta, comisionesPagina, comisionesUsuarioId])
+    if (!user?.id) return
+    if (comisionesBusqueda.trim()) buscarComisiones(comisionesBusqueda)
+    else cargarComisiones()
+  }, [comisionesFiltroTipo, comisionesFiltroDesde, comisionesFiltroHasta, comisionesPagina, comisionesUsuarioId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reload retiros on page change ────────────────────────────────
   useEffect(() => {
-    if (user?.id) cargarRetiros()
-  }, [retirosPagina])
+    if (!user?.id) return
+    if (retirosBusqueda.trim()) buscarRetiros(retirosBusqueda)
+    else cargarRetiros()
+  }, [retirosPagina]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reload facturas on page change ───────────────────────────────
   useEffect(() => {
-    if (user?.id) cargarFacturas()
-  }, [facturasPagina])
+    if (!user?.id) return
+    if (facturasBusqueda.trim()) buscarFacturas(facturasBusqueda)
+    else cargarFacturas()
+  }, [facturasPagina]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reload admin retiros on filter change ──────────────────────────
   useEffect(() => {
-    if (esAdmin) cargarTodosRetiros()
-  }, [todosRetirosFiltro])
+    if (!esAdmin) return
+    if (adminRetirosBusqueda.trim()) buscarAdminRetiros(adminRetirosBusqueda)
+    else cargarTodosRetiros()
+  }, [todosRetirosFiltro]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Reload admin facturas on filter change ─────────────────────────
   useEffect(() => {
-    if (esAdmin) cargarTodasFacturas()
-  }, [todasFacturasFiltroUsuario])
+    if (!esAdmin) return
+    if (adminFacturasBusqueda.trim()) buscarAdminFacturas(adminFacturasBusqueda)
+    else cargarTodasFacturas()
+  }, [todasFacturasFiltroUsuario]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Debounced search: comisiones ──────────────────────────────────
+  useEffect(() => {
+    if (comisionesBusquedaTimeout.current) clearTimeout(comisionesBusquedaTimeout.current)
+    comisionesBusquedaTimeout.current = setTimeout(() => {
+      if (!user?.id) return
+      if (comisionesBusqueda.trim()) buscarComisiones(comisionesBusqueda)
+      else cargarComisiones()
+    }, 300)
+    return () => clearTimeout(comisionesBusquedaTimeout.current)
+  }, [comisionesBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Debounced search: retiros ─────────────────────────────────────
+  useEffect(() => {
+    if (retirosBusquedaTimeout.current) clearTimeout(retirosBusquedaTimeout.current)
+    retirosBusquedaTimeout.current = setTimeout(() => {
+      if (!user?.id) return
+      if (retirosBusqueda.trim()) buscarRetiros(retirosBusqueda)
+      else cargarRetiros()
+    }, 300)
+    return () => clearTimeout(retirosBusquedaTimeout.current)
+  }, [retirosBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Debounced search: facturas ────────────────────────────────────
+  useEffect(() => {
+    if (facturasBusquedaTimeout.current) clearTimeout(facturasBusquedaTimeout.current)
+    facturasBusquedaTimeout.current = setTimeout(() => {
+      if (!user?.id) return
+      if (facturasBusqueda.trim()) buscarFacturas(facturasBusqueda)
+      else cargarFacturas()
+    }, 300)
+    return () => clearTimeout(facturasBusquedaTimeout.current)
+  }, [facturasBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Debounced search: admin retiros ───────────────────────────────
+  useEffect(() => {
+    if (adminRetirosBusquedaTimeout.current) clearTimeout(adminRetirosBusquedaTimeout.current)
+    adminRetirosBusquedaTimeout.current = setTimeout(() => {
+      if (!esAdmin) return
+      if (adminRetirosBusqueda.trim()) buscarAdminRetiros(adminRetirosBusqueda)
+      else cargarTodosRetiros()
+    }, 300)
+    return () => clearTimeout(adminRetirosBusquedaTimeout.current)
+  }, [adminRetirosBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Debounced search: admin facturas ──────────────────────────────
+  useEffect(() => {
+    if (adminFacturasBusquedaTimeout.current) clearTimeout(adminFacturasBusquedaTimeout.current)
+    adminFacturasBusquedaTimeout.current = setTimeout(() => {
+      if (!esAdmin) return
+      if (adminFacturasBusqueda.trim()) buscarAdminFacturas(adminFacturasBusqueda)
+      else cargarTodasFacturas()
+    }, 300)
+    return () => clearTimeout(adminFacturasBusquedaTimeout.current)
+  }, [adminFacturasBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     wallet, saldoDisponible, comisiones, comisionesTotal, comisionesPagina,
@@ -368,6 +715,10 @@ export function useWallet() {
 
     comisionesFiltroTipo, comisionesFiltroDesde, comisionesFiltroHasta, comisionesUsuarioId,
 
+    // Search state
+    comisionesBusqueda, retirosBusqueda, facturasBusqueda,
+    adminRetirosBusqueda, adminFacturasBusqueda,
+
     setComisionesPagina,
     setRetirosPagina,
     setFacturasPagina,
@@ -378,9 +729,13 @@ export function useWallet() {
     setTodosRetirosFiltro,
     setTodasFacturasFiltroUsuario,
 
+    // Search setters
+    setComisionesBusqueda, setRetirosBusqueda, setFacturasBusqueda,
+    setAdminRetirosBusqueda, setAdminFacturasBusqueda,
+
     cargarWallet, cargarSaldoDisponible, cargarComisiones, cargarRetiros,
     cargarFacturas, cargarDatosFiscales, cargarEmpresaFiscal, verificarCloserAlDia,
-    guardarDatosFiscales, solicitarRetiro,
+    guardarDatosFiscales, solicitarRetiro, exportarComisionesCSV,
 
     cargarTodosRetiros, cargarTodasFacturas, cargarContadoresRetiros,
     aprobarRetiro, rechazarRetiro,

@@ -110,6 +110,9 @@ export default function VentasWallet() {
           onPageChange={w.setComisionesPagina}
           loading={w.loading}
           pageSize={w.comisionesPageSize}
+          busqueda={w.comisionesBusqueda}
+          onBusquedaChange={v => { w.setComisionesBusqueda(v); w.setComisionesPagina(0) }}
+          onExportCSV={w.exportarComisionesCSV}
         />
       )}
 
@@ -121,6 +124,8 @@ export default function VentasWallet() {
           onPageChange={w.setRetirosPagina}
           pageSize={w.retirosPageSize}
           loading={w.loading}
+          busqueda={w.retirosBusqueda}
+          onBusquedaChange={v => { w.setRetirosBusqueda(v); w.setRetirosPagina(0) }}
         />
       )}
 
@@ -133,6 +138,8 @@ export default function VentasWallet() {
           pageSize={w.facturasPageSize}
           loading={w.loading}
           datosFiscales={w.datosFiscales}
+          busqueda={w.facturasBusqueda}
+          onBusquedaChange={v => { w.setFacturasBusqueda(v); w.setFacturasPagina(0) }}
         />
       )}
 
@@ -152,6 +159,8 @@ export default function VentasWallet() {
           onAprobar={handleAprobarRetiro}
           onRechazar={handleRechazarRetiro}
           loading={w.loading}
+          busqueda={w.adminRetirosBusqueda}
+          onBusquedaChange={w.setAdminRetirosBusqueda}
         />
       )}
 
@@ -162,6 +171,8 @@ export default function VentasWallet() {
           onFiltroUsuarioChange={w.setTodasFacturasFiltroUsuario}
           miembros={w.miembros}
           loading={w.loading}
+          busqueda={w.adminFacturasBusqueda}
+          onBusquedaChange={w.setAdminFacturasBusqueda}
         />
       )}
 

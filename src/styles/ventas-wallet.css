@@ -366,6 +366,66 @@
   border-color: var(--border-focus);
 }
 
+/* ── Search bar ──────────────────────────────────────────────────── */
+.wt-search {
+  position: relative;
+  flex: 1;
+  min-width: 160px;
+  max-width: 280px;
+}
+
+.wt-search > svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.wt-search input {
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--space-xl) 0 var(--space-xl);
+  font-size: var(--font-sm-md);
+  color: var(--text);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.wt-search input::placeholder {
+  color: var(--text-muted);
+}
+
+.wt-search input:focus {
+  border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
+  background: var(--bg-input-focus);
+}
+
+.wt-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.wt-search-clear:hover {
+  color: var(--text);
+}
+
 /* ── Mini tabs (retiros filter) ───────────────────────────────────── */
 .wt-tabs-mini {
   display: flex;
@@ -1097,6 +1157,10 @@
   .wt-filtros-row {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .wt-search {
+    max-width: 100%;
   }
 
   .wt-fp-row {

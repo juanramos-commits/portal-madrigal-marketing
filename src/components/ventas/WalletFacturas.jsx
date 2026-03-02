@@ -1,9 +1,9 @@
-import { Download } from 'lucide-react'
+import { Download, Search, X } from 'lucide-react'
 import { generarFacturaPDF } from '../../utils/generarFacturaPDF'
 import { formatMoneda, formatFecha, formatDatosBancarios } from '../../utils/formatters'
 import WalletTableSkeleton from './WalletTableSkeleton'
 
-export default function WalletFacturas({ facturas, total, pagina, onPageChange, pageSize, loading, datosFiscales }) {
+export default function WalletFacturas({ facturas, total, pagina, onPageChange, pageSize, loading, datosFiscales, busqueda, onBusquedaChange }) {
   const totalPages = Math.ceil(total / pageSize)
   const handleDescargar = (factura) => {
     generarFacturaPDF({
@@ -12,16 +12,31 @@ export default function WalletFacturas({ facturas, total, pagina, onPageChange, 
     })
   }
 
-  if (loading && facturas.length === 0) {
-    return <WalletTableSkeleton rows={5} cols={7} />
-  }
-
-  if (facturas.length === 0) {
-    return <div className="wt-empty">No hay facturas registradas</div>
-  }
-
   return (
     <div className="wt-facturas">
+      <div className="wt-filtros-row">
+        <div className="wt-search">
+          <Search size={15} />
+          <input
+            type="text"
+            placeholder="Buscar facturas..."
+            value={busqueda}
+            onChange={e => onBusquedaChange(e.target.value)}
+          />
+          {busqueda && (
+            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} title="Limpiar">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {loading && facturas.length === 0 ? (
+        <WalletTableSkeleton rows={5} cols={7} />
+      ) : facturas.length === 0 ? (
+        <div className="wt-empty">{busqueda ? 'Sin resultados' : 'No hay facturas registradas'}</div>
+      ) : (
+      <>
       {/* Desktop */}
       <div className="wt-desktop-only">
         <div className="wt-table-wrap">
@@ -86,6 +101,8 @@ export default function WalletFacturas({ facturas, total, pagina, onPageChange, 
             <button disabled={pagina >= totalPages - 1} onClick={() => onPageChange(pagina + 1)}>Siguiente</button>
           </div>
         </div>
+      )}
+      </>
       )}
     </div>
   )
