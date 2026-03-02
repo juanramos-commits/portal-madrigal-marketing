@@ -8,15 +8,52 @@ import WidgetShell from '../../components/ventas/dashboard/WidgetShell'
 import WidgetKPI from '../../components/ventas/dashboard/WidgetKPI'
 import WidgetChart from '../../components/ventas/dashboard/WidgetChart'
 import WidgetTable from '../../components/ventas/dashboard/WidgetTable'
+import WidgetDistribution from '../../components/ventas/dashboard/WidgetDistribution'
+import WidgetLeaderboard from '../../components/ventas/dashboard/WidgetLeaderboard'
+import WidgetActivity from '../../components/ventas/dashboard/WidgetActivity'
+import WidgetConversionTable from '../../components/ventas/dashboard/WidgetConversionTable'
+import WidgetFunnel from '../../components/ventas/dashboard/WidgetFunnel'
+import WidgetPipeline from '../../components/ventas/dashboard/WidgetPipeline'
+import WidgetGoal from '../../components/ventas/dashboard/WidgetGoal'
 import 'react-grid-layout/css/styles.css'
 import '../../styles/ventas-dashboard-widgets.css'
 
-function renderWidget(widgetDef, data) {
+function renderWidget(widgetDef, data, config) {
   if (!widgetDef) return null
   const cat = widgetDef.category
-  if (cat === 'kpis') return <WidgetKPI widgetDef={widgetDef} data={data} />
+  const dk = widgetDef.dataKey
+
+  // KPIs (includes wallet KPIs + tasa_ghosting)
+  if (cat === 'kpis' || cat === 'wallet' || widgetDef.formato === 'percent' || widgetDef.formato === 'currency' && cat === 'funnel') {
+    return <WidgetKPI widgetDef={widgetDef} data={data} />
+  }
+
+  // Charts (line + bar)
   if (cat === 'charts') return <WidgetChart widgetDef={widgetDef} data={data} />
+
+  // Distribution (pie + horizontal bar)
+  if (cat === 'distribution') return <WidgetDistribution widgetDef={widgetDef} data={data} />
+
+  // Tables
   if (cat === 'tables') return <WidgetTable widgetDef={widgetDef} data={data} />
+
+  // Team
+  if (cat === 'team') {
+    if (dk === 'ranking_closers' || dk === 'ranking_setters') return <WidgetLeaderboard widgetDef={widgetDef} data={data} />
+    if (dk === 'actividad_reciente') return <WidgetActivity widgetDef={widgetDef} data={data} />
+    if (dk === 'conversion_por_closer' || dk === 'conversion_por_setter') return <WidgetConversionTable widgetDef={widgetDef} data={data} />
+  }
+
+  // Funnel
+  if (cat === 'funnel') {
+    if (dk === 'funnel_setters' || dk === 'funnel_closers') return <WidgetFunnel widgetDef={widgetDef} data={data} />
+    if (dk === 'pipeline_resumen') return <WidgetPipeline widgetDef={widgetDef} data={data} />
+    if (dk === 'tasa_ghosting') return <WidgetKPI widgetDef={widgetDef} data={data} />
+  }
+
+  // Goals
+  if (cat === 'goals') return <WidgetGoal widgetDef={widgetDef} data={data} config={config} />
+
   return null
 }
 
@@ -101,7 +138,7 @@ export default function VentasDashboard() {
                 onRemove={() => db.removeWidget(item.i)}
                 loading={db.loading}
               >
-                {renderWidget(widgetDef, widgetData)}
+                {renderWidget(widgetDef, widgetData, item.config)}
               </WidgetShell>
             </div>
           )

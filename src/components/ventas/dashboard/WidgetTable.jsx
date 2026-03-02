@@ -7,10 +7,29 @@ function formatCurrency(v) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
 }
 
+function tiempoRelativo(fecha) {
+  if (!fecha) return '-'
+  const diffMs = Date.now() - new Date(fecha).getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 1) return 'Ahora'
+  if (diffMin < 60) return `${diffMin}m`
+  const diffH = Math.floor(diffMs / 3600000)
+  if (diffH < 24) return `${diffH}h`
+  const diffD = Math.floor(diffMs / 86400000)
+  return `${diffD}d`
+}
+
+function formatDateTime(d) {
+  if (!d) return '-'
+  return new Date(d).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+
 const ESTADO_COLORS = {
   pendiente: 'var(--warning)',
   aprobada: 'var(--success)',
   rechazada: 'var(--error)',
+  completado: 'var(--success)',
+  procesando: 'var(--info)',
 }
 
 function LeadsTable({ data }) {
@@ -69,6 +88,121 @@ function VentasTable({ data }) {
   )
 }
 
+function ComisionesTable({ data }) {
+  return (
+    <table className="db-wtable">
+      <thead>
+        <tr>
+          <th>Lead</th>
+          <th>Concepto</th>
+          <th>Monto</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((c, i) => (
+          <tr key={c.id || i}>
+            <td className="db-wtable-name">{c.lead_nombre || '-'}</td>
+            <td>{c.concepto || '-'}</td>
+            <td className="db-wtable-amount">{formatCurrency(Number(c.monto) || 0)}</td>
+            <td className="db-wtable-date">{formatDate(c.created_at)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function RetirosTable({ data }) {
+  return (
+    <table className="db-wtable">
+      <thead>
+        <tr>
+          <th>Monto</th>
+          <th>Estado</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((r, i) => (
+          <tr key={r.id || i}>
+            <td className="db-wtable-amount">{formatCurrency(Number(r.monto) || 0)}</td>
+            <td>
+              <span className="db-wtable-estado" style={{ color: ESTADO_COLORS[r.estado] || 'var(--text-muted)' }}>
+                {r.estado}
+              </span>
+            </td>
+            <td className="db-wtable-date">{formatDate(r.created_at)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function LeadsSinContactarTable({ data }) {
+  return (
+    <table className="db-wtable">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Negocio</th>
+          <th>Telefono</th>
+          <th>Tiempo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((l, i) => (
+          <tr key={l.id || i}>
+            <td className="db-wtable-name">{l.nombre || '-'}</td>
+            <td>{l.nombre_negocio || '-'}</td>
+            <td>{l.telefono || '-'}</td>
+            <td className="db-wtable-date">{tiempoRelativo(l.created_at)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+function CitasProximasTable({ data }) {
+  return (
+    <table className="db-wtable">
+      <thead>
+        <tr>
+          <th>Lead</th>
+          <th>Closer</th>
+          <th>Hora</th>
+          <th>Meet</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((c, i) => (
+          <tr key={c.id || i}>
+            <td className="db-wtable-name">{c.lead_nombre || '-'}</td>
+            <td>{c.closer_nombre || '-'}</td>
+            <td className="db-wtable-date">{formatDateTime(c.fecha_hora)}</td>
+            <td>
+              {c.meet_link ? (
+                <a href={c.meet_link} target="_blank" rel="noopener noreferrer" className="db-wtable-link">Enlace</a>
+              ) : '-'}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+const TABLE_MAP = {
+  leads_recientes: LeadsTable,
+  ventas_recientes: VentasTable,
+  comisiones_recientes: ComisionesTable,
+  retiros_recientes: RetirosTable,
+  leads_sin_contactar: LeadsSinContactarTable,
+  citas_proximas: CitasProximasTable,
+}
+
 export default function WidgetTable({ widgetDef, data }) {
   const rows = Array.isArray(data) ? data : []
 
@@ -76,7 +210,7 @@ export default function WidgetTable({ widgetDef, data }) {
     return <div className="db-widget-empty">Sin datos recientes</div>
   }
 
-  if (widgetDef?.dataKey === 'leads_recientes') return <LeadsTable data={rows} />
-  if (widgetDef?.dataKey === 'ventas_recientes') return <VentasTable data={rows} />
-  return null
+  const TableComponent = TABLE_MAP[widgetDef?.dataKey]
+  if (!TableComponent) return null
+  return <TableComponent data={rows} />
 }

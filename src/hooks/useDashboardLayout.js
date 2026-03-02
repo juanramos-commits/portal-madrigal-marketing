@@ -87,11 +87,13 @@ export function useDashboardLayout() {
     const def = WIDGET_CATALOG[widgetType]
     if (!def) return
     const id = `${widgetType}_${Date.now()}`
-    setLayout(prev => [...prev, {
+    const item = {
       i: id, type: widgetType,
       x: 0, y: Infinity,
       w: def.defaultSize.w, h: def.defaultSize.h,
-    }])
+    }
+    if (def.defaultConfig) item.config = { ...def.defaultConfig }
+    setLayout(prev => [...prev, item])
   }, [])
 
   const removeWidget = useCallback((widgetId) => {

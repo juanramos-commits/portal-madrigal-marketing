@@ -539,6 +539,396 @@
   color: var(--text-tertiary);
 }
 
+/* ── Widget Distribution (Pie/Bar) ─────────────────────────────────────── */
+
+.db-wdist {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: var(--space-sm);
+}
+
+.db-wdist-chart {
+  flex: 1;
+  min-height: 0;
+}
+
+.db-wdist-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+  padding-top: var(--space-xs);
+}
+
+.db-wdist-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.db-wdist-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.db-wdist-legend-val {
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+
+.db-wdist-legend-pct {
+  color: var(--text-tertiary);
+}
+
+/* ── Widget Leaderboard ────────────────────────────────────────────────── */
+
+.db-wlead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.db-wlead-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  animation: db-wlead-in 0.3s ease both;
+}
+
+@keyframes db-wlead-in {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.db-wlead-pos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.db-wlead-pos--1 { color: #F59E0B; }
+.db-wlead-pos--2 { color: #94A3B8; }
+.db-wlead-pos--3 { color: #CD7F32; }
+
+.db-wlead-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.db-wlead-name {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.db-wlead-bar-bg {
+  height: 6px;
+  background: var(--bg-skeleton);
+  border-radius: var(--radius-full);
+  margin-top: 3px;
+}
+
+.db-wlead-bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+  background: var(--primary);
+}
+
+.db-wlead-stats {
+  display: flex;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.db-wlead-stat {
+  text-align: right;
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.db-wlead-stat strong {
+  display: block;
+  font-size: var(--font-sm);
+  color: var(--text);
+}
+
+/* ── Widget Activity Feed ──────────────────────────────────────────────── */
+
+.db-wactivity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.db-wactivity-item {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.db-wactivity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.db-wactivity-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.db-wactivity-time {
+  font-size: var(--font-2xs);
+  color: var(--text-tertiary);
+}
+
+.db-wactivity-desc {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.db-wactivity-desc strong {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+.db-wactivity-desc em {
+  color: var(--text-muted);
+  font-style: normal;
+}
+
+/* ── Widget Conversion Table ───────────────────────────────────────────── */
+
+.db-wconv-tasa-high { color: var(--success); font-weight: var(--weight-semibold); }
+.db-wconv-tasa-mid { color: var(--warning); font-weight: var(--weight-semibold); }
+.db-wconv-tasa-low { color: var(--error); font-weight: var(--weight-semibold); }
+
+/* ── Widget Funnel ─────────────────────────────────────────────────────── */
+
+.db-wfunnel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.db-wfunnel-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  animation: db-wfunnel-in 0.4s ease both;
+}
+
+@keyframes db-wfunnel-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.db-wfunnel-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.db-wfunnel-label {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-wfunnel-count {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+
+.db-wfunnel-bar-bg {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-skeleton);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.db-wfunnel-bar {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+  min-width: 3%;
+}
+
+.db-wfunnel-rate {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-muted);
+  white-space: nowrap;
+  width: 42px;
+  text-align: right;
+}
+
+.db-wfunnel-global {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--border);
+}
+
+.db-wfunnel-global strong {
+  color: var(--text);
+}
+
+/* ── Widget Pipeline ───────────────────────────────────────────────────── */
+
+.db-wpipeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  height: 100%;
+}
+
+.db-wpipeline-stages {
+  display: flex;
+  height: 12px;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  gap: 2px;
+}
+
+.db-wpipeline-stage {
+  transition: flex 0.4s ease;
+  min-width: 4px;
+}
+
+.db-wpipeline-stage:first-child {
+  border-radius: var(--radius-full) 0 0 var(--radius-full);
+}
+
+.db-wpipeline-stage:last-child {
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+}
+
+.db-wpipeline-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+}
+
+.db-wpipeline-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.db-wpipeline-label-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.db-wpipeline-label-count {
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+
+/* ── Widget Goal ───────────────────────────────────────────────────────── */
+
+.db-wgoal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  height: 100%;
+}
+
+.db-wgoal-ring {
+  position: relative;
+}
+
+.db-wgoal-ring svg {
+  transform: rotate(-90deg);
+}
+
+.db-wgoal-ring-bg {
+  stroke: var(--bg-skeleton);
+}
+
+.db-wgoal--green .db-wgoal-ring-fill { stroke: var(--success); }
+.db-wgoal--yellow .db-wgoal-ring-fill { stroke: var(--warning); }
+.db-wgoal--red .db-wgoal-ring-fill { stroke: var(--error); }
+
+.db-wgoal-ring-fill {
+  transition: stroke-dashoffset 0.8s ease;
+}
+
+.db-wgoal-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.db-wgoal-pct {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+
+.db-wgoal-fraction {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+
+.db-wgoal-remaining {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
+
+/* ── Table link style ──────────────────────────────────────────────────── */
+
+.db-wtable-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
+}
+
+.db-wtable-link:hover {
+  text-decoration: underline;
+}
+
 /* ── Dashboard Page Layout ──────────────────────────────────────────────── */
 
 .db-page {

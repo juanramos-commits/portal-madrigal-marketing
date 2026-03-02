@@ -4,7 +4,11 @@ function formatCurrency(v) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
 }
 
-function animateValue(el, end, isCurrency, duration) {
+function formatPercent(v) {
+  return `${Number(v).toFixed(1)}%`
+}
+
+function animateValue(el, end, formato, duration) {
   if (!el) return
   const numEnd = typeof end === 'number' ? end : parseFloat(String(end).replace(/[^0-9.-]/g, '')) || 0
   const startTime = performance.now()
@@ -12,7 +16,13 @@ function animateValue(el, end, isCurrency, duration) {
     const progress = Math.min((now - startTime) / duration, 1)
     const eased = 1 - Math.pow(1 - progress, 3)
     const current = numEnd * eased
-    el.textContent = isCurrency ? formatCurrency(current) : Math.round(current).toLocaleString('es-ES')
+    if (formato === 'currency') {
+      el.textContent = formatCurrency(current)
+    } else if (formato === 'percent') {
+      el.textContent = formatPercent(current)
+    } else {
+      el.textContent = Math.round(current).toLocaleString('es-ES')
+    }
     if (progress < 1) requestAnimationFrame(step)
   }
   requestAnimationFrame(step)
@@ -23,17 +33,24 @@ export default function WidgetKPI({ widgetDef, data }) {
 
   const valor = Number(data?.valor) || 0
   const anterior = data?.anterior != null ? Number(data.anterior) : null
-  const isCurrency = widgetDef?.formato === 'currency'
+  const formato = widgetDef?.formato || 'number'
 
   useEffect(() => {
-    if (numRef.current) animateValue(numRef.current, valor, isCurrency, 600)
-  }, [valor, isCurrency])
+    if (numRef.current) animateValue(numRef.current, valor, formato, 600)
+  }, [valor, formato])
 
   const diff = anterior != null ? valor - anterior : null
   const diffType = diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral'
-  const diffText = diff != null
-    ? (isCurrency ? (diff > 0 ? '+' : '') + formatCurrency(diff) : (diff > 0 ? '+' : '') + diff)
-    : null
+  let diffText = null
+  if (diff != null) {
+    if (formato === 'currency') {
+      diffText = (diff > 0 ? '+' : '') + formatCurrency(diff)
+    } else if (formato === 'percent') {
+      diffText = (diff > 0 ? '+' : '') + formatPercent(diff)
+    } else {
+      diffText = (diff > 0 ? '+' : '') + diff
+    }
+  }
 
   return (
     <div className="db-wkpi">

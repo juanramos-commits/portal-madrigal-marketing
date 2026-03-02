@@ -1,4 +1,4 @@
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Area, AreaChart } from 'recharts'
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Area, AreaChart, BarChart, Bar } from 'recharts'
 
 function formatDate(d) {
   if (!d) return ''
@@ -17,12 +17,43 @@ function CustomTooltip({ active, payload, label }) {
       <div className="db-wchart-tooltip-date">{formatDate(label)}</div>
       {payload.map((p, i) => (
         <div key={i} className="db-wchart-tooltip-row">
-          <span style={{ color: p.stroke || p.color }}>{p.name}:</span>{' '}
-          {p.name === 'Importe' ? formatCurrency(p.value) : p.value}
+          <span style={{ color: p.stroke || p.fill || p.color }}>{p.name}:</span>{' '}
+          {p.name === 'Importe' || p.name === 'Ingresos' || p.name === 'Comisiones' ? formatCurrency(p.value) : p.value}
+          {p.name === 'Tasa' && '%'}
         </div>
       ))}
     </div>
   )
+}
+
+const CHART_COLORS = {
+  leads_por_dia: { stroke: 'var(--info)', fill: 'rgba(100, 149, 237, 0.1)' },
+  ventas_por_dia: { stroke: 'var(--success)', fill: 'rgba(46, 229, 157, 0.1)' },
+  leads_por_semana: { stroke: '#6366F1', fill: '#6366F1' },
+  ventas_por_mes: { stroke: '#22C55E', fill: '#22C55E' },
+  ingresos_por_dia: { stroke: '#F59E0B', fill: 'rgba(245, 158, 11, 0.1)' },
+  ingresos_por_mes: { stroke: '#F59E0B', fill: '#F59E0B' },
+  comisiones_por_mes: { stroke: '#8B5CF6', fill: '#8B5CF6' },
+  conversion_por_dia: { stroke: '#6366F1', fill: 'rgba(99, 102, 241, 0.1)' },
+}
+
+function getChartConfig(dataKey) {
+  return CHART_COLORS[dataKey] || { stroke: 'var(--info)', fill: 'rgba(100, 149, 237, 0.1)' }
+}
+
+function getDataKeyField(dataKey) {
+  if (dataKey === 'ingresos_por_dia' || dataKey === 'ingresos_por_mes') return 'total'
+  if (dataKey === 'comisiones_por_mes') return 'total'
+  if (dataKey === 'conversion_por_dia') return 'tasa'
+  return 'total'
+}
+
+function getSeriesName(dataKey) {
+  if (dataKey === 'ventas_por_dia' || dataKey === 'ventas_por_mes') return 'Ventas'
+  if (dataKey === 'ingresos_por_dia' || dataKey === 'ingresos_por_mes') return 'Ingresos'
+  if (dataKey === 'comisiones_por_mes') return 'Comisiones'
+  if (dataKey === 'conversion_por_dia') return 'Tasa'
+  return 'Leads'
 }
 
 export default function WidgetChart({ widgetDef, data }) {
@@ -32,9 +63,27 @@ export default function WidgetChart({ widgetDef, data }) {
     return <div className="db-widget-empty">Sin datos para este periodo</div>
   }
 
-  const isVentas = widgetDef?.dataKey === 'ventas_por_dia'
-  const strokeColor = isVentas ? 'var(--success)' : 'var(--info)'
-  const fillColor = isVentas ? 'rgba(46, 229, 157, 0.1)' : 'rgba(100, 149, 237, 0.1)'
+  const dk = widgetDef?.dataKey
+  const chartType = widgetDef?.chartType || 'line'
+  const colors = getChartConfig(dk)
+  const field = getDataKeyField(dk)
+  const name = getSeriesName(dk)
+
+  if (chartType === 'bar') {
+    return (
+      <div className="db-wchart">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+            <XAxis dataKey="fecha" tickFormatter={formatDate} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--bg-hover)' }} />
+            <Bar dataKey={field} fill={colors.fill} radius={[3, 3, 0, 0]} name={name} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    )
+  }
 
   return (
     <div className="db-wchart">
@@ -42,15 +91,15 @@ export default function WidgetChart({ widgetDef, data }) {
         <AreaChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id={`grad_${widgetDef.type}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={strokeColor} stopOpacity={0.2} />
-              <stop offset="95%" stopColor={strokeColor} stopOpacity={0} />
+              <stop offset="5%" stopColor={colors.stroke} stopOpacity={0.2} />
+              <stop offset="95%" stopColor={colors.stroke} stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           <XAxis dataKey="fecha" tickFormatter={formatDate} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
           <Tooltip content={<CustomTooltip />} />
-          <Area type="monotone" dataKey="total" stroke={strokeColor} fill={`url(#grad_${widgetDef.type})`} strokeWidth={2} dot={false} name={isVentas ? 'Ventas' : 'Leads'} />
+          <Area type="monotone" dataKey={field} stroke={colors.stroke} fill={`url(#grad_${widgetDef.type})`} strokeWidth={2} dot={false} name={name} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
