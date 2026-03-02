@@ -4,7 +4,7 @@ import Modal from '../ui/Modal'
 const transicionConfig = {
   'pendiente->aprobada': {
     titulo: 'Aprobar venta',
-    mensaje: (v) => `¿Aprobar la venta de ${v.lead?.nombre || 'Lead'} por ${fmt(v.importe)}?`,
+    mensaje: (v) => ['¿Aprobar la venta de ', { bold: v.lead?.nombre || 'Lead' }, ' por ', { bold: fmt(v.importe) }, '?'],
     hint: 'Se generarán las comisiones correspondientes.',
     label: 'Aprobar',
     btnClass: 'vv-btn-success',
@@ -12,7 +12,7 @@ const transicionConfig = {
   },
   'pendiente->rechazada': {
     titulo: 'Rechazar venta',
-    mensaje: (v) => `¿Rechazar la venta de ${v.lead?.nombre || 'Lead'} por ${fmt(v.importe)}?`,
+    mensaje: (v) => ['¿Rechazar la venta de ', { bold: v.lead?.nombre || 'Lead' }, ' por ', { bold: fmt(v.importe) }, '?'],
     hint: null,
     label: 'Rechazar',
     btnClass: 'vv-btn-danger',
@@ -20,7 +20,7 @@ const transicionConfig = {
   },
   'aprobada->rechazada': {
     titulo: 'Revertir aprobación',
-    mensaje: (v) => `¿Rechazar la venta aprobada de ${v.lead?.nombre || 'Lead'} por ${fmt(v.importe)}?`,
+    mensaje: (v) => ['¿Rechazar la venta aprobada de ', { bold: v.lead?.nombre || 'Lead' }, ' por ', { bold: fmt(v.importe) }, '?'],
     hint: 'Las comisiones ya generadas se descontarán de los wallets. Los saldos pueden quedar en negativo.',
     warning: true,
     label: 'Rechazar',
@@ -29,7 +29,7 @@ const transicionConfig = {
   },
   'aprobada->devolucion': {
     titulo: 'Marcar devolución',
-    mensaje: (v) => `¿Marcar devolución en la venta de ${v.lead?.nombre || 'Lead'} por ${fmt(v.importe)}?`,
+    mensaje: (v) => ['¿Marcar devolución en la venta de ', { bold: v.lead?.nombre || 'Lead' }, ' por ', { bold: fmt(v.importe) }, '?'],
     hint: 'Se marcarán las comisiones como devolución.',
     warning: true,
     label: 'Marcar devolución',
@@ -38,7 +38,7 @@ const transicionConfig = {
   },
   'rechazada->pendiente': {
     titulo: 'Revertir rechazo',
-    mensaje: (v) => `¿Revertir el rechazo de la venta de ${v.lead?.nombre || 'Lead'} por ${fmt(v.importe)}?`,
+    mensaje: (v) => ['¿Revertir el rechazo de la venta de ', { bold: v.lead?.nombre || 'Lead' }, ' por ', { bold: fmt(v.importe) }, '?'],
     hint: 'La venta volverá a estado pendiente de revisión.',
     label: 'Revertir a pendiente',
     btnClass: 'vv-btn-warning',
@@ -46,7 +46,7 @@ const transicionConfig = {
   },
   'devolucion->aprobada': {
     titulo: 'Revertir devolución',
-    mensaje: (v) => `¿Revertir la devolución de la venta de ${v.lead?.nombre || 'Lead'} por ${fmt(v.importe)}?`,
+    mensaje: (v) => ['¿Revertir la devolución de la venta de ', { bold: v.lead?.nombre || 'Lead' }, ' por ', { bold: fmt(v.importe) }, '?'],
     hint: 'La venta volverá a estado aprobada. Las comisiones se restaurarán automáticamente.',
     warning: true,
     label: 'Restaurar a aprobada',
@@ -95,9 +95,11 @@ export default function ModalCambioEstado({ venta, nuevoEstado, onConfirm, onCan
         </>
       }
     >
-      <p dangerouslySetInnerHTML={{ __html: config.mensaje(venta).replace(
-        /\*\*(.*?)\*\*/g, '<strong>$1</strong>'
-      ) }} />
+      <p>
+        {config.mensaje(venta).map((part, i) =>
+          typeof part === 'string' ? part : <strong key={i}>{part.bold}</strong>
+        )}
+      </p>
       {config.hint && (
         <p className={config.warning ? 'vv-modal-warning' : 'vv-modal-hint'}>
           {config.hint}

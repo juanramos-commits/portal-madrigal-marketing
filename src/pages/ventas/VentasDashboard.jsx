@@ -61,10 +61,10 @@ export default function VentasDashboard() {
   const { usuario } = useAuth()
   const db = useDashboard()
   const containerRef = useRef(null)
-  const { width } = useContainerWidth({ ref: containerRef, initialWidth: 1200 })
+  const { width } = useContainerWidth({ ref: containerRef, initialWidth: 1000 })
 
   const nombre = usuario?.nombre?.split(' ')[0] || 'usuario'
-  const isMobile = width < 768
+  const isMobile = width < 500
 
   const rglLayouts = useMemo(() => {
     const lg = db.layout.map(item => {
@@ -115,7 +115,7 @@ export default function VentasDashboard() {
       <ResponsiveGridLayout
         width={width}
         layouts={rglLayouts}
-        breakpoints={{ lg: 1200, md: 768, sm: 0 }}
+        breakpoints={{ lg: 900, md: 500, sm: 0 }}
         cols={{ lg: 12, md: 6, sm: 1 }}
         rowHeight={60}
         isDraggable={db.editMode && !isMobile}
