@@ -19,6 +19,8 @@ export function useVentas() {
   const [error, setError] = useState(null)
 
   const busquedaTimeoutRef = useRef(null)
+  const searchRequestRef = useRef(0)
+  const [searchResultCount, setSearchResultCount] = useState(null)
 
   // Roles
   const [rolesComerciales, setRolesComerciales] = useState([])
@@ -56,9 +58,8 @@ export function useVentas() {
     cargarPaquetes()
   }, [cargarPaquetes])
 
-  // ── Build query ────────────────────────────────────────────────────
-  const buildQuery = useCallback((countOnly = false) => {
-    const busquedaActiva = busqueda.trim() !== ''
+  // ── Build query (non-search only) ──────────────────────────────────
+  const buildQuery = useCallback(() => {
     let query = supabase
       .from('ventas_ventas')
       .select(`
@@ -67,7 +68,7 @@ export function useVentas() {
         es_pago_unico, es_devolucion, fecha_devolucion,
         fecha_aprobacion, fecha_rechazo, notas,
         created_at, updated_at,
-        lead:ventas_leads${busquedaActiva ? '!inner' : ''}(id, nombre, telefono, email),
+        lead:ventas_leads(id, nombre, telefono, email),
         paquete:ventas_paquetes(id, nombre, precio),
         closer:usuarios!ventas_ventas_closer_id_fkey(id, nombre, email),
         setter:usuarios!ventas_ventas_setter_id_fkey(id, nombre, email)
@@ -91,13 +92,8 @@ export function useVentas() {
       query = query.eq('estado', filtroEstado).eq('es_devolucion', false)
     }
 
-    // Search
-    if (busqueda.trim()) {
-      query = query.ilike('lead.nombre', `%${busqueda.trim()}%`)
-    }
-
     return query
-  }, [esAdminODirector, esCloser, esSetter, user?.id, filtroEstado, busqueda])
+  }, [esAdminODirector, esCloser, esSetter, user?.id, filtroEstado])
 
   // ── Load ventas ────────────────────────────────────────────────────
   const cargarVentas = useCallback(async () => {
@@ -166,6 +162,128 @@ export function useVentas() {
     }
   }, [esAdminODirector, esCloser, esSetter, user?.id])
 
+  // ── Estado → RPC params helper ────────────────────────────────────
+  const getEstadoRPCParams = (estado) => {
+    switch (estado) {
+      case 'devolucion': return { p_estado: null, p_es_devolucion: true }
+      case 'todas': return { p_estado: null, p_es_devolucion: null }
+      default: return { p_estado: estado, p_es_devolucion: false }
+    }
+  }
+
+  // ── Search-aware counters via RPC ────────────────────────────────
+  const cargarContadoresConBusqueda = useCallback(async (query) => {
+    try {
+      const effectiveRole = esAdminODirector ? 'super_admin' : ''
+      const configs = [
+        { key: 'todas', p_estado: null, p_es_devolucion: null },
+        { key: 'pendiente', p_estado: 'pendiente', p_es_devolucion: false },
+        { key: 'aprobada', p_estado: 'aprobada', p_es_devolucion: false },
+        { key: 'rechazada', p_estado: 'rechazada', p_es_devolucion: false },
+        { key: 'devolucion', p_estado: null, p_es_devolucion: true },
+      ]
+
+      const results = await Promise.all(
+        configs.map(({ p_estado, p_es_devolucion }) =>
+          supabase.rpc('ventas_buscar_ventas', {
+            p_query: query,
+            p_estado,
+            p_es_devolucion,
+            p_user_id: user?.id,
+            p_user_role: effectiveRole,
+            p_limit: 1,
+            p_offset: 0,
+          })
+        )
+      )
+
+      const conteos = {}
+      configs.forEach(({ key }, i) => {
+        const { data } = results[i]
+        conteos[key] = Number(data?.[0]?.total_count || 0)
+      })
+
+      setContadores(conteos)
+    } catch (_) {
+      // Non-critical
+    }
+  }, [esAdminODirector, user?.id])
+
+  // ── Search via RPC ───────────────────────────────────────────────
+  const buscarVentas = useCallback(async (query) => {
+    const requestId = ++searchRequestRef.current
+    setLoading(true)
+    setError(null)
+
+    try {
+      const effectiveRole = esAdminODirector ? 'super_admin' : ''
+      const { p_estado, p_es_devolucion } = getEstadoRPCParams(filtroEstado)
+
+      const { data: results, error: rpcErr } = await supabase.rpc('ventas_buscar_ventas', {
+        p_query: query,
+        p_estado,
+        p_es_devolucion,
+        p_user_id: user?.id,
+        p_user_role: effectiveRole,
+        p_limit: PAGE_SIZE,
+        p_offset: paginaActual * PAGE_SIZE,
+      })
+
+      if (rpcErr) throw rpcErr
+      if (requestId !== searchRequestRef.current) return
+
+      if (!results || results.length === 0) {
+        setVentas([])
+        setTotalVentas(0)
+        setSearchResultCount(0)
+        cargarContadoresConBusqueda(query)
+        return
+      }
+
+      const totalCount = Number(results[0]?.total_count || 0)
+      const ventaIds = results.map(r => r.venta_id)
+
+      // Load full venta data
+      const { data: ventasData, error: ventasErr } = await supabase
+        .from('ventas_ventas')
+        .select(`
+          id, lead_id, closer_id, setter_id, paquete_id,
+          fecha_venta, importe, metodo_pago, estado,
+          es_pago_unico, es_devolucion, fecha_devolucion,
+          fecha_aprobacion, fecha_rechazo, notas,
+          created_at, updated_at,
+          lead:ventas_leads(id, nombre, telefono, email),
+          paquete:ventas_paquetes(id, nombre, precio),
+          closer:usuarios!ventas_ventas_closer_id_fkey(id, nombre, email),
+          setter:usuarios!ventas_ventas_setter_id_fkey(id, nombre, email)
+        `)
+        .in('id', ventaIds)
+
+      if (ventasErr) throw ventasErr
+      if (requestId !== searchRequestRef.current) return
+
+      // Sort by relevancia
+      const relevanciaMap = {}
+      results.forEach(r => { relevanciaMap[r.venta_id] = r.relevancia })
+      const sorted = (ventasData || []).sort(
+        (a, b) => (relevanciaMap[b.id] || 0) - (relevanciaMap[a.id] || 0)
+      )
+
+      setVentas(sorted)
+      setTotalVentas(totalCount)
+      setSearchResultCount(totalCount)
+      cargarContadoresConBusqueda(query)
+    } catch (err) {
+      if (requestId !== searchRequestRef.current) return
+      console.warn('RPC ventas_buscar_ventas no disponible, usando búsqueda simple:', err.message)
+      setSearchResultCount(null)
+      cargarVentas()
+      cargarContadores()
+    } finally {
+      if (requestId === searchRequestRef.current) setLoading(false)
+    }
+  }, [esAdminODirector, user?.id, filtroEstado, paginaActual, cargarVentas, cargarContadores, cargarContadoresConBusqueda])
+
   // ── Load commissions for a sale ────────────────────────────────────
   const cargarComisiones = useCallback(async (ventaId) => {
     const { data, error: err } = await supabase
@@ -180,9 +298,14 @@ export function useVentas() {
 
   // ── Refresh all ────────────────────────────────────────────────────
   const refrescar = useCallback(() => {
-    cargarVentas()
-    cargarContadores()
-  }, [cargarVentas, cargarContadores])
+    if (busqueda.trim()) {
+      buscarVentas(busqueda.trim())
+    } else {
+      setSearchResultCount(null)
+      cargarVentas()
+      cargarContadores()
+    }
+  }, [busqueda, buscarVentas, cargarVentas, cargarContadores])
 
   // ── Register sale (from pop-up) ────────────────────────────────────
   const registrarVenta = useCallback(async (datos) => {
@@ -336,13 +459,19 @@ export function useVentas() {
   // ── Reload on filter/page change ───────────────────────────────────
   useEffect(() => {
     if (!user?.id || rolesComerciales.length === 0) return
-    cargarVentas()
+    if (busqueda.trim()) {
+      buscarVentas(busqueda.trim())
+    } else {
+      cargarVentas()
+    }
   }, [filtroEstado, paginaActual])
 
   // ── Reload counters on filter change ───────────────────────────────
   useEffect(() => {
     if (!user?.id || rolesComerciales.length === 0) return
-    cargarContadores()
+    if (!busqueda.trim()) {
+      cargarContadores()
+    }
   }, [filtroEstado])
 
   // ── Debounced search ───────────────────────────────────────────────
@@ -351,14 +480,20 @@ export function useVentas() {
     busquedaTimeoutRef.current = setTimeout(() => {
       if (!user?.id || rolesComerciales.length === 0) return
       setPaginaActual(0)
-      cargarVentas()
+      if (busqueda.trim()) {
+        buscarVentas(busqueda.trim())
+      } else {
+        setSearchResultCount(null)
+        cargarVentas()
+        cargarContadores()
+      }
     }, 300)
     return () => clearTimeout(busquedaTimeoutRef.current)
   }, [busqueda])
 
   return {
     ventas, paquetes, filtroEstado, busqueda, loading, error,
-    paginaActual, totalVentas, contadores,
+    paginaActual, totalVentas, contadores, searchResultCount,
     esAdmin, esAdminODirector, esCloser, esSetter, esDirector,
 
     setFiltroEstado: (estado) => { setPaginaActual(0); setFiltroEstado(estado) },

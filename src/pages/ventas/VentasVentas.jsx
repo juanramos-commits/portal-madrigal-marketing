@@ -1,4 +1,4 @@
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { useVentas } from '../../hooks/useVentas'
 import VentasListado from '../../components/ventas/VentasListado'
 import '../../styles/ventas-ventas.css'
@@ -32,14 +32,28 @@ export default function VentasVentas() {
       <div className="vv-header">
         <div className="vv-header-top">
           <h1>Ventas</h1>
-          <div className="vv-search">
+          <div className="vv-search" style={{ position: 'relative' }}>
             <Search size={16} />
             <input
               type="text"
-              placeholder="Buscar por lead..."
+              placeholder="Buscar en todos los campos..."
               value={ventas.busqueda}
               onChange={e => ventas.setBusqueda(e.target.value)}
             />
+            {ventas.busqueda && ventas.searchResultCount !== null && ventas.searchResultCount !== undefined && (
+              <span className="vv-search-count">
+                {ventas.searchResultCount} {ventas.searchResultCount === 1 ? 'resultado' : 'resultados'}
+              </span>
+            )}
+            {ventas.busqueda && (
+              <button
+                className="vv-search-clear"
+                onClick={() => ventas.setBusqueda('')}
+                aria-label="Limpiar búsqueda"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
         </div>
 
