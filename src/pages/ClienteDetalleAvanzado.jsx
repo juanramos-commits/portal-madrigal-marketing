@@ -558,8 +558,7 @@ function EditableField({ label, value, campo, onSave, type = 'text', options = n
             <Select
               value={tempValue}
               onChange={handleSelectChange}
-              className="select"
-              style={{ flex: 1 }}
+                           style={{ flex: 1 }}
               disabled={saving}
             >
               <option value="">Seleccionar...</option>
@@ -1181,7 +1180,7 @@ function LeadsTab({ leads, paquetes, setPaquetes, clienteId, tienePermiso }) {
       <Card title="📋 Lista de Leads">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
           <input type="text" placeholder="Buscar..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} className="input" />
-          <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} className="select">
+          <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
             <option value="">Todos los estados</option>
             {estadosUnicos.map(estado => <option key={estado} value={estado}>{estado}</option>)}
           </Select>

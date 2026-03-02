@@ -278,15 +278,15 @@ export default function Usuarios() {
       <div className="card" style={{ marginBottom: '24px', padding: '16px' }}>
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="input" style={{ flex: 1, minWidth: '200px' }} />
-          <Select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} className="select" style={{ width: '150px' }}>
+          <Select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} style={{ width: '150px' }}>
             <option value="">Todos los tipos</option>
             {Object.entries(TIPOS_USUARIO).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
           </Select>
-          <Select value={filtroRol} onChange={e => setFiltroRol(e.target.value)} className="select" style={{ width: '180px' }}>
+          <Select value={filtroRol} onChange={e => setFiltroRol(e.target.value)} style={{ width: '180px' }}>
             <option value="">Todos los roles</option>
             {roles.map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
           </Select>
-          <Select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} className="select" style={{ width: '130px' }}>
+          <Select value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)} style={{ width: '130px' }}>
             <option value="">Todos</option>
             <option value="activo">Activos</option>
             <option value="inactivo">Inactivos</option>
@@ -333,7 +333,7 @@ export default function Usuarios() {
                   <td><span className="badge" style={{ background: `${TIPOS_USUARIO[u.tipo]?.color}20`, color: TIPOS_USUARIO[u.tipo]?.color }}>{TIPOS_USUARIO[u.tipo]?.label}</span></td>
                   <td>
                     {u.tipo !== 'cliente' && u.tipo !== 'super_admin' ? (
-                      <Select value={u.rol_id || ''} onChange={e => cambiarRol(u.id, e.target.value)} className="select" style={{ height: '32px', fontSize: '13px', background: 'transparent' }} disabled={!tienePermiso('usuarios.editar') || u.id === currentUser?.id}>
+                      <Select value={u.rol_id || ''} onChange={e => cambiarRol(u.id, e.target.value)} style={{ height: '32px', fontSize: '13px', background: 'transparent' }} disabled={!tienePermiso('usuarios.editar') || u.id === currentUser?.id}>
                         <option value="">Sin rol</option>
                         {roles.filter(r => {
                           if (r.nombre === 'Super Admin') return false
@@ -389,7 +389,7 @@ export default function Usuarios() {
           </div>
           <div className="field" style={{ marginBottom: '16px' }}>
             <label className="field-label">Tipo</label>
-            <Select value={inviteForm.tipo} onChange={e => setInviteForm({...inviteForm, tipo: e.target.value})} className="select" disabled={inviteLoading}>
+            <Select value={inviteForm.tipo} onChange={e => setInviteForm({...inviteForm, tipo: e.target.value})} disabled={inviteLoading}>
               <option value="equipo">Equipo</option>
               <option value="admin">Admin</option>
               <option value="cliente">Cliente</option>
@@ -398,7 +398,7 @@ export default function Usuarios() {
           {inviteForm.tipo !== 'cliente' && (
             <div className="field" style={{ marginBottom: '24px' }}>
               <label className="field-label">Rol</label>
-              <Select value={inviteForm.rol_id} onChange={e => setInviteForm({...inviteForm, rol_id: e.target.value})} className="select" disabled={inviteLoading}>
+              <Select value={inviteForm.rol_id} onChange={e => setInviteForm({...inviteForm, rol_id: e.target.value})} disabled={inviteLoading}>
                 <option value="">Seleccionar...</option>
                 {roles.filter(r => r.nombre !== 'Super Admin').map(r => <option key={r.id} value={r.id}>{r.nombre}</option>)}
               </Select>

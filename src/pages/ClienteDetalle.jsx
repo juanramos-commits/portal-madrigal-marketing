@@ -258,7 +258,7 @@ function CampoEditable({ label, valor, campo, tipo = 'text', opciones, tienePerm
         <label className="field-label">{label}</label>
         <div style={{ display: 'flex', gap: '8px' }}>
           {tipo === 'select' ? (
-            <Select value={valorTemp || ''} onChange={(e) => setValorTemp(e.target.value)} className="select" style={{ flex: 1 }}>
+            <Select value={valorTemp || ''} onChange={(e) => setValorTemp(e.target.value)} style={{ flex: 1 }}>
               {opciones.map(op => <option key={op.value} value={op.value}>{op.label}</option>)}
             </Select>
           ) : (

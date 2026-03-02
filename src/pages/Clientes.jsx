@@ -301,7 +301,7 @@ export default function Clientes() {
             />
           </div>
 
-          <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} className="select" style={{ width: '180px' }}>
+          <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} style={{ width: '180px' }}>
             <option value="todos">Todos los estados</option>
             <option value="campañas_activas">Campañas Activas</option>
             <option value="pausado">Pausado</option>

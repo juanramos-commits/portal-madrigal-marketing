@@ -440,7 +440,7 @@ export default function TablaClientesAvanzada() {
           <input type="text" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar clientes..." className="input" style={{ paddingLeft: '40px' }} />
         </div>
 
-        <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} className="select" style={{ minWidth: '170px' }}>
+        <Select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)} style={{ minWidth: '170px' }}>
           <option value="todos">Todos los estados</option>
           <option value="campañas_activas">Campañas Activas</option>
           <option value="pausado">Pausado</option>
