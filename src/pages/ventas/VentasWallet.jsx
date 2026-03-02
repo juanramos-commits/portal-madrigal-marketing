@@ -33,19 +33,14 @@ export default function VentasWallet() {
   const handleSolicitarRetiro = async (monto) => {
     await w.solicitarRetiro(monto)
     setShowRetiroModal(false)
-    w.refrescar()
   }
 
   const handleAprobarRetiro = async (retiroId) => {
     await w.aprobarRetiro(retiroId)
-    w.cargarTodosRetiros()
-    w.cargarContadoresRetiros()
   }
 
   const handleRechazarRetiro = async (retiroId, motivo) => {
     await w.rechazarRetiro(retiroId, motivo)
-    w.cargarTodosRetiros()
-    w.cargarContadoresRetiros()
   }
 
   const handleGuardarDatosFiscales = async (datos) => {
@@ -114,6 +109,10 @@ export default function VentasWallet() {
       {tab === 'retiros' && (
         <WalletRetiros
           retiros={w.retiros}
+          total={w.retirosTotal}
+          pagina={w.retirosPagina}
+          onPageChange={w.setRetirosPagina}
+          pageSize={w.retirosPageSize}
           loading={w.loading}
         />
       )}
@@ -121,6 +120,10 @@ export default function VentasWallet() {
       {tab === 'facturas' && (
         <WalletFacturas
           facturas={w.facturas}
+          total={w.facturasTotal}
+          pagina={w.facturasPagina}
+          onPageChange={w.setFacturasPagina}
+          pageSize={w.facturasPageSize}
           loading={w.loading}
           datosFiscales={w.datosFiscales}
         />

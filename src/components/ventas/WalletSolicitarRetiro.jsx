@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react'
 import Modal from '../ui/Modal'
-
-function formatMoneda(v) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
-}
+import { formatMoneda } from '../../utils/formatters'
 
 export default function WalletSolicitarRetiro({
   saldoDisponible,

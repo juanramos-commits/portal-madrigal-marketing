@@ -1,15 +1,7 @@
 import { Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Select from '../ui/Select'
-
-function formatMoneda(v) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
-}
-
-function formatFecha(d) {
-  if (!d) return '-'
-  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
-}
+import { formatMoneda, formatFecha } from '../../utils/formatters'
 
 function formatFechaCorta(d) {
   if (!d) return 'Disponible'

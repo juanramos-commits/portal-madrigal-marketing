@@ -17,8 +17,10 @@ export function useWallet() {
   const [comisionesPagina, setComisionesPagina] = useState(0)
   const [retiros, setRetiros] = useState([])
   const [retirosTotal, setRetirosTotal] = useState(0)
+  const [retirosPagina, setRetirosPagina] = useState(0)
   const [facturas, setFacturas] = useState([])
   const [facturasTotal, setFacturasTotal] = useState(0)
+  const [facturasPagina, setFacturasPagina] = useState(0)
   const [datosFiscales, setDatosFiscales] = useState(null)
   const [empresaFiscal, setEmpresaFiscal] = useState(null)
   const [closerAlDia, setCloserAlDia] = useState(true)
@@ -128,30 +130,32 @@ export function useWallet() {
   // ── Load retiros (own) ─────────────────────────────────────────────
   const cargarRetiros = useCallback(async () => {
     if (!user?.id) return
+    const from = retirosPagina * RETIROS_PAGE_SIZE
     const { data, count } = await supabase
       .from('ventas_retiros')
       .select('*, factura:ventas_facturas(id, numero_factura)', { count: 'exact' })
       .eq('usuario_id', user.id)
       .order('created_at', { ascending: false })
-      .range(0, RETIROS_PAGE_SIZE - 1)
+      .range(from, from + RETIROS_PAGE_SIZE - 1)
 
     setRetiros(data || [])
     setRetirosTotal(count || 0)
-  }, [user?.id])
+  }, [user?.id, retirosPagina])
 
   // ── Load facturas (own) ────────────────────────────────────────────
   const cargarFacturas = useCallback(async () => {
     if (!user?.id) return
+    const from = facturasPagina * FACTURAS_PAGE_SIZE
     const { data, count } = await supabase
       .from('ventas_facturas')
       .select('*', { count: 'exact' })
       .eq('usuario_id', user.id)
       .order('fecha_emision', { ascending: false })
-      .range(0, FACTURAS_PAGE_SIZE - 1)
+      .range(from, from + FACTURAS_PAGE_SIZE - 1)
 
     setFacturas(data || [])
     setFacturasTotal(count || 0)
-  }, [user?.id])
+  }, [user?.id, facturasPagina])
 
   // ── Load datos fiscales ────────────────────────────────────────────
   const cargarDatosFiscales = useCallback(async () => {
@@ -212,6 +216,8 @@ export function useWallet() {
       query = query.eq('estado', todosRetirosFiltro)
     }
 
+    query = query.limit(200)
+
     const { data, count } = await query
     setTodosRetiros(data || [])
     setTodosRetirosTotal(count || 0)
@@ -243,6 +249,8 @@ export function useWallet() {
     if (todasFacturasFiltroUsuario) {
       query = query.eq('usuario_id', todasFacturasFiltroUsuario)
     }
+
+    query = query.limit(200)
 
     const { data, count } = await query
     setTodasFacturas(data || [])
@@ -326,6 +334,16 @@ export function useWallet() {
     if (user?.id) cargarComisiones()
   }, [comisionesFiltroTipo, comisionesFiltroDesde, comisionesFiltroHasta, comisionesPagina, comisionesUsuarioId])
 
+  // ── Reload retiros on page change ────────────────────────────────
+  useEffect(() => {
+    if (user?.id) cargarRetiros()
+  }, [retirosPagina])
+
+  // ── Reload facturas on page change ───────────────────────────────
+  useEffect(() => {
+    if (user?.id) cargarFacturas()
+  }, [facturasPagina])
+
   // ── Reload admin retiros on filter change ──────────────────────────
   useEffect(() => {
     if (esAdmin) cargarTodosRetiros()
@@ -338,7 +356,8 @@ export function useWallet() {
 
   return {
     wallet, saldoDisponible, comisiones, comisionesTotal, comisionesPagina,
-    retiros, retirosTotal, facturas, facturasTotal,
+    retiros, retirosTotal, retirosPagina,
+    facturas, facturasTotal, facturasPagina,
     datosFiscales, empresaFiscal, closerAlDia, loading, error,
     esAdmin, esCloser, miembros,
 
@@ -349,6 +368,8 @@ export function useWallet() {
     comisionesFiltroTipo, comisionesFiltroDesde, comisionesFiltroHasta, comisionesUsuarioId,
 
     setComisionesPagina,
+    setRetirosPagina,
+    setFacturasPagina,
     setComisionesFiltroTipo,
     setComisionesFiltroDesde,
     setComisionesFiltroHasta,
@@ -365,5 +386,7 @@ export function useWallet() {
 
     refrescar,
     comisionesPageSize: COMISIONES_PAGE_SIZE,
+    retirosPageSize: RETIROS_PAGE_SIZE,
+    facturasPageSize: FACTURAS_PAGE_SIZE,
   }
 }

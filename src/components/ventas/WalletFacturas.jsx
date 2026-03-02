@@ -1,13 +1,5 @@
 import { generarFacturaPDF } from '../../utils/generarFacturaPDF'
-
-function formatMoneda(v) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
-}
-
-function formatFecha(d) {
-  if (!d) return '-'
-  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
-}
+import { formatMoneda, formatFecha } from '../../utils/formatters'
 
 const DownloadIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
@@ -15,7 +7,8 @@ const DownloadIcon = () => (
   </svg>
 )
 
-export default function WalletFacturas({ facturas, loading, datosFiscales }) {
+export default function WalletFacturas({ facturas, total, pagina, onPageChange, pageSize, loading, datosFiscales }) {
+  const totalPages = Math.ceil(total / pageSize)
   const handleDescargar = (factura) => {
     generarFacturaPDF({
       ...factura,
@@ -87,6 +80,17 @@ export default function WalletFacturas({ facturas, loading, datosFiscales }) {
           </div>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="wt-pagination">
+          <span>Página {pagina + 1} de {totalPages}</span>
+          <div className="wt-pagination-btns">
+            <button disabled={pagina === 0} onClick={() => onPageChange(pagina - 1)}>Anterior</button>
+            <button disabled={pagina >= totalPages - 1} onClick={() => onPageChange(pagina + 1)}>Siguiente</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

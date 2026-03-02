@@ -1,8 +1,5 @@
 import WalletBloqueado from './WalletBloqueado'
-
-function formatMoneda(v) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
-}
+import { formatMoneda } from '../../utils/formatters'
 
 const WalletIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20 }}>

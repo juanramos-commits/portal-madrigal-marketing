@@ -1,11 +1,4 @@
-function formatMoneda(v) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
-}
-
-function formatFecha(d) {
-  if (!d) return '-'
-  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
-}
+import { formatMoneda, formatFecha } from '../../utils/formatters'
 
 const estadoConfig = {
   pendiente: { label: 'Pendiente', className: 'wt-badge-pendiente' },
@@ -13,7 +6,8 @@ const estadoConfig = {
   rechazado: { label: 'Rechazado', className: 'wt-badge-rechazado' },
 }
 
-export default function WalletRetiros({ retiros, loading }) {
+export default function WalletRetiros({ retiros, total, pagina, onPageChange, pageSize, loading }) {
+  const totalPages = Math.ceil(total / pageSize)
   if (loading && retiros.length === 0) {
     return <div className="wt-loading">Cargando retiros...</div>
   }
@@ -76,6 +70,17 @@ export default function WalletRetiros({ retiros, loading }) {
           )
         })}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="wt-pagination">
+          <span>Página {pagina + 1} de {totalPages}</span>
+          <div className="wt-pagination-btns">
+            <button disabled={pagina === 0} onClick={() => onPageChange(pagina - 1)}>Anterior</button>
+            <button disabled={pagina >= totalPages - 1} onClick={() => onPageChange(pagina + 1)}>Siguiente</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

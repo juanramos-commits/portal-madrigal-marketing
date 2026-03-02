@@ -9,6 +9,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
     ciudad: '',
     codigo_postal: '',
     pais: '',
+    cuenta_bancaria_iban: '',
     serie_factura: 'F',
     iva_porcentaje: 0,
     iva_incluido: false,
@@ -26,6 +27,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
         ciudad: datosFiscales.ciudad || '',
         codigo_postal: datosFiscales.codigo_postal || '',
         pais: datosFiscales.pais || '',
+        cuenta_bancaria_iban: datosFiscales.cuenta_bancaria_iban || '',
         serie_factura: datosFiscales.serie_factura || 'F',
         iva_porcentaje: datosFiscales.iva_porcentaje ?? 0,
         iva_incluido: datosFiscales.iva_incluido || false,
@@ -45,6 +47,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
     if (!form.nif_cif.trim()) e.nif_cif = 'Obligatorio'
     if (!form.direccion.trim()) e.direccion = 'Obligatorio'
     if (!form.pais.trim()) e.pais = 'Obligatorio'
+    if (!form.cuenta_bancaria_iban.trim()) e.cuenta_bancaria_iban = 'Obligatorio'
     setErrores(e)
     return Object.keys(e).length === 0
   }
@@ -131,6 +134,18 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
             placeholder="España"
           />
           {errores.pais && <span className="wt-field-error">{errores.pais}</span>}
+        </div>
+
+        <div className="wt-field wt-field-full">
+          <label>Cuenta bancaria (IBAN) *</label>
+          <input
+            type="text"
+            value={form.cuenta_bancaria_iban}
+            onChange={e => handleChange('cuenta_bancaria_iban', e.target.value.toUpperCase())}
+            placeholder="ES00 0000 0000 0000 0000 0000"
+            maxLength={34}
+          />
+          {errores.cuenta_bancaria_iban && <span className="wt-field-error">{errores.cuenta_bancaria_iban}</span>}
         </div>
 
       </div>

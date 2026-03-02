@@ -1,14 +1,6 @@
 import { useState } from 'react'
 import Modal from '../ui/Modal'
-
-function formatMoneda(v) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v || 0)
-}
-
-function formatFecha(d) {
-  if (!d) return '-'
-  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
-}
+import { formatMoneda, formatFecha } from '../../utils/formatters'
 
 const CheckIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>

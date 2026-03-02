@@ -63,8 +63,8 @@ export default function AjustesComisiones({
     finally { setBonusSaving(false) }
   }
 
-  const directores = equipo
-    .filter(m => m.roles.some(r => r.rol === 'director_ventas' && r.activo))
+  const miembrosActivos = equipo
+    .filter(m => m.roles.some(r => r.activo))
 
   return (
     <div className="aj-seccion">
@@ -112,7 +112,7 @@ export default function AjustesComisiones({
           <label>Usuario</label>
           <Select value={bonusUsuario} onChange={e => setBonusUsuario(e.target.value)}>
             <option value="">Seleccionar usuario</option>
-            {directores.map(m => (
+            {miembrosActivos.map(m => (
               <option key={m.usuario_id} value={m.usuario_id}>
                 {m.usuario?.nombre || m.usuario?.email}
               </option>

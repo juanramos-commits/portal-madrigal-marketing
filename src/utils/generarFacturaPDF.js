@@ -1,10 +1,7 @@
 import { jsPDF } from 'jspdf'
+import { formatMoneda } from './formatters'
 
-function formatMoneda(valor) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(valor)
-}
-
-function formatFecha(d) {
+function formatFechaLarga(d) {
   if (!d) return ''
   return new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
 }
@@ -32,7 +29,7 @@ export function generarFacturaPDF(factura) {
   doc.setFont('Helvetica', 'normal')
   doc.setFontSize(10)
   doc.setTextColor(100, 100, 100)
-  doc.text(`Fecha: ${formatFecha(factura.fecha_emision)}`, pageW / 2, y, { align: 'center' })
+  doc.text(`Fecha: ${formatFechaLarga(factura.fecha_emision)}`, pageW / 2, y, { align: 'center' })
   y += 6
 
   doc.setLineWidth(0.3)
