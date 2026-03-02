@@ -35,8 +35,26 @@ export default function VentasVentas() {
             <h1>Ventas</h1>
             <span className="vv-count">{ventas.totalVentas} ventas</span>
           </div>
+        </div>
+
+        {/* Tabs + Search */}
+        <div className="vv-toolbar">
+          <div className="vv-tabs">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                className={`vv-tab${ventas.filtroEstado === tab.key ? ' active' : ''}`}
+                onClick={() => ventas.setFiltroEstado(tab.key)}
+              >
+                {tab.label}
+                <span className="vv-tab-count">
+                  {ventas.contadores[tab.key] || 0}
+                </span>
+              </button>
+            ))}
+          </div>
           <div className="vv-search" style={{ position: 'relative' }}>
-            <Search size={16} />
+            <Search size={15} />
             <input
               type="text"
               placeholder="Buscar en todos los campos..."
@@ -58,22 +76,6 @@ export default function VentasVentas() {
               </button>
             )}
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="vv-tabs">
-          {tabs.map(tab => (
-            <button
-              key={tab.key}
-              className={`vv-tab${ventas.filtroEstado === tab.key ? ' active' : ''}`}
-              onClick={() => ventas.setFiltroEstado(tab.key)}
-            >
-              {tab.label}
-              <span className="vv-tab-count">
-                {ventas.contadores[tab.key] || 0}
-              </span>
-            </button>
-          ))}
         </div>
       </div>
 
