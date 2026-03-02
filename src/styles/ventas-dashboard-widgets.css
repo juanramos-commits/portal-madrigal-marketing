@@ -1,0 +1,603 @@
+/* ==========================================================================
+   DASHBOARD WIDGETS — Grid + Shell + KPI + Chart + Table + Toolbar + Modal
+   ========================================================================== */
+
+/* ── react-grid-layout overrides ────────────────────────────────────────── */
+
+.react-grid-layout {
+  position: relative;
+  transition: height var(--transition-slow);
+}
+
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+
+.react-grid-item.react-draggable-dragging {
+  transition: none;
+  z-index: 10;
+  opacity: 0.9;
+}
+
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.react-grid-item:hover > .react-resizable-handle {
+  opacity: 0.5;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--text-muted);
+}
+
+.react-grid-placeholder {
+  background: var(--primary-muted) !important;
+  border: 1px dashed var(--border-hover) !important;
+  border-radius: var(--radius-md) !important;
+  opacity: 0.4 !important;
+}
+
+/* ── Toolbar ────────────────────────────────────────────────────────────── */
+
+.db-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) 0;
+  flex-wrap: wrap;
+}
+
+.db-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.db-toolbar-greeting {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.db-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.db-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-1-5) var(--space-sm);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.db-toolbar-btn:hover {
+  background: var(--bg-card-hover);
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+
+.db-toolbar-btn--save {
+  background: var(--primary);
+  color: var(--text-inverse);
+  border-color: var(--primary);
+}
+
+.db-toolbar-btn--save:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: var(--text-inverse);
+}
+
+.db-toolbar-btn--add {
+  color: var(--success);
+  border-color: rgba(46, 229, 157, 0.3);
+}
+
+.db-toolbar-btn--add:hover {
+  background: var(--success-bg);
+  border-color: var(--success);
+}
+
+.db-toolbar-btn--cancel {
+  color: var(--error);
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.db-toolbar-btn--cancel:hover {
+  background: var(--error-bg);
+  border-color: var(--error);
+}
+
+.db-toolbar-btn span {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .db-toolbar-btn span {
+    display: inline;
+  }
+}
+
+/* ── Widget Shell ───────────────────────────────────────────────────────── */
+
+.db-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.db-widget:hover {
+  border-color: var(--border-hover);
+}
+
+.db-widget--editing {
+  border-color: var(--border-hover);
+  box-shadow: 0 0 0 1px var(--primary-muted);
+}
+
+.db-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  min-height: 36px;
+  flex-shrink: 0;
+}
+
+.db-widget-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.db-widget-drag-handle {
+  cursor: grab;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: color var(--transition-fast);
+}
+
+.db-widget-drag-handle:hover {
+  color: var(--text);
+}
+
+.db-widget-drag-handle:active {
+  cursor: grabbing;
+}
+
+.db-widget-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.db-widget-remove:hover {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.db-widget-body {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-sm) var(--space-3);
+  min-height: 0;
+}
+
+.db-widget-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 60px;
+  color: var(--text-tertiary);
+  font-size: var(--font-sm);
+}
+
+/* ── Widget Skeleton ────────────────────────────────────────────────────── */
+
+.db-widget-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+}
+
+.db-sk-block {
+  border-radius: var(--radius-xs);
+  background: var(--bg-skeleton);
+  animation: db-sk-pulse 1.5s ease-in-out infinite;
+}
+
+.db-sk-lg {
+  height: 32px;
+  width: 60%;
+}
+
+.db-sk-sm {
+  height: 14px;
+  width: 40%;
+}
+
+@keyframes db-sk-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* ── Widget KPI ─────────────────────────────────────────────────────────── */
+
+.db-wkpi {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100%;
+  gap: var(--space-xs);
+}
+
+.db-wkpi-value {
+  font-size: var(--font-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.db-wkpi-diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+}
+
+.db-wkpi-diff-up {
+  color: var(--success);
+}
+
+.db-wkpi-diff-down {
+  color: var(--error);
+}
+
+.db-wkpi-diff-neutral {
+  color: var(--text-muted);
+}
+
+/* ── Widget Chart ───────────────────────────────────────────────────────── */
+
+.db-wchart {
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+}
+
+.db-wchart-tooltip {
+  background: var(--bg-tooltip);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-3);
+  font-size: var(--font-sm);
+  backdrop-filter: var(--backdrop-blur);
+}
+
+.db-wchart-tooltip-date {
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+  margin-bottom: var(--space-2xs);
+}
+
+.db-wchart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--text);
+}
+
+/* ── Widget Table ───────────────────────────────────────────────────────── */
+
+.db-wtable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-sm);
+}
+
+.db-wtable thead th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: var(--space-xs) var(--space-sm);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  white-space: nowrap;
+}
+
+.db-wtable tbody td {
+  padding: var(--space-1-5) var(--space-sm);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.db-wtable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.db-wtable tbody tr:hover td {
+  background: var(--bg-hover);
+}
+
+.db-wtable-name {
+  font-weight: var(--weight-medium);
+}
+
+.db-wtable-date {
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+}
+
+.db-wtable-amount {
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.db-wtable-estado {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: capitalize;
+}
+
+/* ── Add Widget Modal ───────────────────────────────────────────────────── */
+
+.db-addw {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.db-addw-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-sm);
+}
+
+.db-addw-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-1-5) var(--space-sm);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.db-addw-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.db-addw-tab--active {
+  color: var(--text);
+  background: var(--bg-active);
+}
+
+.db-addw-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-semibold);
+  color: var(--text-muted);
+  background: var(--bg-badge);
+  border-radius: var(--radius-full);
+}
+
+.db-addw-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-sm);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.db-addw-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--space-xl) 0;
+  color: var(--text-tertiary);
+  font-size: var(--font-sm);
+}
+
+.db-addw-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition-fast);
+}
+
+.db-addw-item:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+}
+
+.db-addw-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-badge);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.db-addw-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.db-addw-item-label {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+}
+
+.db-addw-item-size {
+  font-size: var(--font-xs);
+  color: var(--text-tertiary);
+}
+
+/* ── Dashboard Page Layout ──────────────────────────────────────────────── */
+
+.db-page {
+  padding: var(--space-md) var(--page-padding-desktop);
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+}
+
+.db-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}
+
+/* ── Filtro fecha overrides (dentro de toolbar) ─────────────────────────── */
+
+.db-toolbar .db-filtro-fecha {
+  flex-shrink: 0;
+}
+
+.db-toolbar .db-select-periodo {
+  font-size: var(--font-sm);
+  min-width: 130px;
+}
+
+.db-toolbar .db-input-fecha {
+  font-size: var(--font-sm);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .db-page {
+    padding: var(--space-sm) var(--page-padding-mobile);
+  }
+
+  .db-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .db-toolbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .db-toolbar-greeting {
+    font-size: var(--font-md);
+  }
+
+  .db-wkpi-value {
+    font-size: var(--font-xl);
+  }
+
+  .db-addw-list {
+    grid-template-columns: 1fr;
+  }
+}
