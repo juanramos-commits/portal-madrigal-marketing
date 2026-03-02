@@ -939,6 +939,11 @@
   min-height: 100%;
 }
 
+.db-grid-container {
+  width: 100%;
+  min-height: 200px;
+}
+
 .db-loading {
   display: flex;
   align-items: center;
