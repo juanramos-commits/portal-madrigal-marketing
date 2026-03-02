@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import Select from '../ui/Select'
 
@@ -26,7 +27,7 @@ export default function CRMFiltros({
     onCerrar()
   }
 
-  return (
+  return createPortal(
     <>
       <div className="crm-filters-overlay" onClick={onCerrar} />
       <div className="crm-filters-panel">
@@ -135,6 +136,7 @@ export default function CRMFiltros({
           <button className="btn primary" onClick={aplicar}>Aplicar filtros</button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }

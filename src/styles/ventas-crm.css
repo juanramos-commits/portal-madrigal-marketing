@@ -1726,11 +1726,8 @@
   }
 
   .crm-filters-panel {
-    inset: 0;
-    width: auto;
     max-width: none;
     border-left: none;
-    animation: none;
   }
 
   .crm-detail {
