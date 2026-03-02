@@ -468,10 +468,6 @@
     flex-wrap: wrap;
   }
 
-  .vv-filters-panel {
-    max-width: none;
-    border-left: none;
-  }
 }
 
 /* ── Pagination ───────────────────────────────────────────────────── */
@@ -1087,4 +1083,20 @@
   color: var(--text-inverse);
   font-size: var(--font-2xs);
   font-weight: var(--weight-bold);
+}
+
+/* ── Mobile filter panel (must be after base .vv-filters-panel) ─── */
+@media (max-width: 768px) {
+  .vv-filters-panel {
+    max-width: none;
+    border-left: none;
+  }
+
+  .vv-filter-row {
+    overflow: hidden;
+  }
+
+  .vv-filter-field input[type="date"] {
+    min-width: 0;
+  }
 }
