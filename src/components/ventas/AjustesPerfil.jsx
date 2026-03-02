@@ -184,6 +184,7 @@ export default function AjustesPerfil({
             value={nuevaPass}
             onChange={e => { setNuevaPass(e.target.value); setPassGuardada(false) }}
             placeholder="Mínimo 8 caracteres"
+            autoComplete="new-password"
           />
           <PasswordStrengthMeter password={nuevaPass} />
         </div>
@@ -195,6 +196,7 @@ export default function AjustesPerfil({
             value={confirmarPass}
             onChange={e => setConfirmarPass(e.target.value)}
             placeholder="Repite la contraseña"
+            autoComplete="new-password"
           />
         </div>
 
