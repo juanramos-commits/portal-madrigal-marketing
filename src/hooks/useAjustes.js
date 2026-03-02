@@ -356,6 +356,7 @@ export function useAjustes() {
         usuario_id: datos.usuario_id,
         monto: datos.monto,
         concepto: datos.concepto || 'Bonus manual',
+        es_bonus: true,
         es_bonus_manual: true,
         disponible_desde: new Date().toISOString(),
         created_at: new Date().toISOString(),
@@ -363,15 +364,16 @@ export function useAjustes() {
     if (error) throw error
     // Update wallet balance
     const { data: wallet } = await supabase
-      .from('ventas_wallets')
-      .select('saldo_total')
+      .from('ventas_wallet')
+      .select('saldo, total_ganado')
       .eq('usuario_id', datos.usuario_id)
       .single()
     if (wallet) {
       await supabase
-        .from('ventas_wallets')
+        .from('ventas_wallet')
         .update({
-          saldo_total: (wallet.saldo_total || 0) + Number(datos.monto),
+          saldo: (wallet.saldo || 0) + Number(datos.monto),
+          total_ganado: (wallet.total_ganado || 0) + Number(datos.monto),
           updated_at: new Date().toISOString(),
         })
         .eq('usuario_id', datos.usuario_id)

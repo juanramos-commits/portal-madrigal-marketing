@@ -166,6 +166,12 @@
   cursor: not-allowed;
 }
 
+.wt-card-hint {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  margin-top: var(--space-1);
+}
+
 .wt-saldo-info {
   display: flex;
   flex-direction: column;
@@ -182,6 +188,19 @@
   font-size: var(--font-sm);
   color: var(--text-muted);
   opacity: 0.7;
+}
+
+.wt-saldo-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.wt-saldo-retenido {
+  font-size: var(--font-sm);
+  color: var(--warning);
+  opacity: 0.85;
 }
 
 .wt-saldo-ref {
@@ -820,6 +839,25 @@
   font-size: var(--font-sm-md);
   color: var(--success);
   font-weight: var(--weight-medium);
+}
+
+.wt-warning-info {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-bg);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  margin-top: var(--space-sm);
+}
+
+.wt-warning-info svg {
+  flex-shrink: 0;
+  color: var(--warning);
+  margin-top: 2px;
 }
 
 /* ── Loading & empty states ───────────────────────────────────────── */

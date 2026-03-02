@@ -139,8 +139,9 @@ export function generarFacturaPDF(factura) {
   doc.text('Forma de pago: Transferencia bancaria', margin, y)
   y += 6
 
-  if (factura.iban) {
-    doc.text(factura.iban, margin, y)
+  const datosBancarios = factura.datos_bancarios_texto || factura.iban || ''
+  if (datosBancarios) {
+    doc.text(datosBancarios, margin, y)
     y += 10
   }
 

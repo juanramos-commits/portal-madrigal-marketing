@@ -190,10 +190,11 @@ export function useWallet() {
 
   // ── Save datos fiscales ────────────────────────────────────────────
   const guardarDatosFiscales = useCallback(async (datos) => {
+    const { siguiente_numero_factura, id, created_at, updated_at, ...datosParaGuardar } = datos
     const { error: err } = await supabase
       .from('ventas_datos_fiscales')
       .upsert({
-        ...datos,
+        ...datosParaGuardar,
         usuario_id: user.id,
       }, { onConflict: 'usuario_id' })
 

@@ -21,10 +21,18 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
           <span className={`wt-card-value ${saldoNegativo ? 'wt-text-danger' : ''}`}>
             {formatMoneda(saldo)}
           </span>
-          {puedeRetirar && (
-            <button className="wt-btn-retiro" onClick={onSolicitarRetiro}>
-              Solicitar retiro
-            </button>
+          <button
+            className="wt-btn-retiro"
+            onClick={onSolicitarRetiro}
+            disabled={!puedeRetirar}
+          >
+            Solicitar retiro
+          </button>
+          {!puedeRetirar && saldoDisponible <= 0 && !saldoNegativo && (
+            <span className="wt-card-hint">Sin saldo disponible</span>
+          )}
+          {saldoNegativo && (
+            <span className="wt-card-hint wt-text-danger">Saldo negativo</span>
           )}
         </div>
 
@@ -45,11 +53,15 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
 
       {/* Saldo disponible info */}
       <div className="wt-saldo-info">
-        <span>Saldo disponible para retiro: <strong>{formatMoneda(saldoDisponible)}</strong></span>
+        <div className="wt-saldo-line">
+          <span>Saldo disponible para retiro:</span>
+          <strong>{formatMoneda(saldoDisponible)}</strong>
+        </div>
         {disponibleDiferente && saldoDisponible < saldo && (
-          <span className="wt-saldo-note">
-            Algunas comisiones aún no están disponibles (periodo de 48h)
-          </span>
+          <div className="wt-saldo-line wt-saldo-retenido">
+            <span>En retención (48h) o retiros pendientes:</span>
+            <span>{formatMoneda(saldo - saldoDisponible)}</span>
+          </div>
         )}
       </div>
 
