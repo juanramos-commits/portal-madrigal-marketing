@@ -469,7 +469,8 @@
   }
 
   .vv-filters-panel {
-    max-width: 100vw;
+    max-width: none;
+    border-left: none;
   }
 }
 
@@ -1002,6 +1003,7 @@
 
 .vv-filter-row > .vv-filter-field {
   flex: 1;
+  min-width: 0;
 }
 
 .vv-filters-footer {

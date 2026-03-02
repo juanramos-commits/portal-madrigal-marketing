@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 
 const METODOS_PAGO = [
@@ -38,7 +39,7 @@ export default function VentasFiltros({
     onCerrar()
   }
 
-  return (
+  return createPortal(
     <>
       <div className="vv-filters-overlay" onClick={onCerrar} />
       <div className="vv-filters-panel">
@@ -153,6 +154,7 @@ export default function VentasFiltros({
           <button className="vv-btn-primary" onClick={handleAplicar}>Aplicar filtros</button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
