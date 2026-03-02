@@ -64,22 +64,6 @@ export default function VentasCRM() {
             <h1>CRM</h1>
             <span className="crm-lead-count">{crm.totalLeads} leads</span>
           </div>
-          <div className="crm-header-actions">
-            <button
-              className="crm-filter-btn"
-              onClick={crm.refrescar}
-              title="Refrescar"
-              style={{ padding: '0 8px' }}
-            >
-              <RefreshCw />
-            </button>
-
-            {crm.esAdminODirector && (
-              <button className="crm-new-btn" onClick={() => setShowNewLead(true)}>
-                <Plus /> Nuevo Lead
-              </button>
-            )}
-          </div>
         </div>
 
         <div className="crm-header-row">
@@ -122,9 +106,25 @@ export default function VentasCRM() {
           {/* Filter button */}
           <button className="crm-filter-btn" onClick={() => setShowFilters(true)}>
             <Filter />
-            <span>Filtros</span>
+            <span className="crm-toolbar-label">Filtros</span>
             {filtroCount > 0 && <span className="crm-filter-badge">{filtroCount}</span>}
           </button>
+
+          {/* Refresh */}
+          <button
+            className="crm-filter-btn"
+            onClick={crm.refrescar}
+            title="Refrescar"
+          >
+            <RefreshCw />
+          </button>
+
+          {/* Nuevo Lead */}
+          {crm.esAdminODirector && (
+            <button className="crm-new-btn" onClick={() => setShowNewLead(true)}>
+              <Plus /> <span className="crm-toolbar-label">Nuevo Lead</span>
+            </button>
+          )}
         </div>
       </div>
 

@@ -1521,23 +1521,27 @@
 }
 
 /* ── Responsive Breakpoints ────────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .crm-header-top {
-    flex-direction: column;
-    align-items: stretch;
-  }
+/* ── Toolbar label (hidden on mobile) ──────────────────────────────────── */
+.crm-toolbar-label {}
 
-  .crm-header-actions {
-    justify-content: space-between;
+@media (max-width: 768px) {
+  .crm-toolbar-label {
+    display: none;
   }
 
   .crm-search {
     max-width: none;
+    flex-basis: 100%;
+    order: 10;
   }
 
   .crm-pipeline-tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .crm-new-btn {
+    padding: 0 var(--space-sm);
   }
 
   .crm-detail {

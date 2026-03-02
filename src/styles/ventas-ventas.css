@@ -372,6 +372,11 @@
   margin-bottom: var(--space-sm);
 }
 
+.vv-card-top .vv-badge,
+.vv-card-top .vv-estado-selector {
+  margin-left: calc(var(--space-2-5) * -1);
+}
+
 .vv-card-importe {
   font-size: var(--font-md);
   font-weight: var(--weight-bold);
