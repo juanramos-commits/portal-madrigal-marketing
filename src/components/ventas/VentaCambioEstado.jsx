@@ -21,7 +21,9 @@ function getOpcionesDisponibles(venta) {
 
 export default function VentaCambioEstado({ venta, onCambio }) {
   const [abierto, setAbierto] = useState(false)
+  const [pos, setPos] = useState(null)
   const ref = useRef(null)
+  const btnRef = useRef(null)
   const opciones = getOpcionesDisponibles(venta)
   const estadoActual = venta.es_devolucion ? 'devolucion' : venta.estado
 
@@ -34,6 +36,15 @@ export default function VentaCambioEstado({ venta, onCambio }) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [abierto])
 
+  const toggleOpen = (e) => {
+    e.stopPropagation()
+    if (!abierto && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 4, left: rect.left })
+    }
+    setAbierto(!abierto)
+  }
+
   if (opciones.length === 0) {
     return <span className={`vv-badge vv-badge-${estadoActual}`}>{estadoLabels[estadoActual]}</span>
   }
@@ -41,14 +52,15 @@ export default function VentaCambioEstado({ venta, onCambio }) {
   return (
     <div className="vv-estado-selector" ref={ref}>
       <button
+        ref={btnRef}
         className={`vv-badge vv-badge-${estadoActual} vv-estado-editable`}
-        onClick={(e) => { e.stopPropagation(); setAbierto(!abierto) }}
+        onClick={toggleOpen}
       >
         {estadoLabels[estadoActual]}
         <ChevronDown size={12} />
       </button>
-      {abierto && (
-        <div className="vv-estado-dropdown">
+      {abierto && pos && (
+        <div className="vv-estado-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left }}>
           {opciones.map(opcion => (
             <button
               key={opcion}

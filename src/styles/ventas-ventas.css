@@ -850,9 +850,6 @@
 .vv-estado-editable:hover { opacity: 0.8; }
 
 .vv-estado-dropdown {
-  position: absolute;
-  top: calc(100% + var(--space-2xs));
-  right: 0;
   min-width: 180px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
