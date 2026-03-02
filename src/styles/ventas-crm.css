@@ -1725,6 +1725,10 @@
     display: flex;
   }
 
+  .crm-filters-panel {
+    max-width: 100%;
+  }
+
   .crm-detail {
     padding-bottom: var(--space-lg);
   }

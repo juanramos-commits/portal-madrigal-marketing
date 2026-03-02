@@ -594,6 +594,7 @@ export default function Layout() {
       <style>{`
         @media (max-width: 768px) {
           .mobile-menu-btn-float { display: flex !important; }
+          .app-shell:has(.crm-filters-overlay, .ui-modal-overlay, .crm-sheet-overlay, .vv-filters-overlay) > .mobile-menu-btn-float { display: none !important; }
         }
       `}</style>
     </div>
