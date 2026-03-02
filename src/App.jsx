@@ -5,7 +5,6 @@ import { ToastProvider } from './contexts/ToastContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import PermissionRoute from './components/PermissionRoute'
 import Layout from './components/Layout'
-import CookieConsent from './components/CookieConsent'
 
 // Páginas públicas
 const Login = lazy(() => import('./pages/Login'))
@@ -129,7 +128,6 @@ function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
         </Suspense>
-        <CookieConsent />
       </BrowserRouter>
       </ToastProvider>
     </AuthProvider>
