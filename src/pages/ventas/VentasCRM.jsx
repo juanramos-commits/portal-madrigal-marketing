@@ -60,7 +60,7 @@ export default function VentasCRM() {
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="crm-header">
         <div className="crm-header-top">
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
             <h1>CRM</h1>
             <span className="crm-lead-count">{crm.totalLeads} leads</span>
           </div>

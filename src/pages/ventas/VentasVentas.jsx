@@ -31,7 +31,7 @@ export default function VentasVentas() {
       {/* Header */}
       <div className="vv-header">
         <div className="vv-header-top">
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
             <h1>Ventas</h1>
             <span className="vv-count">{ventas.totalVentas} ventas</span>
           </div>
