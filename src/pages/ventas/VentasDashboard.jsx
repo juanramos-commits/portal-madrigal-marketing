@@ -1,5 +1,5 @@
-import { useMemo, useCallback, useRef, useState, useEffect } from 'react'
-import { ResponsiveGridLayout } from 'react-grid-layout'
+import { useMemo, useCallback, useRef } from 'react'
+import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import { useAuth } from '../../contexts/AuthContext'
 import { useDashboard } from '../../hooks/useDashboard'
 import { WIDGET_CATALOG } from '../../config/widgetCatalog'
@@ -43,33 +43,14 @@ function renderWidget(widgetDef, data, config) {
   return null
 }
 
-function useContainerWidth(ref) {
-  const [width, setWidth] = useState(0)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    // Immediate measurement
-    const rect = el.getBoundingClientRect()
-    if (rect.width > 0) setWidth(rect.width)
-    // Observe for resize
-    const ro = new ResizeObserver(entries => {
-      const w = entries[0]?.contentRect?.width
-      if (w && w > 0) setWidth(w)
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [ref])
-  return width
-}
-
 export default function VentasDashboard() {
   const { usuario } = useAuth()
   const db = useDashboard()
-  const containerRef = useRef(null)
-  const width = useContainerWidth(containerRef)
+  const gridRef = useRef(null)
+  const { width } = useContainerWidth({ ref: gridRef, initialWidth: 1200 })
 
   const nombre = usuario?.nombre?.split(' ')[0] || 'usuario'
-  const isMobile = width > 0 && width < 500
+  const isMobile = width < 500
 
   const rglLayouts = useMemo(() => {
     const lg = db.layout.map(item => {
@@ -117,42 +98,40 @@ export default function VentasDashboard() {
         layout={db.layout}
       />
 
-      <div ref={containerRef} className="db-grid-container">
-        {width > 0 && (
-          <ResponsiveGridLayout
-            width={width}
-            layouts={rglLayouts}
-            breakpoints={{ lg: 900, md: 500, sm: 0 }}
-            cols={{ lg: 12, md: 6, sm: 1 }}
-            rowHeight={60}
-            isDraggable={db.editMode && !isMobile}
-            isResizable={db.editMode && !isMobile}
-            compactType="vertical"
-            containerPadding={[0, 0]}
-            margin={[12, 12]}
-            draggableHandle=".db-widget-drag-handle"
-            onLayoutChange={handleLayoutChange}
-          >
-            {db.layout.map(item => {
-              const widgetDef = WIDGET_CATALOG[item.type]
-              if (!widgetDef) return null
-              const widgetData = db.data?.[widgetDef.dataKey]
+      <div ref={gridRef} className="db-grid-container">
+        <ResponsiveGridLayout
+          width={width}
+          layouts={rglLayouts}
+          breakpoints={{ lg: 900, md: 500, sm: 0 }}
+          cols={{ lg: 12, md: 6, sm: 1 }}
+          rowHeight={60}
+          isDraggable={db.editMode && !isMobile}
+          isResizable={db.editMode && !isMobile}
+          compactType="vertical"
+          containerPadding={[0, 0]}
+          margin={[12, 12]}
+          draggableHandle=".db-widget-drag-handle"
+          onLayoutChange={handleLayoutChange}
+        >
+          {db.layout.map(item => {
+            const widgetDef = WIDGET_CATALOG[item.type]
+            if (!widgetDef) return null
+            const widgetData = db.data?.[widgetDef.dataKey]
 
-              return (
-                <div key={item.i}>
-                  <WidgetShell
-                    widgetDef={widgetDef}
-                    editMode={db.editMode}
-                    onRemove={() => db.removeWidget(item.i)}
-                    loading={db.loading}
-                  >
-                    {renderWidget(widgetDef, widgetData, item.config)}
-                  </WidgetShell>
-                </div>
-              )
-            })}
-          </ResponsiveGridLayout>
-        )}
+            return (
+              <div key={item.i}>
+                <WidgetShell
+                  widgetDef={widgetDef}
+                  editMode={db.editMode}
+                  onRemove={() => db.removeWidget(item.i)}
+                  loading={db.loading}
+                >
+                  {renderWidget(widgetDef, widgetData, item.config)}
+                </WidgetShell>
+              </div>
+            )
+          })}
+        </ResponsiveGridLayout>
       </div>
     </div>
   )
