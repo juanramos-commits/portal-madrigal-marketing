@@ -13,8 +13,10 @@
 }
 
 .ntf-header h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: var(--font-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
   color: var(--text);
   margin: 0;
 }
@@ -272,7 +274,7 @@
   }
 
   .ntf-header h1 {
-    font-size: 1.25rem;
+    font-size: var(--font-xl-2xl);
   }
 
   .ntf-item {

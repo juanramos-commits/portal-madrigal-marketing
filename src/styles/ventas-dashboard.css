@@ -22,8 +22,10 @@
 }
 
 .db-title {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: var(--font-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
   color: var(--text);
   margin: 0;
 }
