@@ -1726,7 +1726,11 @@
   }
 
   .crm-filters-panel {
-    max-width: 100%;
+    left: 0;
+    max-width: none;
+    width: 100%;
+    border-left: none;
+    overflow-x: hidden;
   }
 
   .crm-detail {
