@@ -31,7 +31,10 @@ export default function VentasVentas() {
       {/* Header */}
       <div className="vv-header">
         <div className="vv-header-top">
-          <h1>Ventas</h1>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <h1>Ventas</h1>
+            <span className="vv-count">{ventas.totalVentas} ventas</span>
+          </div>
           <div className="vv-search" style={{ position: 'relative' }}>
             <Search size={16} />
             <input
