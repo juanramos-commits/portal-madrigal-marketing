@@ -207,7 +207,7 @@ export default function AjustesPerfil({
       {/* ── Card: Apariencia ── */}
       <div className="aj-card">
         <div className="aj-card-section-title">Apariencia</div>
-        <p className="aj-field-hint" style={{ marginTop: 0, marginBottom: '1rem' }}>
+        <p className="aj-desc">
           Elige el modo de visualización de la aplicación.
         </p>
         <div className="aj-tema-opciones">
@@ -227,8 +227,8 @@ export default function AjustesPerfil({
       {/* ── Card: Cambiar contraseña ── */}
       <div className="aj-card">
         <div className="aj-card-section-title">Cambiar contraseña</div>
-        <input type="text" name="fake-user" autoComplete="username" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
-        <input type="password" name="fake-pass" autoComplete="current-password" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
+        <input type="text" name="fake-user" autoComplete="username" className="aj-sr-only" tabIndex={-1} />
+        <input type="password" name="fake-pass" autoComplete="current-password" className="aj-sr-only" tabIndex={-1} />
 
         <div className="aj-form">
           <div className="aj-field">

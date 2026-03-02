@@ -142,7 +142,7 @@ export default function AjustesWebhooks({
             <div key={w.id} className="aj-card">
               <div className="aj-card-top">
                 <span className="aj-card-title">{w.nombre}</span>
-                <span className={`aj-status-badge ${w.activo ? 'aj-status-active' : 'aj-status-inactive'}`} onClick={() => handleToggleActivo(w)} style={{ cursor: 'pointer' }}>
+                <span className={`aj-status-badge aj-clickable ${w.activo ? 'aj-status-active' : 'aj-status-inactive'}`} onClick={() => handleToggleActivo(w)}>
                   {w.activo ? 'Activo' : 'Inactivo'}
                 </span>
               </div>
@@ -237,7 +237,7 @@ export default function AjustesWebhooks({
                 <div className="aj-log-main">
                   <span className="aj-log-fecha">{new Date(l.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                   <span className={`aj-log-resultado ${l.resultado === 'exito' ? 'aj-text-success' : 'aj-text-error'}`}>
-                    {l.resultado === 'exito' ? '✓ Éxito' : '✗ Error'}
+                    {l.resultado === 'exito' ? 'Éxito' : 'Error'}
                   </span>
                   {l.lead_nombre && <span>{l.lead_nombre}</span>}
                   {l.error_mensaje && <span className="aj-text-error">{l.error_mensaje}</span>}

@@ -97,26 +97,26 @@ export default function CalendarioBloqueos({
         size="sm"
         footer={
           <>
-            <button className="vc-btn-ghost" onClick={() => setShowModal(false)} disabled={saving}>Cancelar</button>
-            <button className="vc-btn-primary" onClick={handleCrear} disabled={saving}>
+            <button className="aj-btn-ghost" onClick={() => setShowModal(false)} disabled={saving}>Cancelar</button>
+            <button className="aj-btn-primary" onClick={handleCrear} disabled={saving}>
               {saving ? 'Creando...' : 'Crear bloqueo'}
             </button>
           </>
         }
       >
-        <div className="vc-field">
+        <div className="aj-field">
           <label>Fecha inicio *</label>
           <input type="datetime-local" value={fechaInicio} onChange={e => { setFechaInicio(e.target.value); setError(null) }} />
         </div>
-        <div className="vc-field">
+        <div className="aj-field">
           <label>Fecha fin *</label>
           <input type="datetime-local" value={fechaFin} onChange={e => { setFechaFin(e.target.value); setError(null) }} />
         </div>
-        <div className="vc-field">
+        <div className="aj-field">
           <label>Motivo</label>
           <input type="text" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Ej: Vacaciones, Cita médica..." />
         </div>
-        {error && <div className="vc-error-msg">{error}</div>}
+        {error && <div className="aj-error">{error}</div>}
       </Modal>
     </div>
   )

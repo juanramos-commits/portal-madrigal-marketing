@@ -66,7 +66,7 @@ export default function AjustesEmpresaFiscal({
           <label>Dirección</label>
           <textarea value={form.direccion} onChange={e => handleChange('direccion', e.target.value)} rows={2} />
         </div>
-        <div className="aj-form-row">
+        <div className="aj-form-row-3">
           <div className="aj-field">
             <label>Ciudad</label>
             <input type="text" value={form.ciudad} onChange={e => handleChange('ciudad', e.target.value)} />

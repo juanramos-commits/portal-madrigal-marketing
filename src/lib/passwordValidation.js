@@ -22,7 +22,7 @@ function calcularFortaleza(password) {
   if (/[0-9]/.test(password)) score++
   if (/[^A-Za-z0-9]/.test(password)) score++
 
-  if (score <= 2) return { nivel: 'debil', color: '#ef4444', porcentaje: 33 }
-  if (score <= 3) return { nivel: 'media', color: '#f59e0b', porcentaje: 66 }
-  return { nivel: 'fuerte', color: '#10b981', porcentaje: 100 }
+  if (score <= 2) return { nivel: 'debil', color: 'var(--error)', className: 'aj-psm-fail', porcentaje: 33 }
+  if (score <= 3) return { nivel: 'media', color: 'var(--warning)', className: 'aj-psm-warn', porcentaje: 66 }
+  return { nivel: 'fuerte', color: 'var(--success)', className: 'aj-psm-ok', porcentaje: 100 }
 }

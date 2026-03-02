@@ -24,10 +24,10 @@ function SortableEstado({ estado, onEditar, onEliminar }) {
     <div ref={setNodeRef} style={style} className="aj-etapa-row">
       <button className="aj-drag-handle" {...attributes} {...listeners}><GripIcon /></button>
       <span className="aj-etapa-color" style={{ background: estado.color || '#9CA3AF' }} />
-      <span className="aj-etapa-nombre" style={{ flex: 1 }}>{estado.nombre}</span>
-      <span className="aj-estado-grab">
-        {estado.es_obligatorio_grabacion ? 'Grabación obligatoria ✓' : ''}
-      </span>
+      <span className="aj-etapa-nombre">{estado.nombre}</span>
+      {estado.es_obligatorio_grabacion && (
+        <span className="aj-estado-grab">Grab. obligatoria</span>
+      )}
       <div className="aj-etapa-actions">
         <button className="aj-btn-icon" onClick={() => onEditar(estado)} title="Editar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>

@@ -4,12 +4,6 @@ import Checkbox from '../ui/Checkbox'
 import Modal from '../ui/Modal'
 import Select from '../ui/Select'
 
-const CloseIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
-
 const ROL_LABELS = { setter: 'Setter', closer: 'Closer', director_ventas: 'Director' }
 const ALL_ROLES = ['setter', 'closer', 'director_ventas']
 

@@ -177,7 +177,7 @@ export default function CalendarioDisponibilidad({
           <span>Total: <strong>{horasSemanales.toFixed(1)}h</strong> semanales</span>
           {minimoHoras != null && (
             <span className={cumpleMinimo ? 'vc-text-success' : 'vc-text-danger'}>
-              Mínimo exigido: {minimoHoras}h {cumpleMinimo ? '✓' : '✗'}
+              Mínimo exigido: {minimoHoras}h
             </span>
           )}
         </div>

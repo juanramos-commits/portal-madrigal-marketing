@@ -50,7 +50,7 @@ export default function AjustesLog({
   const totalPaginas = Math.ceil(actividadTotal / POR_PAGINA)
 
   return (
-    <div className="aj-seccion">
+    <div className="aj-seccion aj-seccion-wide">
       <h3>Log de actividad</h3>
 
       <div className="aj-log-filtros">
@@ -65,8 +65,14 @@ export default function AjustesLog({
             <option key={t.value} value={t.value}>{t.label}</option>
           ))}
         </Select>
-        <input type="date" value={filtroDesde} onChange={e => { setFiltroDesde(e.target.value); setPagina(0) }} />
-        <input type="date" value={filtroHasta} onChange={e => { setFiltroHasta(e.target.value); setPagina(0) }} />
+        <div className="aj-log-date-field">
+          <label>Desde</label>
+          <input type="date" value={filtroDesde} onChange={e => { setFiltroDesde(e.target.value); setPagina(0) }} />
+        </div>
+        <div className="aj-log-date-field">
+          <label>Hasta</label>
+          <input type="date" value={filtroHasta} onChange={e => { setFiltroHasta(e.target.value); setPagina(0) }} />
+        </div>
       </div>
 
       {loading ? (
