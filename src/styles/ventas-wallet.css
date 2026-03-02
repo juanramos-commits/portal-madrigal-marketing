@@ -846,6 +846,7 @@
 .wt-field-hint {
   font-size: var(--font-sm);
   color: var(--text-tertiary);
+  margin-top: var(--space-xs);
 }
 
 .wt-input-readonly {
