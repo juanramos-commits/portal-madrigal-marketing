@@ -4,7 +4,6 @@
 
 /* ═══ PAGE ═══ */
 .db-page {
-  padding: var(--space-md);
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -830,7 +829,7 @@
 /* ═══ DESKTOP ═══ */
 @media (min-width: 769px) {
   .db-page {
-    padding: var(--space-lg) var(--space-xl);
+    /* padding handled by parent .page wrapper */
   }
 
   .db-kpis-grid {

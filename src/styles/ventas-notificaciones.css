@@ -1,6 +1,5 @@
 /* ── Notificaciones ── */
 .ntf-page {
-  padding: 1.5rem;
   max-width: 720px;
   margin: 0 auto;
 }
@@ -270,7 +269,7 @@
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .ntf-page {
-    padding: 1rem;
+    /* padding handled by parent .page wrapper */
   }
 
   .ntf-header h1 {

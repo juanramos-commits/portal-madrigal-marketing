@@ -1,6 +1,5 @@
 /* ── Biblioteca ── */
 .bib-page {
-  padding: 1.5rem;
   max-width: 960px;
   margin: 0 auto;
 }
@@ -814,7 +813,7 @@
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .bib-page {
-    padding: 1rem;
+    /* padding handled by parent .page wrapper */
   }
 
   .bib-header {
