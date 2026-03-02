@@ -48,6 +48,10 @@ function useContainerWidth(ref) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    // Immediate measurement
+    const rect = el.getBoundingClientRect()
+    if (rect.width > 0) setWidth(rect.width)
+    // Observe for resize
     const ro = new ResizeObserver(entries => {
       const w = entries[0]?.contentRect?.width
       if (w && w > 0) setWidth(w)
