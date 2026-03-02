@@ -13,6 +13,7 @@ import AjustesReunionEstados from '../../components/ventas/AjustesReunionEstados
 import AjustesCamposObligatorios from '../../components/ventas/AjustesCamposObligatorios'
 import AjustesLog from '../../components/ventas/AjustesLog'
 import '../../styles/ventas-ajustes.css'
+import '../../styles/ventas-calendario.css'
 
 const UserIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>

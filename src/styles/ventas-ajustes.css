@@ -410,6 +410,90 @@
   margin: var(--space-md) 0;
 }
 
+/* ═══ FORM ROW (2 cols) ═══ */
+.aj-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .aj-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ═══ ETAPAS (Pipelines) ═══ */
+.aj-etapa-orden {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 24px;
+}
+
+.aj-etapa-tipo-badge {
+  font-size: 0.688rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.aj-etapa-max {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ═══ PAQUETES ═══ */
+.aj-card-precio {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.aj-card-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ═══ COMISIONES ═══ */
+.aj-com-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.aj-com-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.aj-com-row:last-child {
+  border-bottom: none;
+}
+
+.aj-com-rol {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 100px;
+}
+
+.aj-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
 .aj-cal-section {
   margin-bottom: 0;
 }
