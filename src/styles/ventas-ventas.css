@@ -454,6 +454,18 @@
   .vv-search {
     max-width: none;
   }
+
+  .vv-toolbar-label {
+    display: none;
+  }
+
+  .vv-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .vv-filters-panel {
+    max-width: 100vw;
+  }
 }
 
 /* ── Pagination ───────────────────────────────────────────────────── */
@@ -795,4 +807,276 @@
 .vv-btn-danger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.vv-btn-warning {
+  padding: var(--space-sm) var(--space-5);
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--warning);
+  color: var(--text-inverse);
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+.vv-btn-warning:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.vv-btn-devolucion {
+  padding: var(--space-sm) var(--space-5);
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--color-devolucion);
+  color: var(--text-inverse);
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+.vv-btn-devolucion:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Estado change dropdown ──────────────────────────────────────── */
+.vv-estado-selector {
+  position: relative;
+  display: inline-flex;
+}
+
+.vv-estado-editable {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  border: none;
+  background: inherit;
+}
+.vv-estado-editable:hover { opacity: 0.8; }
+
+.vv-estado-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-2xs));
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-dropdown);
+  z-index: var(--z-dropdown);
+  overflow: hidden;
+}
+
+.vv-estado-option {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-3);
+  text-align: left;
+  font-size: var(--font-sm-md);
+  color: var(--text);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.vv-estado-option:hover { background: var(--bg-hover); }
+
+.vv-estado-opt-aprobada { color: var(--success); }
+.vv-estado-opt-rechazada { color: var(--error); }
+.vv-estado-opt-pendiente { color: var(--warning); }
+.vv-estado-opt-devolucion { color: var(--color-devolucion); }
+
+/* ── Filter panel ────────────────────────────────────────────────── */
+.vv-filters-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  z-index: var(--z-overlay);
+  animation: vv-fade-in 0.15s ease;
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+}
+
+@keyframes vv-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.vv-filters-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 360px;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  z-index: var(--z-overlay);
+  display: flex;
+  flex-direction: column;
+  animation: vv-slide-right 0.2s ease;
+}
+
+@keyframes vv-slide-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.vv-filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.vv-filters-header h2 {
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  margin: 0;
+}
+
+.vv-filters-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--space-xs);
+  display: flex;
+}
+.vv-filters-close:hover { color: var(--text); }
+
+.vv-filters-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-active) transparent;
+}
+
+.vv-filters-body::-webkit-scrollbar { width: 4px; }
+.vv-filters-body::-webkit-scrollbar-thumb {
+  background: var(--bg-active);
+  border-radius: var(--radius-xs);
+}
+
+.vv-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  flex: 1;
+}
+
+.vv-filter-field label {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.vv-filter-field select,
+.vv-filter-field input {
+  height: 36px;
+  padding: 0 var(--space-sm);
+  font-size: var(--font-sm-md);
+  color: var(--text);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  width: 100%;
+}
+
+.vv-filter-field select:focus,
+.vv-filter-field input:focus {
+  border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.vv-filter-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.vv-filters-footer {
+  padding: var(--space-md);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.vv-filters-footer button { flex: 1; }
+
+.vv-btn-primary {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--primary);
+  color: var(--text-inverse);
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+.vv-btn-primary:hover { opacity: 0.9; }
+
+/* ── Filter button in toolbar ────────────────────────────────────── */
+.vv-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: 34px;
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--font-sm-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.vv-filter-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+
+/* ── Export button ────────────────────────────────────────────────── */
+.vv-export-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: 34px;
+  padding: 0 var(--space-3);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--font-sm-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.vv-export-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+.vv-export-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.vv-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: var(--text-inverse);
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-bold);
 }

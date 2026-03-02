@@ -1,8 +1,8 @@
 import { useState, useCallback, Fragment } from 'react'
-import { Check, X, RotateCcw, Minus } from 'lucide-react'
+import { Check, Minus } from 'lucide-react'
 import VentaDetalle from './VentaDetalle'
-import { ModalAprobar, ModalRechazar } from './VentaAprobacion'
-import VentaDevolucion from './VentaDevolucion'
+import VentaCambioEstado from './VentaCambioEstado'
+import ModalCambioEstado from './ModalCambioEstado'
 
 function formatDate(d) {
   if (!d) return '-'
@@ -34,15 +34,17 @@ export default function VentasListado({
   onPageChange,
   loading,
   esAdmin,
-  onAprobar,
-  onRechazar,
-  onDevolucion,
+  onCambiarEstado,
   cargarComisiones,
 }) {
   const [expandedId, setExpandedId] = useState(null)
   const [comisionesMap, setComisionesMap] = useState({})
   const [loadingComisiones, setLoadingComisiones] = useState({})
   const [modal, setModal] = useState(null)
+
+  const handleCambioEstado = (ventaId, nuevoEstado, venta) => {
+    setModal({ type: 'cambio-estado', ventaId, nuevoEstado, venta })
+  }
 
   const totalPages = Math.ceil(totalCount / pageSize)
 
@@ -76,13 +78,13 @@ export default function VentasListado({
             <tr>
               <th>Lead</th><th>Fecha</th><th>Paquete</th><th>Importe</th>
               <th>Método</th><th>Pago ún.</th><th>Setter</th><th>Closer</th>
-              <th>Estado</th><th>Acciones</th>
+              <th>Estado</th>
             </tr>
           </thead>
           <tbody>
             {[1, 2, 3, 4, 5].map(i => (
               <tr key={i}>
-                {Array(10).fill(0).map((_, j) => (
+                {Array(9).fill(0).map((_, j) => (
                   <td key={j}><span className="vv-skeleton" style={{ width: '80%', height: 14, display: 'block' }} /></td>
                 ))}
               </tr>
@@ -105,7 +107,11 @@ export default function VentasListado({
           <div key={venta.id} className="vv-card">
             <div className="vv-card-main" onClick={() => toggleExpand(venta.id)}>
               <div className="vv-card-top">
-                <span className={`vv-badge ${estado.className}`}>{estado.label}</span>
+                {esAdmin ? (
+                  <VentaCambioEstado venta={venta} onCambio={handleCambioEstado} />
+                ) : (
+                  <span className={`vv-badge ${estado.className}`}>{estado.label}</span>
+                )}
                 <span className="vv-card-importe">{formatImporte(venta.importe)}</span>
               </div>
               <div className="vv-card-lead">{venta.lead?.nombre || '-'}</div>
@@ -120,32 +126,6 @@ export default function VentasListado({
               </div>
               <div className="vv-card-fecha">{formatDate(venta.fecha_venta)}</div>
             </div>
-
-            {/* Actions */}
-            {esAdmin && (
-              <div className="vv-card-actions">
-                {venta.estado === 'pendiente' && !venta.es_devolucion && (
-                  <>
-                    <button className="vv-action-btn vv-action-approve" onClick={(e) => { e.stopPropagation(); setModal({ type: 'aprobar', venta }) }}>
-                      <Check size={14} /> Aprobar
-                    </button>
-                    <button className="vv-action-btn vv-action-reject" onClick={(e) => { e.stopPropagation(); setModal({ type: 'rechazar', venta }) }}>
-                      <X size={14} /> Rechazar
-                    </button>
-                  </>
-                )}
-                {venta.estado === 'aprobada' && !venta.es_devolucion && (
-                  <>
-                    <button className="vv-action-btn vv-action-reject" onClick={(e) => { e.stopPropagation(); setModal({ type: 'revertir', venta }) }}>
-                      <X size={14} /> Rechazar
-                    </button>
-                    <button className="vv-action-btn vv-action-refund" onClick={(e) => { e.stopPropagation(); setModal({ type: 'devolucion', venta }) }}>
-                      <RotateCcw size={14} /> Devolución
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
 
             {/* Expanded detail */}
             {isExpanded && (
@@ -179,13 +159,12 @@ export default function VentasListado({
             <th>Setter</th>
             <th>Closer</th>
             <th>Estado</th>
-            {esAdmin && <th>Acciones</th>}
           </tr>
         </thead>
         <tbody>
           {ventas.length === 0 ? (
             <tr>
-              <td colSpan={esAdmin ? 10 : 9} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
+              <td colSpan={9} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
                 No se encontraron ventas
               </td>
             </tr>
@@ -210,37 +189,17 @@ export default function VentasListado({
                   <td>{venta.es_pago_unico ? <Check size={14} /> : <Minus size={14} />}</td>
                   <td>{venta.setter?.nombre || '-'}</td>
                   <td>{venta.closer?.nombre || '-'}</td>
-                  <td><span className={`vv-badge ${estado.className}`}>{estado.label}</span></td>
-                  {esAdmin && (
-                    <td onClick={e => e.stopPropagation()}>
-                      <div className="vv-actions-cell">
-                        {venta.estado === 'pendiente' && !venta.es_devolucion && (
-                          <>
-                            <button className="vv-action-btn vv-action-approve" onClick={() => setModal({ type: 'aprobar', venta })} title="Aprobar">
-                              <Check size={14} />
-                            </button>
-                            <button className="vv-action-btn vv-action-reject" onClick={() => setModal({ type: 'rechazar', venta })} title="Rechazar">
-                              <X size={14} />
-                            </button>
-                          </>
-                        )}
-                        {venta.estado === 'aprobada' && !venta.es_devolucion && (
-                          <>
-                            <button className="vv-action-btn vv-action-reject" onClick={() => setModal({ type: 'revertir', venta })} title="Rechazar">
-                              <X size={14} />
-                            </button>
-                            <button className="vv-action-btn vv-action-refund" onClick={() => setModal({ type: 'devolucion', venta })} title="Devolución">
-                              <RotateCcw size={14} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  )}
+                  <td onClick={e => e.stopPropagation()}>
+                    {esAdmin ? (
+                      <VentaCambioEstado venta={venta} onCambio={handleCambioEstado} />
+                    ) : (
+                      <span className={`vv-badge ${estado.className}`}>{estado.label}</span>
+                    )}
+                  </td>
                 </tr>
                 {isExpanded && (
                   <tr className="vv-expanded-row">
-                    <td colSpan={esAdmin ? 10 : 9}>
+                    <td colSpan={9}>
                       <VentaDetalle
                         venta={venta}
                         comisiones={comisionesMap[venta.id]}
@@ -284,33 +243,15 @@ export default function VentasListado({
         </div>
       )}
 
-      {/* Modals */}
-      {modal?.type === 'aprobar' && (
-        <ModalAprobar
+      {/* Modal de cambio de estado */}
+      {modal?.type === 'cambio-estado' && (
+        <ModalCambioEstado
           venta={modal.venta}
-          onConfirm={async (id) => { await onAprobar(id); handleActionDone() }}
-          onCancel={() => setModal(null)}
-        />
-      )}
-      {modal?.type === 'rechazar' && (
-        <ModalRechazar
-          venta={modal.venta}
-          onConfirm={async (id) => { await onRechazar(id); handleActionDone() }}
-          onCancel={() => setModal(null)}
-        />
-      )}
-      {modal?.type === 'revertir' && (
-        <ModalRechazar
-          venta={modal.venta}
-          esReversion
-          onConfirm={async (id) => { await onRechazar(id); handleActionDone() }}
-          onCancel={() => setModal(null)}
-        />
-      )}
-      {modal?.type === 'devolucion' && (
-        <VentaDevolucion
-          venta={modal.venta}
-          onConfirm={async (id) => { await onDevolucion(id); handleActionDone() }}
+          nuevoEstado={modal.nuevoEstado}
+          onConfirm={async () => {
+            await onCambiarEstado(modal.ventaId, modal.nuevoEstado, modal.venta)
+            handleActionDone()
+          }}
           onCancel={() => setModal(null)}
         />
       )}

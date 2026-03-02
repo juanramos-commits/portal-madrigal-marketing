@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Papa from 'papaparse'
+import { saveAs } from 'file-saver'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
@@ -17,10 +19,17 @@ export function useVentas() {
   const [totalVentas, setTotalVentas] = useState(0)
   const [contadores, setContadores] = useState({ todas: 0, pendiente: 0, aprobada: 0, rechazada: 0, devolucion: 0 })
   const [error, setError] = useState(null)
+  const [filtros, setFiltrosState] = useState({
+    setter_id: '', closer_id: '', paquete_id: '', metodo_pago: '',
+    es_pago_unico: '', importe_min: '', importe_max: '', fecha_desde: '', fecha_hasta: '',
+  })
+  const [settersList, setSettersList] = useState([])
+  const [closersList, setClosersList] = useState([])
 
   const busquedaTimeoutRef = useRef(null)
   const searchRequestRef = useRef(0)
   const [searchResultCount, setSearchResultCount] = useState(null)
+  const [exportando, setExportando] = useState(false)
 
   // Roles
   const [rolesComerciales, setRolesComerciales] = useState([])
@@ -58,6 +67,20 @@ export function useVentas() {
     cargarPaquetes()
   }, [cargarPaquetes])
 
+  // ── Load setters/closers for filter selects ───────────────────────
+  useEffect(() => {
+    if (!user?.id) return
+    const cargar = async () => {
+      const [{ data: s }, { data: c }] = await Promise.all([
+        supabase.from('ventas_roles_comerciales').select('usuario_id, usuario:usuarios(id, nombre, email)').eq('rol', 'setter').eq('activo', true),
+        supabase.from('ventas_roles_comerciales').select('usuario_id, usuario:usuarios(id, nombre, email)').eq('rol', 'closer').eq('activo', true),
+      ])
+      setSettersList(s || [])
+      setClosersList(c || [])
+    }
+    cargar()
+  }, [user?.id])
+
   // ── Build query (non-search only) ──────────────────────────────────
   const buildQuery = useCallback(() => {
     let query = supabase
@@ -92,8 +115,19 @@ export function useVentas() {
       query = query.eq('estado', filtroEstado).eq('es_devolucion', false)
     }
 
+    // Advanced filters
+    if (filtros.setter_id) query = query.eq('setter_id', filtros.setter_id)
+    if (filtros.closer_id) query = query.eq('closer_id', filtros.closer_id)
+    if (filtros.paquete_id) query = query.eq('paquete_id', filtros.paquete_id)
+    if (filtros.metodo_pago) query = query.eq('metodo_pago', filtros.metodo_pago)
+    if (filtros.es_pago_unico !== '') query = query.eq('es_pago_unico', filtros.es_pago_unico === 'true')
+    if (filtros.importe_min) query = query.gte('importe', parseFloat(filtros.importe_min))
+    if (filtros.importe_max) query = query.lte('importe', parseFloat(filtros.importe_max))
+    if (filtros.fecha_desde) query = query.gte('fecha_venta', filtros.fecha_desde)
+    if (filtros.fecha_hasta) query = query.lte('fecha_venta', filtros.fecha_hasta)
+
     return query
-  }, [esAdminODirector, esCloser, esSetter, user?.id, filtroEstado])
+  }, [esAdminODirector, esCloser, esSetter, user?.id, filtroEstado, filtros])
 
   // ── Load ventas ────────────────────────────────────────────────────
   const cargarVentas = useCallback(async () => {
@@ -133,6 +167,16 @@ export function useVentas() {
             q = q.or(`closer_id.eq.${user.id},setter_id.eq.${user.id}`)
           }
         }
+        // Advanced filters
+        if (filtros.setter_id) q = q.eq('setter_id', filtros.setter_id)
+        if (filtros.closer_id) q = q.eq('closer_id', filtros.closer_id)
+        if (filtros.paquete_id) q = q.eq('paquete_id', filtros.paquete_id)
+        if (filtros.metodo_pago) q = q.eq('metodo_pago', filtros.metodo_pago)
+        if (filtros.es_pago_unico !== '') q = q.eq('es_pago_unico', filtros.es_pago_unico === 'true')
+        if (filtros.importe_min) q = q.gte('importe', parseFloat(filtros.importe_min))
+        if (filtros.importe_max) q = q.lte('importe', parseFloat(filtros.importe_max))
+        if (filtros.fecha_desde) q = q.gte('fecha_venta', filtros.fecha_desde)
+        if (filtros.fecha_hasta) q = q.lte('fecha_venta', filtros.fecha_hasta)
         return q
       }
 
@@ -160,7 +204,7 @@ export function useVentas() {
     } catch (_) {
       // Non-critical
     }
-  }, [esAdminODirector, esCloser, esSetter, user?.id])
+  }, [esAdminODirector, esCloser, esSetter, user?.id, filtros])
 
   // ── Estado → RPC params helper ────────────────────────────────────
   const getEstadoRPCParams = (estado) => {
@@ -296,6 +340,79 @@ export function useVentas() {
     return data || []
   }, [])
 
+  // ── Export CSV ─────────────────────────────────────────────────────
+  const exportarCSV = useCallback(async () => {
+    setExportando(true)
+    try {
+      // Build query without pagination to get ALL results
+      let query = supabase
+        .from('ventas_ventas')
+        .select(`
+          *, lead:ventas_leads(nombre, email, telefono, nombre_negocio),
+          paquete:ventas_paquetes(nombre),
+          setter:usuarios!ventas_ventas_setter_id_fkey(nombre),
+          closer:usuarios!ventas_ventas_closer_id_fkey(nombre)
+        `)
+        .order('fecha_venta', { ascending: false })
+
+      // RBAC
+      if (!esAdminODirector) {
+        if (esCloser && !esSetter) query = query.eq('closer_id', user.id)
+        else if (esSetter && !esCloser) query = query.eq('setter_id', user.id)
+        else if (esSetter && esCloser) query = query.or(`closer_id.eq.${user.id},setter_id.eq.${user.id}`)
+      }
+
+      // Status filter
+      if (filtroEstado === 'devolucion') query = query.eq('es_devolucion', true)
+      else if (filtroEstado !== 'todas') query = query.eq('estado', filtroEstado).eq('es_devolucion', false)
+
+      // Advanced filters
+      if (filtros.setter_id) query = query.eq('setter_id', filtros.setter_id)
+      if (filtros.closer_id) query = query.eq('closer_id', filtros.closer_id)
+      if (filtros.paquete_id) query = query.eq('paquete_id', filtros.paquete_id)
+      if (filtros.metodo_pago) query = query.eq('metodo_pago', filtros.metodo_pago)
+      if (filtros.es_pago_unico !== '') query = query.eq('es_pago_unico', filtros.es_pago_unico === 'true')
+      if (filtros.importe_min) query = query.gte('importe', parseFloat(filtros.importe_min))
+      if (filtros.importe_max) query = query.lte('importe', parseFloat(filtros.importe_max))
+      if (filtros.fecha_desde) query = query.gte('fecha_venta', filtros.fecha_desde)
+      if (filtros.fecha_hasta) query = query.lte('fecha_venta', filtros.fecha_hasta)
+
+      const { data, error: err } = await query
+      if (err) throw err
+
+      const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-ES') : '-'
+
+      const csvData = (data || []).map(v => ({
+        'Lead': v.lead?.nombre || '-',
+        'Email': v.lead?.email || '-',
+        'Teléfono': v.lead?.telefono || '-',
+        'Nombre Negocio': v.lead?.nombre_negocio || '-',
+        'Fecha Venta': fmtDate(v.fecha_venta),
+        'Paquete': v.paquete?.nombre || '-',
+        'Importe': v.importe ? `${v.importe}€` : '0€',
+        'Método Pago': v.metodo_pago || '-',
+        'Pago Único': v.es_pago_unico ? 'Sí' : 'No',
+        'Setter': v.setter?.nombre || '-',
+        'Closer': v.closer?.nombre || '-',
+        'Estado': v.estado || '-',
+        'Es Devolución': v.es_devolucion ? 'Sí' : 'No',
+        'Fecha Aprobación': fmtDate(v.fecha_aprobacion),
+        'Fecha Rechazo': fmtDate(v.fecha_rechazo),
+        'Fecha Devolución': fmtDate(v.fecha_devolucion),
+      }))
+
+      const csv = Papa.unparse(csvData, { delimiter: ';', quotes: true })
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
+      const fecha = new Date().toISOString().split('T')[0]
+      saveAs(blob, `ventas_${fecha}.csv`)
+    } catch (err) {
+      console.error('Error exportando CSV:', err)
+      setError('Error al exportar CSV')
+    } finally {
+      setExportando(false)
+    }
+  }, [esAdminODirector, esCloser, esSetter, user?.id, filtroEstado, filtros])
+
   // ── Refresh all ────────────────────────────────────────────────────
   const refrescar = useCallback(() => {
     if (busqueda.trim()) {
@@ -427,6 +544,38 @@ export function useVentas() {
     refrescar()
   }, [refrescar])
 
+  // ── Revert rejection (rechazada → pendiente) ─────────────────────
+  const revertirRechazo = useCallback(async (ventaId) => {
+    const { data, error: err } = await supabase.rpc('ventas_revertir_rechazo', { p_venta_id: ventaId })
+    if (err) throw err
+    if (data && !data.ok) throw new Error(data.error)
+    refrescar()
+  }, [refrescar])
+
+  // ── Revert refund (devolución → aprobada) ─────────────────────────
+  const revertirDevolucion = useCallback(async (ventaId) => {
+    const { data, error: err } = await supabase.rpc('ventas_revertir_devolucion', { p_venta_id: ventaId })
+    if (err) throw err
+    if (data && !data.ok) throw new Error(data.error)
+    refrescar()
+  }, [refrescar])
+
+  // ── General state change handler ──────────────────────────────────
+  const cambiarEstado = useCallback(async (ventaId, nuevoEstado, venta) => {
+    const estadoActual = venta.es_devolucion ? 'devolucion' : venta.estado
+    const transicion = `${estadoActual}->${nuevoEstado}`
+
+    switch (transicion) {
+      case 'pendiente->aprobada': return aprobarVenta(ventaId)
+      case 'pendiente->rechazada': return rechazarVenta(ventaId)
+      case 'aprobada->rechazada': return rechazarVenta(ventaId)
+      case 'aprobada->devolucion': return marcarDevolucion(ventaId)
+      case 'rechazada->pendiente': return revertirRechazo(ventaId)
+      case 'devolucion->aprobada': return revertirDevolucion(ventaId)
+      default: throw new Error(`Transición no permitida: ${transicion}`)
+    }
+  }, [aprobarVenta, rechazarVenta, marcarDevolucion, revertirRechazo, revertirDevolucion])
+
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
 
@@ -464,7 +613,7 @@ export function useVentas() {
     } else {
       cargarVentas()
     }
-  }, [filtroEstado, paginaActual])
+  }, [filtroEstado, paginaActual, filtros])
 
   // ── Reload counters on filter change ───────────────────────────────
   useEffect(() => {
@@ -472,7 +621,7 @@ export function useVentas() {
     if (!busqueda.trim()) {
       cargarContadores()
     }
-  }, [filtroEstado])
+  }, [filtroEstado, filtros])
 
   // ── Debounced search ───────────────────────────────────────────────
   useEffect(() => {
@@ -499,6 +648,8 @@ export function useVentas() {
     setFiltroEstado: (estado) => { setPaginaActual(0); setFiltroEstado(estado) },
     setBusqueda,
     setPaginaActual,
+    setFiltros: (f) => { setPaginaActual(0); setFiltrosState(f) },
+    filtros, settersList, closersList,
 
     cargarVentas,
     cargarPaquetes,
@@ -510,6 +661,12 @@ export function useVentas() {
     aprobarVenta,
     rechazarVenta,
     marcarDevolucion,
+    revertirRechazo,
+    revertirDevolucion,
+    cambiarEstado,
+
+    exportarCSV,
+    exportando,
 
     refrescar,
     pageSize: PAGE_SIZE,

@@ -1,6 +1,8 @@
-import { Search, X } from 'lucide-react'
+import { useState } from 'react'
+import { Search, X, Filter, Download } from 'lucide-react'
 import { useVentas } from '../../hooks/useVentas'
 import VentasListado from '../../components/ventas/VentasListado'
+import VentasFiltros from '../../components/ventas/VentasFiltros'
 import '../../styles/ventas-ventas.css'
 
 const tabs = [
@@ -13,18 +15,9 @@ const tabs = [
 
 export default function VentasVentas() {
   const ventas = useVentas()
+  const [mostrarFiltros, setMostrarFiltros] = useState(false)
 
-  const handleAprobar = async (ventaId) => {
-    await ventas.aprobarVenta(ventaId)
-  }
-
-  const handleRechazar = async (ventaId) => {
-    await ventas.rechazarVenta(ventaId)
-  }
-
-  const handleDevolucion = async (ventaId) => {
-    await ventas.marcarDevolucion(ventaId)
-  }
+  const filtrosActivos = Object.values(ventas.filtros).filter(v => v !== '' && v !== null && v !== undefined).length
 
   return (
     <div className="vv-page">
@@ -76,8 +69,36 @@ export default function VentasVentas() {
               </button>
             )}
           </div>
+          <button className="vv-filter-btn" onClick={() => setMostrarFiltros(true)}>
+            <Filter size={16} />
+            <span className="vv-toolbar-label">Filtros</span>
+            {filtrosActivos > 0 && (
+              <span className="vv-filter-badge">{filtrosActivos}</span>
+            )}
+          </button>
+          <button
+            className="vv-export-btn"
+            onClick={ventas.exportarCSV}
+            disabled={ventas.exportando || ventas.totalVentas === 0}
+            title="Exportar a CSV"
+          >
+            <Download size={16} />
+            <span className="vv-toolbar-label">CSV</span>
+          </button>
         </div>
       </div>
+
+      {/* Filters panel */}
+      {mostrarFiltros && (
+        <VentasFiltros
+          filtros={ventas.filtros}
+          onAplicar={ventas.setFiltros}
+          onCerrar={() => setMostrarFiltros(false)}
+          setters={ventas.settersList}
+          closers={ventas.closersList}
+          paquetes={ventas.paquetes}
+        />
+      )}
 
       {/* Error */}
       {ventas.error && (
@@ -96,9 +117,7 @@ export default function VentasVentas() {
         onPageChange={ventas.setPaginaActual}
         loading={ventas.loading}
         esAdmin={ventas.esAdmin}
-        onAprobar={handleAprobar}
-        onRechazar={handleRechazar}
-        onDevolucion={handleDevolucion}
+        onCambiarEstado={ventas.cambiarEstado}
         cargarComisiones={ventas.cargarComisiones}
       />
     </div>
