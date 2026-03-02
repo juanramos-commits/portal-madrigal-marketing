@@ -2,15 +2,40 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import Select from '../ui/Select'
 
-const TIPOS_ACCION = [
-  { value: '', label: 'Todas las acciones' },
-  { value: 'creacion', label: 'Creación' },
-  { value: 'cambio_etapa', label: 'Cambio de etapa' },
-  { value: 'edicion', label: 'Edición' },
-  { value: 'venta', label: 'Venta' },
-  { value: 'asignacion', label: 'Asignación' },
-  { value: 'nota', label: 'Nota' },
+const MODULOS = [
+  { value: '', label: 'Todos los módulos' },
+  { value: 'auth', label: 'Autenticación' },
+  { value: 'crm', label: 'CRM' },
+  { value: 'ventas', label: 'Ventas' },
+  { value: 'wallet', label: 'Wallet' },
+  { value: 'ajustes', label: 'Ajustes' },
+  { value: 'calendario', label: 'Calendario' },
+  { value: 'biblioteca', label: 'Biblioteca' },
 ]
+
+const ACCIONES = [
+  { value: '', label: 'Todas las acciones' },
+  { value: 'login', label: 'Login' },
+  { value: 'logout', label: 'Logout' },
+  { value: 'crear', label: 'Crear' },
+  { value: 'editar', label: 'Editar' },
+  { value: 'eliminar', label: 'Eliminar' },
+  { value: 'aprobar', label: 'Aprobar' },
+  { value: 'rechazar', label: 'Rechazar' },
+  { value: 'cambio_etapa', label: 'Cambio de etapa' },
+  { value: 'asignar', label: 'Asignación' },
+  { value: 'devolucion', label: 'Devolución' },
+]
+
+const MODULO_LABELS = {
+  auth: 'Auth',
+  crm: 'CRM',
+  ventas: 'Ventas',
+  wallet: 'Wallet',
+  ajustes: 'Ajustes',
+  calendario: 'Calendario',
+  biblioteca: 'Biblioteca',
+}
 
 const POR_PAGINA = 50
 
@@ -18,7 +43,8 @@ export default function AjustesLog({
   actividad, actividadTotal, onCargar,
 }) {
   const [filtroUsuario, setFiltroUsuario] = useState('')
-  const [filtroTipo, setFiltroTipo] = useState('')
+  const [filtroModulo, setFiltroModulo] = useState('')
+  const [filtroAccion, setFiltroAccion] = useState('')
   const [filtroDesde, setFiltroDesde] = useState('')
   const [filtroHasta, setFiltroHasta] = useState('')
   const [pagina, setPagina] = useState(0)
@@ -41,11 +67,12 @@ export default function AjustesLog({
     setLoading(true)
     onCargar({
       usuario_id: filtroUsuario || undefined,
-      tipo: filtroTipo || undefined,
+      modulo: filtroModulo || undefined,
+      accion: filtroAccion || undefined,
       desde: filtroDesde || undefined,
       hasta: filtroHasta || undefined,
     }, pagina, POR_PAGINA).finally(() => setLoading(false))
-  }, [filtroUsuario, filtroTipo, filtroDesde, filtroHasta, pagina])
+  }, [filtroUsuario, filtroModulo, filtroAccion, filtroDesde, filtroHasta, pagina])
 
   const totalPaginas = Math.ceil(actividadTotal / POR_PAGINA)
 
@@ -60,9 +87,14 @@ export default function AjustesLog({
             <option key={u.id} value={u.id}>{u.nombre || u.email}</option>
           ))}
         </Select>
-        <Select value={filtroTipo} onChange={e => { setFiltroTipo(e.target.value); setPagina(0) }}>
-          {TIPOS_ACCION.map(t => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+        <Select value={filtroModulo} onChange={e => { setFiltroModulo(e.target.value); setPagina(0) }}>
+          {MODULOS.map(m => (
+            <option key={m.value} value={m.value}>{m.label}</option>
+          ))}
+        </Select>
+        <Select value={filtroAccion} onChange={e => { setFiltroAccion(e.target.value); setPagina(0) }}>
+          {ACCIONES.map(a => (
+            <option key={a.value} value={a.value}>{a.label}</option>
           ))}
         </Select>
         <div className="aj-log-date-field">
@@ -87,8 +119,8 @@ export default function AjustesLog({
                 <tr>
                   <th>Fecha</th>
                   <th>Usuario</th>
+                  <th>Módulo</th>
                   <th>Acción</th>
-                  <th>Lead</th>
                   <th>Detalle</th>
                 </tr>
               </thead>
@@ -97,8 +129,8 @@ export default function AjustesLog({
                   <tr key={a.id}>
                     <td>{new Date(a.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
                     <td>{a.usuario?.nombre || a.usuario?.email || '-'}</td>
-                    <td><span className="aj-log-tipo">{a.tipo}</span></td>
-                    <td>{a.lead?.nombre || '-'}</td>
+                    <td><span className={`aj-modulo-badge aj-modulo-${a.modulo}`}>{MODULO_LABELS[a.modulo] || a.modulo}</span></td>
+                    <td><span className="aj-log-tipo">{a.accion}</span></td>
                     <td className="aj-log-desc">{a.descripcion || '-'}</td>
                   </tr>
                 ))}

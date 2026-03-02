@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
+import { logActividad } from '../lib/logActividad'
 
 const ROLES_VISIBLES = ['setter', 'closer', 'director_ventas', 'super_admin']
 
@@ -210,6 +211,7 @@ export function useBiblioteca() {
       .single()
     if (err) throw err
     setSecciones(prev => [...prev, data])
+    logActividad('biblioteca', 'crear', `Sección creada: ${datos.nombre}`, { entidad: 'seccion', entidad_id: data.id })
     return data
   }, [secciones])
 
@@ -223,6 +225,7 @@ export function useBiblioteca() {
       .single()
     if (err) throw err
     setSecciones(prev => prev.map(s => s.id === seccionId ? data : s))
+    logActividad('biblioteca', 'editar', `Sección actualizada: ${datos.nombre || ''}`, { entidad: 'seccion', entidad_id: seccionId })
     return data
   }, [])
 
@@ -234,6 +237,7 @@ export function useBiblioteca() {
       .eq('id', seccionId)
     if (err) throw err
     setSecciones(prev => prev.filter(s => s.id !== seccionId))
+    logActividad('biblioteca', 'eliminar', 'Sección eliminada', { entidad: 'seccion', entidad_id: seccionId })
     // Also soft delete recursos in this section
     await supabase
       .from('ventas_biblioteca_recursos')
@@ -262,6 +266,7 @@ export function useBiblioteca() {
       .single()
     if (err) throw err
     setRecursos(prev => [...prev, data])
+    logActividad('biblioteca', 'crear', `Recurso creado: ${datos.nombre}`, { entidad: 'recurso', entidad_id: data.id })
     return data
   }, [recursos])
 
@@ -275,6 +280,7 @@ export function useBiblioteca() {
       .single()
     if (err) throw err
     setRecursos(prev => prev.map(r => r.id === recursoId ? data : r))
+    logActividad('biblioteca', 'editar', `Recurso actualizado: ${datos.nombre || ''}`, { entidad: 'recurso', entidad_id: recursoId })
     return data
   }, [])
 
@@ -286,6 +292,7 @@ export function useBiblioteca() {
       .eq('id', recursoId)
     if (err) throw err
     setRecursos(prev => prev.filter(r => r.id !== recursoId))
+    logActividad('biblioteca', 'eliminar', 'Recurso eliminado', { entidad: 'recurso', entidad_id: recursoId })
   }, [])
 
   // Reorder secciones

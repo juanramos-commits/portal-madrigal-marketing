@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { logActividad } from '../lib/logActividad'
 
 export function useAjustes() {
   const { user, usuario } = useAuth()
@@ -94,6 +95,7 @@ export function useAjustes() {
       .eq('id', user.id)
     if (error) throw error
     setPerfil(prev => ({ ...prev, nombre: datos.nombre }))
+    logActividad('ajustes', 'editar', `Perfil actualizado: ${datos.nombre}`, { entidad: 'perfil' })
   }, [user?.id])
 
   const subirFotoPerfil = useCallback(async (file) => {
@@ -124,6 +126,7 @@ export function useAjustes() {
   const cambiarContrasena = useCallback(async (nueva) => {
     const { error } = await supabase.auth.updateUser({ password: nueva })
     if (error) throw error
+    logActividad('ajustes', 'editar', 'Contraseña cambiada')
   }, [])
 
   // ═══ TEMA ═══
@@ -183,6 +186,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setEtapas(prev => [...prev, data])
+    logActividad('ajustes', 'crear', `Etapa creada: ${datos.nombre}`, { entidad: 'etapa', entidad_id: data.id })
     return data
   }, [etapas])
 
@@ -195,6 +199,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setEtapas(prev => prev.map(e => e.id === etapaId ? data : e))
+    logActividad('ajustes', 'editar', `Etapa editada: ${data.nombre}`, { entidad: 'etapa', entidad_id: etapaId })
     return data
   }, [])
 
@@ -213,6 +218,7 @@ export function useAjustes() {
       .eq('id', etapaId)
     if (error) throw error
     setEtapas(prev => prev.filter(e => e.id !== etapaId))
+    logActividad('ajustes', 'eliminar', 'Etapa eliminada', { entidad: 'etapa', entidad_id: etapaId })
   }, [])
 
   const reordenarEtapas = useCallback(async (pipelineId, nuevasIds) => {
@@ -247,6 +253,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setPaquetes(prev => [...prev, data])
+    logActividad('ajustes', 'crear', `Paquete creado: ${datos.nombre}`, { entidad: 'paquete', entidad_id: data.id })
     return data
   }, [])
 
@@ -259,6 +266,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setPaquetes(prev => prev.map(p => p.id === id ? data : p))
+    logActividad('ajustes', 'editar', `Paquete editado: ${data.nombre}`, { entidad: 'paquete', entidad_id: id })
   }, [])
 
   const eliminarPaquete = useCallback(async (id) => {
@@ -268,6 +276,7 @@ export function useAjustes() {
       .eq('id', id)
     if (error) throw error
     setPaquetes(prev => prev.filter(p => p.id !== id))
+    logActividad('ajustes', 'eliminar', 'Paquete eliminado', { entidad: 'paquete', entidad_id: id })
   }, [])
 
   // ═══ CATEGORÍAS ═══
@@ -289,6 +298,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setCategorias(prev => [...prev, data])
+    logActividad('ajustes', 'crear', `Categoría creada: ${datos.nombre}`, { entidad: 'categoria', entidad_id: data.id })
     return data
   }, [categorias])
 
@@ -301,6 +311,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setCategorias(prev => prev.map(c => c.id === id ? data : c))
+    logActividad('ajustes', 'editar', `Categoría editada: ${data.nombre}`, { entidad: 'categoria', entidad_id: id })
   }, [])
 
   const eliminarCategoria = useCallback(async (id) => {
@@ -310,6 +321,7 @@ export function useAjustes() {
       .eq('id', id)
     if (error) throw error
     setCategorias(prev => prev.filter(c => c.id !== id))
+    logActividad('ajustes', 'eliminar', 'Categoría eliminada', { entidad: 'categoria', entidad_id: id })
   }, [])
 
   const reordenarCategorias = useCallback(async (nuevasIds) => {
@@ -347,6 +359,7 @@ export function useAjustes() {
       if (error) throw error
     }
     setComisionesConfig(configs)
+    logActividad('ajustes', 'editar', 'Comisiones configuradas', { entidad: 'comisiones' })
   }, [])
 
   const asignarBonusManual = useCallback(async (datos) => {
@@ -378,6 +391,7 @@ export function useAjustes() {
         })
         .eq('usuario_id', datos.usuario_id)
     }
+    logActividad('wallet', 'crear', `Bonus manual: ${datos.monto}€ — ${datos.concepto || 'Bonus manual'}`, { entidad: 'comision' })
   }, [])
 
   // ═══ EMPRESA FISCAL ═══
@@ -409,6 +423,7 @@ export function useAjustes() {
       if (error) throw error
       setEmpresaFiscal(data)
     }
+    logActividad('ajustes', 'editar', 'Datos fiscales empresa actualizados', { entidad: 'empresa_fiscal' })
   }, [empresaFiscal])
 
   // ═══ EQUIPO ═══
@@ -445,6 +460,7 @@ export function useAjustes() {
       .insert(inserts)
     if (error) throw error
     await cargarEquipo()
+    logActividad('ajustes', 'crear', `Rol asignado: ${roles.join(', ')}`, { entidad: 'equipo' })
   }, [cargarEquipo])
 
   const editarRoles = useCallback(async (usuarioId, rolesNuevos) => {
@@ -463,6 +479,7 @@ export function useAjustes() {
       await supabase.from('ventas_roles_comerciales').insert(inserts)
     }
     await cargarEquipo()
+    logActividad('ajustes', 'editar', `Roles editados: ${rolesNuevos.join(', ')}`, { entidad: 'equipo' })
   }, [cargarEquipo])
 
   const desactivarMiembro = useCallback(async (usuarioId, activar) => {
@@ -472,6 +489,7 @@ export function useAjustes() {
       .eq('usuario_id', usuarioId)
     if (error) throw error
     await cargarEquipo()
+    logActividad('ajustes', 'editar', `Miembro ${activar ? 'activado' : 'desactivado'}`, { entidad: 'equipo' })
   }, [cargarEquipo])
 
   // ═══ WEBHOOKS ═══
@@ -498,6 +516,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setWebhooks(prev => [data, ...prev])
+    logActividad('ajustes', 'crear', `Webhook creado: ${datos.nombre}`, { entidad: 'webhook', entidad_id: data.id })
     return data
   }, [])
 
@@ -510,6 +529,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setWebhooks(prev => prev.map(w => w.id === id ? data : w))
+    logActividad('ajustes', 'editar', `Webhook editado: ${data.nombre}`, { entidad: 'webhook', entidad_id: id })
   }, [])
 
   const eliminarWebhook = useCallback(async (id) => {
@@ -519,6 +539,7 @@ export function useAjustes() {
       .eq('id', id)
     if (error) throw error
     setWebhooks(prev => prev.filter(w => w.id !== id))
+    logActividad('ajustes', 'eliminar', 'Webhook eliminado', { entidad: 'webhook', entidad_id: id })
   }, [])
 
   const guardarMapeo = useCallback(async (webhookId, mapeo) => {
@@ -559,6 +580,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setReunionEstados(prev => [...prev, data])
+    logActividad('ajustes', 'crear', `Estado reunión creado: ${datos.nombre}`, { entidad: 'reunion_estado', entidad_id: data.id })
     return data
   }, [reunionEstados])
 
@@ -571,6 +593,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setReunionEstados(prev => prev.map(e => e.id === id ? data : e))
+    logActividad('ajustes', 'editar', `Estado reunión editado: ${data.nombre}`, { entidad: 'reunion_estado', entidad_id: id })
   }, [])
 
   const eliminarEstado = useCallback(async (id) => {
@@ -580,6 +603,7 @@ export function useAjustes() {
       .eq('id', id)
     if (error) throw error
     setReunionEstados(prev => prev.filter(e => e.id !== id))
+    logActividad('ajustes', 'eliminar', 'Estado reunión eliminado', { entidad: 'reunion_estado', entidad_id: id })
   }, [])
 
   const reordenarEstados = useCallback(async (nuevasIds) => {
@@ -637,18 +661,20 @@ export function useAjustes() {
       if (error) throw error
     }
     await cargarReparto()
+    logActividad('ajustes', 'editar', 'Reparto configurado', { entidad: 'reparto' })
   }, [cargarReparto])
 
   // ═══ LOG ACTIVIDAD ═══
   const cargarActividad = useCallback(async (filtros = {}, pagina = 0, porPagina = 50) => {
     let query = supabase
-      .from('ventas_actividad')
-      .select('*, usuario:usuarios(id, nombre, email), lead:ventas_leads(id, nombre)', { count: 'exact' })
+      .from('ventas_log_global')
+      .select('*, usuario:usuarios(id, nombre, email)', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(pagina * porPagina, (pagina + 1) * porPagina - 1)
 
     if (filtros.usuario_id) query = query.eq('usuario_id', filtros.usuario_id)
-    if (filtros.tipo) query = query.eq('tipo', filtros.tipo)
+    if (filtros.modulo) query = query.eq('modulo', filtros.modulo)
+    if (filtros.accion) query = query.eq('accion', filtros.accion)
     if (filtros.desde) query = query.gte('created_at', filtros.desde)
     if (filtros.hasta) query = query.lte('created_at', filtros.hasta)
 

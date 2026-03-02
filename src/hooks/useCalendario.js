@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
+import { logActividad } from '../lib/logActividad'
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
@@ -183,6 +184,7 @@ export function useCalendario() {
     if (err) throw err
     setCitas(prev => prev.map(c => c.id === citaId ? { ...c, estado_reunion_id: estadoReunionId, estado_reunion: reunionEstados.find(e => e.id === estadoReunionId) || c.estado_reunion } : c))
     cargarCitas()
+    logActividad('calendario', 'editar', 'Estado cita actualizado', { entidad: 'cita', entidad_id: citaId })
   }, [reunionEstados, cargarCitas])
 
   // Update cita notas
@@ -213,6 +215,7 @@ export function useCalendario() {
     if (err) throw err
     setCitas(prev => prev.map(c => c.id === citaId ? { ...c, estado: 'cancelada', cancelada_por: 'admin' } : c))
     cargarCitas()
+    logActividad('calendario', 'eliminar', 'Cita cancelada', { entidad: 'cita', entidad_id: citaId })
   }, [cargarCitas])
 
   // Reasignar closer (admin)
@@ -223,6 +226,7 @@ export function useCalendario() {
       .eq('id', citaId)
     if (err) throw err
     await cargarCitas()
+    logActividad('calendario', 'asignar', 'Closer reasignado en cita', { entidad: 'cita', entidad_id: citaId })
   }, [cargarCitas])
 
   // Load disponibilidad
@@ -262,6 +266,7 @@ export function useCalendario() {
     }
 
     setDisponibilidad(franjas.map((f, i) => ({ ...f, id: `temp-${i}`, usuario_id: user.id })))
+    logActividad('calendario', 'editar', 'Disponibilidad guardada')
   }, [user?.id])
 
   // Calculate weekly hours
@@ -302,6 +307,7 @@ export function useCalendario() {
       .single()
     if (err) throw err
     setBloqueos(prev => [data, ...prev])
+    logActividad('calendario', 'crear', `Bloqueo creado: ${bloqueo.motivo || 'Sin motivo'}`, { entidad: 'bloqueo', entidad_id: data.id })
     return data
   }, [user?.id])
 
@@ -313,6 +319,7 @@ export function useCalendario() {
       .eq('id', bloqueoId)
     if (err) throw err
     setBloqueos(prev => prev.filter(b => b.id !== bloqueoId))
+    logActividad('calendario', 'eliminar', 'Bloqueo eliminado', { entidad: 'bloqueo', entidad_id: bloqueoId })
   }, [])
 
   // Load config
@@ -350,6 +357,7 @@ export function useCalendario() {
       .single()
     if (err) throw err
     setConfig(data)
+    logActividad('calendario', 'editar', 'Configuración de calendario actualizada')
   }, [user?.id])
 
   // Load enlaces (admin)

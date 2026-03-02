@@ -1232,6 +1232,25 @@
   color: var(--text-muted) !important;
 }
 
+/* ═══ MODULE BADGES ═══ */
+.aj-modulo-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.aj-modulo-auth       { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.aj-modulo-crm        { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+.aj-modulo-ventas     { background: rgba(34,197,94,0.15);   color: var(--success); }
+.aj-modulo-wallet     { background: rgba(245,158,11,0.15);  color: #f59e0b; }
+.aj-modulo-ajustes    { background: rgba(168,85,247,0.15);  color: #c084fc; }
+.aj-modulo-calendario { background: rgba(249,115,22,0.15);  color: #fb923c; }
+.aj-modulo-biblioteca { background: rgba(6,182,212,0.15);   color: #22d3ee; }
+
 /* ═══ PAGINATION ═══ */
 .aj-paginacion {
   display: flex;

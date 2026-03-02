@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
+import { logActividad } from '../../lib/logActividad'
 import Select from '../ui/Select'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import '../../styles/ventas-crm.css'
@@ -284,6 +285,8 @@ export default function CRMLeadDetalle() {
     })
     if (error) console.error('Error registrando actividad de edición:', error)
 
+    logActividad('crm', 'editar', descripcion, { entidad: 'lead', entidad_id: lead.id })
+
     // Actualizar snapshot
     TRACKED_FIELDS.forEach(f => {
       snapshotRef.current[f.key] = lead[f.key] ?? null
@@ -329,6 +332,8 @@ export default function CRMLeadDetalle() {
         datos: { pipeline_id: pipelineId, etapa_anterior_id: ps?.etapa_id, etapa_nueva_id: nuevaEtapaId },
       })
 
+      logActividad('crm', 'cambio_etapa', `${pipelineNombre}: ${etapaAnterior} → ${etapaNueva}`, { entidad: 'lead', entidad_id: id })
+
       showToast('Etapa actualizada')
       cargarLead()
     } catch (_) {
@@ -348,6 +353,7 @@ export default function CRMLeadDetalle() {
         descripcion: `Setter: ${prevNombre} → ${nuevoNombre}`,
         datos: { setter_id: setterId, anterior: lead.setter_asignado_id },
       })
+      logActividad('crm', 'asignar', `Setter: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
       showToast('Setter actualizado')
       cargarLead()
     } catch (_) {
@@ -366,6 +372,7 @@ export default function CRMLeadDetalle() {
         descripcion: `Closer: ${prevNombre} → ${nuevoNombre}`,
         datos: { closer_id: closerId, anterior: lead.closer_asignado_id },
       })
+      logActividad('crm', 'asignar', `Closer: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
       showToast('Closer actualizado')
       cargarLead()
     } catch (_) {

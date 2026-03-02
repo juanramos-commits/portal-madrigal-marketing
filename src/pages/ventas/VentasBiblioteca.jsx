@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Toggle from '../../components/ui/Toggle'
 import { useBiblioteca } from '../../hooks/useBiblioteca'
 import BibliotecaBuscador from '../../components/ventas/BibliotecaBuscador'
 import BibliotecaSecciones from '../../components/ventas/BibliotecaSecciones'
@@ -10,8 +9,14 @@ import BibliotecaFormRecurso from '../../components/ventas/BibliotecaFormRecurso
 import '../../styles/ventas-biblioteca.css'
 
 const SettingsIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
     <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+)
+
+const CloseIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
   </svg>
 )
 
@@ -52,10 +57,13 @@ export default function VentasBiblioteca() {
         <h1>Biblioteca</h1>
         <div className="bib-header-actions">
           {bib.puedeGestionar && (
-            <div className="bib-toggle-gestion">
-              <SettingsIcon />
-              <Toggle checked={bib.modoGestion} onChange={v => bib.setModoGestion(v)} label="Gestionar" />
-            </div>
+            <button
+              className={`bib-btn-gestion${bib.modoGestion ? ' bib-btn-gestion-active' : ''}`}
+              onClick={() => bib.setModoGestion(!bib.modoGestion)}
+            >
+              {bib.modoGestion ? <CloseIcon /> : <SettingsIcon />}
+              {bib.modoGestion ? 'Salir de gestión' : 'Gestionar'}
+            </button>
           )}
         </div>
       </div>

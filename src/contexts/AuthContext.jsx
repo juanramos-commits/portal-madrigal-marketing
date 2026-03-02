@@ -1,6 +1,7 @@
 import { logger } from '../lib/logger'
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { logActividad } from '../lib/logActividad'
 
 const AuthContext = createContext({})
 
@@ -166,6 +167,7 @@ export function AuthProvider({ children }) {
           } catch (e) {
             logger.error('Error registrando login en auditoría:', e)
           }
+          logActividad('auth', 'login', `Inicio de sesión: ${usuarioData.email}`)
         }
       }
       return { data, error }
@@ -187,6 +189,7 @@ export function AuthProvider({ children }) {
       } catch (e) {
         logger.error('Error registrando logout en auditoría:', e)
       }
+      logActividad('auth', 'logout', `Cierre de sesión: ${usuario.email}`)
     }
     setUser(null)
     setUsuario(null)

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
+import { logActividad } from '../lib/logActividad'
 
 const LEADS_PER_BATCH = 20
 const TABLE_PAGE_SIZE = 50
@@ -663,6 +664,8 @@ export function useVentasCRM() {
           })
           if (actErr) console.error('Error registrando actividad drag&drop:', actErr)
 
+          logActividad('crm', 'cambio_etapa', `${etapaOrigen?.nombre || '?'} → ${etapaLost.nombre} (max intentos)`, { entidad: 'lead', entidad_id: leadId })
+
           return
         }
       }
@@ -686,6 +689,8 @@ export function useVentasCRM() {
         datos: { etapa_anterior_id: etapaOrigenId, etapa_nueva_id: etapaDestinoId, via: 'drag_drop' },
       })
       if (actErr) console.error('Error registrando actividad drag&drop:', actErr)
+
+      logActividad('crm', 'cambio_etapa', `${etapaOrigen?.nombre || '?'} → ${etapaDestino.nombre}`, { entidad: 'lead', entidad_id: leadId })
     } catch (_) {
       // Revert optimistic update
       setLeads(prev => {
@@ -772,6 +777,8 @@ export function useVentasCRM() {
       datos: {},
     })
 
+    logActividad('crm', 'crear', 'Lead creado: ' + datos.nombre, { entidad: 'lead', entidad_id: lead.id })
+
     // Refetch leads to show the new lead
     refrescar()
 
@@ -797,6 +804,9 @@ export function useVentasCRM() {
       .eq('id', leadId)
 
     if (err) throw err
+
+    logActividad('crm', 'eliminar', 'Lead eliminado', { entidad: 'lead', entidad_id: leadId })
+
     refrescar()
   }, [refrescar])
 
@@ -878,6 +888,8 @@ export function useVentasCRM() {
     })
     if (actErr) console.error('Error registrando actividad setter:', actErr)
 
+    logActividad('crm', 'asignar', 'Setter reasignado', { entidad: 'lead', entidad_id: leadId })
+
     refrescar()
   }, [user?.id, refrescar])
 
@@ -894,6 +906,8 @@ export function useVentasCRM() {
     })
     if (actErr) console.error('Error registrando actividad closer:', actErr)
 
+    logActividad('crm', 'asignar', 'Closer reasignado', { entidad: 'lead', entidad_id: leadId })
+
     refrescar()
   }, [user?.id, refrescar])
 
@@ -903,6 +917,8 @@ export function useVentasCRM() {
       .from('ventas_lead_etiquetas')
       .insert({ lead_id: leadId, etiqueta_id: etiquetaId })
     if (err && err.code !== '23505') throw err
+
+    logActividad('crm', 'editar', 'Etiqueta añadida', { entidad: 'lead', entidad_id: leadId })
   }, [])
 
   const quitarEtiqueta = useCallback(async (leadId, etiquetaId) => {
@@ -912,6 +928,8 @@ export function useVentasCRM() {
       .eq('lead_id', leadId)
       .eq('etiqueta_id', etiquetaId)
     if (error) throw error
+
+    logActividad('crm', 'editar', 'Etiqueta eliminada', { entidad: 'lead', entidad_id: leadId })
   }, [])
 
   // ── Unique sources for filters ─────────────────────────────────────

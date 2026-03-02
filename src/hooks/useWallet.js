@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
+import { logActividad } from '../lib/logActividad'
 
 const COMISIONES_PAGE_SIZE = 20
 const RETIROS_PAGE_SIZE = 25
@@ -219,6 +220,7 @@ export function useWallet() {
 
     if (err) throw err
     setDatosFiscales(datos)
+    logActividad('wallet', 'editar', 'Datos fiscales actualizados')
   }, [user?.id])
 
   // ── Admin: load all retiros ────────────────────────────────────────
@@ -577,6 +579,7 @@ export function useWallet() {
     })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error || 'Error al solicitar retiro')
+    logActividad('wallet', 'crear', 'Retiro solicitado: ' + monto + '\u20AC', { entidad: 'retiro' })
     refrescar()
     return data
   }, [user?.id, refrescar])
@@ -586,6 +589,7 @@ export function useWallet() {
     const { data, error: err } = await supabase.rpc('ventas_aprobar_retiro', { p_retiro_id: retiroId })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error || 'Error al aprobar retiro')
+    logActividad('wallet', 'aprobar', 'Retiro aprobado', { entidad: 'retiro', entidad_id: retiroId })
     refrescar()
     return data
   }, [refrescar])
@@ -598,6 +602,7 @@ export function useWallet() {
     })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error || 'Error al rechazar retiro')
+    logActividad('wallet', 'rechazar', 'Retiro rechazado', { entidad: 'retiro', entidad_id: retiroId })
     refrescar()
     return data
   }, [refrescar])

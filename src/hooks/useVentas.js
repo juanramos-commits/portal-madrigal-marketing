@@ -4,6 +4,7 @@ import { saveAs } from 'file-saver'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
+import { logActividad } from '../lib/logActividad'
 
 const PAGE_SIZE = 25
 
@@ -454,6 +455,8 @@ export function useVentas() {
     })
     if (actErr) console.warn('Error al registrar actividad:', actErr.message)
 
+    logActividad('ventas', 'crear', 'Venta registrada: ' + (datos.paquete_nombre || 'Paquete') + ' — ' + datos.importe + '€', { entidad: 'venta', entidad_id: venta.id })
+
     // Notify super_admin(s) (non-critical)
     const { data: admins } = await supabase
       .from('usuarios')
@@ -527,6 +530,7 @@ export function useVentas() {
   const aprobarVenta = useCallback(async (ventaId) => {
     const { error: err } = await supabase.rpc('ventas_aprobar_venta', { p_venta_id: ventaId })
     if (err) throw err
+    logActividad('ventas', 'aprobar', 'Venta aprobada', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
   }, [refrescar])
 
@@ -534,6 +538,7 @@ export function useVentas() {
   const rechazarVenta = useCallback(async (ventaId) => {
     const { error: err } = await supabase.rpc('ventas_rechazar_venta', { p_venta_id: ventaId })
     if (err) throw err
+    logActividad('ventas', 'rechazar', 'Venta rechazada', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
   }, [refrescar])
 
@@ -541,6 +546,7 @@ export function useVentas() {
   const marcarDevolucion = useCallback(async (ventaId) => {
     const { error: err } = await supabase.rpc('ventas_marcar_devolucion', { p_venta_id: ventaId })
     if (err) throw err
+    logActividad('ventas', 'devolucion', 'Devolución registrada', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
   }, [refrescar])
 
@@ -549,6 +555,7 @@ export function useVentas() {
     const { data, error: err } = await supabase.rpc('ventas_revertir_rechazo', { p_venta_id: ventaId })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error)
+    logActividad('ventas', 'editar', 'Rechazo revertido', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
   }, [refrescar])
 
@@ -557,6 +564,7 @@ export function useVentas() {
     const { data, error: err } = await supabase.rpc('ventas_revertir_devolucion', { p_venta_id: ventaId })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error)
+    logActividad('ventas', 'editar', 'Devolución revertida', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
   }, [refrescar])
 
