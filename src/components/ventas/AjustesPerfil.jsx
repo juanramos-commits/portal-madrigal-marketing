@@ -105,115 +105,122 @@ export default function AjustesPerfil({
   }
 
   return (
-    <div className="aj-seccion">
-      <h3>Mi perfil</h3>
+    <div className="aj-perfil">
+      {/* ── Card: Datos personales ── */}
+      <div className="aj-card">
+        <div className="aj-card-section-title">Datos personales</div>
 
-      <div className="aj-perfil-avatar-row">
-        <div className="aj-avatar" onClick={handleFotoClick}>
-          {perfil?.avatar_url ? (
-            <img src={perfil.avatar_url} alt="Avatar" />
-          ) : (
-            <span>{getInitial()}</span>
-          )}
-          <div className="aj-avatar-overlay">
-            {subiendoFoto ? '...' : 'Cambiar'}
+        <div className="aj-perfil-avatar-row">
+          <div className="aj-avatar" onClick={handleFotoClick}>
+            {perfil?.avatar_url ? (
+              <img src={perfil.avatar_url} alt="Avatar" />
+            ) : (
+              <span>{getInitial()}</span>
+            )}
+            <div className="aj-avatar-overlay">
+              {subiendoFoto ? '...' : 'Cambiar'}
+            </div>
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style={{ display: 'none' }}
+            onChange={handleFotoChange}
+          />
+          <div className="aj-perfil-avatar-info">
+            <div className="aj-perfil-nombre-preview">{perfil?.nombre || 'Sin nombre'}</div>
+            <div className="aj-perfil-email-preview">{perfil?.email}</div>
+            {misRoles.length > 0 && (
+              <div className="aj-perfil-roles">
+                {misRoles.map(r => (
+                  <span key={r} className={`aj-role-badge aj-role-${r}`}>
+                    {ROL_LABELS[r] || r}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          style={{ display: 'none' }}
-          onChange={handleFotoChange}
-        />
-        <div className="aj-perfil-avatar-info">
-          <div className="aj-perfil-nombre-preview">{perfil?.nombre || 'Sin nombre'}</div>
-          <div className="aj-perfil-email-preview">{perfil?.email}</div>
-          {misRoles.length > 0 && (
-            <div className="aj-perfil-roles">
-              {misRoles.map(r => (
-                <span key={r} className={`aj-role-badge aj-role-${r}`}>
-                  {ROL_LABELS[r] || r}
-                </span>
-              ))}
-            </div>
-          )}
+
+        <div className="aj-card-divider" />
+
+        <div className="aj-form">
+          <div className="aj-field">
+            <label>Nombre</label>
+            <input
+              type="text"
+              value={nombre}
+              onChange={e => { setNombre(e.target.value); setGuardado(false) }}
+              placeholder="Tu nombre"
+            />
+          </div>
+
+          <div className="aj-field">
+            <label>Email</label>
+            <input
+              type="email"
+              value={perfil?.email || ''}
+              readOnly
+              className="aj-input-readonly"
+            />
+            <span className="aj-field-hint">El email no se puede cambiar</span>
+          </div>
+
+          {error && <div className="aj-error">{error}</div>}
+
+          <div className="aj-actions">
+            <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
+              {saving ? 'Guardando...' : 'Guardar perfil'}
+            </button>
+            {guardado && <span className="aj-guardado-msg">Guardado</span>}
+          </div>
         </div>
       </div>
 
-      <div className="aj-form">
-        <div className="aj-field">
-          <label>Nombre</label>
-          <input
-            type="text"
-            value={nombre}
-            onChange={e => { setNombre(e.target.value); setGuardado(false) }}
-            placeholder="Tu nombre"
-          />
-        </div>
+      {/* ── Card: Cambiar contraseña ── */}
+      <div className="aj-card">
+        <div className="aj-card-section-title">Cambiar contraseña</div>
+        {/* Campos trampa ocultos para absorber el autofill de Chrome */}
+        <input type="text" name="fake-user" autoComplete="username" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
+        <input type="password" name="fake-pass" autoComplete="current-password" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
 
-        <div className="aj-field">
-          <label>Email</label>
-          <input
-            type="email"
-            value={perfil?.email || ''}
-            readOnly
-            className="aj-input-readonly"
-          />
-          <span className="aj-field-hint">El email no se puede cambiar</span>
-        </div>
+        <div className="aj-form">
+          <div className="aj-field">
+            <label>Nueva contraseña</label>
+            <input
+              type="password"
+              value={nuevaPass}
+              onChange={e => { setNuevaPass(e.target.value); setPassGuardada(false) }}
+              placeholder="Mínimo 8 caracteres"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+            />
+            <PasswordStrengthMeter password={nuevaPass} />
+          </div>
 
-        {error && <div className="aj-error">{error}</div>}
+          <div className="aj-field">
+            <label>Confirmar contraseña</label>
+            <input
+              type="password"
+              value={confirmarPass}
+              onChange={e => setConfirmarPass(e.target.value)}
+              placeholder="Repite la contraseña"
+              autoComplete="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+            />
+          </div>
 
-        <div className="aj-actions">
-          <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar perfil'}
-          </button>
-          {guardado && <span className="aj-success">Perfil guardado</span>}
-        </div>
-      </div>
+          {passError && <div className="aj-error">{passError}</div>}
 
-      <div className="aj-separator" />
-
-      <h4>Cambiar contraseña</h4>
-      {/* Campos trampa ocultos para absorber el autofill de Chrome */}
-      <input type="text" name="fake-user" autoComplete="username" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
-      <input type="password" name="fake-pass" autoComplete="current-password" style={{ position: 'absolute', opacity: 0, height: 0, width: 0, overflow: 'hidden', pointerEvents: 'none' }} tabIndex={-1} />
-      <div className="aj-form">
-        <div className="aj-field">
-          <label>Nueva contraseña</label>
-          <input
-            type="password"
-            value={nuevaPass}
-            onChange={e => { setNuevaPass(e.target.value); setPassGuardada(false) }}
-            placeholder="Mínimo 8 caracteres"
-            autoComplete="off"
-            data-lpignore="true"
-            data-1p-ignore="true"
-          />
-          <PasswordStrengthMeter password={nuevaPass} />
-        </div>
-
-        <div className="aj-field">
-          <label>Confirmar contraseña</label>
-          <input
-            type="password"
-            value={confirmarPass}
-            onChange={e => setConfirmarPass(e.target.value)}
-            placeholder="Repite la contraseña"
-            autoComplete="off"
-            data-lpignore="true"
-            data-1p-ignore="true"
-          />
-        </div>
-
-        {passError && <div className="aj-error">{passError}</div>}
-
-        <div className="aj-actions">
-          <button className="aj-btn-primary" onClick={handleCambiarPass} disabled={savingPass}>
-            {savingPass ? 'Cambiando...' : 'Cambiar contraseña'}
-          </button>
-          {passGuardada && <span className="aj-success">Contraseña cambiada</span>}
+          <div className="aj-actions">
+            <button className="aj-btn-primary" onClick={handleCambiarPass} disabled={savingPass}>
+              {savingPass ? 'Cambiando...' : 'Cambiar contraseña'}
+            </button>
+            {passGuardada && <span className="aj-guardado-msg">Contraseña cambiada</span>}
+          </div>
         </div>
       </div>
     </div>
