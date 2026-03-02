@@ -423,6 +423,7 @@ body {
   padding: 32px;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .page::-webkit-scrollbar {
