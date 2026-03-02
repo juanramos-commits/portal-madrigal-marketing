@@ -1217,6 +1217,10 @@
   margin-top: var(--space-md);
 }
 
+.crm-filters-body .ui-field {
+  margin-bottom: 0;
+}
+
 .crm-filters-body::-webkit-scrollbar {
   width: 4px;
 }
@@ -1520,6 +1524,179 @@
   height: 16px;
 }
 
+/* ── Card Actions Wrapper ──────────────────────────────────────────────── */
+.crm-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+/* ── Card Move Button (mobile only) ───────────────────────────────────── */
+.crm-card-move {
+  display: none;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs-sm);
+  background: var(--bg-active);
+  color: var(--text-muted);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.crm-card-move:active {
+  transform: scale(0.92);
+  background: var(--bg-hover);
+}
+
+.crm-card-move svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ── Bottom Sheet ──────────────────────────────────────────────────────── */
+.crm-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  z-index: var(--z-overlay);
+  animation: crm-fade-in 0.15s ease;
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+}
+
+.crm-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 70vh;
+  background: var(--bg-elevated);
+  border-top-left-radius: var(--radius-lg, 16px);
+  border-top-right-radius: var(--radius-lg, 16px);
+  z-index: calc(var(--z-overlay) + 1);
+  display: flex;
+  flex-direction: column;
+  animation: crm-sheet-up 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes crm-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.crm-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--bg-active);
+  border-radius: 2px;
+  margin: var(--space-sm) auto var(--space-2xs);
+  flex-shrink: 0;
+}
+
+.crm-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.crm-sheet-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  min-width: 0;
+  flex: 1;
+}
+
+.crm-sheet-title {
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  margin: 0;
+}
+
+.crm-sheet-lead-name {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.crm-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-sm) 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.crm-sheet-stage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-md);
+  font-size: var(--font-base);
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+  font-family: inherit;
+}
+
+.crm-sheet-stage:active:not(:disabled) {
+  background: var(--bg-active);
+}
+
+.crm-sheet-stage:disabled {
+  cursor: default;
+}
+
+.crm-sheet-stage.current {
+  background: var(--bg-subtle);
+}
+
+.crm-sheet-stage-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.crm-sheet-stage-name {
+  flex: 1;
+  font-weight: var(--weight-medium);
+}
+
+.crm-sheet-stage.current .crm-sheet-stage-name {
+  color: var(--text-muted);
+}
+
+.crm-sheet-stage-current {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
+  font-weight: var(--weight-medium);
+  flex-shrink: 0;
+}
+
+.crm-sheet-stage-current svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* ── Responsive Breakpoints ────────────────────────────────────────────── */
 /* ── Toolbar label (hidden on mobile) ──────────────────────────────────── */
 .crm-toolbar-label {}
@@ -1542,6 +1719,10 @@
 
   .crm-new-btn {
     padding: 0 var(--space-sm);
+  }
+
+  .crm-card-move {
+    display: flex;
   }
 
   .crm-detail {

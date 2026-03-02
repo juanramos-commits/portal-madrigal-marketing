@@ -12,6 +12,7 @@ export default function CRMKanbanColumn({
   loadingMore = false,
   onLoadMore,
   showAssignee = false,
+  onMoverMobile,
 }) {
   const { isOver, setNodeRef } = useDroppable({
     id: etapa.id,
@@ -45,6 +46,7 @@ export default function CRMKanbanColumn({
               lead={lead}
               etapa={etapa}
               showAssignee={showAssignee}
+              onMoverMobile={onMoverMobile}
             />
           ))}
         </SortableContext>

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -10,6 +10,7 @@ import {
 } from '@dnd-kit/core'
 import CRMKanbanColumn from './CRMKanbanColumn'
 import CRMLeadCard from './CRMLeadCard'
+import CRMBottomSheetMover from './CRMBottomSheetMover'
 
 export default function CRMKanban({
   etapas,
@@ -26,6 +27,27 @@ export default function CRMKanban({
   const [activeId, setActiveId] = useState(null)
   const [activeLead, setActiveLead] = useState(null)
   const [activeEtapa, setActiveEtapa] = useState(null)
+  const [moverSheetData, setMoverSheetData] = useState(null)
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const handler = (e) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  const handleMoverMobile = useCallback((lead, etapa) => {
+    setMoverSheetData({ lead, etapa })
+  }, [])
+
+  const handleSheetMover = useCallback(async (leadId, from, to) => {
+    try {
+      await onMoverLead(leadId, from, to)
+    } catch (err) {
+      onError?.(err.message || 'Error al mover el lead')
+    }
+  }, [onMoverLead, onError])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -112,6 +134,7 @@ export default function CRMKanban({
   }
 
   return (
+    <>
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
@@ -130,6 +153,7 @@ export default function CRMKanban({
             loadingMore={loadingMore[etapa.id]}
             onLoadMore={onLoadMore}
             showAssignee={showAssignee}
+            onMoverMobile={isMobile ? handleMoverMobile : undefined}
           />
         ))}
       </div>
@@ -146,5 +170,16 @@ export default function CRMKanban({
         ) : null}
       </DragOverlay>
     </DndContext>
+
+    {moverSheetData && (
+      <CRMBottomSheetMover
+        lead={moverSheetData.lead}
+        etapaActual={moverSheetData.etapa}
+        etapas={etapas}
+        onMover={handleSheetMover}
+        onCerrar={() => setMoverSheetData(null)}
+      />
+    )}
+    </>
   )
 }

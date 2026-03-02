@@ -1,6 +1,7 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
+import { ArrowRightLeft } from 'lucide-react'
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor">
@@ -23,7 +24,7 @@ function getAvatarColor(name) {
   return `hsl(${hue}, 50%, 40%)`
 }
 
-export default function CRMLeadCard({ lead, etapa, showAssignee }) {
+export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }) {
   const navigate = useNavigate()
 
   const {
@@ -56,6 +57,12 @@ export default function CRMLeadCard({ lead, etapa, showAssignee }) {
     window.open(`https://wa.me/${phone}`, '_blank')
   }
 
+  const handleMoverMobile = (e) => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (onMoverMobile) onMoverMobile(lead, etapa)
+  }
+
   const showAttempts = etapa && (etapa.tipo === 'ghosting' || etapa.tipo === 'seguimiento')
   const assignee = lead.setter || lead.closer
 
@@ -70,11 +77,23 @@ export default function CRMLeadCard({ lead, etapa, showAssignee }) {
     >
       <div className="crm-card-top">
         <span className="crm-card-name">{lead.nombre}</span>
-        {lead.telefono && (
-          <button className="crm-card-wa" onClick={handleWhatsApp} title="WhatsApp">
-            <WhatsAppIcon />
-          </button>
-        )}
+        <div className="crm-card-actions">
+          {onMoverMobile && (
+            <button
+              className="crm-card-move"
+              onClick={handleMoverMobile}
+              onPointerDown={(e) => e.stopPropagation()}
+              title="Mover a otra etapa"
+            >
+              <ArrowRightLeft />
+            </button>
+          )}
+          {lead.telefono && (
+            <button className="crm-card-wa" onClick={handleWhatsApp} title="WhatsApp">
+              <WhatsAppIcon />
+            </button>
+          )}
+        </div>
       </div>
 
       {lead.telefono && (
