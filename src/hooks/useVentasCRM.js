@@ -49,6 +49,8 @@ export function useVentasCRM() {
   const loadRequestRef = useRef(0)
   const hasMoreRef = useRef({})
   const busquedaTimeoutRef = useRef(null)
+  const searchRequestRef = useRef(0)
+  const [searchResultCount, setSearchResultCount] = useState(null)
 
   const esAdmin = usuario?.tipo === 'super_admin'
   const rolComercialActual = rolesComerciales.find(r => r.usuario_id === user?.id)
@@ -422,6 +424,144 @@ export function useVentasCRM() {
       }
     }
   }, [pipelineActivo, buildLeadQuery, tablaPage, tablaSort, etapas])
+
+  // ── RPC-powered search across all fields ───────────────────────────
+  const buscarLeads = useCallback(async (query) => {
+    if (!pipelineActivo || etapas.length === 0) return
+
+    const requestId = ++searchRequestRef.current
+    setLoading(true)
+    setError(null)
+
+    try {
+      const effectiveRole = esAdminODirector ? 'super_admin' : ''
+
+      const { data: results, error: rpcErr } = await supabase.rpc('ventas_buscar_leads', {
+        p_query: query.trim(),
+        p_pipeline_id: pipelineActivo.id,
+        p_user_id: user?.id,
+        p_user_role: effectiveRole,
+        p_limit: 100,
+        p_offset: 0,
+      })
+
+      if (rpcErr) throw rpcErr
+      if (requestId !== searchRequestRef.current) return
+
+      // No results
+      if (!results || results.length === 0) {
+        if (vista === 'kanban') {
+          const emptyLeads = {}
+          const emptyCounts = {}
+          etapas.forEach(e => { emptyLeads[e.id] = []; emptyCounts[e.id] = 0 })
+          setLeads(emptyLeads)
+          setLeadCounts(emptyCounts)
+          setTotalLeads(0)
+        } else {
+          setLeadsTabla([])
+          setTablaTotalCount(0)
+        }
+        setSearchResultCount(0)
+        return
+      }
+
+      const leadIds = results.map(r => r.lead_id)
+      const relevanciaMap = Object.fromEntries(results.map(r => [r.lead_id, r.relevancia]))
+
+      // Load full lead data for matched IDs
+      let dataQuery = supabase
+        .from('ventas_lead_pipeline')
+        .select(`
+          id,
+          lead_id,
+          pipeline_id,
+          etapa_id,
+          contador_intentos,
+          fecha_entrada,
+          lead:ventas_leads!inner(
+            id, nombre, email, telefono, nombre_negocio, fuente, valor, notas,
+            resumen_setter, resumen_closer, enlace_grabacion, creado_por,
+            created_at, updated_at, tags, contactos_adicionales, fuente_detalle,
+            categoria:ventas_categorias(id, nombre),
+            setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
+            closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
+          )
+        `)
+        .eq('pipeline_id', pipelineActivo.id)
+        .in('lead_id', leadIds)
+
+      // Apply active filters on top of search results
+      if (filtros.setter_id) dataQuery = dataQuery.eq('lead.setter_asignado_id', filtros.setter_id)
+      if (filtros.closer_id) dataQuery = dataQuery.eq('lead.closer_asignado_id', filtros.closer_id)
+      if (filtros.categoria_id) dataQuery = dataQuery.eq('lead.categoria_id', filtros.categoria_id)
+      if (filtros.fuente) dataQuery = dataQuery.eq('lead.fuente', filtros.fuente)
+      if (filtros.fecha_desde) dataQuery = dataQuery.gte('lead.created_at', filtros.fecha_desde)
+      if (filtros.fecha_hasta) dataQuery = dataQuery.lte('lead.created_at', filtros.fecha_hasta + 'T23:59:59')
+      if (filtros.etapa_ids && filtros.etapa_ids.length > 0) dataQuery = dataQuery.in('etapa_id', filtros.etapa_ids)
+
+      const { data: pipelineData, error: pipeErr } = await dataQuery
+      if (pipeErr) throw pipeErr
+      if (requestId !== searchRequestRef.current) return
+
+      // Map results with relevance
+      const mapped = (pipelineData || []).map(item => ({
+        ...item.lead,
+        pipeline_lead_id: item.id,
+        etapa_id: item.etapa_id,
+        pipeline_id: item.pipeline_id,
+        contador_intentos: item.contador_intentos,
+        fecha_entrada: item.fecha_entrada,
+        _relevancia: relevanciaMap[item.lead_id] || 0,
+      }))
+
+      // Sort by relevance
+      mapped.sort((a, b) => (b._relevancia || 0) - (a._relevancia || 0))
+
+      if (vista === 'kanban') {
+        const newLeads = {}
+        const newCounts = {}
+        let total = 0
+
+        etapas.forEach(e => { newLeads[e.id] = []; newCounts[e.id] = 0 })
+
+        mapped.forEach(lead => {
+          if (newLeads[lead.etapa_id]) {
+            newLeads[lead.etapa_id].push(lead)
+            newCounts[lead.etapa_id]++
+            total++
+          }
+        })
+
+        setLeads(newLeads)
+        setLeadCounts(newCounts)
+        setTotalLeads(total)
+        // Disable "load more" during search
+        Object.keys(hasMoreRef.current).forEach(k => { hasMoreRef.current[k] = false })
+      } else {
+        setLeadsTabla(mapped.map(lead => ({
+          ...lead,
+          etapa: etapas.find(e => e.id === lead.etapa_id),
+        })))
+        setTablaTotalCount(mapped.length)
+      }
+
+      setSearchResultCount(mapped.length)
+    } catch (err) {
+      if (requestId !== searchRequestRef.current) return
+      // Fallback: use the old simple search (buildLeadQuery with ilike)
+      console.warn('RPC ventas_buscar_leads no disponible, usando búsqueda simple:', err.message)
+      setSearchResultCount(null)
+      if (vista === 'kanban') {
+        await cargarLeads()
+      } else {
+        await cargarLeadsTabla()
+      }
+    } finally {
+      if (requestId === searchRequestRef.current) {
+        setLoading(false)
+      }
+    }
+  }, [pipelineActivo, etapas, esAdminODirector, user?.id, vista, filtros, cargarLeads, cargarLeadsTabla])
 
   // ── Reload ─────────────────────────────────────────────────────────
   const refrescar = useCallback(() => {
@@ -851,8 +991,13 @@ export function useVentasCRM() {
     if (busquedaTimeoutRef.current) clearTimeout(busquedaTimeoutRef.current)
     busquedaTimeoutRef.current = setTimeout(() => {
       if (!pipelineActivo || etapas.length === 0) return
-      if (vista === 'kanban') cargarLeads()
-      else cargarLeadsTabla()
+      if (busqueda.trim()) {
+        buscarLeads(busqueda)
+      } else {
+        setSearchResultCount(null)
+        if (vista === 'kanban') cargarLeads()
+        else cargarLeadsTabla()
+      }
     }, 300)
     return () => clearTimeout(busquedaTimeoutRef.current)
   }, [busqueda]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -889,7 +1034,7 @@ export function useVentasCRM() {
     loading, loadingMore, error, setters, closers, fuentes,
     rolesComerciales, misRoles, esAdminODirector, esSetter, esCloser, esDirector, esAdmin,
     leadsTabla, tablaTotalCount, tablaPage, tablaSort,
-    hasMore: hasMoreRef.current,
+    hasMore: hasMoreRef.current, searchResultCount,
 
     // Actions
     setPipelineActivo, setVista, setFiltros, setBusqueda,

@@ -117,7 +117,7 @@ export default function VentasCRM() {
           </div>
 
           {/* Search */}
-          <CRMBuscador value={crm.busqueda} onChange={crm.setBusqueda} />
+          <CRMBuscador value={crm.busqueda} onChange={crm.setBusqueda} resultCount={crm.searchResultCount} />
 
           {/* Filter button */}
           <button className="crm-filter-btn" onClick={() => setShowFilters(true)}>
