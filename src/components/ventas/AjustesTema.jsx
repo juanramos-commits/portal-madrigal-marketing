@@ -24,21 +24,25 @@ const opciones = [
 
 export default function AjustesTema({ tema, onSetTema }) {
   return (
-    <div className="aj-seccion">
-      <h3>Apariencia</h3>
-      <p className="aj-desc">Elige el modo de visualización de la aplicación.</p>
+    <div className="aj-perfil">
+      <div className="aj-card">
+        <div className="aj-card-section-title">Apariencia</div>
+        <p className="aj-field-hint" style={{ marginTop: 0, marginBottom: '1rem' }}>
+          Elige el modo de visualización de la aplicación.
+        </p>
 
-      <div className="aj-tema-opciones">
-        {opciones.map(opt => (
-          <button
-            key={opt.key}
-            className={`aj-tema-opcion${tema === opt.key ? ' active' : ''}`}
-            onClick={() => onSetTema(opt.key)}
-          >
-            <div className="aj-tema-opcion-icon">{opt.icon}</div>
-            <span>{opt.label}</span>
-          </button>
-        ))}
+        <div className="aj-tema-opciones">
+          {opciones.map(opt => (
+            <button
+              key={opt.key}
+              className={`aj-tema-opcion${tema === opt.key ? ' active' : ''}`}
+              onClick={() => onSetTema(opt.key)}
+            >
+              <div className="aj-tema-opcion-icon">{opt.icon}</div>
+              <span>{opt.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
