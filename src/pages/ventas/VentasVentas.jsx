@@ -1,12 +1,7 @@
+import { Search } from 'lucide-react'
 import { useVentas } from '../../hooks/useVentas'
 import VentasListado from '../../components/ventas/VentasListado'
 import '../../styles/ventas-ventas.css'
-
-const SearchIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-  </svg>
-)
 
 const tabs = [
   { key: 'todas', label: 'Todas' },
@@ -21,17 +16,14 @@ export default function VentasVentas() {
 
   const handleAprobar = async (ventaId) => {
     await ventas.aprobarVenta(ventaId)
-    ventas.refrescar()
   }
 
   const handleRechazar = async (ventaId) => {
     await ventas.rechazarVenta(ventaId)
-    ventas.refrescar()
   }
 
   const handleDevolucion = async (ventaId) => {
     await ventas.marcarDevolucion(ventaId)
-    ventas.refrescar()
   }
 
   return (
@@ -41,7 +33,7 @@ export default function VentasVentas() {
         <div className="vv-header-top">
           <h1>Ventas</h1>
           <div className="vv-search">
-            <SearchIcon />
+            <Search size={16} />
             <input
               type="text"
               placeholder="Buscar por lead..."

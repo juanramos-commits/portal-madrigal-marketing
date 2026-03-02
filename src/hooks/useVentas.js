@@ -58,6 +58,7 @@ export function useVentas() {
 
   // ── Build query ────────────────────────────────────────────────────
   const buildQuery = useCallback((countOnly = false) => {
+    const busquedaActiva = busqueda.trim() !== ''
     let query = supabase
       .from('ventas_ventas')
       .select(`
@@ -66,7 +67,7 @@ export function useVentas() {
         es_pago_unico, es_devolucion, fecha_devolucion,
         fecha_aprobacion, fecha_rechazo, notas,
         created_at, updated_at,
-        lead:ventas_leads(id, nombre, telefono, email),
+        lead:ventas_leads${busquedaActiva ? '!inner' : ''}(id, nombre, telefono, email),
         paquete:ventas_paquetes(id, nombre, precio),
         closer:usuarios!ventas_ventas_closer_id_fkey(id, nombre, email),
         setter:usuarios!ventas_ventas_setter_id_fkey(id, nombre, email)
@@ -114,19 +115,14 @@ export function useVentas() {
       const { data, count, error: err } = await query
       if (err) throw err
 
-      // Filter out null leads from ilike (inner join workaround)
-      const filtered = busqueda.trim()
-        ? (data || []).filter(v => v.lead !== null)
-        : (data || [])
-
-      setVentas(filtered)
-      setTotalVentas(busqueda.trim() ? filtered.length : (count || 0))
+      setVentas(data || [])
+      setTotalVentas(count || 0)
     } catch (err) {
       setError('Error al cargar ventas')
     } finally {
       setLoading(false)
     }
-  }, [buildQuery, paginaActual, busqueda])
+  }, [buildQuery, paginaActual])
 
   // ── Load counters ──────────────────────────────────────────────────
   const cargarContadores = useCallback(async () => {
@@ -208,16 +204,17 @@ export function useVentas() {
 
     if (err) throw err
 
-    // Log activity
-    await supabase.from('ventas_actividad').insert({
+    // Log activity (non-critical)
+    const { error: actErr } = await supabase.from('ventas_actividad').insert({
       lead_id: datos.lead_id,
       usuario_id: user.id,
       tipo: 'venta',
       descripcion: `Venta registrada — ${datos.paquete_nombre || 'Paquete'} — ${Number(datos.importe).toLocaleString('es-ES', { minimumFractionDigits: 2 })}€`,
       datos: { venta_id: venta.id, importe: datos.importe },
     })
+    if (actErr) console.warn('Error al registrar actividad:', actErr.message)
 
-    // Notify super_admin(s)
+    // Notify super_admin(s) (non-critical)
     const { data: admins } = await supabase
       .from('usuarios')
       .select('id')
@@ -232,7 +229,8 @@ export function useVentas() {
         mensaje: `${datos.lead_nombre || 'Lead'} — ${Number(datos.importe).toLocaleString('es-ES', { minimumFractionDigits: 2 })}€`,
         datos: { venta_id: venta.id, lead_id: datos.lead_id },
       }))
-      await supabase.from('ventas_notificaciones').insert(notificaciones)
+      const { error: notifErr } = await supabase.from('ventas_notificaciones').insert(notificaciones)
+      if (notifErr) console.warn('Error al crear notificaciones:', notifErr.message)
     }
 
     refrescar()
@@ -242,22 +240,26 @@ export function useVentas() {
   // ── Move lead to venta stage in both pipelines ─────────────────────
   const moverLeadAVenta = useCallback(async (leadId, pipelineId, etapaVentaId) => {
     // Move in the current pipeline
-    await supabase
+    const { error: moveErr } = await supabase
       .from('ventas_lead_pipeline')
       .update({ etapa_id: etapaVentaId, fecha_entrada: new Date().toISOString() })
       .eq('lead_id', leadId)
       .eq('pipeline_id', pipelineId)
 
+    if (moveErr) throw moveErr
+
     // Move in the other pipeline too (find venta stage there)
-    const { data: otherPipelines } = await supabase
+    const { data: otherPipelines, error: otherErr } = await supabase
       .from('ventas_lead_pipeline')
       .select('pipeline_id')
       .eq('lead_id', leadId)
       .neq('pipeline_id', pipelineId)
 
+    if (otherErr) throw otherErr
+
     if (otherPipelines && otherPipelines.length > 0) {
       for (const entry of otherPipelines) {
-        const { data: etapaVenta } = await supabase
+        const { data: etapaVenta, error: etapaErr } = await supabase
           .from('ventas_etapas')
           .select('id')
           .eq('pipeline_id', entry.pipeline_id)
@@ -266,12 +268,16 @@ export function useVentas() {
           .limit(1)
           .single()
 
+        if (etapaErr) console.warn('Error buscando etapa venta:', etapaErr.message)
+
         if (etapaVenta) {
-          await supabase
+          const { error: moveOtherErr } = await supabase
             .from('ventas_lead_pipeline')
             .update({ etapa_id: etapaVenta.id, fecha_entrada: new Date().toISOString() })
             .eq('lead_id', leadId)
             .eq('pipeline_id', entry.pipeline_id)
+
+          if (moveOtherErr) console.warn('Error moviendo lead en pipeline secundario:', moveOtherErr.message)
         }
       }
     }

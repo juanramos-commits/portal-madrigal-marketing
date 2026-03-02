@@ -2,6 +2,20 @@
    VENTAS — VENTAS SECTION
    ============================================================================ */
 
+/* ── Local tokens (payment methods / devolucion) ─────────────────── */
+:root {
+  --color-stripe: #635bff;
+  --color-stripe-bg: rgba(99, 91, 255, 0.12);
+  --color-sequra: #00c4b4;
+  --color-sequra-bg: rgba(0, 196, 180, 0.12);
+  --color-devolucion: #a078ff;
+  --color-devolucion-bg: rgba(160, 120, 255, 0.15);
+  --color-devolucion-border: rgba(160, 120, 255, 0.3);
+  --color-devolucion-hover: rgba(160, 120, 255, 0.1);
+  --color-success-border: rgba(46, 229, 157, 0.3);
+  --color-error-border: rgba(255, 107, 107, 0.3);
+}
+
 /* ── Page layout ──────────────────────────────────────────────────── */
 .vv-page {
   display: flex;
@@ -27,8 +41,8 @@
 }
 
 .vv-header-top h1 {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: var(--font-xl-2xl);
+  font-weight: var(--weight-bold);
   margin: 0;
   color: var(--text);
 }
@@ -41,15 +55,15 @@
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 6px 12px;
+  padding: var(--space-1-5) var(--space-3);
   min-width: 0;
   max-width: 280px;
   flex: 1;
 }
 
 .vv-search svg {
-  width: 16px;
-  height: 16px;
+  width: var(--font-md);
+  height: var(--font-md);
   color: var(--text-muted);
   flex-shrink: 0;
 }
@@ -58,7 +72,7 @@
   background: transparent;
   border: none;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   width: 100%;
   outline: none;
 }
@@ -74,7 +88,7 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-bottom: 2px;
+  padding-bottom: var(--space-2xs);
 }
 
 .vv-tabs::-webkit-scrollbar { display: none; }
@@ -82,14 +96,14 @@
 .vv-tab {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-3-5);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
@@ -97,27 +111,27 @@
 }
 
 .vv-tab:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-skeleton);
   color: var(--text);
 }
 
 .vv-tab.active {
   background: var(--bg-active);
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--border-hover);
 }
 
 .vv-tab-count {
-  font-size: 11px;
-  background: rgba(255, 255, 255, 0.06);
-  padding: 1px 6px;
-  border-radius: 10px;
+  font-size: var(--font-xs);
+  background: var(--bg-badge);
+  padding: 1px var(--space-1-5);
+  border-radius: var(--radius-pill);
   min-width: 18px;
   text-align: center;
 }
 
 .vv-tab.active .vv-tab-count {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--bg-active);
 }
 
 /* ── Error banner ─────────────────────────────────────────────────── */
@@ -126,11 +140,11 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-md);
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  background: var(--error-bg);
+  border: 1px solid var(--border-error);
   border-radius: var(--radius-sm);
   color: var(--error);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
 }
 
 .vv-error-banner p { margin: 0; }
@@ -139,48 +153,48 @@
 .vv-badge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: var(--space-2xs) var(--space-2-5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
 
 .vv-badge-pendiente {
-  background: rgba(255, 169, 77, 0.15);
+  background: var(--warning-bg);
   color: var(--warning);
 }
 
 .vv-badge-aprobada {
-  background: rgba(46, 229, 157, 0.15);
+  background: var(--success-bg);
   color: var(--success);
 }
 
 .vv-badge-rechazada {
-  background: rgba(255, 107, 107, 0.15);
+  background: var(--error-bg);
   color: var(--error);
 }
 
 .vv-badge-devolucion {
-  background: rgba(160, 120, 255, 0.15);
-  color: #a078ff;
+  background: var(--color-devolucion-bg);
+  color: var(--color-devolucion);
 }
 
 /* ── Method badges ────────────────────────────────────────────────── */
 .vv-metodo-badge {
   display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.06);
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-xs-sm);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
+  background: var(--bg-badge);
   color: var(--text-muted);
 }
 
-.vv-metodo-stripe { color: #635bff; background: rgba(99, 91, 255, 0.12); }
-.vv-metodo-sequra { color: #00c4b4; background: rgba(0, 196, 180, 0.12); }
-.vv-metodo-transferencia { color: var(--warning); background: rgba(255, 169, 77, 0.12); }
+.vv-metodo-stripe { color: var(--color-stripe); background: var(--color-stripe-bg); }
+.vv-metodo-sequra { color: var(--color-sequra); background: var(--color-sequra-bg); }
+.vv-metodo-transferencia { color: var(--warning); background: var(--warning-bg); }
 
 /* ── Desktop table ────────────────────────────────────────────────── */
 .vv-table-wrap {
@@ -192,18 +206,18 @@
 .vv-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
 }
 
 .vv-table thead th {
-  padding: 10px 14px;
+  padding: var(--space-2-5) var(--space-3-5);
   text-align: left;
-  font-weight: 600;
-  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-xs);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-subtle);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
@@ -220,11 +234,11 @@
 }
 
 .vv-table-row.expanded {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--bg-skeleton);
 }
 
 .vv-table-row td {
-  padding: 10px 14px;
+  padding: var(--space-2-5) var(--space-3-5);
   border-bottom: 1px solid var(--border);
   color: var(--text);
   vertical-align: middle;
@@ -233,26 +247,26 @@
 .vv-expanded-row td {
   padding: 0;
   border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--bg-subtle);
 }
 
 /* ── Actions cell ─────────────────────────────────────────────────── */
 .vv-actions-cell {
   display: flex;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .vv-action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-xs-sm);
   border: 1px solid var(--border);
   background: transparent;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
@@ -260,26 +274,26 @@
 
 .vv-action-approve {
   color: var(--success);
-  border-color: rgba(46, 229, 157, 0.3);
+  border-color: var(--color-success-border);
 }
 .vv-action-approve:hover {
-  background: rgba(46, 229, 157, 0.1);
+  background: var(--success-bg);
 }
 
 .vv-action-reject {
   color: var(--error);
-  border-color: rgba(255, 107, 107, 0.3);
+  border-color: var(--color-error-border);
 }
 .vv-action-reject:hover {
-  background: rgba(255, 107, 107, 0.1);
+  background: var(--error-bg);
 }
 
 .vv-action-refund {
-  color: #a078ff;
-  border-color: rgba(160, 120, 255, 0.3);
+  color: var(--color-devolucion);
+  border-color: var(--color-devolucion-border);
 }
 .vv-action-refund:hover {
-  background: rgba(160, 120, 255, 0.1);
+  background: var(--color-devolucion-hover);
 }
 
 /* ── Mobile cards ─────────────────────────────────────────────────── */
@@ -309,20 +323,20 @@
 }
 
 .vv-card-importe {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--font-md);
+  font-weight: var(--weight-bold);
   color: var(--text);
 }
 
 .vv-card-lead {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
-  margin-bottom: 2px;
+  margin-bottom: var(--space-2xs);
 }
 
 .vv-card-paquete {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
   margin-bottom: var(--space-sm);
 }
@@ -330,7 +344,7 @@
 .vv-card-meta {
   display: flex;
   gap: var(--space-sm);
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   margin-bottom: var(--space-xs);
 }
@@ -338,19 +352,19 @@
 .vv-card-meta span {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .vv-card-asignados {
   display: flex;
   gap: var(--space-md);
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   margin-bottom: var(--space-xs);
 }
 
 .vv-card-fecha {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
@@ -364,7 +378,7 @@
 .vv-card-actions .vv-action-btn {
   flex: 1;
   justify-content: center;
-  padding: 8px;
+  padding: var(--space-sm);
 }
 
 .vv-card-detail {
@@ -399,7 +413,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-sm) 0;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
   flex-wrap: wrap;
   gap: var(--space-sm);
@@ -411,18 +425,18 @@
 }
 
 .vv-pagination-btns button {
-  padding: 6px 14px;
+  padding: var(--space-1-5) var(--space-3-5);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
 .vv-pagination-btns button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-badge);
 }
 
 .vv-pagination-btns button:disabled {
@@ -433,15 +447,25 @@
 /* ── Empty state ──────────────────────────────────────────────────── */
 .vv-empty {
   text-align: center;
-  padding: 48px 24px;
+  padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--font-base);
+}
+
+/* ── Loading overlay (reload with data) ──────────────────────────── */
+.vv-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-overlay);
+  z-index: 10;
+  pointer-events: none;
+  border-radius: var(--radius-md);
 }
 
 /* ── Skeleton ─────────────────────────────────────────────────────── */
 .vv-skeleton {
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 4px;
+  background: var(--bg-badge);
+  border-radius: var(--radius-xs);
   animation: vv-pulse 1.5s infinite;
 }
 
@@ -453,7 +477,7 @@
 /* ── Detalle expandido ────────────────────────────────────────────── */
 .vv-detalle {
   padding: var(--space-md);
-  animation: vv-slideDown 0.2s ease;
+  animation: vv-slideDown var(--transition-base);
 }
 
 @keyframes vv-slideDown {
@@ -474,8 +498,8 @@
 }
 
 .vv-detalle-section h4 {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -485,15 +509,15 @@
 .vv-detalle-rows {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .vv-detalle-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
-  padding: 4px 0;
+  font-size: var(--font-sm-md);
+  padding: var(--space-xs) 0;
 }
 
 .vv-detalle-row > span:first-child {
@@ -509,31 +533,31 @@
 }
 
 .vv-detalle-importe {
-  font-weight: 700;
-  font-size: 15px;
+  font-weight: var(--weight-bold);
+  font-size: var(--font-base);
 }
 
 .vv-detalle-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   background: transparent;
   border: none;
   color: var(--info);
-  font-size: 12px;
+  font-size: var(--font-sm);
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: var(--space-2xs) var(--space-1-5);
+  border-radius: var(--radius-xs);
   transition: background var(--transition-fast);
 }
 
 .vv-detalle-link:hover {
-  background: rgba(100, 149, 237, 0.1);
+  background: var(--info-bg);
 }
 
 .vv-detalle-loading,
 .vv-detalle-empty {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
   padding: var(--space-sm) 0;
 }
@@ -542,24 +566,24 @@
 .vv-comisiones-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--font-sm);
 }
 
 .vv-comisiones-table th {
   text-align: left;
-  font-weight: 600;
-  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-xs);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   color: var(--text-muted);
-  padding: 6px 8px;
+  padding: var(--space-1-5) var(--space-sm);
   border-bottom: 1px solid var(--border);
 }
 
 .vv-comisiones-table td {
-  padding: 6px 8px;
+  padding: var(--space-1-5) var(--space-sm);
   color: var(--text);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--bg-skeleton);
 }
 
 .vv-comision-negativa td {
@@ -571,14 +595,14 @@
 
 /* ── Modal utility classes (used inside shared Modal) ────────────── */
 .vv-modal-hint {
-  font-size: 13px !important;
+  font-size: var(--font-sm-md) !important;
   color: var(--text-muted) !important;
 }
 
 .vv-modal-warning {
-  font-size: 13px !important;
+  font-size: var(--font-sm-md) !important;
   color: var(--warning) !important;
-  background: rgba(255, 169, 77, 0.08);
+  background: var(--warning-bg);
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--warning);
@@ -704,13 +728,13 @@
 }
 
 .vv-btn-danger {
-  padding: 8px 20px;
+  padding: var(--space-sm) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--error);
-  color: white;
-  font-size: 13px;
-  font-weight: 600;
+  color: var(--text-inverse);
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
 }

@@ -1,23 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-const LinkIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-  </svg>
-)
-
-const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-)
-
-const DashIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <line x1="5" y1="12" x2="19" y2="12"/>
-  </svg>
-)
+import { ExternalLink, Check, Minus } from 'lucide-react'
 
 function formatDate(d) {
   if (!d) return '-'
@@ -62,7 +45,7 @@ export default function VentaDetalle({ venta, comisiones, loadingComisiones, onL
                     className="vv-detalle-link"
                     onClick={(e) => { e.stopPropagation(); navigate(`/ventas/crm/lead/${venta.lead_id}`) }}
                   >
-                    <LinkIcon /> Ver en CRM
+                    <ExternalLink size={14} /> Ver en CRM
                   </button>
                 )}
               </span>
@@ -81,7 +64,7 @@ export default function VentaDetalle({ venta, comisiones, loadingComisiones, onL
             </div>
             <div className="vv-detalle-row">
               <span>Pago único</span>
-              <span>{venta.es_pago_unico ? <CheckIcon /> : <DashIcon />}</span>
+              <span>{venta.es_pago_unico ? <Check size={14} /> : <Minus size={14} />}</span>
             </div>
             <div className="vv-detalle-row">
               <span>Fecha venta</span>

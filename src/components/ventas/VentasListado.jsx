@@ -1,37 +1,8 @@
 import { useState, useCallback, Fragment } from 'react'
+import { Check, X, RotateCcw, Minus } from 'lucide-react'
 import VentaDetalle from './VentaDetalle'
 import { ModalAprobar, ModalRechazar } from './VentaAprobacion'
 import VentaDevolucion from './VentaDevolucion'
-
-const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-)
-
-const XIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-  </svg>
-)
-
-const RefundIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
-  </svg>
-)
-
-const DashIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    <line x1="5" y1="12" x2="19" y2="12"/>
-  </svg>
-)
-
-const ChevronIcon = ({ dir }) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
-    {dir === 'down' ? <polyline points="6 9 12 15 18 9"/> : <polyline points="18 15 12 9 6 15"/>}
-  </svg>
-)
 
 function formatDate(d) {
   if (!d) return '-'
@@ -156,20 +127,20 @@ export default function VentasListado({
                 {venta.estado === 'pendiente' && !venta.es_devolucion && (
                   <>
                     <button className="vv-action-btn vv-action-approve" onClick={(e) => { e.stopPropagation(); setModal({ type: 'aprobar', venta }) }}>
-                      <CheckIcon /> Aprobar
+                      <Check size={14} /> Aprobar
                     </button>
                     <button className="vv-action-btn vv-action-reject" onClick={(e) => { e.stopPropagation(); setModal({ type: 'rechazar', venta }) }}>
-                      <XIcon /> Rechazar
+                      <X size={14} /> Rechazar
                     </button>
                   </>
                 )}
                 {venta.estado === 'aprobada' && !venta.es_devolucion && (
                   <>
                     <button className="vv-action-btn vv-action-reject" onClick={(e) => { e.stopPropagation(); setModal({ type: 'revertir', venta }) }}>
-                      <XIcon /> Rechazar
+                      <X size={14} /> Rechazar
                     </button>
                     <button className="vv-action-btn vv-action-refund" onClick={(e) => { e.stopPropagation(); setModal({ type: 'devolucion', venta }) }}>
-                      <RefundIcon /> Devolución
+                      <RotateCcw size={14} /> Devolución
                     </button>
                   </>
                 )}
@@ -236,7 +207,7 @@ export default function VentasListado({
                       {metodoLabels[venta.metodo_pago] || '-'}
                     </span>
                   </td>
-                  <td>{venta.es_pago_unico ? <CheckIcon /> : <DashIcon />}</td>
+                  <td>{venta.es_pago_unico ? <Check size={14} /> : <Minus size={14} />}</td>
                   <td>{venta.setter?.nombre || '-'}</td>
                   <td>{venta.closer?.nombre || '-'}</td>
                   <td><span className={`vv-badge ${estado.className}`}>{estado.label}</span></td>
@@ -246,20 +217,20 @@ export default function VentasListado({
                         {venta.estado === 'pendiente' && !venta.es_devolucion && (
                           <>
                             <button className="vv-action-btn vv-action-approve" onClick={() => setModal({ type: 'aprobar', venta })} title="Aprobar">
-                              <CheckIcon />
+                              <Check size={14} />
                             </button>
                             <button className="vv-action-btn vv-action-reject" onClick={() => setModal({ type: 'rechazar', venta })} title="Rechazar">
-                              <XIcon />
+                              <X size={14} />
                             </button>
                           </>
                         )}
                         {venta.estado === 'aprobada' && !venta.es_devolucion && (
                           <>
                             <button className="vv-action-btn vv-action-reject" onClick={() => setModal({ type: 'revertir', venta })} title="Rechazar">
-                              <XIcon />
+                              <X size={14} />
                             </button>
                             <button className="vv-action-btn vv-action-refund" onClick={() => setModal({ type: 'devolucion', venta })} title="Devolución">
-                              <RefundIcon />
+                              <RotateCcw size={14} />
                             </button>
                           </>
                         )}
@@ -290,8 +261,13 @@ export default function VentasListado({
   return (
     <>
       {/* Desktop table / Mobile cards */}
-      <div className="vv-desktop-only">{renderTable()}</div>
-      <div className="vv-mobile-only">{renderCards()}</div>
+      <div style={{ position: 'relative' }}>
+        {loading && ventas.length > 0 && (
+          <div className="vv-loading-overlay" />
+        )}
+        <div className="vv-desktop-only">{renderTable()}</div>
+        <div className="vv-mobile-only">{renderCards()}</div>
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
