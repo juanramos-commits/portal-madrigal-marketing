@@ -131,18 +131,15 @@
 .vc-vista-btn:hover { background: var(--bg-skeleton); color: var(--text); }
 .vc-vista-btn.active { background: var(--bg-active); color: var(--text); }
 
-.vc-closer-filtro {
-  height: 34px;
-  background: var(--bg-input);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 0 var(--space-xl) 0 var(--space-sm);
-  color: var(--text);
-  font-size: var(--font-sm-md);
-  cursor: pointer;
-  transition: border-color var(--transition-fast);
+.vc-controles-right .ui-field {
+  margin-bottom: 0;
 }
-.vc-closer-filtro:focus { outline: none; border-color: var(--border-focus); }
+
+.vc-controles-right .ui-select {
+  height: 34px;
+  font-size: var(--font-sm-md);
+  padding: 0 var(--space-xl) 0 var(--space-sm);
+}
 
 /* ── VISTA MENSUAL ────────────────────────────────────────────────── */
 .vc-mes {

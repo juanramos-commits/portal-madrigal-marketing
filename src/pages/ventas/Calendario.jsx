@@ -126,7 +126,6 @@ export default function VentasCalendario() {
             {/* Closer filter (admin only) */}
             {cal.esDirector && cal.closers.length > 0 && (
               <Select
-                className="vc-closer-filtro"
                 value={cal.closerFiltro || ''}
                 onChange={e => cal.setCloserFiltro(e.target.value || null)}
               >
