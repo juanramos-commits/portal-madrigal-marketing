@@ -72,7 +72,7 @@ export default function WidgetChart({ widgetDef, data }) {
   if (chartType === 'bar') {
     return (
       <div className="db-wchart">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <BarChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="fecha" tickFormatter={formatDate} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
@@ -87,7 +87,7 @@ export default function WidgetChart({ widgetDef, data }) {
 
   return (
     <div className="db-wchart">
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <AreaChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id={`grad_${widgetDef.type}`} x1="0" y1="0" x2="0" y2="1">
