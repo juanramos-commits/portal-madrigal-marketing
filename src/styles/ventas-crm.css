@@ -1217,7 +1217,7 @@
   scrollbar-color: var(--bg-active) transparent;
 }
 
-.crm-filters-body > * { flex-shrink: 0; }
+.crm-filters-body > * { flex: 0 0 auto; }
 
 .crm-filters-body::-webkit-scrollbar {
   width: 4px;
