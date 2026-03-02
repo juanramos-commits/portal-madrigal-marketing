@@ -1206,15 +1206,18 @@
 }
 
 .crm-filters-body {
-  flex: 1;
+  flex: 1 1 0;
   overflow-y: auto;
   padding: var(--space-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  justify-content: flex-start;
   scrollbar-width: thin;
   scrollbar-color: var(--bg-active) transparent;
 }
+
+.crm-filters-body > * { flex-shrink: 0; }
 
 .crm-filters-body::-webkit-scrollbar {
   width: 4px;
