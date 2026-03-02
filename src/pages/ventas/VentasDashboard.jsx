@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useRef, useLayoutEffect, useEffect } from 'react'
+import { useMemo, useCallback, useState, useRef } from 'react'
 import { ResponsiveGridLayout } from 'react-grid-layout'
 import { useAuth } from '../../contexts/AuthContext'
 import { useDashboard } from '../../hooks/useDashboard'
@@ -46,24 +46,26 @@ function renderWidget(widgetDef, data, config) {
 export default function VentasDashboard() {
   const { usuario } = useAuth()
   const db = useDashboard()
-  const containerRef = useRef(null)
-  const [gridWidth, setGridWidth] = useState(1200)
+  const [gridWidth, setGridWidth] = useState(0)
+  const observerRef = useRef(null)
 
-  useLayoutEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    setGridWidth(el.offsetWidth)
-  }, [])
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const ro = new ResizeObserver(entries => {
-      const w = entries[0]?.contentRect?.width
-      if (w && w > 0) setGridWidth(w)
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
+  // Callback ref: fires when element attaches/detaches from DOM
+  const measureRef = useCallback(node => {
+    // Cleanup previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+      observerRef.current = null
+    }
+    if (node) {
+      // Immediate measurement
+      setGridWidth(node.offsetWidth)
+      // Watch for resizes
+      observerRef.current = new ResizeObserver(entries => {
+        const w = entries[0]?.contentRect?.width
+        if (w > 0) setGridWidth(w)
+      })
+      observerRef.current.observe(node)
+    }
   }, [])
 
   const nombre = usuario?.nombre?.split(' ')[0] || 'usuario'
@@ -115,40 +117,42 @@ export default function VentasDashboard() {
         layout={db.layout}
       />
 
-      <div ref={containerRef} className="db-grid-container">
-        <ResponsiveGridLayout
-          width={gridWidth}
-          layouts={rglLayouts}
-          breakpoints={{ lg: 900, md: 500, sm: 0 }}
-          cols={{ lg: 12, md: 6, sm: 1 }}
-          rowHeight={60}
-          isDraggable={db.editMode && !isMobile}
-          isResizable={db.editMode && !isMobile}
-          compactType="vertical"
-          containerPadding={[0, 0]}
-          margin={[12, 12]}
-          draggableHandle=".db-widget-drag-handle"
-          onLayoutChange={handleLayoutChange}
-        >
-          {db.layout.map(item => {
-            const widgetDef = WIDGET_CATALOG[item.type]
-            if (!widgetDef) return null
-            const widgetData = db.data?.[widgetDef.dataKey]
+      <div ref={measureRef} className="db-grid-container">
+        {gridWidth > 0 && (
+          <ResponsiveGridLayout
+            width={gridWidth}
+            layouts={rglLayouts}
+            breakpoints={{ lg: 900, md: 500, sm: 0 }}
+            cols={{ lg: 12, md: 6, sm: 1 }}
+            rowHeight={60}
+            isDraggable={db.editMode && !isMobile}
+            isResizable={db.editMode && !isMobile}
+            compactType="vertical"
+            containerPadding={[0, 0]}
+            margin={[12, 12]}
+            draggableHandle=".db-widget-drag-handle"
+            onLayoutChange={handleLayoutChange}
+          >
+            {db.layout.map(item => {
+              const widgetDef = WIDGET_CATALOG[item.type]
+              if (!widgetDef) return null
+              const widgetData = db.data?.[widgetDef.dataKey]
 
-            return (
-              <div key={item.i}>
-                <WidgetShell
-                  widgetDef={widgetDef}
-                  editMode={db.editMode}
-                  onRemove={() => db.removeWidget(item.i)}
-                  loading={db.loading}
-                >
-                  {renderWidget(widgetDef, widgetData, item.config)}
-                </WidgetShell>
-              </div>
-            )
-          })}
-        </ResponsiveGridLayout>
+              return (
+                <div key={item.i}>
+                  <WidgetShell
+                    widgetDef={widgetDef}
+                    editMode={db.editMode}
+                    onRemove={() => db.removeWidget(item.i)}
+                    loading={db.loading}
+                  >
+                    {renderWidget(widgetDef, widgetData, item.config)}
+                  </WidgetShell>
+                </div>
+              )
+            })}
+          </ResponsiveGridLayout>
+        )}
       </div>
     </div>
   )
