@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useRef } from 'react'
+import { useMemo, useCallback } from 'react'
 import { ResponsiveGridLayout, useContainerWidth } from 'react-grid-layout'
 import { useAuth } from '../../contexts/AuthContext'
 import { useDashboard } from '../../hooks/useDashboard'
@@ -46,8 +46,7 @@ function renderWidget(widgetDef, data, config) {
 export default function VentasDashboard() {
   const { usuario } = useAuth()
   const db = useDashboard()
-  const gridRef = useRef(null)
-  const { width } = useContainerWidth({ ref: gridRef, initialWidth: 1200 })
+  const { width, containerRef } = useContainerWidth({ initialWidth: 1200 })
 
   const nombre = usuario?.nombre?.split(' ')[0] || 'usuario'
   const isMobile = width < 500
@@ -98,7 +97,7 @@ export default function VentasDashboard() {
         layout={db.layout}
       />
 
-      <div ref={gridRef} className="db-grid-container">
+      <div ref={containerRef} className="db-grid-container">
         <ResponsiveGridLayout
           width={width}
           layouts={rglLayouts}
