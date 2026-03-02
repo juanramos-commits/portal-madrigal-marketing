@@ -112,7 +112,7 @@ export default function VentasCalendario() {
           <div className="vc-controles-right">
             {/* Vista selector */}
             <div className="vc-vista-selector">
-              {[{ key: 'mes', label: 'Mes' }, { key: 'semana', label: 'Semana' }, { key: 'dia', label: 'Día' }].map(v => (
+              {[{ key: 'semana', label: 'Semana' }, { key: 'mes', label: 'Mes' }, { key: 'dia', label: 'Día' }].map(v => (
                 <button
                   key={v.key}
                   className={`vc-vista-btn${cal.vista === v.key ? ' active' : ''}`}

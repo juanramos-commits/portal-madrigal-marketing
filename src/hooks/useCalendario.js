@@ -51,7 +51,7 @@ export function useCalendario() {
   const [closers, setClosers] = useState([])
   const [reunionEstados, setReunionEstados] = useState([])
   const [setters, setSetters] = useState([])
-  const [vista, setVista] = useState('mes')
+  const [vista, setVista] = useState('semana')
   const [fechaActual, setFechaActual] = useState(new Date())
   const [closerFiltro, setCloserFiltro] = useState(null)
   const [loading, setLoading] = useState(true)

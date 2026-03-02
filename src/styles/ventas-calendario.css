@@ -19,38 +19,43 @@
 }
 
 .vc-header h1 {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: var(--font-2xl);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
   margin: 0;
   color: var(--text);
 }
 
-/* ── Tabs ─────────────────────────────────────────────────────────── */
+/* ── Tabs — pill pattern ─────────────────────────────────────────── */
 .vc-tabs {
   display: flex;
   gap: var(--space-xs);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding-bottom: 2px;
+  padding-bottom: var(--space-2xs);
 }
 .vc-tabs::-webkit-scrollbar { display: none; }
 
 .vc-tab {
-  padding: 6px 14px;
-  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-1-5) var(--space-3-5);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
   flex-shrink: 0;
 }
-.vc-tab:hover { background: rgba(255,255,255,0.04); color: var(--text); }
-.vc-tab.active { background: rgba(255,255,255,0.08); color: var(--text); border-color: rgba(255,255,255,0.15); }
+.vc-tab:hover { background: var(--bg-skeleton); color: var(--text); }
+.vc-tab.active { background: var(--bg-active); color: var(--text); border-color: var(--border-hover); }
 
 /* ── Calendar controls ────────────────────────────────────────────── */
 .vc-controles {
@@ -64,15 +69,15 @@
 .vc-nav {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 
 .vc-nav-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
@@ -80,26 +85,28 @@
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.vc-nav-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+.vc-nav-btn:hover { background: var(--bg-skeleton); color: var(--text); }
 
 .vc-nav-hoy {
-  padding: 4px 12px;
+  height: 34px;
+  padding: 0 var(--space-sm);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.vc-nav-hoy:hover { background: rgba(255,255,255,0.06); }
+.vc-nav-hoy:hover { background: var(--bg-skeleton); }
 
 .vc-nav-titulo {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   white-space: nowrap;
+  margin-left: var(--space-xs);
 }
 
 .vc-controles-right {
@@ -113,31 +120,35 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;
+  height: 34px;
 }
 
 .vc-vista-btn {
-  padding: 5px 12px;
+  padding: 0 var(--space-sm);
+  height: 100%;
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   border-right: 1px solid var(--border);
 }
 .vc-vista-btn:last-child { border-right: none; }
-.vc-vista-btn:hover { background: rgba(255,255,255,0.04); color: var(--text); }
-.vc-vista-btn.active { background: rgba(255,255,255,0.08); color: var(--text); }
+.vc-vista-btn:hover { background: var(--bg-skeleton); color: var(--text); }
+.vc-vista-btn.active { background: var(--bg-active); color: var(--text); }
 
 .vc-closer-filtro {
+  height: 34px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 5px 10px;
+  padding: 0 var(--space-xl) 0 var(--space-sm);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   cursor: pointer;
+  transition: border-color var(--transition-fast);
 }
 .vc-closer-filtro:focus { outline: none; border-color: var(--border-focus); }
 
