@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
-import { Kanban, List, Filter, Plus, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
+import { Kanban, List, Filter, Plus, RefreshCw } from 'lucide-react'
 import { useVentasCRM } from '../../hooks/useVentasCRM'
 import { useVentas } from '../../hooks/useVentas'
+import { useToast } from '../../contexts/ToastContext'
 import CRMKanban from '../../components/ventas/CRMKanban'
 import CRMTabla from '../../components/ventas/CRMTabla'
 import CRMBuscador from '../../components/ventas/CRMBuscador'
@@ -14,22 +15,16 @@ import '../../styles/ventas-ventas.css'
 export default function VentasCRM() {
   const crm = useVentasCRM()
   const ventasHook = useVentas()
+  const { showToast } = useToast()
   const [showFilters, setShowFilters] = useState(false)
   const [showNewLead, setShowNewLead] = useState(false)
-  const [toast, setToast] = useState(null)
 
   const filtroCount = useMemo(() => {
     return Object.values(crm.filtros).filter(v => v != null && v !== '' && !(Array.isArray(v) && v.length === 0)).length
   }, [crm.filtros])
 
-  const showToast = (msg, type = 'error') => {
-    setToast({ msg, type })
-    setTimeout(() => setToast(null), 3000)
-  }
-
   const handleCrearLead = async (datos) => {
     await crm.crearLead(datos)
-    crm.refrescar()
   }
 
   // Error state
@@ -140,7 +135,7 @@ export default function VentasCRM() {
           onMoverLead={crm.moverLead}
           showAssignee={crm.esAdminODirector}
           loading={crm.loading}
-          onError={(msg) => showToast(msg, 'error')}
+          onError={(msg) => showToast(msg, 'error', 3000)}
         />
       ) : (
         <CRMTabla
@@ -193,7 +188,7 @@ export default function VentasCRM() {
             crm.setLeadParaVenta(null)
             crm.setEtapaVentaDestino(null)
             crm.refrescar()
-            showToast('Venta registrada correctamente', 'success')
+            showToast('Venta registrada correctamente', 'success', 3000)
           }}
           onCancel={() => {
             crm.setLeadParaVenta(null)
@@ -202,15 +197,6 @@ export default function VentasCRM() {
         />
       )}
 
-      {/* ── Toast ───────────────────────────────────────────────────── */}
-      {toast && (
-        <div className={`crm-toast ${toast.type}`}>
-          <span className="crm-toast-icon">
-            {toast.type === 'success' ? <CheckCircle /> : <AlertCircle />}
-          </span>
-          {toast.msg}
-        </div>
-      )}
     </div>
   )
 }

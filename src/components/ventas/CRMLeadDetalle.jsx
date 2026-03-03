@@ -5,9 +5,10 @@ import {
   User, Mail, Phone, Globe, GitBranch, Users, FileText,
   Video, Tag, Clock, Calendar,
   PlusCircle, ArrowRightCircle, UserCheck, Pencil,
-  CheckCircle, AlertCircle, Trash2,
+  Trash2,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
 import { supabase } from '../../lib/supabase'
 import { logActividad } from '../../lib/logActividad'
 import Select from '../ui/Select'
@@ -79,8 +80,8 @@ export default function CRMLeadDetalle() {
   const [showEtapaDropdown, setShowEtapaDropdown] = useState(null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [showTagPicker, setShowTagPicker] = useState(false)
-  const [toast, setToast] = useState(null)
 
+  const { showToast } = useToast()
   const debounceRefs = useRef({})
   const snapshotRef = useRef(null)
   const registroTimeoutRef = useRef(null)
@@ -92,11 +93,6 @@ export default function CRMLeadDetalle() {
   const esAdminODirector = esAdmin || esDirector
   const esMiLeadSetter = lead?.setter_asignado_id === user?.id
   const esMiLeadCloser = lead?.closer_asignado_id === user?.id
-
-  const showToast = (msg, type = 'success') => {
-    setToast({ msg, type })
-    setTimeout(() => setToast(null), 3000)
-  }
 
   // ── Load lead detail ───────────────────────────────────────────────
   const cargarLead = useCallback(async () => {
@@ -303,9 +299,13 @@ export default function CRMLeadDetalle() {
     }, 2000)
   }, [])
 
-  // Cleanup: registrar cambios pendientes al desmontar
+  // Cleanup: flush pending saves and activity tracking on unmount
   useEffect(() => {
     return () => {
+      // Clear field debounce timers
+      Object.values(debounceRefs.current).forEach(clearTimeout)
+      debounceRefs.current = {}
+      // Flush activity tracking
       if (registroTimeoutRef.current) clearTimeout(registroTimeoutRef.current)
       registrarRef.current?.()
       snapshotRef.current = null
@@ -334,7 +334,7 @@ export default function CRMLeadDetalle() {
 
       logActividad('crm', 'cambio_etapa', `${pipelineNombre}: ${etapaAnterior} → ${etapaNueva}`, { entidad: 'lead', entidad_id: id })
 
-      showToast('Etapa actualizada')
+      showToast('Etapa actualizada', 'success')
       cargarLead()
     } catch (_) {
       showToast('Error al cambiar etapa', 'error')
@@ -354,7 +354,7 @@ export default function CRMLeadDetalle() {
         datos: { setter_id: setterId, anterior: lead.setter_asignado_id },
       })
       logActividad('crm', 'asignar', `Setter: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
-      showToast('Setter actualizado')
+      showToast('Setter actualizado', 'success')
       cargarLead()
     } catch (_) {
       showToast('Error', 'error')
@@ -373,7 +373,7 @@ export default function CRMLeadDetalle() {
         datos: { closer_id: closerId, anterior: lead.closer_asignado_id },
       })
       logActividad('crm', 'asignar', `Closer: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
-      showToast('Closer actualizado')
+      showToast('Closer actualizado', 'success')
       cargarLead()
     } catch (_) {
       showToast('Error', 'error')
@@ -899,15 +899,6 @@ export default function CRMLeadDetalle() {
         onCancel={() => setShowConfirmDelete(false)}
       />
 
-      {/* ── Toast ───────────────────────────────────────────────────── */}
-      {toast && (
-        <div className={`crm-toast ${toast.type}`}>
-          <span className="crm-toast-icon">
-            {toast.type === 'success' ? <CheckCircle /> : <AlertCircle />}
-          </span>
-          {toast.msg}
-        </div>
-      )}
     </div>
   )
 }
