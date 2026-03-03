@@ -10,12 +10,12 @@ export default memo(function WidgetShell({ widgetDef, editMode, onRemove, loadin
     <div className={`db-widget${editMode ? ' db-widget--editing' : ''}`}>
       <div className="db-widget-header">
         <div className="db-widget-title">
-          {editMode && <GripVertical size={14} className="db-widget-drag-handle" />}
+          {editMode && <GripVertical size={14} className="db-widget-drag-handle" title="Arrastra para mover" />}
           {Icon && <Icon size={14} />}
           {widgetDef.label}
         </div>
         {editMode && (
-          <button className="db-widget-remove" onClick={onRemove} title="Quitar widget" aria-label={`Quitar ${widgetDef.label}`}>
+          <button type="button" className="db-widget-remove" onClick={onRemove} title="Quitar widget" aria-label={`Quitar ${widgetDef.label}`}>
             <X size={14} />
           </button>
         )}
