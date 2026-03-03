@@ -12,15 +12,15 @@ function tiempoRelativo(fecha) {
 }
 
 const TIPO_COLORS = {
-  cambio_etapa: '#6366F1',
-  cita_agendada: '#22C55E',
-  venta: '#F59E0B',
-  venta_rechazada: '#EF4444',
-  devolucion: '#EF4444',
-  asignacion: '#3B82F6',
-  cita_cancelada: '#F97316',
-  edicion: '#9CA3AF',
-  creacion: '#22C55E',
+  cambio_etapa: 'var(--color-category)',
+  cita_agendada: 'var(--success)',
+  venta: 'var(--warning)',
+  venta_rechazada: 'var(--error)',
+  devolucion: 'var(--error)',
+  asignacion: 'var(--color-category)',
+  cita_cancelada: 'var(--warning)',
+  edicion: 'var(--text-muted)',
+  creacion: 'var(--success)',
 }
 
 export default function WidgetActivity({ widgetDef, data }) {
@@ -30,7 +30,7 @@ export default function WidgetActivity({ widgetDef, data }) {
   return (
     <div className="db-wactivity">
       {items.map(a => {
-        const color = TIPO_COLORS[a.tipo] || '#9CA3AF'
+        const color = TIPO_COLORS[a.tipo] || 'var(--text-muted)'
         return (
           <div key={a.id} className="db-wactivity-item">
             <div className="db-wactivity-dot" style={{ background: color }} />
