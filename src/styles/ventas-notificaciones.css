@@ -116,8 +116,14 @@
   padding: var(--space-3-5) var(--space-3);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), opacity var(--transition-base);
   position: relative;
+  animation: ntf-fade-in var(--transition-base) ease;
+}
+
+@keyframes ntf-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .ntf-item:hover {
