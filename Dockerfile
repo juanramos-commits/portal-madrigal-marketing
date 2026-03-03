@@ -3,7 +3,7 @@ ARG CACHEBUST=2
 WORKDIR /app
 
 # Cache buster - change this to force rebuild
-ARG CACHE_BUST=2026-03-02-v1
+ARG CACHE_BUST=2026-03-03-v1
 
 # Supabase env vars needed at build time (Vite inlines them)
 ARG VITE_SUPABASE_URL
