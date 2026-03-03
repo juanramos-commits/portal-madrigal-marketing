@@ -148,6 +148,10 @@
   background: var(--bg-active);
 }
 
+.ntf-item + .ntf-item {
+  border-top: 1px solid var(--border);
+}
+
 /* ── Delete button ── */
 .ntf-btn-eliminar {
   flex-shrink: 0;
