@@ -21,7 +21,7 @@ export default function VentasNotificaciones() {
         <div className="ntf-header-left">
           <h1>Notificaciones</h1>
           {ntf.contadorNoLeidas > 0 && (
-            <span className="ntf-header-badge" aria-label={`${ntf.contadorNoLeidas} sin leer`}>{ntf.contadorNoLeidas}</span>
+            <span className="ntf-header-badge" role="status" aria-label={`${ntf.contadorNoLeidas} sin leer`}>{ntf.contadorNoLeidas}</span>
           )}
         </div>
         {ntf.contadorNoLeidas > 0 && (

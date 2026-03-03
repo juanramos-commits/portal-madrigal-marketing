@@ -122,7 +122,7 @@ export default function NotificacionesLista({
       })}
 
       {error && (
-        <div className="ntf-error-inline">
+        <div className="ntf-error-inline" role="alert">
           {error}
           {onReintentar && (
             <button type="button" className="ntf-error-inline-btn" onClick={onReintentar}>Reintentar</button>
@@ -131,7 +131,7 @@ export default function NotificacionesLista({
       )}
 
       {hayMas && !error && (
-        <button type="button" className="ntf-cargar-mas" onClick={onCargarMas} disabled={loading}>
+        <button type="button" className="ntf-cargar-mas" onClick={onCargarMas} disabled={loading} aria-busy={loading}>
           {loading && <span className="ntf-spinner" />}
           {loading ? 'Cargando...' : 'Cargar más'}
         </button>

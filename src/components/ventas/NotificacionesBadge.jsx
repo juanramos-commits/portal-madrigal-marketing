@@ -4,6 +4,6 @@ export default function NotificacionesBadge({ contador }) {
   const texto = contador > 9 ? '9+' : String(contador)
 
   return (
-    <span className="ntf-badge" aria-label={`${contador} notificaciones sin leer`}>{texto}</span>
+    <span className="ntf-badge" role="status" aria-label={`${contador} notificaciones sin leer`}>{texto}</span>
   )
 }
