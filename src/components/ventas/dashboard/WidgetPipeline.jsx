@@ -7,7 +7,11 @@ export default function WidgetPipeline({ widgetDef, data }) {
   return (
     <div className="db-wpipeline">
       {totalLeads > 0 && (
-        <div className="db-wpipeline-stages">
+        <div
+          className="db-wpipeline-stages"
+          role="img"
+          aria-label={`Pipeline: ${stages.filter(s => (Number(s.total) || 0) > 0).map(s => `${s.nombre} ${Number(s.total) || 0}`).join(', ')}`}
+        >
           {stages.map((s, i) => {
             const val = Number(s.total) || 0
             if (val === 0) return null
@@ -16,7 +20,7 @@ export default function WidgetPipeline({ widgetDef, data }) {
                 key={i}
                 className="db-wpipeline-stage"
                 style={{ flex: val, background: s.color || 'var(--text-muted)' }}
-                title={`${s.nombre}: ${val}`}
+                aria-hidden="true"
               />
             )
           })}
