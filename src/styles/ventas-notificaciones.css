@@ -236,10 +236,10 @@
 /* ── Icon ── */
 .ntf-icon {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-pill);
-  background: var(--bg-card);
+  background: var(--bg-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -247,8 +247,8 @@
 }
 
 .ntf-icon svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 
 .ntf-icon.ntf-color-success { color: var(--success); background: var(--success-bg); }
@@ -413,8 +413,8 @@
 .ntf-skeleton-content { flex: 1; }
 
 .ntf-skeleton-icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-pill);
   background: linear-gradient(90deg, var(--bg-skeleton) 25%, var(--bg-hover) 50%, var(--bg-skeleton) 75%);
   background-size: 200% 100%;
