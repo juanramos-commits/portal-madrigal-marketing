@@ -16,12 +16,12 @@ function CustomTooltip({ active, payload }) {
   )
 }
 
-function PieDistribution({ data }) {
+function PieDistribution({ data, label }) {
   const total = data.reduce((s, d) => s + (Number(d.valor) || 0), 0)
 
   return (
     <div className="db-wdist">
-      <div className="db-wdist-chart">
+      <div className="db-wdist-chart" role="img" aria-label={`Gráfico: ${label}`}>
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <PieChart>
             <Pie
@@ -57,10 +57,10 @@ function PieDistribution({ data }) {
   )
 }
 
-function HorizontalBarDistribution({ data }) {
+function HorizontalBarDistribution({ data, label }) {
   return (
     <div className="db-wdist">
-      <div className="db-wdist-chart">
+      <div className="db-wdist-chart" role="img" aria-label={`Gráfico: ${label}`}>
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <BarChart data={data} layout="vertical" margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
@@ -83,8 +83,10 @@ export default function WidgetDistribution({ widgetDef, data }) {
   const items = Array.isArray(data) ? data : []
   if (items.length === 0) return <div className="db-widget-empty">Sin datos</div>
 
+  const label = widgetDef?.label || 'Distribución'
+
   if (widgetDef?.chartType === 'horizontal_bar') {
-    return <HorizontalBarDistribution data={items} />
+    return <HorizontalBarDistribution data={items} label={label} />
   }
-  return <PieDistribution data={items} />
+  return <PieDistribution data={items} label={label} />
 }
