@@ -767,8 +767,8 @@
 }
 
 .db-wlead-bronze {
-  background: rgba(205, 127, 50, 0.15);
-  color: #CD7F32;
+  background: var(--color-bronze-bg);
+  color: var(--color-bronze);
 }
 
 .db-wlead-info {
