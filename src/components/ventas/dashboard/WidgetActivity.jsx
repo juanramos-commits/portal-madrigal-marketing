@@ -29,10 +29,10 @@ export default function WidgetActivity({ widgetDef, data }) {
 
   return (
     <div className="db-wactivity">
-      {items.map(a => {
+      {items.map((a, i) => {
         const color = TIPO_COLORS[a.tipo] || 'var(--text-muted)'
         return (
-          <div key={a.id} className="db-wactivity-item">
+          <div key={a.id || i} className="db-wactivity-item">
             <div className="db-wactivity-dot" style={{ background: color }} />
             <div className="db-wactivity-content">
               <span className="db-wactivity-time">{tiempoRelativo(a.created_at)}</span>
