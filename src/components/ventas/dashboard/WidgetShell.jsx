@@ -21,7 +21,7 @@ export default function WidgetShell({ widgetDef, editMode, onRemove, loading, ch
       </div>
       <div className="db-widget-body">
         {loading ? (
-          <div className="db-widget-skeleton">
+          <div className="db-widget-skeleton" role="status" aria-label="Cargando datos">
             <div className="db-sk-block db-sk-lg" />
             <div className="db-sk-block db-sk-sm" />
           </div>
