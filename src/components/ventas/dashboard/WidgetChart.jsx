@@ -27,18 +27,18 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 const CHART_COLORS = {
-  leads_por_dia: { stroke: 'var(--info)', fill: 'rgba(100, 149, 237, 0.1)' },
-  ventas_por_dia: { stroke: 'var(--success)', fill: 'rgba(46, 229, 157, 0.1)' },
-  leads_por_semana: { stroke: '#6366F1', fill: '#6366F1' },
-  ventas_por_mes: { stroke: '#22C55E', fill: '#22C55E' },
-  ingresos_por_dia: { stroke: '#F59E0B', fill: 'rgba(245, 158, 11, 0.1)' },
-  ingresos_por_mes: { stroke: '#F59E0B', fill: '#F59E0B' },
-  comisiones_por_mes: { stroke: '#8B5CF6', fill: '#8B5CF6' },
-  conversion_por_dia: { stroke: '#6366F1', fill: 'rgba(99, 102, 241, 0.1)' },
+  leads_por_dia: { stroke: 'var(--primary)', fill: 'var(--primary-muted)' },
+  ventas_por_dia: { stroke: 'var(--success)', fill: 'var(--success-bg)' },
+  leads_por_semana: { stroke: 'var(--primary)', fill: 'var(--primary)' },
+  ventas_por_mes: { stroke: 'var(--success)', fill: 'var(--success)' },
+  ingresos_por_dia: { stroke: 'var(--warning)', fill: 'var(--warning-bg)' },
+  ingresos_por_mes: { stroke: 'var(--warning)', fill: 'var(--warning)' },
+  comisiones_por_mes: { stroke: 'var(--success)', fill: 'var(--success)' },
+  conversion_por_dia: { stroke: 'var(--primary)', fill: 'var(--primary-muted)' },
 }
 
 function getChartConfig(dataKey) {
-  return CHART_COLORS[dataKey] || { stroke: 'var(--info)', fill: 'rgba(100, 149, 237, 0.1)' }
+  return CHART_COLORS[dataKey] || { stroke: 'var(--primary)', fill: 'var(--primary-muted)' }
 }
 
 function getDataKeyField(dataKey) {
