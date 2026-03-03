@@ -6,7 +6,7 @@ import { WIDGET_CATALOG } from '../config/widgetCatalog'
 
 function getUserRole(usuario, rolesComerciales, userId) {
   if (usuario?.tipo === 'super_admin') return 'admin'
-  const misRoles = rolesComerciales.filter(r => r.usuario_id === userId && r.activo)
+  const misRoles = rolesComerciales.filter(r => r.usuario_id === userId)
   if (misRoles.some(r => r.rol === 'director_ventas')) return 'director_ventas'
   if (misRoles.some(r => r.rol === 'closer')) return 'closer'
   if (misRoles.some(r => r.rol === 'setter')) return 'setter'
