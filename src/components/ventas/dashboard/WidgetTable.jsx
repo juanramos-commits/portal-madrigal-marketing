@@ -147,7 +147,7 @@ function LeadsSinContactarTable({ data }) {
         <tr>
           <th>Nombre</th>
           <th>Negocio</th>
-          <th>Telefono</th>
+          <th>Teléfono</th>
           <th>Tiempo</th>
         </tr>
       </thead>
