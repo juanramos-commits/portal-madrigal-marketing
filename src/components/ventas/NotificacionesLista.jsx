@@ -97,7 +97,7 @@ export default function NotificacionesLista({
   const grupos = agruparPorFecha(notificaciones)
 
   return (
-    <div className="ntf-lista">
+    <div className="ntf-lista" aria-live="polite">
       {Object.entries(GRUPO_LABELS).map(([key, label]) => {
         const items = grupos[key]
         if (!items || items.length === 0) return null
