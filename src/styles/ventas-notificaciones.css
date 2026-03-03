@@ -244,15 +244,12 @@
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
+  transition: transform var(--transition-fast);
 }
 
 .ntf-icon svg {
   width: 20px;
   height: 20px;
-}
-
-.ntf-icon {
-  transition: transform var(--transition-fast);
 }
 
 .ntf-item:hover .ntf-icon {
