@@ -29,7 +29,7 @@ const ESTADO_COLORS = {
   aprobada: 'var(--success)',
   rechazada: 'var(--error)',
   completado: 'var(--success)',
-  procesando: 'var(--info)',
+  procesando: 'var(--color-category)',
 }
 
 function LeadsTable({ data }) {
