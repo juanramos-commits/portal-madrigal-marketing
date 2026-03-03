@@ -120,9 +120,12 @@ export function useVentasCRM() {
       query = query.in('etapa_id', filtros.etapa_ids)
     }
 
-    // Search
+    // Search — escape special PostgREST filter chars to prevent query injection
     if (busqueda.trim()) {
-      query = query.or(`nombre.ilike.%${busqueda.trim()}%,telefono.ilike.%${busqueda.trim()}%`, { foreignTable: 'ventas_leads' })
+      const sanitized = busqueda.trim().replace(/[%_\\,().]/g, '')
+      if (sanitized) {
+        query = query.or(`nombre.ilike.%${sanitized}%,telefono.ilike.%${sanitized}%`, { foreignTable: 'ventas_leads' })
+      }
     }
 
     return query
@@ -395,9 +398,20 @@ export function useVentasCRM() {
 
     try {
       setLoading(true)
-      const query = buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre)
-        .order('fecha_entrada', { ascending: tablaSort.dir === 'asc' })
-        .range(tablaPage * TABLE_PAGE_SIZE, (tablaPage + 1) * TABLE_PAGE_SIZE - 1)
+      // Map table column keys to actual sortable fields
+      const sortCol = tablaSort.col
+      const ascending = tablaSort.dir === 'asc'
+      let query = buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre)
+
+      // Lead-level fields need foreignTable option; pipeline-level fields sort directly
+      const leadFields = ['nombre', 'telefono', 'email', 'fuente', 'created_at']
+      if (leadFields.includes(sortCol)) {
+        query = query.order(sortCol, { ascending, foreignTable: 'ventas_leads' })
+      } else {
+        query = query.order('fecha_entrada', { ascending })
+      }
+
+      query = query.range(tablaPage * TABLE_PAGE_SIZE, (tablaPage + 1) * TABLE_PAGE_SIZE - 1)
 
       const { data, count, error: err } = await query
       if (err) throw err
