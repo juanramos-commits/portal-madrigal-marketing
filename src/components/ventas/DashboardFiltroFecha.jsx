@@ -4,10 +4,10 @@ import Select from '../ui/Select'
 const OPCIONES = [
   { value: 'este_mes', label: 'Este mes' },
   { value: 'mes_pasado', label: 'Mes pasado' },
-  { value: 'ultimos_7', label: 'Ultimos 7 dias' },
-  { value: 'ultimos_30', label: 'Ultimos 30 dias' },
-  { value: 'ultimos_90', label: 'Ultimos 90 dias' },
-  { value: 'este_ano', label: 'Este ano' },
+  { value: 'ultimos_7', label: 'Últimos 7 días' },
+  { value: 'ultimos_30', label: 'Últimos 30 días' },
+  { value: 'ultimos_90', label: 'Últimos 90 días' },
+  { value: 'este_ano', label: 'Este año' },
   { value: 'personalizado', label: 'Personalizado' },
 ]
 

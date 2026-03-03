@@ -10,8 +10,8 @@ import {
 export const WIDGET_CATEGORIES = [
   { key: 'kpis', label: 'KPIs', icon: TrendingUp },
   { key: 'wallet', label: 'Wallet', icon: Wallet },
-  { key: 'charts', label: 'Graficos', icon: BarChart3 },
-  { key: 'distribution', label: 'Distribucion', icon: PieChart },
+  { key: 'charts', label: 'Gráficos', icon: BarChart3 },
+  { key: 'distribution', label: 'Distribución', icon: PieChart },
   { key: 'tables', label: 'Tablas', icon: Table2 },
   { key: 'team', label: 'Equipo', icon: Trophy },
   { key: 'funnel', label: 'Funnel', icon: GitBranch },
@@ -121,13 +121,13 @@ export const WIDGET_CATALOG = {
 
   // ── Charts Fase 1 (2) ──────────────────────────────────
   chart_leads_por_dia: {
-    type: 'chart_leads_por_dia', label: 'Leads por dia', category: 'charts',
+    type: 'chart_leads_por_dia', label: 'Leads por día', category: 'charts',
     icon: BarChart3, dataKey: 'leads_por_dia', chartType: 'line',
     defaultSize: { w: 6, h: 4 }, minSize: { w: 4, h: 3 },
     roles: ['admin', 'director_ventas', 'setter'],
   },
   chart_ventas_por_dia: {
-    type: 'chart_ventas_por_dia', label: 'Ventas por dia', category: 'charts',
+    type: 'chart_ventas_por_dia', label: 'Ventas por día', category: 'charts',
     icon: BarChart3, dataKey: 'ventas_por_dia', chartType: 'line',
     defaultSize: { w: 6, h: 4 }, minSize: { w: 4, h: 3 },
     roles: ['admin', 'director_ventas', 'closer'],
@@ -147,7 +147,7 @@ export const WIDGET_CATALOG = {
     roles: ['admin', 'director_ventas', 'closer'],
   },
   chart_ingresos_por_dia: {
-    type: 'chart_ingresos_por_dia', label: 'Ingresos por dia', category: 'charts',
+    type: 'chart_ingresos_por_dia', label: 'Ingresos por día', category: 'charts',
     icon: BarChart3, dataKey: 'ingresos_por_dia', chartType: 'line',
     defaultSize: { w: 6, h: 4 }, minSize: { w: 4, h: 3 },
     roles: ['admin', 'director_ventas', 'closer'],
@@ -165,7 +165,7 @@ export const WIDGET_CATALOG = {
     roles: ['admin', 'director_ventas', 'closer', 'setter'],
   },
   chart_conversion_por_dia: {
-    type: 'chart_conversion_por_dia', label: 'Conversion por dia', category: 'charts',
+    type: 'chart_conversion_por_dia', label: 'Conversión por día', category: 'charts',
     icon: Percent, dataKey: 'conversion_por_dia', chartType: 'line',
     defaultSize: { w: 6, h: 4 }, minSize: { w: 4, h: 3 },
     roles: ['admin', 'director_ventas'],
@@ -269,13 +269,13 @@ export const WIDGET_CATALOG = {
     roles: ['admin', 'director_ventas'],
   },
   team_conversion_por_closer: {
-    type: 'team_conversion_por_closer', label: 'Conversion por closer', category: 'team',
+    type: 'team_conversion_por_closer', label: 'Conversión por closer', category: 'team',
     icon: Percent, dataKey: 'conversion_por_closer',
     defaultSize: { w: 6, h: 4 }, minSize: { w: 4, h: 3 },
     roles: ['admin', 'director_ventas'],
   },
   team_conversion_por_setter: {
-    type: 'team_conversion_por_setter', label: 'Conversion por setter', category: 'team',
+    type: 'team_conversion_por_setter', label: 'Conversión por setter', category: 'team',
     icon: Percent, dataKey: 'conversion_por_setter',
     defaultSize: { w: 6, h: 4 }, minSize: { w: 4, h: 3 },
     roles: ['admin', 'director_ventas'],
