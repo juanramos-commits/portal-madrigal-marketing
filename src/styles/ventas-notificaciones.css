@@ -136,7 +136,7 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
-  padding: var(--space-sm) var(--space-3) var(--space-xs);
+  padding: var(--space-sm) var(--space-md) var(--space-xs);
 }
 
 /* ── Item ── */
@@ -522,8 +522,8 @@
   }
 
   .ntf-grupo-label {
-    padding-left: var(--space-sm);
-    padding-right: var(--space-sm);
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
   }
 }
 
