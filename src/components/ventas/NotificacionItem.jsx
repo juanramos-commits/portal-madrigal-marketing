@@ -87,7 +87,7 @@ export default function NotificacionItem({ notificacion, onMarcarLeida, onElimin
       tabIndex={0}
     >
       {!notificacion.leida && <span className="ntf-dot" />}
-      <div className={`ntf-icon${colorClass ? ` ${colorClass}` : ''}`}><Icon size={18} /></div>
+      <div className={`ntf-icon${colorClass ? ` ${colorClass}` : ''}`}><Icon size={20} /></div>
       <div className="ntf-content">
         <div className="ntf-top-row">
           <div className="ntf-titulo">{notificacion.titulo}</div>
