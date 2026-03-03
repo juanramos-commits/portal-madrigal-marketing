@@ -230,7 +230,15 @@ function VistaDiaria({ fechaActual, citas, bloqueos, onClickCita, esDirector, es
                   <div className="vc-linea-ahora" style={{ top: `${((ahoraMinutos % 60) / 60) * 100}%` }} />
                 )}
                 {citasHora.map(c => (
-                  <div key={c.id} className="vc-dia-cita" onClick={() => onClickCita(c)}>
+                  <div
+                    key={c.id}
+                    className="vc-dia-cita"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onClickCita(c)}
+                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClickCita(c) } }}
+                    aria-label={`Cita: ${c.lead?.nombre || 'Sin nombre'}`}
+                  >
                     <span className="vc-dia-cita-hora">{new Date(c.fecha_hora).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
                     <span className="vc-dia-cita-nombre">{c.lead?.nombre || 'Sin nombre'}</span>
                     {esDirector && c.closer && (

@@ -185,7 +185,7 @@ export default function CalendarioCitaDetalle({
               {estadoActual.nombre}
             </span>
           ) : (
-            <span style={{ color: 'var(--text-muted)' }}>Sin estado</span>
+            <span className="vc-text-muted">Sin estado</span>
           )}
         </div>
 

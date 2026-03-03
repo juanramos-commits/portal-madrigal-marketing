@@ -97,16 +97,16 @@ export default function CalendarioEnlaces({
   const handleToggleActivo = async (enlace) => {
     try {
       await onActualizar(enlace.id, { activo: !enlace.activo })
-    } catch (_) {
-      // silently fail
+    } catch (err) {
+      console.warn('Error al cambiar estado del enlace:', err)
     }
   }
 
   const handleEliminar = async (id) => {
     try {
       await onEliminar(id)
-    } catch (_) {
-      // silently fail
+    } catch (err) {
+      console.warn('Error al eliminar enlace:', err)
     }
   }
 
@@ -147,8 +147,8 @@ export default function CalendarioEnlaces({
                 <tbody>
                   {enlaces.map(e => (
                     <tr key={e.id}>
-                      <td style={{ fontWeight: 600 }}>{e.nombre}</td>
-                      <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{e.slug}</td>
+                      <td className="vc-cell-bold">{e.nombre}</td>
+                      <td className="vc-cell-slug">{e.slug}</td>
                       <td>{e.setter?.nombre || e.setter?.email || 'Sin setter'}</td>
                       <td>{e.fuente || '-'}</td>
                       <td>
@@ -177,7 +177,7 @@ export default function CalendarioEnlaces({
             {enlaces.map(e => (
               <div key={e.id} className="vc-enlace-card">
                 <div className="vc-enlace-card-top">
-                  <span style={{ fontWeight: 600 }}>{e.nombre}</span>
+                  <span className="vc-cell-bold">{e.nombre}</span>
                   <Toggle checked={e.activo} onChange={() => handleToggleActivo(e)} />
                 </div>
                 <div className="vc-enlace-card-meta">

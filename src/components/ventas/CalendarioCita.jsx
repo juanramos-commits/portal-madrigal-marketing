@@ -25,7 +25,7 @@ export default function CalendarioCita({ cita, onClick, mostrarCloser, compacto 
         className="vc-cita-dot"
         style={{ background: color }}
         onClick={e => { e.stopPropagation(); onClick?.(cita) }}
-        title={`${formatHora(cita.fecha_hora)} - ${cita.lead?.nombre || 'Sin nombre'}`}
+        aria-label={`${formatHora(cita.fecha_hora)} - ${cita.lead?.nombre || 'Sin nombre'}`}
       />
     )
   }

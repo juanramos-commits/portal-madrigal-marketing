@@ -1225,3 +1225,101 @@
     flex-wrap: wrap;
   }
 }
+
+/* ── Icon utility ────────────────────────────────────────────────── */
+.vc-icon-nav {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Cell utility ────────────────────────────────────────────────── */
+.vc-cell-bold {
+  font-weight: 600;
+}
+
+.vc-cell-slug {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Focus-visible ───────────────────────────────────────────────── */
+.vc-tab:focus-visible,
+.vc-nav-btn:focus-visible,
+.vc-nav-hoy:focus-visible,
+.vc-vista-btn:focus-visible,
+.vc-btn-primary:focus-visible,
+.vc-btn-ghost:focus-visible,
+.vc-btn-danger:focus-visible,
+.vc-btn-sm:focus-visible,
+.vc-btn-xs:focus-visible,
+.vc-btn-icon-danger:focus-visible,
+.vc-btn-copy:focus-visible,
+.vc-disp-del:focus-visible,
+.vc-disp-add:focus-visible,
+.vc-link-btn:focus-visible,
+.vc-cita-bloque:focus-visible,
+.vc-cita-dot:focus-visible,
+.vc-dia-cita:focus-visible,
+.vc-meet-link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .vc-tab,
+  .vc-nav-btn,
+  .vc-nav-hoy,
+  .vc-vista-btn,
+  .vc-btn-primary,
+  .vc-btn-ghost,
+  .vc-btn-danger,
+  .vc-btn-sm,
+  .vc-btn-xs,
+  .vc-btn-icon-danger,
+  .vc-btn-copy,
+  .vc-link-btn,
+  .vc-meet-link,
+  .vc-cita-bloque,
+  .vc-dia-cita,
+  .vc-disp-dia,
+  .vc-disp-del,
+  .vc-disp-add,
+  .vc-mes-celda,
+  .vc-table tbody tr,
+  .vc-field input,
+  .vc-field select,
+  .vc-field textarea,
+  .vc-field-inline input,
+  .vc-disp-franja input[type="time"] {
+    transition: none;
+  }
+}
+
+/* ── Print ────────────────────────────────────────────────────────── */
+@media print {
+  .vc-tabs,
+  .vc-controles,
+  .vc-nav,
+  .vc-controles-right,
+  .vc-disp-actions,
+  .vc-bloqueos-header button,
+  .vc-enlaces-header button,
+  .vc-enlace-card-actions,
+  .vc-actions-cell,
+  .vc-mobile-only,
+  .vc-btn-copy,
+  .vc-btn-sm,
+  .vc-btn-primary,
+  .vc-btn-danger {
+    display: none !important;
+  }
+
+  .vc-page {
+    gap: var(--space-sm);
+  }
+
+  .vc-table-wrap {
+    border: 1px solid #ccc;
+  }
+}

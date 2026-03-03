@@ -11,13 +11,13 @@ import Select from '../../components/ui/Select'
 import '../../styles/ventas-calendario.css'
 
 const ChevronLeft = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="vc-icon-nav" aria-hidden="true">
     <polyline points="15 18 9 12 15 6"/>
   </svg>
 )
 
 const ChevronRight = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="vc-icon-nav" aria-hidden="true">
     <polyline points="9 18 15 12 9 6"/>
   </svg>
 )
@@ -87,12 +87,14 @@ export default function VentasCalendario() {
       </div>
 
       {/* Tabs */}
-      <div className="vc-tabs">
+      <div className="vc-tabs" role="tablist" aria-label="Secciones del calendario">
         {tabs.map(t => (
           <button
             key={t.key}
             className={`vc-tab${tab === t.key ? ' active' : ''}`}
             onClick={() => setTab(t.key)}
+            role="tab"
+            aria-selected={tab === t.key}
           >
             {t.label}
           </button>
@@ -103,20 +105,21 @@ export default function VentasCalendario() {
       {tab === 'calendario' && (
         <div className="vc-controles">
           <div className="vc-nav">
-            <button className="vc-nav-btn" onClick={cal.irAnterior}><ChevronLeft /></button>
+            <button className="vc-nav-btn" onClick={cal.irAnterior} aria-label="Periodo anterior"><ChevronLeft /></button>
             <button className="vc-nav-hoy" onClick={cal.irHoy}>Hoy</button>
-            <button className="vc-nav-btn" onClick={cal.irSiguiente}><ChevronRight /></button>
+            <button className="vc-nav-btn" onClick={cal.irSiguiente} aria-label="Periodo siguiente"><ChevronRight /></button>
             <span className="vc-nav-titulo">{formatTituloNav(cal.vista, cal.fechaActual)}</span>
           </div>
 
           <div className="vc-controles-right">
             {/* Vista selector */}
-            <div className="vc-vista-selector">
+            <div className="vc-vista-selector" role="group" aria-label="Tipo de vista">
               {[{ key: 'semana', label: 'Semana' }, { key: 'mes', label: 'Mes' }, { key: 'dia', label: 'Día' }].map(v => (
                 <button
                   key={v.key}
                   className={`vc-vista-btn${cal.vista === v.key ? ' active' : ''}`}
                   onClick={() => cal.setVista(v.key)}
+                  aria-pressed={cal.vista === v.key}
                 >
                   {v.label}
                 </button>
@@ -139,7 +142,7 @@ export default function VentasCalendario() {
         </div>
       )}
 
-      {cal.error && <div className="vc-error-msg">{cal.error}</div>}
+      {cal.error && <div className="vc-error-msg" role="alert">{cal.error}</div>}
 
       {/* Main content */}
       {tab === 'calendario' && (
