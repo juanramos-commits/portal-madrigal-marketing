@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { CheckCheck } from 'lucide-react'
 import { useNotificaciones } from '../../hooks/useNotificaciones'
 import NotificacionesLista from '../../components/ventas/NotificacionesLista'
@@ -5,6 +6,14 @@ import '../../styles/ventas-notificaciones.css'
 
 export default function VentasNotificaciones() {
   const ntf = useNotificaciones()
+
+  useEffect(() => {
+    const base = 'Notificaciones | Madrigal Marketing'
+    document.title = ntf.contadorNoLeidas > 0
+      ? `(${ntf.contadorNoLeidas}) ${base}`
+      : base
+    return () => { document.title = 'Madrigal Marketing | Portal' }
+  }, [ntf.contadorNoLeidas])
 
   return (
     <div className="ntf-page">
