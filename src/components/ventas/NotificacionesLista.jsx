@@ -108,7 +108,7 @@ export default function NotificacionesLista({
 
         return (
           <div key={key} className="ntf-grupo">
-            <div className="ntf-grupo-label">{label}</div>
+            <h3 className="ntf-grupo-label">{label}</h3>
             {items.map(n => (
               <NotificacionItem
                 key={n.id}

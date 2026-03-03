@@ -12,7 +12,7 @@ export function useNotificaciones() {
   const [filtro, setFiltro] = useState('todas')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [hayMas, setHayMas] = useState(true)
+  const [hayMas, setHayMas] = useState(false)
   const channelRef = useRef(null)
   const offsetRef = useRef(0)
   const filtroRef = useRef(filtro)
@@ -261,6 +261,17 @@ export function useNotificaciones() {
     return () => desuscribirseRealtime()
   }, [user?.id])
 
+  // Refresh stale data when tab becomes visible again
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && user?.id) {
+        contarNoLeidas()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [user?.id, contarNoLeidas])
+
   const refrescar = useCallback(() => {
     cargarNotificaciones(true)
     contarNoLeidas()
@@ -282,8 +293,6 @@ export function useNotificaciones() {
     marcarComoLeida,
     marcarTodasComoLeidas,
     eliminarNotificacion,
-    suscribirseRealtime,
-    desuscribirseRealtime,
 
     refrescar,
   }

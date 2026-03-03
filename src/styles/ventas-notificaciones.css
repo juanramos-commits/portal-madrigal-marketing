@@ -35,7 +35,7 @@
   font-weight: var(--weight-bold);
   color: var(--text-inverse);
   background: var(--primary);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-full);
   line-height: 1;
 }
 
@@ -110,7 +110,7 @@
   background: var(--error-bg);
   color: var(--error);
   padding: 1px var(--space-1-5);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-full);
   font-weight: var(--weight-semibold);
 }
 
@@ -147,6 +147,7 @@
   text-transform: uppercase;
   letter-spacing: 0.6px;
   padding: var(--space-sm) var(--space-md) var(--space-xs);
+  margin: 0;
 }
 
 /* ── Item ── */
@@ -417,6 +418,7 @@
   padding: var(--space-2xl) var(--space-md);
   text-align: center;
   width: 100%;
+  animation: ntf-fade-in var(--transition-base) ease;
 }
 
 .ntf-empty-icon {
@@ -458,6 +460,7 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
+  touch-action: manipulation;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
@@ -616,6 +619,7 @@
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .ntf-item,
+  .ntf-empty,
   .ntf-skeleton-item,
   .ntf-skeleton-icon,
   .ntf-skeleton-line {
