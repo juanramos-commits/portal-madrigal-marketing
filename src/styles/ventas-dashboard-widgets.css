@@ -468,6 +468,7 @@
   gap: var(--space-xs);
   border-bottom: 1px solid var(--border);
   padding-bottom: var(--space-sm);
+  flex-wrap: wrap;
 }
 
 .db-addw-tab {
