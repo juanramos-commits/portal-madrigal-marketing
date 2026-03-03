@@ -134,6 +134,12 @@
   transform: scale(0.96);
 }
 
+.db-toolbar-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 .db-toolbar-btn:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
@@ -268,6 +274,12 @@
 
 .db-widget-drag-handle:active {
   cursor: grabbing;
+}
+
+.db-widget-drag-handle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .db-widget-remove {
@@ -892,8 +904,9 @@
   font-size: var(--font-sm);
   color: var(--text-muted);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .db-wactivity-desc strong {
@@ -1279,6 +1292,12 @@
     align-items: stretch;
   }
 
+  .db-toolbar-filters .db-select-periodo,
+  .db-toolbar-filters .db-select-usuario {
+    width: 100%;
+    min-width: 0;
+  }
+
   .db-toolbar-actions {
     justify-content: flex-end;
   }
@@ -1306,6 +1325,10 @@
   .db-wlead-top {
     flex-direction: column;
     gap: 0;
+  }
+
+  .db-wtable tbody td {
+    max-width: 100px;
   }
 }
 
