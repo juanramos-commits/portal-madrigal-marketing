@@ -78,7 +78,7 @@ export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }
               className="crm-card-move"
               onClick={handleMoverMobile}
               onPointerDown={(e) => e.stopPropagation()}
-              title="Mover a otra etapa"
+              aria-label="Mover a otra etapa"
             >
               <ArrowRightLeft />
             </button>
@@ -114,7 +114,7 @@ export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }
           </span>
         )}
         {showAssignee && assignee && (
-          <span className="crm-card-avatar" title={assignee.nombre} style={{ background: getAvatarColor(assignee.nombre) }}>
+          <span className="crm-card-avatar" aria-label={assignee.nombre} style={{ background: getAvatarColor(assignee.nombre) }}>
             {getInitials(assignee.nombre)}
           </span>
         )}

@@ -111,12 +111,12 @@ export default function CRMKanban({
 
   if (loading) {
     return (
-      <div className="crm-kanban">
+      <div className="crm-kanban" aria-busy="true" aria-label="Cargando tablero">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="crm-column">
             <div className="crm-column-header">
-              <span className="crm-skeleton" style={{ width: 8, height: 8, borderRadius: '50%' }} />
-              <span className="crm-skeleton" style={{ width: 80, height: 14 }} />
+              <span className="crm-skeleton crm-skeleton-dot" />
+              <span className="crm-skeleton crm-skeleton-title" />
             </div>
             <div className="crm-column-body">
               {[1, 2, 3].map(j => (
@@ -156,7 +156,7 @@ export default function CRMKanban({
 
       <DragOverlay>
         {activeLead ? (
-          <div className="crm-drag-overlay" style={{ width: 268, '--column-color': activeEtapa?.color }}>
+          <div className="crm-drag-overlay" aria-hidden="true" style={{ width: 268, '--column-color': activeEtapa?.color }}>
             <CRMLeadCard
               lead={activeLead}
               etapa={activeEtapa}

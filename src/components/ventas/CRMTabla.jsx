@@ -60,7 +60,7 @@ export default function CRMTabla({
             {[1, 2, 3, 4, 5].map(i => (
               <tr key={i}>
                 {columns.map(c => (
-                  <td key={c.key}><span className="crm-skeleton" style={{ width: '80%', height: 14, display: 'block' }} /></td>
+                  <td key={c.key}><span className="crm-skeleton crm-skeleton-cell" /></td>
                 ))}
               </tr>
             ))}
@@ -80,8 +80,11 @@ export default function CRMTabla({
                 <th
                   key={col.key}
                   onClick={col.sortable !== false ? () => handleSort(col.key) : undefined}
-                  style={col.sortable === false ? { cursor: 'default' } : undefined}
+                  onKeyDown={col.sortable !== false ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort(col.key) } } : undefined}
+                  tabIndex={col.sortable !== false ? 0 : undefined}
+                  className={col.sortable === false ? 'crm-th-static' : undefined}
                   aria-sort={sort.col === col.key ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+                  aria-roledescription={col.sortable !== false ? 'Columna ordenable' : undefined}
                 >
                   {col.label}
                   {sort.col === col.key && (sort.dir === 'asc' ? <ChevronUp /> : <ChevronDown />)}
@@ -92,7 +95,7 @@ export default function CRMTabla({
           <tbody>
             {leads.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
+                <td colSpan={columns.length} className="crm-table-empty">
                   No se encontraron leads
                 </td>
               </tr>
@@ -103,9 +106,8 @@ export default function CRMTabla({
                   onClick={() => navigate(`/ventas/crm/lead/${lead.id}`)}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/ventas/crm/lead/${lead.id}`) } }}
                   tabIndex={0}
-                  style={{ cursor: 'pointer' }}
                 >
-                  <td style={{ fontWeight: 600 }}>{lead.nombre}</td>
+                  <td className="crm-cell-bold">{lead.nombre}</td>
                   <td>{lead.telefono || '-'}</td>
                   <td>{lead.email || '-'}</td>
                   <td>{lead.categoria?.nombre || '-'}</td>
@@ -124,10 +126,9 @@ export default function CRMTabla({
                   <td>
                     {lead.telefono && (
                       <button
-                        className="crm-card-wa"
-                        style={{ width: 26, height: 26 }}
+                        className="crm-card-wa crm-card-wa--sm"
                         onClick={e => handleWhatsApp(e, lead.telefono)}
-                        title="WhatsApp"
+                        aria-label="Enviar WhatsApp"
                       >
                         <WhatsAppIcon size={14} />
                       </button>

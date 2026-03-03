@@ -342,6 +342,14 @@
   border-radius: var(--radius-xs);
 }
 
+/* ── Shared thin scrollbar (vertical) ─────────────────────────────────── */
+.crm-column-body::-webkit-scrollbar,
+.crm-filters-body::-webkit-scrollbar,
+.crm-detail-sidebar::-webkit-scrollbar { width: 4px; }
+.crm-column-body::-webkit-scrollbar-thumb,
+.crm-filters-body::-webkit-scrollbar-thumb,
+.crm-detail-sidebar::-webkit-scrollbar-thumb { background: var(--bg-active); border-radius: var(--radius-xs); }
+
 /* ── Kanban Column ──────────────────────────────────────────────────────── */
 .crm-column {
   flex: 0 0 280px;
@@ -439,15 +447,6 @@
   scrollbar-color: var(--bg-active) transparent;
 }
 
-.crm-column-body::-webkit-scrollbar {
-  width: 4px;
-}
-
-.crm-column-body::-webkit-scrollbar-thumb {
-  background: var(--bg-active);
-  border-radius: var(--radius-xs);
-}
-
 .crm-load-more {
   padding: var(--space-sm);
   text-align: center;
@@ -543,6 +542,16 @@
 .crm-card-wa svg {
   width: 15px;
   height: 15px;
+}
+
+.crm-card-wa--sm {
+  width: 26px;
+  height: 26px;
+}
+
+.crm-card-wa--lg {
+  width: 36px;
+  height: 36px;
 }
 
 .crm-card-phone {
@@ -677,6 +686,26 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
+}
+
+.crm-table-empty {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-muted);
+}
+
+.crm-cell-bold {
+  font-weight: var(--weight-semibold);
+}
+
+.crm-th-static {
+  cursor: default;
+}
+
+.crm-skeleton-cell {
+  display: block;
+  width: 80%;
+  height: 14px;
 }
 
 .crm-pagination {
@@ -1245,15 +1274,6 @@
   margin-bottom: 0;
 }
 
-.crm-filters-body::-webkit-scrollbar {
-  width: 4px;
-}
-
-.crm-filters-body::-webkit-scrollbar-thumb {
-  background: var(--bg-active);
-  border-radius: var(--radius-xs);
-}
-
 .crm-filters-footer {
   padding: var(--space-md);
   border-top: 1px solid var(--border);
@@ -1381,6 +1401,18 @@
   margin-bottom: var(--space-1-5);
 }
 
+.crm-skeleton-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.crm-skeleton-title {
+  width: 80px;
+  height: 14px;
+}
+
 /* ── Error State ────────────────────────────────────────────────────────── */
 .crm-error {
   display: flex;
@@ -1423,11 +1455,6 @@
 @keyframes crm-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-@keyframes crm-slide-up {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes crm-slide-right {
@@ -1685,14 +1712,6 @@
     scrollbar-color: var(--bg-active) transparent;
   }
 
-  .crm-detail-sidebar::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .crm-detail-sidebar::-webkit-scrollbar-thumb {
-    background: var(--bg-active);
-    border-radius: var(--radius-xs);
-  }
 }
 
 @media (min-width: 1280px) {

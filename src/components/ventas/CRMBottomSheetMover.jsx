@@ -41,12 +41,12 @@ export default function CRMBottomSheetMover({
   return (
     <>
       <div className="crm-sheet-overlay" onClick={onCerrar} aria-hidden="true" />
-      <div className="crm-sheet" ref={sheetRef} role="dialog" aria-modal="true">
+      <div className="crm-sheet" ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby="crm-sheet-mover-title">
         <div className="crm-sheet-handle" />
 
         <div className="crm-sheet-header">
           <div className="crm-sheet-header-left">
-            <h3 className="crm-sheet-title">Mover lead</h3>
+            <h3 id="crm-sheet-mover-title" className="crm-sheet-title">Mover lead</h3>
             <span className="crm-sheet-lead-name">{lead.nombre}</span>
           </div>
           <button className="crm-modal-close" onClick={onCerrar} aria-label="Cerrar">

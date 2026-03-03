@@ -37,7 +37,7 @@ export default function CRMKanbanColumn({
   }, [hasMore, loadingMore, onLoadMore, etapa.id])
 
   return (
-    <div className={`crm-column${isOver ? ' drag-over' : ''}`} ref={setNodeRef} style={{ '--column-color': etapa.color || 'var(--text-muted)' }}>
+    <div className={`crm-column${isOver ? ' drag-over' : ''}`} ref={setNodeRef} role="group" aria-label={`${etapa.nombre} — ${count} leads`} style={{ '--column-color': etapa.color || 'var(--text-muted)' }}>
       <div className="crm-column-header">
         <span className="crm-column-dot" style={{ background: etapa.color || 'var(--text-muted)' }} />
         <span className="crm-column-name">{etapa.nombre}</span>
@@ -58,7 +58,7 @@ export default function CRMKanbanColumn({
         </SortableContext>
 
         {leads.length === 0 && !loadingMore && (
-          <div className="crm-empty">
+          <div className="crm-empty" role="status">
             <span className="crm-empty-icon"><Inbox /></span>
             Sin leads
           </div>
@@ -70,7 +70,7 @@ export default function CRMKanbanColumn({
 
         {hasMore && !loadingMore && leads.length > 0 && (
           <div className="crm-load-more">
-            <button onClick={() => onLoadMore?.(etapa.id)}>
+            <button onClick={() => onLoadMore?.(etapa.id)} aria-label={`Cargar más leads en ${etapa.nombre}`}>
               Cargar más
             </button>
           </div>

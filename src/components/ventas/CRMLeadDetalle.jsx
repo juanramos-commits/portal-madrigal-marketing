@@ -561,8 +561,7 @@ export default function CRMLeadDetalle() {
         <div className="crm-detail-actions">
           {lead.telefono && (
             <button
-              className="crm-card-wa"
-              style={{ width: 36, height: 36 }}
+              className="crm-card-wa crm-card-wa--lg"
               onClick={() => window.open(`https://wa.me/${lead.telefono.replace(/[^0-9+]/g, '')}`, '_blank', 'noopener,noreferrer')}
               aria-label="Contactar por WhatsApp"
             >
