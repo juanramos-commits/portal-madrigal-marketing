@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 const METODOS_PAGO = [
   { value: 'stripe', label: 'Stripe' },
@@ -24,6 +25,22 @@ export default function VentasFiltros({
   paquetes = [],
 }) {
   const [local, setLocal] = useState({ ...filtros })
+  const panelRef = useRef(null)
+  useFocusTrap(panelRef)
+
+  // Close on Escape
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onCerrar() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onCerrar])
+
+  // Lock body scroll
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
 
   const handleChange = (key, value) => {
     setLocal(prev => ({ ...prev, [key]: value }))
@@ -41,8 +58,8 @@ export default function VentasFiltros({
 
   return createPortal(
     <>
-      <div className="vv-filters-overlay" onClick={onCerrar} />
-      <div className="vv-filters-panel">
+      <div className="vv-filters-overlay" onClick={onCerrar} aria-hidden="true" />
+      <div className="vv-filters-panel" ref={panelRef} role="dialog" aria-modal="true" aria-label="Filtros">
         <div className="vv-filters-header">
           <h2>Filtros</h2>
           <button className="vv-filters-close" onClick={onCerrar}>

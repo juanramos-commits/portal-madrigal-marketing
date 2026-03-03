@@ -32,8 +32,15 @@ export default function VentaCambioEstado({ venta, onCambio }) {
     const handleClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setAbierto(false)
     }
+    const handleKey = (e) => {
+      if (e.key === 'Escape') setAbierto(false)
+    }
     document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleKey)
+    }
   }, [abierto])
 
   const toggleOpen = (e) => {

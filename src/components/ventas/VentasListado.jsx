@@ -178,6 +178,10 @@ export default function VentasListado({
                 <tr
                   className={`vv-table-row${isExpanded ? ' expanded' : ''}`}
                   onClick={() => toggleExpand(venta.id)}
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(venta.id) } }}
+                  style={{ cursor: 'pointer' }}
                 >
                   <td style={{ fontWeight: 600 }}>{venta.lead?.nombre || '-'}</td>
                   <td>{formatDate(venta.fecha_venta)}</td>

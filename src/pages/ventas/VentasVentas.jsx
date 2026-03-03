@@ -32,10 +32,12 @@ export default function VentasVentas() {
 
         {/* Tabs + Search */}
         <div className="vv-toolbar">
-          <div className="vv-tabs">
+          <div className="vv-tabs" role="tablist" aria-label="Filtrar por estado">
             {tabs.map(tab => (
               <button
                 key={tab.key}
+                role="tab"
+                aria-selected={ventas.filtroEstado === tab.key}
                 className={`vv-tab${ventas.filtroEstado === tab.key ? ' active' : ''}`}
                 onClick={() => ventas.setFiltroEstado(tab.key)}
               >
@@ -53,9 +55,10 @@ export default function VentasVentas() {
               placeholder="Buscar en todos los campos..."
               value={ventas.busqueda}
               onChange={e => ventas.setBusqueda(e.target.value)}
+              aria-label="Buscar ventas"
             />
             {ventas.busqueda && ventas.searchResultCount !== null && ventas.searchResultCount !== undefined && (
-              <span className="vv-search-count">
+              <span className="vv-search-count" aria-live="polite">
                 {ventas.searchResultCount} {ventas.searchResultCount === 1 ? 'resultado' : 'resultados'}
               </span>
             )}
@@ -69,7 +72,7 @@ export default function VentasVentas() {
               </button>
             )}
           </div>
-          <button className="vv-filter-btn" onClick={() => setMostrarFiltros(true)}>
+          <button className="vv-filter-btn" onClick={() => setMostrarFiltros(true)} aria-label="Filtros">
             <Filter size={16} />
             <span className="vv-toolbar-label">Filtros</span>
             {filtrosActivos > 0 && (
@@ -83,7 +86,7 @@ export default function VentasVentas() {
             title="Exportar a CSV"
           >
             <Download size={16} />
-            <span className="vv-toolbar-label">CSV</span>
+            <span className="vv-toolbar-label">Exportar CSV</span>
           </button>
         </div>
       </div>
