@@ -427,6 +427,18 @@
 .ntf-skeleton-line--msg   { width: 80%; margin-bottom: var(--space-xs); }
 .ntf-skeleton-line--time  { width: 25%; height: 10px; }
 
+.ntf-skeleton-item { animation: ntf-skeleton-fade-in 0.4s ease both; }
+.ntf-skeleton-item:nth-child(1) { animation-delay: 0s; }
+.ntf-skeleton-item:nth-child(2) { animation-delay: 0.05s; }
+.ntf-skeleton-item:nth-child(3) { animation-delay: 0.1s; }
+.ntf-skeleton-item:nth-child(4) { animation-delay: 0.15s; }
+.ntf-skeleton-item:nth-child(5) { animation-delay: 0.2s; }
+
+@keyframes ntf-skeleton-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes ntf-shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
