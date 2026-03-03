@@ -103,7 +103,9 @@ export default function BibliotecaRecurso({ recurso, onCopiar, mostrarVisibilida
           <>
             <button className="bib-btn-icon" onClick={handleCopiar} title="Copiar URL">
               <CopyIcon />
-              {copiado && <span className="bib-copiado">¡Copiado!</span>}
+              <span className="bib-copiado" role="status" aria-live="polite">
+                {copiado ? '¡Copiado!' : ''}
+              </span>
             </button>
             <a
               href={recurso.url}

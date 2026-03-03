@@ -42,11 +42,14 @@ export default function BibliotecaFormRecurso({ recurso, secciones, seccionIdIni
   }, [recurso, seccionIdInicial])
 
   const toggleRol = (rol) => {
-    setVisiblePara(prev =>
-      prev.includes(rol)
-        ? prev.filter(r => r !== rol)
-        : [...prev, rol]
-    )
+    setVisiblePara(prev => {
+      if (prev.includes(rol)) {
+        // Prevent unchecking the last role
+        if (prev.length <= 1) return prev
+        return prev.filter(r => r !== rol)
+      }
+      return [...prev, rol]
+    })
   }
 
   const handleGuardar = async () => {
@@ -56,6 +59,10 @@ export default function BibliotecaFormRecurso({ recurso, secciones, seccionIdIni
     }
     if (!seccionId) {
       setError('Selecciona una sección')
+      return
+    }
+    if (url.trim() && !/^https?:\/\//i.test(url.trim())) {
+      setError('La URL debe empezar con http:// o https://')
       return
     }
     setSaving(true)

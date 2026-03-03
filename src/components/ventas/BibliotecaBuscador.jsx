@@ -12,14 +12,15 @@ const CloseIcon = () => (
 
 export default function BibliotecaBuscador({ busqueda, onBusquedaChange }) {
   return (
-    <div className="bib-buscador">
-      <div className="bib-buscador-icono">
+    <div className="bib-buscador" role="search">
+      <div className="bib-buscador-icono" aria-hidden="true">
         <SearchIcon />
       </div>
       <input
         type="text"
         className="bib-buscador-input"
         placeholder="Buscar recursos..."
+        aria-label="Buscar recursos en la biblioteca"
         value={busqueda}
         onChange={e => onBusquedaChange(e.target.value)}
       />

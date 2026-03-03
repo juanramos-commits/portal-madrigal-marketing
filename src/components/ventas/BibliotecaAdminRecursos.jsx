@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import {
   DndContext,
@@ -110,6 +110,13 @@ export default function BibliotecaAdminRecursos({
 }) {
   const [seccionActiva, setSeccionActiva] = useState(secciones[0]?.id || '')
   const [confirmEliminar, setConfirmEliminar] = useState(null)
+
+  // Sync active section when secciones change (e.g. new section created, or active one deleted)
+  useEffect(() => {
+    if (secciones.length > 0 && !secciones.some(s => s.id === seccionActiva)) {
+      setSeccionActiva(secciones[0].id)
+    }
+  }, [secciones, seccionActiva])
   const [eliminando, setEliminando] = useState(false)
   const [errorEliminar, setErrorEliminar] = useState(null)
 
@@ -196,7 +203,7 @@ export default function BibliotecaAdminRecursos({
       <ConfirmDialog
         open={!!confirmEliminar}
         title="Eliminar recurso"
-        message={<>¿Eliminar el recurso <strong>{confirmEliminar?.nombre}</strong>?<br /><span className="bib-text-muted">Esta acción no se puede deshacer.</span>{errorEliminar && <><br /><span style={{ color: '#ef4444', fontSize: 13 }}>{errorEliminar}</span></>}</>}
+        message={<>¿Eliminar el recurso <strong>{confirmEliminar?.nombre}</strong>?<br /><span className="bib-text-muted">Esta acción no se puede deshacer.</span>{errorEliminar && <><br /><span className="bib-confirm-error">{errorEliminar}</span></>}</>}
         variant="danger"
         confirmText="Eliminar"
         loading={eliminando}

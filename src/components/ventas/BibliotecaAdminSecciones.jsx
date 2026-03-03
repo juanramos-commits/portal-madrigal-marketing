@@ -155,7 +155,7 @@ export default function BibliotecaAdminSecciones({
       <ConfirmDialog
         open={!!confirmEliminar}
         title="Eliminar sección"
-        message={<>¿Eliminar la sección <strong>{confirmEliminar?.nombre}</strong> y todos sus recursos?<br /><span className="bib-text-muted">Esta acción no se puede deshacer.</span>{errorEliminar && <><br /><span style={{ color: '#ef4444', fontSize: 13 }}>{errorEliminar}</span></>}</>}
+        message={<>¿Eliminar la sección <strong>{confirmEliminar?.nombre}</strong> y todos sus recursos?<br /><span className="bib-text-muted">Esta acción no se puede deshacer.</span>{errorEliminar && <><br /><span className="bib-confirm-error">{errorEliminar}</span></>}</>}
         variant="danger"
         confirmText="Eliminar"
         loading={eliminando}

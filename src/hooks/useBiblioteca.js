@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
@@ -128,7 +128,7 @@ export function useBiblioteca() {
   }, [user?.id, rolesComerciales.length, cargarSecciones, cargarRecursos])
 
   // Filter recursos by visibility (unless admin/director or in management mode)
-  const recursosFiltrados = useCallback(() => {
+  const recursosFiltrados = useMemo(() => {
     let filtered = recursos
 
     // Visibility filter: non-admins only see resources where their role is in visible_para
@@ -153,8 +153,7 @@ export function useBiblioteca() {
   }, [recursos, puedeGestionar, misRolesKeys, busquedaDebounced])
 
   // Filtered secciones (hide empty secciones when searching, unless admin)
-  const seccionesFiltradas = useCallback(() => {
-    const recs = recursosFiltrados()
+  const seccionesFiltradas = useMemo(() => {
     if (!busquedaDebounced.trim() && !modoGestion) return secciones
 
     const term = busquedaDebounced.toLowerCase()
@@ -165,7 +164,7 @@ export function useBiblioteca() {
         s.descripcion?.toLowerCase().includes(term)
       )
       // Section has matching recursos
-      const tieneRecursos = recs.some(r => r.seccion_id === s.id)
+      const tieneRecursos = recursosFiltrados.some(r => r.seccion_id === s.id)
       // In management mode, show all
       if (modoGestion) return true
       if (!term) return true

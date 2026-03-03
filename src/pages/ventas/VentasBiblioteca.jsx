@@ -25,8 +25,8 @@ export default function VentasBiblioteca() {
   const [formSeccion, setFormSeccion] = useState(null) // null = cerrado, {} = nueva, {seccion} = editar
   const [formRecurso, setFormRecurso] = useState(null) // null = cerrado, {seccionId} = nuevo, {recurso} = editar
 
-  const seccionesMostradas = bib.seccionesFiltradas()
-  const recursosMostrados = bib.recursosFiltrados()
+  const seccionesMostradas = bib.seccionesFiltradas
+  const recursosMostrados = bib.recursosFiltrados
 
   // Handlers secciones
   const handleNuevaSeccion = () => setFormSeccion({})
@@ -124,6 +124,7 @@ export default function VentasBiblioteca() {
           onToggleSeccion={bib.toggleSeccion}
           onCopiar={bib.copiarAlPortapapeles}
           mostrarVisibilidad={bib.puedeGestionar}
+          buscando={!!bib.busquedaDebounced.trim()}
         />
       )}
 

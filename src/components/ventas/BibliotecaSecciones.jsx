@@ -19,12 +19,13 @@ export default function BibliotecaSecciones({
   onToggleSeccion,
   onCopiar,
   mostrarVisibilidad,
+  buscando,
 }) {
   if (secciones.length === 0) {
     return (
       <div className="bib-empty">
         <FolderIcon />
-        <p>No hay secciones en la biblioteca</p>
+        <p>{buscando ? 'No se encontraron resultados para tu búsqueda' : 'No hay secciones en la biblioteca'}</p>
       </div>
     )
   }
@@ -40,9 +41,11 @@ export default function BibliotecaSecciones({
             <button
               className="bib-seccion-header"
               onClick={() => onToggleSeccion(seccion.id)}
+              aria-expanded={abierta}
+              aria-controls={`bib-seccion-body-${seccion.id}`}
             >
               <div className="bib-seccion-titulo">
-                <span className={`bib-seccion-chevron${abierta ? ' rotado' : ''}`}>
+                <span className={`bib-seccion-chevron${abierta ? ' rotado' : ''}`} aria-hidden="true">
                   <ChevronDown />
                 </span>
                 <span className="bib-seccion-nombre">{seccion.nombre}</span>
@@ -53,7 +56,7 @@ export default function BibliotecaSecciones({
               )}
             </button>
             {abierta && (
-              <div className="bib-seccion-body">
+              <div className="bib-seccion-body" id={`bib-seccion-body-${seccion.id}`}>
                 {recursosSeccion.length === 0 ? (
                   <div className="bib-seccion-vacia">Sin recursos en esta sección</div>
                 ) : (

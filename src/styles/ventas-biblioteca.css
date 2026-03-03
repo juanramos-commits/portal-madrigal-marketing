@@ -501,13 +501,16 @@
   top: -1.75rem;
   left: 50%;
   transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.bib-copiado:not(:empty) {
   background: var(--success);
   color: var(--text-inverse);
   font-size: 0.688rem;
   padding: 0.125rem 0.5rem;
   border-radius: 4px;
-  white-space: nowrap;
-  pointer-events: none;
   animation: bib-fade-in 0.15s;
 }
 
@@ -564,6 +567,11 @@
   border-radius: 6px;
   font-size: 0.813rem;
   margin-top: 0.5rem;
+}
+
+.bib-confirm-error {
+  color: var(--error);
+  font-size: var(--font-sm-md);
 }
 
 /* ── Fields ── */
@@ -833,6 +841,29 @@
 .bib-admin-tab-count {
   font-size: 0.688rem;
   opacity: 0.7;
+}
+
+/* ── Focus visible ── */
+.bib-btn-gestion:focus-visible,
+.bib-btn-sm:focus-visible,
+.bib-btn-primary:focus-visible,
+.bib-btn-ghost:focus-visible,
+.bib-btn-danger:focus-visible,
+.bib-btn-icon:focus-visible,
+.bib-btn-icon-danger:focus-visible,
+.bib-seccion-header:focus-visible,
+.bib-expand-btn:focus-visible,
+.bib-buscador-clear:focus-visible,
+.bib-drag-handle:focus-visible,
+.bib-admin-seccion-tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.bib-buscador-input:focus-visible {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
 }
 
 /* ── Responsive ── */
