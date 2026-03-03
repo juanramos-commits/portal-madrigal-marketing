@@ -40,7 +40,8 @@ export default function WidgetKPI({ widgetDef, data }) {
     if (numRef.current) animateValue(numRef.current, valor, formato, 600)
   }, [valor, formato])
 
-  const diff = anterior != null ? valor - anterior : null
+  const rawDiff = anterior != null ? valor - anterior : null
+  const diff = rawDiff != null && !Number.isNaN(rawDiff) ? rawDiff : null
   const diffType = diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral'
   let diffText = null
   if (diff != null) {
