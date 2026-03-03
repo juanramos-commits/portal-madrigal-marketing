@@ -78,7 +78,6 @@ export default function VentasDashboard() {
     }
   }, [])
 
-  const nombre = usuario?.nombre?.split(' ')[0] || 'usuario'
   const isMobile = gridWidth < 500
 
   const rglLayouts = useMemo(() => {
@@ -111,8 +110,10 @@ export default function VentasDashboard() {
 
   return (
     <div className="db-page">
+      <div className="db-header">
+        <h1>Dashboard</h1>
+      </div>
       <DashboardToolbar
-        nombre={nombre}
         periodo={db.periodo}
         onPeriodoChange={db.setPeriodo}
         fechaInicio={db.fechaInicio}

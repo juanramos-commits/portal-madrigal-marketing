@@ -80,35 +80,13 @@
   flex-wrap: wrap;
 }
 
-.db-toolbar-left {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-sm);
-  min-width: 0;
-}
-
-.db-toolbar-title {
+.db-header h1 {
   font-size: var(--font-2xl);
   font-weight: var(--weight-bold);
   letter-spacing: -0.02em;
   line-height: var(--leading-tight);
   color: var(--text);
   margin: 0;
-}
-
-.db-toolbar-greeting {
-  font-size: var(--font-sm);
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.db-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
 }
 
 .db-toolbar-filters {
@@ -1222,7 +1200,7 @@
     justify-content: flex-end;
   }
 
-  .db-toolbar-title {
+  .db-header h1 {
     font-size: var(--font-xl);
   }
 

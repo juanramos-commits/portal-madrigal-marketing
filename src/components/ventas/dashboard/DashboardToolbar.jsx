@@ -3,14 +3,7 @@ import { Settings, RotateCcw, Save, Plus, X } from 'lucide-react'
 import DashboardFiltroFecha from '../DashboardFiltroFecha'
 import AddWidgetModal from './AddWidgetModal'
 
-function saludo(nombre) {
-  const h = new Date().getHours()
-  const franja = h < 12 ? 'Buenos días' : h < 20 ? 'Buenas tardes' : 'Buenas noches'
-  return nombre ? `${franja}, ${nombre}` : 'Dashboard'
-}
-
 export default function DashboardToolbar({
-  nombre,
   periodo, onPeriodoChange, fechaInicio, fechaFin, onFechaPersonalizada,
   usuarioFiltro, onUsuarioFiltroChange, miembrosEquipo,
   editMode, setEditMode,
@@ -27,13 +20,7 @@ export default function DashboardToolbar({
 
   return (
     <div className="db-toolbar">
-      <div className="db-toolbar-left">
-        <h1 className="db-toolbar-title">Dashboard</h1>
-        <span className="db-toolbar-greeting">{saludo(nombre)}</span>
-      </div>
-
-      <div className="db-toolbar-right">
-        <div className="db-toolbar-filters">
+      <div className="db-toolbar-filters">
           <DashboardFiltroFecha
             periodo={periodo}
             onPeriodoChange={onPeriodoChange}
@@ -81,7 +68,6 @@ export default function DashboardToolbar({
             <span>Editar</span>
           </button>
         )}
-      </div>
 
       <AddWidgetModal
         open={showAdd}
