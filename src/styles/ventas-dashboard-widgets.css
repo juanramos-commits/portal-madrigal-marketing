@@ -130,6 +130,10 @@
   border-color: var(--border-hover);
 }
 
+.db-toolbar-btn:active {
+  transform: scale(0.96);
+}
+
 .db-toolbar-btn:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
@@ -145,6 +149,10 @@
   background: var(--primary-hover);
   border-color: var(--primary-hover);
   color: var(--text-inverse);
+}
+
+.db-toolbar-btn--save:active {
+  transform: scale(0.96);
 }
 
 .db-toolbar-btn--add {
@@ -168,13 +176,15 @@
 }
 
 .db-toolbar-btn--edit {
-  color: var(--text);
-  border-color: var(--border-hover);
+  color: var(--text-muted);
+  border-color: var(--border);
+  background: var(--bg-card);
 }
 
 .db-toolbar-btn--edit:hover {
   background: var(--bg-active);
   color: var(--text);
+  border-color: var(--primary);
 }
 
 @media (max-width: 480px) {
@@ -278,6 +288,11 @@
 .db-widget-remove:hover {
   background: var(--error-bg);
   color: var(--error);
+  transform: scale(1.1);
+}
+
+.db-widget-remove:active {
+  transform: scale(0.9);
 }
 
 .db-widget-remove:focus-visible {
@@ -535,8 +550,9 @@
 }
 
 .db-addw-tab--active {
-  color: var(--text);
+  color: var(--primary);
   background: var(--bg-active);
+  box-shadow: inset 0 -2px 0 var(--primary);
 }
 
 .db-addw-tab-count {
@@ -551,6 +567,13 @@
   color: var(--text-muted);
   background: var(--bg-badge);
   border-radius: var(--radius-full);
+  font-variant-numeric: tabular-nums;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.db-addw-tab--active .db-addw-tab-count {
+  background: var(--primary-muted);
+  color: var(--primary);
 }
 
 .db-addw-list {
@@ -584,12 +607,24 @@
 
 .db-addw-item:hover {
   background: var(--bg-card-hover);
-  border-color: var(--border-hover);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.db-addw-item:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .db-addw-item:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+.db-addw-item:hover .db-addw-item-icon {
+  background: var(--primary-muted);
+  color: var(--primary);
 }
 
 .db-addw-item-icon {
@@ -602,6 +637,7 @@
   background: var(--bg-badge);
   color: var(--text-muted);
   flex-shrink: 0;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .db-addw-item-info {
@@ -1123,14 +1159,20 @@
 
 .db-select-periodo {
   padding: var(--space-sm) var(--space-3);
+  height: 32px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-input);
   color: var(--text);
   font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   outline: none;
   cursor: pointer;
   transition: border-color var(--transition-fast);
+}
+
+.db-select-periodo:hover {
+  border-color: var(--border-hover);
 }
 
 .db-select-periodo:focus-visible {
@@ -1147,13 +1189,20 @@
 
 .db-input-fecha {
   padding: var(--space-xs) var(--space-sm);
+  height: 32px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-input);
   color: var(--text);
   font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   outline: none;
+  cursor: pointer;
   transition: border-color var(--transition-fast);
+}
+
+.db-input-fecha:hover {
+  border-color: var(--border-hover);
 }
 
 .db-input-fecha:focus-visible {
