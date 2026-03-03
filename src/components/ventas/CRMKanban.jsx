@@ -24,7 +24,6 @@ export default function CRMKanban({
   loading,
   onError,
 }) {
-  const [activeId, setActiveId] = useState(null)
   const [activeLead, setActiveLead] = useState(null)
   const [activeEtapa, setActiveEtapa] = useState(null)
   const [moverSheetData, setMoverSheetData] = useState(null)
@@ -64,7 +63,6 @@ export default function CRMKanban({
 
   const handleDragStart = useCallback((event) => {
     const { active } = event
-    setActiveId(active.id)
     const result = findLeadEtapa(active.id)
     if (result) {
       setActiveLead(result.lead)
@@ -74,7 +72,6 @@ export default function CRMKanban({
 
   const handleDragEnd = useCallback(async (event) => {
     const { active, over } = event
-    setActiveId(null)
     setActiveLead(null)
     setActiveEtapa(null)
 
@@ -108,7 +105,6 @@ export default function CRMKanban({
   }, [findLeadEtapa, etapas, onMoverLead, onError])
 
   const handleDragCancel = useCallback(() => {
-    setActiveId(null)
     setActiveLead(null)
     setActiveEtapa(null)
   }, [])

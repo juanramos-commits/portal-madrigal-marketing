@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { X, Check } from 'lucide-react'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 export default function CRMBottomSheetMover({
   lead,
@@ -9,6 +10,7 @@ export default function CRMBottomSheetMover({
   onCerrar,
 }) {
   const sheetRef = useRef(null)
+  useFocusTrap(sheetRef)
 
   // Lock body scroll while open
   useEffect(() => {

@@ -392,7 +392,7 @@ export function useVentasCRM() {
       if (mapped.length < LEADS_PER_BATCH) {
         hasMoreRef.current[etapaId] = false
       }
-    } catch (_) {
+    } catch {
       // Silently fail for load more
     } finally {
       loadingMoreRef.current[etapaId] = false
@@ -440,7 +440,7 @@ export function useVentasCRM() {
       setLeadsTabla(mapped)
       setTablaTotalCount(count || 0)
       setTotalLeads(count || 0)
-    } catch (_) {
+    } catch {
       if (requestId === loadRequestRef.current) {
         setError('Error al cargar leads')
       }
@@ -715,7 +715,7 @@ export function useVentasCRM() {
       if (actErr) console.error('Error registrando actividad drag&drop:', actErr)
 
       logActividad('crm', 'cambio_etapa', `${etapaOrigen?.nombre || '?'} → ${etapaDestino.nombre}`, { entidad: 'lead', entidad_id: leadId })
-    } catch (_) {
+    } catch {
       // Revert optimistic update
       setLeads(prev => {
         const newLeads = { ...prev }

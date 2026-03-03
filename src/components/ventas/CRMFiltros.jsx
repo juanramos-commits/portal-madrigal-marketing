@@ -1,7 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import Select from '../ui/Select'
+import { useFocusTrap } from '../../hooks/useFocusTrap'
 
 export default function CRMFiltros({
   filtros,
@@ -14,6 +15,9 @@ export default function CRMFiltros({
   etapas = [],
   fuentes = [],
 }) {
+  const panelRef = useRef(null)
+  useFocusTrap(panelRef)
+
   // Close on Escape key
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onCerrar() }
@@ -44,7 +48,7 @@ export default function CRMFiltros({
   return createPortal(
     <>
       <div className="crm-filters-overlay" onClick={onCerrar} aria-hidden="true" />
-      <div className="crm-filters-panel" role="dialog" aria-modal="true" aria-label="Filtros">
+      <div className="crm-filters-panel" ref={panelRef} role="dialog" aria-modal="true" aria-label="Filtros">
         <div className="crm-filters-header">
           <h2>Filtros</h2>
           <button className="crm-modal-close" onClick={onCerrar} aria-label="Cerrar filtros">

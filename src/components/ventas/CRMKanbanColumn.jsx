@@ -20,14 +20,20 @@ export default function CRMKanbanColumn({
   })
 
   const scrollRef = useRef(null)
+  const scrollThrottleRef = useRef(false)
   const leadIds = useMemo(() => leads.map(l => l.id), [leads])
 
   const handleScroll = useCallback(() => {
-    if (!hasMore || loadingMore || !scrollRef.current) return
-    const el = scrollRef.current
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
-      onLoadMore?.(etapa.id)
-    }
+    if (scrollThrottleRef.current) return
+    scrollThrottleRef.current = true
+    requestAnimationFrame(() => {
+      scrollThrottleRef.current = false
+      if (!hasMore || loadingMore || !scrollRef.current) return
+      const el = scrollRef.current
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
+        onLoadMore?.(etapa.id)
+      }
+    })
   }, [hasMore, loadingMore, onLoadMore, etapa.id])
 
   return (

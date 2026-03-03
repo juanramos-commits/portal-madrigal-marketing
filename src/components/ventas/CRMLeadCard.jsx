@@ -39,7 +39,7 @@ export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }
     transition,
   }
 
-  const handleClick = (e) => {
+  const handleClick = () => {
     if (isDragging) return
     navigate(`/ventas/crm/lead/${lead.id}`)
   }

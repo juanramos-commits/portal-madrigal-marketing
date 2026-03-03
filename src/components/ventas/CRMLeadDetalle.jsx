@@ -237,7 +237,7 @@ export default function CRMLeadDetalle() {
       delete pendingFieldUpdatesRef.current[field]
       try {
         await supabase.from('ventas_leads').update({ [field]: value }).eq('id', id)
-      } catch (_) {
+      } catch {
         showToast('Error al guardar', 'error')
       }
     }, 800)
@@ -325,6 +325,7 @@ export default function CRMLeadDetalle() {
       const pending = pendingFieldUpdatesRef.current
       if (Object.keys(pending).length > 0) {
         supabase.from('ventas_leads').update(pending).eq('id', id)
+          .then(({ error }) => { if (error) console.error('[CRM Detail] Unmount flush failed:', error) })
         pendingFieldUpdatesRef.current = {}
       }
 
@@ -359,7 +360,7 @@ export default function CRMLeadDetalle() {
 
       showToast('Etapa actualizada', 'success')
       cargarLead()
-    } catch (_) {
+    } catch {
       showToast('Error al cambiar etapa', 'error')
     }
   }
@@ -379,7 +380,7 @@ export default function CRMLeadDetalle() {
       logActividad('crm', 'asignar', `Setter: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
       showToast('Setter actualizado', 'success')
       cargarLead()
-    } catch (_) {
+    } catch {
       showToast('Error', 'error')
     }
   }
@@ -398,7 +399,7 @@ export default function CRMLeadDetalle() {
       logActividad('crm', 'asignar', `Closer: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
       showToast('Closer actualizado', 'success')
       cargarLead()
-    } catch (_) {
+    } catch {
       showToast('Error', 'error')
     }
   }
@@ -408,7 +409,7 @@ export default function CRMLeadDetalle() {
     try {
       await supabase.from('ventas_leads').delete().eq('id', id)
       navigate('/ventas/crm', { replace: true })
-    } catch (_) {
+    } catch {
       showToast('Error al eliminar', 'error')
     }
   }
@@ -649,10 +650,6 @@ export default function CRMLeadDetalle() {
           <div className="crm-section">
             <div className="crm-section-title"><User /> Información de contacto</div>
             <div className="crm-field-grid">
-              <div className="crm-field">
-                <label>Nombre</label>
-                <input value={lead.nombre || ''} onChange={e => updateField('nombre', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
-              </div>
               <div className="crm-field">
                 <label>Email</label>
                 <div className="crm-input-wrap">
