@@ -97,8 +97,8 @@ export default function WidgetChart({ widgetDef, data }) {
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
           <XAxis dataKey="fecha" tickFormatter={formatDate} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
-          <Tooltip content={<CustomTooltip />} />
-          <Area type="monotone" dataKey={field} stroke={colors.stroke} fill={`url(#grad_${widgetDef.type})`} strokeWidth={2} dot={false} name={name} />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--border-hover)' }} />
+          <Area type="monotone" dataKey={field} stroke={colors.stroke} fill={`url(#grad_${widgetDef.type})`} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} name={name} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
