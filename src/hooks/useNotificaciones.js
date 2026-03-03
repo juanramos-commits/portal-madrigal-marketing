@@ -14,6 +14,7 @@ export function useNotificaciones() {
   const [hayMas, setHayMas] = useState(true)
   const channelRef = useRef(null)
   const offsetRef = useRef(0)
+  const filtroRef = useRef(filtro)
 
   const contarNoLeidas = useCallback(async () => {
     if (!user?.id) return
@@ -173,9 +174,14 @@ export function useNotificaciones() {
         table: 'ventas_notificaciones',
         filter: `usuario_id=eq.${user.id}`,
       }, (payload) => {
-        setNotificaciones(prev =>
-          prev.map(n => n.id === payload.new.id ? payload.new : n)
-        )
+        if (filtroRef.current === 'no_leidas' && payload.new.leida) {
+          // Remove read notification from unread-only list
+          setNotificaciones(prev => prev.filter(n => n.id !== payload.new.id))
+        } else {
+          setNotificaciones(prev =>
+            prev.map(n => n.id === payload.new.id ? payload.new : n)
+          )
+        }
         contarNoLeidas()
       })
       .subscribe()
@@ -190,6 +196,9 @@ export function useNotificaciones() {
       channelRef.current = null
     }
   }, [])
+
+  // Keep filtroRef in sync
+  useEffect(() => { filtroRef.current = filtro }, [filtro])
 
   // Load on mount and filter change
   useEffect(() => {
