@@ -49,8 +49,11 @@ export function useVentasCRM() {
 
   const loadRequestRef = useRef(0)
   const hasMoreRef = useRef({})
+  const loadingMoreRef = useRef({})
+  const leadsOffsetRef = useRef({})
   const busquedaTimeoutRef = useRef(null)
   const searchRequestRef = useRef(0)
+  const realtimeDebounceRef = useRef(null)
   const [searchResultCount, setSearchResultCount] = useState(null)
 
   const esAdmin = usuario?.tipo === 'super_admin'
@@ -172,6 +175,7 @@ export function useVentasCRM() {
           newCounts[etapa.id] = count || 0
           total += count || 0
           hasMoreRef.current[etapa.id] = (count || 0) > LEADS_PER_BATCH
+          leadsOffsetRef.current[etapa.id] = (data || []).length
         }))
 
         if (requestId !== loadRequestRef.current) return
@@ -300,6 +304,7 @@ export function useVentasCRM() {
         newCounts[etapa.id] = count || 0
         total += count || 0
         hasMoreRef.current[etapa.id] = (count || 0) > LEADS_PER_BATCH
+        leadsOffsetRef.current[etapa.id] = (data || []).length
       }))
 
       if (requestId !== loadRequestRef.current) return
@@ -362,14 +367,15 @@ export function useVentasCRM() {
 
   // ── Load more leads for a column ───────────────────────────────────
   const cargarMasLeads = useCallback(async (etapaId) => {
-    if (!hasMoreRef.current[etapaId] || loadingMore[etapaId]) return
+    if (!hasMoreRef.current[etapaId] || loadingMoreRef.current[etapaId]) return
 
+    loadingMoreRef.current[etapaId] = true
     setLoadingMore(prev => ({ ...prev, [etapaId]: true }))
     try {
-      const current = leads[etapaId]?.length || 0
+      const offset = leadsOffsetRef.current[etapaId] || LEADS_PER_BATCH
       const query = buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre, etapaId)
         .order('fecha_entrada', { ascending: false })
-        .range(current, current + LEADS_PER_BATCH - 1)
+        .range(offset, offset + LEADS_PER_BATCH - 1)
 
       const { data, error: err } = await query
       if (err) throw err
@@ -381,15 +387,18 @@ export function useVentasCRM() {
         [etapaId]: [...(prev[etapaId] || []), ...mapped],
       }))
 
+      leadsOffsetRef.current[etapaId] = offset + mapped.length
+
       if (mapped.length < LEADS_PER_BATCH) {
         hasMoreRef.current[etapaId] = false
       }
     } catch (_) {
       // Silently fail for load more
     } finally {
+      loadingMoreRef.current[etapaId] = false
       setLoadingMore(prev => ({ ...prev, [etapaId]: false }))
     }
-  }, [leads, buildLeadQuery, loadingMore, pipelineActivo])
+  }, [buildLeadQuery, pipelineActivo])
 
   // ── Load leads for Table view ──────────────────────────────────────
   const cargarLeadsTabla = useCallback(async () => {
