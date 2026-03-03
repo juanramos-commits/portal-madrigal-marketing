@@ -4,7 +4,7 @@ import {
   BarChart3, Table2,
   Wallet, CreditCard, ArrowDownToLine, ArrowUpFromLine, Hourglass,
   PieChart, Target, Activity, Trophy, GitBranch, Ghost,
-  CalendarClock, Percent,
+  CalendarClock, Percent, CalendarCheck,
 } from 'lucide-react'
 
 export const WIDGET_CATEGORIES = [
@@ -79,6 +79,18 @@ export const WIDGET_CATALOG = {
     icon: TrendingUp, dataKey: 'ticket_medio', formato: 'currency',
     defaultSize: { w: 3, h: 2 }, minSize: { w: 2, h: 2 },
     roles: ['admin', 'director_ventas', 'closer'],
+  },
+  kpi_tasa_conversion: {
+    type: 'kpi_tasa_conversion', label: 'Tasa de conversión', category: 'kpis',
+    icon: Percent, dataKey: 'tasa_conversion', formato: 'percent',
+    defaultSize: { w: 3, h: 2 }, minSize: { w: 2, h: 2 },
+    roles: ['admin', 'director_ventas'],
+  },
+  kpi_citas_agendadas: {
+    type: 'kpi_citas_agendadas', label: 'Citas agendadas', category: 'kpis',
+    icon: CalendarCheck, dataKey: 'citas_agendadas', formato: 'number',
+    defaultSize: { w: 3, h: 2 }, minSize: { w: 2, h: 2 },
+    roles: ['admin', 'director_ventas', 'closer', 'setter'],
   },
 
   // ── Wallet KPIs (6) — Fase 2 ───────────────────────────

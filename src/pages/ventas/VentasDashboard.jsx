@@ -37,7 +37,7 @@ function renderWidget(widgetDef, data, config) {
   if (cat === 'funnel') {
     if (dk === 'funnel_setters' || dk === 'funnel_closers') return <WidgetFunnel widgetDef={widgetDef} data={data} />
     if (dk === 'pipeline_resumen') return <WidgetPipeline widgetDef={widgetDef} data={data} />
-    if (dk === 'tasa_ghosting') return <WidgetKPI widgetDef={widgetDef} data={data} />
+    // tasa_ghosting is caught above by formato === 'percent' → WidgetKPI
   }
   if (cat === 'goals') return <WidgetGoal widgetDef={widgetDef} data={data} config={config} />
   return <div className="db-widget-empty">Widget no soportado</div>

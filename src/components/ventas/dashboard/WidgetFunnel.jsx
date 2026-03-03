@@ -2,7 +2,6 @@ const NIVELES_SETTERS = [
   { key: 'leads', label: 'Leads nuevos', color: 'var(--color-category)' },
   { key: 'contactados', label: 'Contactados', color: 'var(--warning)' },
   { key: 'citas', label: 'Citas agendadas', color: 'var(--warning)' },
-  { key: 'llamadas', label: 'Llamadas realizadas', color: 'var(--success)' },
   { key: 'ventas', label: 'Ventas cerradas', color: 'var(--success)' },
 ]
 

@@ -9,7 +9,7 @@ export const DEFAULT_LAYOUTS = {
     // Row 0-1: Core KPIs
     ...kpiRow(['kpi_total_leads', 'kpi_leads_hoy', 'kpi_total_ventas', 'kpi_ingresos_totales'], 0),
     // Row 2-3: More KPIs
-    ...kpiRow(['kpi_ventas_pendientes', 'kpi_ventas_aprobadas', 'kpi_ingresos_mes', 'kpi_ticket_medio'], 2),
+    ...kpiRow(['kpi_ventas_pendientes', 'kpi_ventas_aprobadas', 'kpi_tasa_conversion', 'kpi_ticket_medio'], 2),
     // Row 4-7: Charts side by side
     { i: 'chart_leads_por_dia', type: 'chart_leads_por_dia', x: 0, y: 4, w: 6, h: 4 },
     { i: 'chart_ventas_por_dia', type: 'chart_ventas_por_dia', x: 6, y: 4, w: 6, h: 4 },
@@ -24,7 +24,7 @@ export const DEFAULT_LAYOUTS = {
     { i: 'team_actividad_reciente', type: 'team_actividad_reciente', x: 6, y: 18, w: 6, h: 5 },
   ],
   director_ventas: [
-    ...kpiRow(['kpi_total_leads', 'kpi_total_ventas', 'kpi_ingresos_totales', 'kpi_ticket_medio'], 0),
+    ...kpiRow(['kpi_total_leads', 'kpi_total_ventas', 'kpi_tasa_conversion', 'kpi_ingresos_totales'], 0),
     { i: 'chart_leads_por_dia', type: 'chart_leads_por_dia', x: 0, y: 2, w: 6, h: 4 },
     { i: 'chart_ventas_por_dia', type: 'chart_ventas_por_dia', x: 6, y: 2, w: 6, h: 4 },
     { i: 'team_ranking_setters', type: 'team_ranking_setters', x: 0, y: 6, w: 6, h: 5 },
