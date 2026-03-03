@@ -447,9 +447,9 @@
   padding: var(--space-1) var(--space-2-5);
   font-size: var(--font-sm);
   font-weight: var(--weight-semibold);
-  border: 1px solid currentColor;
+  border: none;
   border-radius: var(--radius-xs-sm);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.15);
   color: inherit;
   cursor: pointer;
   white-space: nowrap;
@@ -457,7 +457,7 @@
   transition: background var(--transition-fast);
 }
 .ui-toast-action:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.25);
 }
 @media (max-width: 768px) {
   .ui-toast-container { left: var(--space-md); right: var(--space-md); bottom: var(--space-md); align-items: center; }
