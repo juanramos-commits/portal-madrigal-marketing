@@ -166,7 +166,7 @@ export default function VentasDashboard() {
                     widgetDef={widgetDef}
                     editMode={db.editMode}
                     onRemove={() => db.removeWidget(item.i)}
-                    loading={db.loading}
+                    loading={db.dataLoading}
                   >
                     {renderWidget(widgetDef, widgetData, item.config)}
                   </WidgetShell>
