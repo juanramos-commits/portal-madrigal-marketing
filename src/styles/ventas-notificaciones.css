@@ -271,6 +271,7 @@
 }
 
 .ntf-titulo {
+  flex: 1;
   font-weight: var(--weight-medium);
   font-size: var(--font-base);
   color: var(--text);
