@@ -52,24 +52,27 @@ export default function DashboardToolbar({
 
         {editMode ? (
           <div className="db-toolbar-actions">
-            <button className="db-toolbar-btn db-toolbar-btn--add" onClick={() => setShowAdd(true)} title="Anadir widget">
-              <Plus size={15} />
-              <span>Anadir</span>
+            <button className="db-toolbar-btn db-toolbar-btn--add" onClick={() => setShowAdd(true)}>
+              <Plus size={14} />
+              <span>Añadir</span>
             </button>
-            <button className="db-toolbar-btn db-toolbar-btn--reset" onClick={onReset} title="Restaurar por defecto">
+            <button className="db-toolbar-btn" onClick={onReset} title="Restaurar layout por defecto">
               <RotateCcw size={14} />
+              <span>Resetear</span>
             </button>
-            <button className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave} title="Guardar layout">
+            <button className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave}>
               <Save size={14} />
               <span>Guardar</span>
             </button>
-            <button className="db-toolbar-btn db-toolbar-btn--cancel" onClick={() => setEditMode(false)} title="Cancelar">
+            <button className="db-toolbar-btn db-toolbar-btn--cancel" onClick={() => setEditMode(false)}>
               <X size={14} />
+              <span>Cancelar</span>
             </button>
           </div>
         ) : (
-          <button className="db-toolbar-btn db-toolbar-btn--edit" onClick={() => setEditMode(true)} title="Editar dashboard">
+          <button className="db-toolbar-btn db-toolbar-btn--edit" onClick={() => setEditMode(true)}>
             <Settings size={14} />
+            <span>Editar</span>
           </button>
         )}
       </div>
