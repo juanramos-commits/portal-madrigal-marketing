@@ -261,6 +261,22 @@
   overflow: auto;
   padding: var(--space-sm) var(--space-3);
   min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.db-widget-body::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.db-widget-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.db-widget-body::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .db-widget-empty {
