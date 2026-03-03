@@ -60,7 +60,7 @@ export default function NotificacionesLista({
         <div className="ntf-empty-icon"><AlertCircle size={32} /></div>
         <p>{error}</p>
         {onReintentar && (
-          <button className="ntf-btn-reintentar" onClick={onReintentar}>Reintentar</button>
+          <button type="button" className="ntf-btn-reintentar" onClick={onReintentar}>Reintentar</button>
         )}
       </div>
     )
@@ -68,18 +68,21 @@ export default function NotificacionesLista({
 
   if (loading && notificaciones.length === 0) {
     return (
-      <div className="ntf-skeleton-list">
-        {Array.from({ length: 5 }, (_, i) => (
-          <div key={i} className="ntf-skeleton-item">
-            <div className="ntf-skeleton-icon" />
-            <div className="ntf-skeleton-content">
-              <div className="ntf-skeleton-line ntf-skeleton-line--title" />
-              <div className="ntf-skeleton-line ntf-skeleton-line--msg" />
-              <div className="ntf-skeleton-line ntf-skeleton-line--time" />
+      <>
+        <div className="ntf-skeleton-list" aria-hidden="true">
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="ntf-skeleton-item">
+              <div className="ntf-skeleton-icon" />
+              <div className="ntf-skeleton-content">
+                <div className="ntf-skeleton-line ntf-skeleton-line--title" />
+                <div className="ntf-skeleton-line ntf-skeleton-line--msg" />
+                <div className="ntf-skeleton-line ntf-skeleton-line--time" />
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+        <span className="sr-only" role="status">Cargando notificaciones</span>
+      </>
     )
   }
 
@@ -122,13 +125,13 @@ export default function NotificacionesLista({
         <div className="ntf-error-inline">
           {error}
           {onReintentar && (
-            <button className="ntf-error-inline-btn" onClick={onReintentar}>Reintentar</button>
+            <button type="button" className="ntf-error-inline-btn" onClick={onReintentar}>Reintentar</button>
           )}
         </div>
       )}
 
       {hayMas && !error && (
-        <button className="ntf-cargar-mas" onClick={onCargarMas} disabled={loading}>
+        <button type="button" className="ntf-cargar-mas" onClick={onCargarMas} disabled={loading}>
           {loading && <span className="ntf-spinner" />}
           {loading ? 'Cargando...' : 'Cargar más'}
         </button>

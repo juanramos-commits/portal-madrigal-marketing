@@ -48,8 +48,6 @@ function tiempoRelativo(fecha) {
   return f.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
 }
 
-export { tiempoRelativo }
-
 export default function NotificacionItem({ notificacion, onMarcarLeida, onEliminar }) {
   const navigate = useNavigate()
 

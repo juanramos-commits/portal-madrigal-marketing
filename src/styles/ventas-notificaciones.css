@@ -250,7 +250,7 @@
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-full);
   background: var(--bg-subtle);
   display: flex;
   align-items: center;
@@ -343,12 +343,18 @@
   color: var(--error);
   cursor: pointer;
   white-space: nowrap;
+  touch-action: manipulation;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .ntf-error-inline-btn:hover {
   background: var(--error);
   color: var(--text-inverse);
+}
+
+.ntf-error-inline-btn:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
 }
 
 /* ── Load more ── */
@@ -367,12 +373,18 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
+  touch-action: manipulation;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .ntf-cargar-mas:hover {
   background: var(--bg-hover);
   color: var(--text);
+}
+
+.ntf-cargar-mas:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: -2px;
 }
 
 .ntf-cargar-mas:disabled {
@@ -413,7 +425,7 @@
   justify-content: center;
   width: 80px;
   height: 80px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-full);
   background: var(--bg-card);
   color: var(--text-muted);
   opacity: 0.5;
@@ -485,7 +497,7 @@
 .ntf-skeleton-icon {
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-full);
   background: linear-gradient(90deg, var(--bg-skeleton) 25%, var(--bg-hover) 50%, var(--bg-skeleton) 75%);
   background-size: 200% 100%;
   animation: ntf-shimmer 1.5s ease infinite;
@@ -528,14 +540,28 @@
   justify-content: center;
   min-width: 18px;
   height: 18px;
-  padding: 0 5px;
-  font-size: 0.625rem;
+  padding: 0 var(--space-1-5);
+  font-size: var(--font-2xs, 0.625rem);
   font-weight: var(--weight-bold);
   color: var(--text-inverse);
   background: var(--error);
   border-radius: var(--radius-full);
   line-height: 1;
   flex-shrink: 0;
+}
+
+/* ── Visually hidden (a11y) ── */
+.ntf-lista .sr-only,
+.ntf-skeleton-list + .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ── Responsive ── */

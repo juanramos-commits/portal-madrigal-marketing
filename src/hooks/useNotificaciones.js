@@ -182,6 +182,11 @@ export function useNotificaciones() {
   // Realtime subscription
   const suscribirseRealtime = useCallback(() => {
     if (!user?.id) return null
+    // Clean up any existing subscription before creating a new one
+    if (channelRef.current) {
+      channelRef.current.unsubscribe()
+      channelRef.current = null
+    }
 
     const channel = supabase
       .channel(`notif-lista-${user.id}`)
