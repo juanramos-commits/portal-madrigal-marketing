@@ -132,11 +132,13 @@ export function useNotificaciones() {
 
   const eliminarNotificacion = useCallback(async (notifId) => {
     if (!notifId || !user?.id) return
-    const prev = notificaciones
-    const target = notificaciones.find(n => n.id === notifId)
-    // Optimistic remove
-    setNotificaciones(p => p.filter(n => n.id !== notifId))
-    if (target && !target.leida) setContadorNoLeidas(c => Math.max(0, c - 1))
+    // Capture current state for rollback before optimistic update
+    let removedItem = null
+    setNotificaciones(prev => {
+      removedItem = prev.find(n => n.id === notifId)
+      return prev.filter(n => n.id !== notifId)
+    })
+    if (removedItem && !removedItem.leida) setContadorNoLeidas(c => Math.max(0, c - 1))
     try {
       const { error: delErr } = await supabase
         .from('ventas_notificaciones')
@@ -144,14 +146,25 @@ export function useNotificaciones() {
         .eq('id', notifId)
         .eq('usuario_id', user.id)
       if (delErr) {
-        setNotificaciones(prev)
-        if (target && !target.leida) setContadorNoLeidas(c => c + 1)
+        // Rollback — re-insert at correct position
+        setNotificaciones(prev => {
+          const restored = [...prev, removedItem].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          )
+          return restored
+        })
+        if (removedItem && !removedItem.leida) setContadorNoLeidas(c => c + 1)
       }
     } catch {
-      setNotificaciones(prev)
-      if (target && !target.leida) setContadorNoLeidas(c => c + 1)
+      setNotificaciones(prev => {
+        const restored = [...prev, removedItem].sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        )
+        return restored
+      })
+      if (removedItem && !removedItem.leida) setContadorNoLeidas(c => c + 1)
     }
-  }, [user?.id, notificaciones])
+  }, [user?.id])
 
   // Realtime subscription
   const suscribirseRealtime = useCallback(() => {
