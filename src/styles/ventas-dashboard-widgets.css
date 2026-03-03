@@ -651,7 +651,14 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
   animation: db-wlead-in 0.3s ease both;
+  transition: background var(--transition-fast);
+}
+
+.db-wlead-item:hover {
+  background: var(--bg-hover);
 }
 
 @keyframes db-wlead-in {
@@ -720,7 +727,7 @@
 }
 
 .db-wlead-bar-bg {
-  height: 6px;
+  height: 8px;
   background: var(--bg-skeleton);
   border-radius: var(--radius-full);
   margin-top: 3px;
