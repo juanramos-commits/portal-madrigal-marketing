@@ -360,5 +360,7 @@
 
   .ntf-btn-eliminar {
     opacity: 1;
+    width: 36px;
+    height: 36px;
   }
 }
