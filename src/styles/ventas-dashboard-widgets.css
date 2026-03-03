@@ -1004,7 +1004,7 @@
   height: 18px;
   border-radius: var(--radius-full);
   overflow: hidden;
-  gap: 2px;
+  gap: var(--space-2xs);
 }
 
 .db-wpipeline-stage {
