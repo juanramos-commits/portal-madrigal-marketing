@@ -1589,6 +1589,8 @@ ALTER TABLE ventas_webhook_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ventas_reparto_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ventas_campos_obligatorios ENABLE ROW LEVEL SECURITY;
 
+-- Realtime: permitir suscripciones en notificaciones
+ALTER PUBLICATION supabase_realtime ADD TABLE ventas_notificaciones;
 
 -- ==========================================================================
 -- PARTE 6: POLÍTICAS RLS
@@ -2007,6 +2009,9 @@ CREATE POLICY vnot_update ON ventas_notificaciones FOR UPDATE
 -- INSERT se hace desde funciones SECURITY DEFINER (triggers/RPCs)
 CREATE POLICY vnot_insert ON ventas_notificaciones FOR INSERT WITH CHECK (
     ventas_tiene_rol() OR ventas_es_super_admin()
+);
+CREATE POLICY vnot_delete ON ventas_notificaciones FOR DELETE USING (
+    usuario_id = auth.uid()::uuid
 );
 
 -- --------------------------------------------------------------------------
