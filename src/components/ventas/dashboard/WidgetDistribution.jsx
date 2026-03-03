@@ -36,7 +36,7 @@ function PieDistribution({ data, label }) {
               stroke="none"
             >
               {data.map((d, i) => (
-                <Cell key={i} fill={d.color || COLORS[i % COLORS.length]} />
+                <Cell key={d.nombre || i} fill={d.color || COLORS[i % COLORS.length]} />
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
@@ -45,7 +45,7 @@ function PieDistribution({ data, label }) {
       </div>
       <div className="db-wdist-legend">
         {data.map((d, i) => (
-          <div key={i} className="db-wdist-legend-item">
+          <div key={d.nombre || i} className="db-wdist-legend-item">
             <span className="db-wdist-legend-dot" style={{ background: d.color || COLORS[i % COLORS.length] }} />
             <span>{d.nombre}</span>
             <span className="db-wdist-legend-value">{d.valor}</span>
@@ -69,7 +69,7 @@ function HorizontalBarDistribution({ data, label }) {
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
               {data.map((d, i) => (
-                <Cell key={i} fill={d.color || COLORS[i % COLORS.length]} />
+                <Cell key={d.nombre || i} fill={d.color || COLORS[i % COLORS.length]} />
               ))}
             </Bar>
           </BarChart>
