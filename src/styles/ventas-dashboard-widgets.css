@@ -1322,4 +1322,10 @@
   .db-wgoal-ring-fill {
     transition: none !important;
   }
+
+  .react-grid-item,
+  .react-grid-item.cssTransforms,
+  .react-grid-layout {
+    transition: none !important;
+  }
 }
