@@ -24,8 +24,14 @@ export function useDashboardLayout() {
 
   useEffect(() => {
     if (!user?.id) return
-    supabase.from('ventas_roles_comerciales').select('*').eq('activo', true)
-      .then(({ data }) => setRolesComerciales(data || []))
+    ;(async () => {
+      try {
+        const { data } = await supabase.from('ventas_roles_comerciales').select('*').eq('activo', true)
+        setRolesComerciales(data || [])
+      } catch {
+        setRolesComerciales([])
+      }
+    })()
   }, [user?.id])
 
   useEffect(() => {
@@ -40,22 +46,27 @@ export function useDashboardLayout() {
 
     const cargar = async () => {
       setLoading(true)
-      const { data } = await supabase
-        .from('dashboard_layouts')
-        .select('layout')
-        .eq('usuario_id', user.id)
-        .maybeSingle()
+      try {
+        const { data } = await supabase
+          .from('dashboard_layouts')
+          .select('layout')
+          .eq('usuario_id', user.id)
+          .maybeSingle()
 
-      if (data?.layout && Array.isArray(data.layout) && data.layout.length > 0) {
-        const filtered = data.layout.filter(item => {
-          const def = WIDGET_CATALOG[item.type]
-          return def && def.roles.includes(rol)
-        })
-        setLayout(filtered.length > 0 ? filtered : (DEFAULT_LAYOUTS[rol] || []))
-      } else {
+        if (data?.layout && Array.isArray(data.layout) && data.layout.length > 0) {
+          const filtered = data.layout.filter(item => {
+            const def = WIDGET_CATALOG[item.type]
+            return def && def.roles.includes(rol)
+          })
+          setLayout(filtered.length > 0 ? filtered : (DEFAULT_LAYOUTS[rol] || []))
+        } else {
+          setLayout(DEFAULT_LAYOUTS[rol] || [])
+        }
+      } catch {
         setLayout(DEFAULT_LAYOUTS[rol] || [])
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     cargar()
   }, [user?.id, rol])
@@ -110,7 +121,7 @@ export function useDashboardLayout() {
 
   return {
     layout, setLayout, editMode, setEditMode,
-    loading, rol, rolesComerciales,
+    loading, layoutLoading: loading, rol, rolesComerciales,
     onLayoutChange, addWidget, removeWidget,
     saveLayout, resetLayout,
   }

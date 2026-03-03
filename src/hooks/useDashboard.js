@@ -21,6 +21,9 @@ export function useDashboard() {
   return {
     ...layoutHook,
     ...dataHook,
+    loading: layoutHook.loading || dataHook.loading,
+    layoutLoading: layoutHook.loading,
+    dataLoading: dataHook.loading,
     handleSave,
     handleReset,
   }
