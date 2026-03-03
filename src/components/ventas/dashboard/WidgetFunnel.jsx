@@ -31,26 +31,28 @@ export default function WidgetFunnel({ widgetDef, data }) {
   const tasaGlobal = firstVal > 0 ? ((Number(data[lastKey]) || 0) / firstVal * 100).toFixed(1) : '0.0'
 
   return (
-    <div className="db-wfunnel" role="list" aria-label="Etapas del funnel">
-      {niveles.map((nivel, i) => {
-        const val = Number(data[nivel.key]) || 0
-        const pct = (val / firstVal) * 100
-        const prevVal = i > 0 ? (Number(data[niveles[i - 1].key]) || 0) : null
-        const convRate = prevVal && prevVal > 0 ? ((val / prevVal) * 100).toFixed(1) : null
+    <div className="db-wfunnel">
+      <div role="list" aria-label="Etapas del funnel">
+        {niveles.map((nivel, i) => {
+          const val = Number(data[nivel.key]) || 0
+          const pct = (val / firstVal) * 100
+          const prevVal = i > 0 ? (Number(data[niveles[i - 1].key]) || 0) : null
+          const convRate = prevVal && prevVal > 0 ? ((val / prevVal) * 100).toFixed(1) : null
 
-        return (
-          <div key={nivel.key} className="db-wfunnel-row" role="listitem" style={{ animationDelay: `${i * 100}ms` }}>
-            <div className="db-wfunnel-info">
-              <span className="db-wfunnel-label">{nivel.label}</span>
-              <span className="db-wfunnel-count">{val}</span>
+          return (
+            <div key={nivel.key} className="db-wfunnel-row" role="listitem" style={{ animationDelay: `${i * 100}ms` }}>
+              <div className="db-wfunnel-info">
+                <span className="db-wfunnel-label">{nivel.label}</span>
+                <span className="db-wfunnel-count">{val}</span>
+              </div>
+              <div className="db-wfunnel-bar-bg">
+                <div className="db-wfunnel-bar" style={{ width: `${Math.max(pct, 3)}%`, background: nivel.color }} />
+              </div>
+              <span className="db-wfunnel-rate">{convRate ? `${convRate}%` : ''}</span>
             </div>
-            <div className="db-wfunnel-bar-bg">
-              <div className="db-wfunnel-bar" style={{ width: `${Math.max(pct, 3)}%`, background: nivel.color }} />
-            </div>
-            <span className="db-wfunnel-rate">{convRate ? `${convRate}%` : ''}</span>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
       {isCloser && data.facturacion != null && (
         <div className="db-wfunnel-global">
           Facturación: <strong>{formatCurrency(Number(data.facturacion) || 0)}</strong>
