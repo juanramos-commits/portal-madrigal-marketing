@@ -32,6 +32,7 @@ export function useDashboardData(layout) {
   const [usuarioFiltro, setUsuarioFiltro] = useState('')
   const [data, setData] = useState({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const requestRef = useRef(0)
 
   useEffect(() => {
@@ -67,20 +68,24 @@ export function useDashboardData(layout) {
 
     const reqId = ++requestRef.current
     setLoading(true)
+    setError(null)
     setData({})
 
     try {
-      const { data: result, error } = await supabase.rpc('ventas_dashboard_widget_data', {
+      const { data: result, error: rpcError } = await supabase.rpc('ventas_dashboard_widget_data', {
         p_usuario_id: usuarioFiltro || user.id,
         p_fecha_inicio: formatDate(fechaInicio),
         p_fecha_fin: formatDate(fechaFin),
         p_widgets: keys,
       })
-      if (error) throw error
+      if (rpcError) throw rpcError
       if (reqId === requestRef.current) setData(result || {})
     } catch (e) {
       console.error('Dashboard data error:', e)
-      if (reqId === requestRef.current) setData({})
+      if (reqId === requestRef.current) {
+        setData({})
+        setError(e?.message || 'Error cargando datos')
+      }
     } finally {
       if (reqId === requestRef.current) setLoading(false)
     }
@@ -89,7 +94,7 @@ export function useDashboardData(layout) {
   useEffect(() => { cargarDatos() }, [cargarDatos])
 
   return {
-    data, loading, periodo, setPeriodo,
+    data, loading, error, periodo, setPeriodo,
     fechaInicio, fechaFin, setFechaPersonalizada,
     usuarioFiltro, setUsuarioFiltro,
     refrescar: cargarDatos,
