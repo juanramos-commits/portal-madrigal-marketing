@@ -594,7 +594,7 @@
   flex-shrink: 0;
 }
 
-.db-wdist-legend-val {
+.db-wdist-legend-value {
   font-weight: var(--weight-semibold);
   color: var(--text);
 }
