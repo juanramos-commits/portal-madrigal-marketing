@@ -533,3 +533,22 @@
     padding-right: var(--space-sm);
   }
 }
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .ntf-item,
+  .ntf-skeleton-item,
+  .ntf-skeleton-icon,
+  .ntf-skeleton-line {
+    animation: none;
+  }
+
+  .ntf-dot {
+    animation: none;
+    opacity: 1;
+  }
+
+  .ntf-spinner {
+    animation: ntf-spin 1.5s linear infinite;
+  }
+}
