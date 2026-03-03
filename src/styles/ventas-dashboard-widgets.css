@@ -148,7 +148,7 @@
 
 .db-toolbar-btn--add {
   color: var(--success);
-  border-color: rgba(46, 229, 157, 0.3);
+  border-color: var(--success-bg);
 }
 
 .db-toolbar-btn--add:hover {
@@ -158,7 +158,7 @@
 
 .db-toolbar-btn--cancel {
   color: var(--error);
-  border-color: rgba(255, 107, 107, 0.3);
+  border-color: var(--error-bg);
 }
 
 .db-toolbar-btn--cancel:hover {
