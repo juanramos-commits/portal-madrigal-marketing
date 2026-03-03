@@ -43,6 +43,7 @@ export function useVentas() {
   const esAdminODirector = esAdmin || esDirector
 
   // ── Load roles ─────────────────────────────────────────────────────
+  const [rolesLoaded, setRolesLoaded] = useState(false)
   useEffect(() => {
     if (!user?.id) return
     const cargar = async () => {
@@ -51,6 +52,7 @@ export function useVentas() {
         .select('*')
         .eq('activo', true)
       setRolesComerciales(data || [])
+      setRolesLoaded(true)
     }
     cargar()
   }, [user?.id])
@@ -604,20 +606,23 @@ export function useVentas() {
       })
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      clearTimeout(realtimeDebounceRef.current)
+      supabase.removeChannel(channel)
+    }
   }, [user?.id, refrescar])
 
   // ── Initial load ───────────────────────────────────────────────────
   useEffect(() => {
-    if (user?.id && rolesComerciales.length > 0) {
+    if (user?.id && rolesLoaded) {
       cargarVentas()
       cargarContadores()
     }
-  }, [user?.id, rolesComerciales.length])
+  }, [user?.id, rolesLoaded]) // eslint-disable-line react-hooks/exhaustive-deps -- only run on initial load when roles are ready
 
   // ── Reload on filter/page change ───────────────────────────────────
   useEffect(() => {
-    if (!user?.id || rolesComerciales.length === 0) return
+    if (!user?.id || !rolesLoaded) return
     if (busqueda.trim()) {
       buscarVentas(busqueda.trim())
     } else {
@@ -627,7 +632,7 @@ export function useVentas() {
 
   // ── Reload counters on filter change ───────────────────────────────
   useEffect(() => {
-    if (!user?.id || rolesComerciales.length === 0) return
+    if (!user?.id || !rolesLoaded) return
     if (!busqueda.trim()) {
       cargarContadores()
     }
@@ -637,7 +642,7 @@ export function useVentas() {
   useEffect(() => {
     if (busquedaTimeoutRef.current) clearTimeout(busquedaTimeoutRef.current)
     busquedaTimeoutRef.current = setTimeout(() => {
-      if (!user?.id || rolesComerciales.length === 0) return
+      if (!user?.id || !rolesLoaded) return
       setPaginaActual(0)
       if (busqueda.trim()) {
         buscarVentas(busqueda.trim())

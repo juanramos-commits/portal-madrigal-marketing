@@ -16,7 +16,7 @@ function formatImporte(v) {
   return Number(v).toLocaleString('es-ES', { minimumFractionDigits: 2 }) + '€'
 }
 
-const metodoLabels = { stripe: 'Stripe', sequra: 'SeQura', transferencia: 'Transferencia' }
+const metodoLabels = { stripe: 'Stripe', sequra: 'SeQura', transferencia: 'Transferencia', efectivo: 'Efectivo', otro: 'Otro' }
 
 export default memo(function VentaDetalle({ venta, comisiones, loadingComisiones, onLoadComisiones }) {
   const navigate = useNavigate()

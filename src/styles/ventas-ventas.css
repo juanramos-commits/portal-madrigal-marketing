@@ -307,7 +307,6 @@
   background: var(--bg-subtle);
 }
 
-/* ── Actions cell ─────────────────────────────────────────────────── */
 /* ── Mobile cards ─────────────────────────────────────────────────── */
 .vv-cards {
   display: flex;
@@ -383,13 +382,6 @@
 .vv-card-fecha {
   font-size: var(--font-sm);
   color: var(--text-muted);
-}
-
-.vv-card-actions {
-  display: flex;
-  gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-md);
-  border-top: 1px solid var(--border);
 }
 
 .vv-card-detail {
@@ -1129,8 +1121,7 @@
   .vv-export-btn,
   .vv-pagination,
   .vv-estado-editable svg,
-  .vv-loading-overlay,
-  .vv-card-actions {
+  .vv-loading-overlay {
     display: none;
   }
 

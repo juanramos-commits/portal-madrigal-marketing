@@ -19,7 +19,7 @@ const estadoConfig = {
   rechazada: { label: 'Rechazada', className: 'vv-badge-rechazada' },
 }
 
-const metodoLabels = { stripe: 'Stripe', sequra: 'SeQura', transferencia: 'Transferencia' }
+const metodoLabels = { stripe: 'Stripe', sequra: 'SeQura', transferencia: 'Transferencia', efectivo: 'Efectivo', otro: 'Otro' }
 
 function getEstadoDisplay(venta) {
   if (venta.es_devolucion) return { label: 'Devolución', className: 'vv-badge-devolucion' }
