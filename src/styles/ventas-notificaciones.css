@@ -275,7 +275,10 @@
 
 /* ── Load more ── */
 .ntf-cargar-mas {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1-5);
   width: 100%;
   padding: var(--space-3);
   margin-top: var(--space-sm);
@@ -286,17 +289,32 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: background var(--transition-fast);
-  text-align: center;
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .ntf-cargar-mas:hover {
   background: var(--bg-card);
+  color: var(--text);
 }
 
 .ntf-cargar-mas:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* ── Inline spinner ── */
+.ntf-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--text-muted);
+  border-radius: 50%;
+  animation: ntf-spin 0.6s linear infinite;
+}
+
+@keyframes ntf-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Empty ── */

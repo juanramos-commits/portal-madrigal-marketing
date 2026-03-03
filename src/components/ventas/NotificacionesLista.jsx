@@ -119,6 +119,7 @@ export default function NotificacionesLista({
 
       {hayMas && (
         <button className="ntf-cargar-mas" onClick={onCargarMas} disabled={loading}>
+          {loading && <span className="ntf-spinner" />}
           {loading ? 'Cargando...' : 'Cargar más'}
         </button>
       )}
