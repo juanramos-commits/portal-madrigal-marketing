@@ -5,7 +5,9 @@ function tasaClass(tasa) {
   return 'db-wconv-tasa-low'
 }
 
-export default function WidgetConversionTable({ widgetDef, data }) {
+import { memo } from 'react'
+
+export default memo(function WidgetConversionTable({ widgetDef, data }) {
   const rows = Array.isArray(data) ? data : []
   if (rows.length === 0) return <div className="db-widget-empty">Sin datos</div>
 
@@ -27,7 +29,7 @@ export default function WidgetConversionTable({ widgetDef, data }) {
       <tbody>
         {rows.map((r, i) => (
           <tr key={r.usuario_id || i}>
-            <td className="db-wtable-name">{r.nombre || r.email || '-'}</td>
+            <td className="db-wtable-name" title={r.nombre || r.email || undefined}>{r.nombre || r.email || '-'}</td>
             <td>{isCloser ? (r.citas || 0) : (r.leads || 0)}</td>
             <td>{isCloser ? (r.ventas || 0) : (r.citas || 0)}</td>
             <td className={tasaClass(r.tasa)}>{(Number(r.tasa) || 0).toFixed(1)}%</td>
@@ -36,4 +38,4 @@ export default function WidgetConversionTable({ widgetDef, data }) {
       </tbody>
     </table>
   )
-}
+})
