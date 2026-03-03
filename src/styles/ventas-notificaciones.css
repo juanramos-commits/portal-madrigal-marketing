@@ -119,6 +119,10 @@
 .ntf-lista {
   display: flex;
   flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 /* ── Grupo ── */
@@ -145,8 +149,7 @@
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
-  padding: var(--space-3-5) var(--space-3);
-  border-radius: var(--radius-sm);
+  padding: var(--space-3-5) var(--space-md);
   cursor: pointer;
   transition: background var(--transition-fast), opacity var(--transition-base);
   position: relative;
@@ -295,11 +298,11 @@
   gap: var(--space-1-5);
   width: 100%;
   padding: var(--space-3);
-  margin-top: var(--space-sm);
   font-size: var(--font-sm-md);
   font-weight: var(--weight-medium);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -307,7 +310,7 @@
 }
 
 .ntf-cargar-mas:hover {
-  background: var(--bg-card);
+  background: var(--bg-hover);
   color: var(--text);
 }
 
@@ -394,6 +397,10 @@
 .ntf-skeleton-list {
   display: flex;
   flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .ntf-skeleton-item {
@@ -488,7 +495,7 @@
   .ntf-filtros::-webkit-scrollbar { display: none; }
 
   .ntf-item {
-    padding: var(--space-3) var(--space-sm);
+    padding: var(--space-3) var(--space-3);
   }
 
   .ntf-btn-eliminar {
