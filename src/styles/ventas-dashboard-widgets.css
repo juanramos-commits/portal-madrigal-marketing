@@ -134,6 +134,11 @@
   border-color: var(--border-hover);
 }
 
+.db-toolbar-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .db-toolbar-btn--save {
   background: var(--primary);
   color: var(--text-inverse);
@@ -277,6 +282,11 @@
 .db-widget-remove:hover {
   background: var(--error-bg);
   color: var(--error);
+}
+
+.db-widget-remove:focus-visible {
+  outline: 2px solid var(--error);
+  outline-offset: 1px;
 }
 
 .db-widget-body {
@@ -572,6 +582,11 @@
 .db-addw-item:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-hover);
+}
+
+.db-addw-item:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .db-addw-item-icon {
