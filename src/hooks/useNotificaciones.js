@@ -184,6 +184,15 @@ export function useNotificaciones() {
         }
         contarNoLeidas()
       })
+      .on('postgres_changes', {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'ventas_notificaciones',
+        filter: `usuario_id=eq.${user.id}`,
+      }, (payload) => {
+        setNotificaciones(prev => prev.filter(n => n.id !== payload.old.id))
+        contarNoLeidas()
+      })
       .subscribe()
 
     channelRef.current = channel
