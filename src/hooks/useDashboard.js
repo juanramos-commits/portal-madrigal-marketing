@@ -9,13 +9,13 @@ export function useDashboard() {
 
   useRefreshOnFocus(dataHook.refrescar, { enabled: !layoutHook.loading })
 
-  const handleSave = () => {
-    layoutHook.saveLayout(layoutHook.layout)
+  const handleSave = async () => {
+    await layoutHook.saveLayout(layoutHook.layout)
     layoutHook.setEditMode(false)
   }
 
-  const handleReset = () => {
-    layoutHook.resetLayout()
+  const handleReset = async () => {
+    await layoutHook.resetLayout()
     layoutHook.setEditMode(false)
   }
 
