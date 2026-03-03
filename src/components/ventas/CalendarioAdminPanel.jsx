@@ -46,8 +46,8 @@ export default function CalendarioAdminPanel({
       await onActualizarMinimoHoras(closerId, valor)
       setClosersData(prev => prev.map(c => c.id === closerId ? { ...c, minimo_horas_semana: valor } : c))
       setMinimosEditados(prev => { const n = { ...prev }; delete n[closerId]; return n })
-    } catch (_) {
-      // silently fail
+    } catch (err) {
+      console.warn('Error al guardar mínimo de horas:', err)
     } finally {
       setSavingMinimo(null)
     }

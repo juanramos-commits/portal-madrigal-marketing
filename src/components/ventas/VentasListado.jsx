@@ -108,7 +108,7 @@ export default memo(function VentasListado({
         const isExpanded = expandedId === venta.id
         return (
           <div key={venta.id} className="vv-card">
-            <div className="vv-card-main" onClick={() => toggleExpand(venta.id)}>
+            <div className="vv-card-main" role="button" tabIndex={0} onClick={() => toggleExpand(venta.id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(venta.id) } }} aria-expanded={isExpanded}>
               <div className="vv-card-top">
                 {esAdmin ? (
                   <VentaCambioEstado venta={venta} onCambio={handleCambioEstado} />

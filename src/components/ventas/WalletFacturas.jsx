@@ -63,7 +63,7 @@ export default function WalletFacturas({ facturas, total, pagina, onPageChange, 
                   <td>{formatMoneda(f.iva_monto)} ({f.iva_porcentaje}%)</td>
                   <td className="wt-cell-bold">{formatMoneda(f.total)}</td>
                   <td>
-                    <button className="wt-action-btn" onClick={() => handleDescargar(f)} title="Descargar PDF">
+                    <button className="wt-action-btn" onClick={() => handleDescargar(f)} aria-label="Descargar PDF">
                       <Download size={14} /> PDF
                     </button>
                   </td>

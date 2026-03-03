@@ -91,7 +91,10 @@ function VistaMensual({ fechaActual, citas, bloqueos, onClickDia, onClickCita, e
             <div
               key={i}
               className={`vc-mes-celda${dia.esOtroMes ? ' vc-otro-mes' : ''}${hoy ? ' vc-hoy' : ''}`}
+              role="button"
+              tabIndex={0}
               onClick={() => onClickDia(dia.date)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClickDia(dia.date) } }}
             >
               <span className={`vc-mes-numero${hoy ? ' vc-hoy-numero' : ''}`}>{dia.date.getDate()}</span>
               <div className="vc-mes-citas">

@@ -101,7 +101,7 @@ export default function BibliotecaRecurso({ recurso, onCopiar, mostrarVisibilida
       <div className="bib-recurso-acciones">
         {recurso.url && (
           <>
-            <button className="bib-btn-icon" onClick={handleCopiar} title="Copiar URL">
+            <button className="bib-btn-icon" onClick={handleCopiar} aria-label="Copiar URL">
               <CopyIcon />
               <span className="bib-copiado" role="status" aria-live="polite">
                 {copiado ? '¡Copiado!' : ''}
@@ -112,7 +112,7 @@ export default function BibliotecaRecurso({ recurso, onCopiar, mostrarVisibilida
               target="_blank"
               rel="noopener noreferrer"
               className="bib-btn-icon"
-              title="Abrir enlace"
+              aria-label="Abrir enlace en nueva pestaña"
             >
               <ExternalLinkIcon />
             </a>

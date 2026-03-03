@@ -47,10 +47,10 @@ function SortableSeccion({ seccion, recursosCount, onEditar, onEliminar }) {
         <span className="bib-admin-seccion-count">{recursosCount} recursos</span>
       </div>
       <div className="bib-admin-seccion-actions">
-        <button className="bib-btn-icon" onClick={() => onEditar(seccion)} title="Editar">
+        <button className="bib-btn-icon" onClick={() => onEditar(seccion)} aria-label="Editar sección">
           <EditIcon />
         </button>
-        <button className="bib-btn-icon bib-btn-icon--danger" onClick={() => onEliminar(seccion)} title="Eliminar">
+        <button className="bib-btn-icon bib-btn-icon--danger" onClick={() => onEliminar(seccion)} aria-label="Eliminar sección">
           <TrashIcon />
         </button>
       </div>

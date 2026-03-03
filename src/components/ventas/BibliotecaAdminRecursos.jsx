@@ -65,10 +65,10 @@ function SortableRecurso({ recurso, onEditar, onEliminar }) {
         )}
       </div>
       <div className="bib-admin-recurso-actions">
-        <button className="bib-btn-icon" onClick={() => onEditar(recurso)} title="Editar">
+        <button className="bib-btn-icon" onClick={() => onEditar(recurso)} aria-label="Editar recurso">
           <EditIcon />
         </button>
-        <button className="bib-btn-icon bib-btn-icon--danger" onClick={() => onEliminar(recurso)} title="Eliminar">
+        <button className="bib-btn-icon bib-btn-icon--danger" onClick={() => onEliminar(recurso)} aria-label="Eliminar recurso">
           <TrashIcon />
         </button>
       </div>

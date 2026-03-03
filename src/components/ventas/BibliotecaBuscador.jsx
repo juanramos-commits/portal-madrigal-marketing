@@ -28,6 +28,7 @@ export default function BibliotecaBuscador({ busqueda, onBusquedaChange }) {
         <button
           className="bib-buscador-clear"
           onClick={() => onBusquedaChange('')}
+          aria-label="Limpiar búsqueda"
         >
           <CloseIcon />
         </button>

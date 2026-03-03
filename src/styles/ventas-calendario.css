@@ -1232,6 +1232,11 @@
   height: 16px;
 }
 
+.vc-icon-sm {
+  width: 14px;
+  height: 14px;
+}
+
 /* ── Cell utility ────────────────────────────────────────────────── */
 .vc-cell-bold {
   font-weight: 600;

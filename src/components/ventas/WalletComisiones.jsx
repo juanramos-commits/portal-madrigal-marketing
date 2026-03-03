@@ -75,7 +75,7 @@ export default function WalletComisiones({
             ))}
           </Select>
         )}
-        <button className="wt-action-btn" onClick={onExportCSV} disabled={comisiones.length === 0} title="Exportar CSV">
+        <button className="wt-action-btn" onClick={onExportCSV} disabled={comisiones.length === 0} aria-label="Exportar CSV">
           <FileSpreadsheet size={14} /> CSV
         </button>
       </div>

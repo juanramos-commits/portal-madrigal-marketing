@@ -83,7 +83,7 @@ export default function WalletAdminFacturas({
                       <td>{formatMoneda(f.iva_monto)}</td>
                       <td className="wt-cell-bold">{formatMoneda(f.total)}</td>
                       <td>
-                        <button className="wt-action-btn" onClick={() => handleDescargar(f)} title="PDF">
+                        <button className="wt-action-btn" onClick={() => handleDescargar(f)} aria-label="Descargar PDF">
                           <Download size={14} />
                         </button>
                       </td>

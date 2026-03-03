@@ -317,7 +317,8 @@ export function useBiblioteca() {
     )
     try {
       await Promise.all(updates)
-    } catch (_) {
+    } catch (err) {
+      console.warn('Error al reordenar secciones:', err)
       await cargarSecciones()
     }
   }, [secciones, cargarSecciones])
@@ -341,7 +342,8 @@ export function useBiblioteca() {
     )
     try {
       await Promise.all(updates)
-    } catch (_) {
+    } catch (err) {
+      console.warn('Error al reordenar recursos:', err)
       await cargarRecursos()
     }
   }, [recursos, cargarRecursos])
@@ -359,7 +361,8 @@ export function useBiblioteca() {
     try {
       await navigator.clipboard.writeText(texto)
       return true
-    } catch (_) {
+    } catch (err) {
+      console.warn('Error al copiar al portapapeles:', err)
       return false
     }
   }, [])
