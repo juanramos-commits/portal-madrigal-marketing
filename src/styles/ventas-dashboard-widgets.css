@@ -2,6 +2,19 @@
    DASHBOARD WIDGETS — Grid + Shell + KPI + Chart + Table + Toolbar + Modal
    ========================================================================== */
 
+/* ── Utility: screen reader only ───────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── react-grid-layout overrides ────────────────────────────────────────── */
 
 .react-grid-layout {

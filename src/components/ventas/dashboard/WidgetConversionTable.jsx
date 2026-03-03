@@ -13,6 +13,9 @@ export default function WidgetConversionTable({ widgetDef, data }) {
 
   return (
     <table className="db-wtable">
+      <caption className="sr-only">
+        {isCloser ? 'Tasa de conversión por closer' : 'Tasa de conversión por setter'}
+      </caption>
       <thead>
         <tr>
           <th>Nombre</th>
