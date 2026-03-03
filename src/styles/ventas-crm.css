@@ -322,9 +322,6 @@
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   min-height: 0;
-}
-
-.crm-kanban {
   scrollbar-width: thin;
   scrollbar-color: var(--bg-active) transparent;
 }
@@ -1514,47 +1511,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Toast ──────────────────────────────────────────────────────────────── */
-.crm-toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: var(--space-2-5) var(--space-5);
-  border-radius: var(--radius-md);
-  font-size: var(--font-sm-md);
-  font-weight: var(--weight-medium);
-  z-index: var(--z-toast);
-  animation: crm-slide-up 0.2s ease, crm-fade-in 0.2s ease;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  box-shadow: var(--shadow-toast);
-}
-
-.crm-toast.error {
-  background: var(--bg-elevated);
-  color: var(--error);
-  border: 1px solid var(--error);
-}
-
-.crm-toast.success {
-  background: var(--bg-elevated);
-  color: var(--success);
-  border: 1px solid var(--success);
-}
-
-.crm-toast-icon {
-  display: flex;
-  flex-shrink: 0;
-}
-
-.crm-toast-icon svg {
-  width: 16px;
-  height: 16px;
-}
-
 /* ── Card Actions Wrapper ──────────────────────────────────────────────── */
 .crm-card-actions {
   display: flex;
@@ -1729,9 +1685,6 @@
 }
 
 /* ── Responsive Breakpoints ────────────────────────────────────────────── */
-/* ── Toolbar label (hidden on mobile) ──────────────────────────────────── */
-.crm-toolbar-label {}
-
 @media (max-width: 768px) {
   .crm-toolbar-label {
     display: none;
