@@ -74,7 +74,7 @@ function VentasTable({ data }) {
           <tr key={v.id}>
             <td className="db-wtable-name">{v.lead_nombre || '-'}</td>
             <td>{v.paquete_nombre || '-'}</td>
-            <td className="db-wtable-amount">{formatCurrency(v.importe)}</td>
+            <td className="db-wtable-amount">{formatCurrency(Number(v.importe) || 0)}</td>
             <td>
               <span className="db-wtable-estado" style={{ color: ESTADO_COLORS[v.estado] || 'var(--text-muted)' }}>
                 {v.estado}
