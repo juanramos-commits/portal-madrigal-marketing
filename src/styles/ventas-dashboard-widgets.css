@@ -445,6 +445,7 @@
 .db-wtable thead th {
   position: sticky;
   top: 0;
+  z-index: 1;
   text-align: left;
   font-size: var(--font-xs);
   font-weight: var(--weight-medium);
