@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useRef, useEffect, memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ExternalLink, Check, Minus } from 'lucide-react'
 
@@ -18,16 +18,16 @@ function formatImporte(v) {
 
 const metodoLabels = { stripe: 'Stripe', sequra: 'SeQura', transferencia: 'Transferencia' }
 
-export default function VentaDetalle({ venta, comisiones, loadingComisiones, onLoadComisiones }) {
+export default memo(function VentaDetalle({ venta, comisiones, loadingComisiones, onLoadComisiones }) {
   const navigate = useNavigate()
-  const [loaded, setLoaded] = useState(false)
+  const loadedRef = useRef(false)
 
   useEffect(() => {
-    if (!loaded && onLoadComisiones) {
+    if (!loadedRef.current && onLoadComisiones) {
+      loadedRef.current = true
       onLoadComisiones(venta.id)
-      setLoaded(true)
     }
-  }, [venta.id, loaded, onLoadComisiones])
+  }, [venta.id, onLoadComisiones])
 
   return (
     <div className="vv-detalle">
@@ -138,4 +138,4 @@ export default function VentaDetalle({ venta, comisiones, loadingComisiones, onL
       </div>
     </div>
   )
-}
+})

@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, Fragment } from 'react'
+import { useState, useCallback, useRef, memo, Fragment } from 'react'
 import { Check, Minus } from 'lucide-react'
 import VentaDetalle from './VentaDetalle'
 import VentaCambioEstado from './VentaCambioEstado'
@@ -26,7 +26,7 @@ function getEstadoDisplay(venta) {
   return estadoConfig[venta.estado] || estadoConfig.pendiente
 }
 
-export default function VentasListado({
+export default memo(function VentasListado({
   ventas,
   totalCount,
   page,
@@ -60,7 +60,8 @@ export default function VentasListado({
     try {
       const data = await cargarComisiones(ventaId)
       setComisionesMap(prev => ({ ...prev, [ventaId]: data }))
-    } catch {
+    } catch (err) {
+      console.warn('Error cargando comisiones:', err)
       loadedComisionesRef.current[ventaId] = false
     } finally {
       setLoadingComisiones(prev => ({ ...prev, [ventaId]: false }))
@@ -262,4 +263,4 @@ export default function VentasListado({
       )}
     </>
   )
-}
+})

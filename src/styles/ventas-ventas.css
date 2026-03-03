@@ -75,7 +75,7 @@
 
 .vv-search > svg {
   position: absolute;
-  left: 10px;
+  left: var(--space-2-5);
   top: 50%;
   transform: translateY(-50%);
   width: 15px;
@@ -129,6 +129,13 @@
   color: var(--text-muted);
   display: flex;
   align-items: center;
+  border-radius: var(--radius-xs);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.vv-search-clear:hover {
+  color: var(--text);
+  background: var(--bg-hover);
 }
 
 /* ── Tabs ─────────────────────────────────────────────────────────── */
@@ -452,7 +459,7 @@
 }
 
 .vv-pagination-btns button:disabled {
-  opacity: 0.3;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -735,7 +742,7 @@
 }
 
 .vv-btn-ghost:disabled {
-  opacity: 0.4;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -790,7 +797,9 @@
   font-size: var(--font-sm-md);
   font-weight: var(--weight-semibold);
   cursor: pointer;
+  transition: all var(--transition-fast);
 }
+.vv-btn-warning:hover:not(:disabled) { filter: brightness(0.9); }
 .vv-btn-warning:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .vv-btn-devolucion {
@@ -802,7 +811,9 @@
   font-size: var(--font-sm-md);
   font-weight: var(--weight-semibold);
   cursor: pointer;
+  transition: all var(--transition-fast);
 }
+.vv-btn-devolucion:hover:not(:disabled) { filter: brightness(0.9); }
 .vv-btn-devolucion:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ── Estado change dropdown ──────────────────────────────────────── */
@@ -818,6 +829,7 @@
   gap: var(--space-2xs);
   border: none;
   background: inherit;
+  transition: opacity var(--transition-fast);
 }
 .vv-estado-editable:hover { opacity: 0.8; }
 
@@ -989,32 +1001,13 @@
   font-size: var(--font-sm-md);
   font-weight: var(--weight-semibold);
   cursor: pointer;
+  transition: opacity var(--transition-fast);
 }
-.vv-btn-primary:hover { opacity: 0.9; }
+.vv-btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.vv-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Filter button in toolbar ────────────────────────────────────── */
-.vv-filter-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  height: 34px;
-  padding: 0 var(--space-3);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  font-size: var(--font-sm-md);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-}
-.vv-filter-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text);
-  border-color: var(--border-hover);
-}
-
-/* ── Export button ────────────────────────────────────────────────── */
+/* ── Toolbar buttons (filter + export) ────────────────────────────── */
+.vv-filter-btn,
 .vv-export-btn {
   display: flex;
   align-items: center;
@@ -1030,13 +1023,16 @@
   transition: all var(--transition-fast);
   white-space: nowrap;
 }
+
+.vv-filter-btn:hover,
 .vv-export-btn:hover:not(:disabled) {
   background: var(--bg-hover);
   color: var(--text);
   border-color: var(--border-hover);
 }
+
 .vv-export-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
