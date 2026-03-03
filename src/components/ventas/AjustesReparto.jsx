@@ -75,7 +75,7 @@ export default function AjustesReparto({
                 />
                 <span>%</span>
               </div>
-              <div className="aj-reparto-bar">
+              <div className="aj-reparto-bar" role="progressbar" aria-valuenow={Math.min(c.porcentaje, 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`${c.nombre}: ${c.porcentaje}%`}>
                 <div className="aj-reparto-bar-fill" style={{ width: `${Math.min(c.porcentaje, 100)}%` }} />
               </div>
             </div>

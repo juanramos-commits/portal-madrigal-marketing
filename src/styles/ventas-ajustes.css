@@ -222,6 +222,8 @@
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
+  padding: 0;
+  font-family: inherit;
 }
 
 .aj-perfil-avatar-row .aj-avatar img {
@@ -764,6 +766,14 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity var(--transition-fast);
+}
+
+.aj-status-badge:hover {
+  opacity: 0.8;
 }
 
 .aj-status-active {
@@ -1317,13 +1327,7 @@
 }
 
 /* ═══ EMPTY / LOADING / ERROR ═══ */
-.aj-empty {
-  padding: var(--space-xl);
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
+.aj-empty,
 .aj-loading {
   padding: var(--space-xl);
   text-align: center;
@@ -1334,8 +1338,8 @@
 .aj-error {
   padding: 10px var(--space-md);
   border-radius: var(--radius-sm);
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  background: color-mix(in srgb, var(--error) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error) 20%, transparent);
   color: var(--error);
   font-size: 0.82rem;
   margin-top: var(--space-sm);
@@ -1344,8 +1348,8 @@
 .aj-success {
   padding: 10px var(--space-md);
   border-radius: var(--radius-sm);
-  background: rgba(46, 229, 157, 0.1);
-  border: 1px solid rgba(46, 229, 157, 0.2);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success) 20%, transparent);
   color: var(--success);
   font-size: 0.82rem;
   margin-top: var(--space-sm);
@@ -1682,6 +1686,16 @@
   opacity: 0.4;
 }
 
+.aj-icon-sm {
+  width: 14px;
+  height: 14px;
+}
+
+.aj-icon-theme {
+  width: 20px;
+  height: 20px;
+}
+
 /* ── Focus-visible ───────────────────────────────────────────────── */
 .aj-nav-item:focus-visible,
 .aj-mobile-item:focus-visible,
@@ -1696,7 +1710,8 @@
 .aj-back-btn:focus-visible,
 .aj-drag-handle:focus-visible,
 .aj-tema-opcion:focus-visible,
-.aj-avatar:focus-visible {
+.aj-avatar:focus-visible,
+.aj-status-badge:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
@@ -1715,6 +1730,7 @@
   .aj-btn-xs,
   .aj-tema-opcion,
   .aj-avatar-overlay,
+  .aj-status-badge,
   .aj-psm-bar,
   .aj-reparto-bar-fill,
   .aj-log-row,

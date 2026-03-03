@@ -18,7 +18,7 @@ const CRM_FIELDS = [
 ]
 
 const CopyIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="aj-icon-sm" aria-hidden="true">
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
   </svg>
 )
@@ -142,15 +142,15 @@ export default function AjustesWebhooks({
             <div key={w.id} className="aj-card">
               <div className="aj-card-top">
                 <span className="aj-card-title">{w.nombre}</span>
-                <span className={`aj-status-badge aj-clickable ${w.activo ? 'aj-status-active' : 'aj-status-inactive'}`} onClick={() => handleToggleActivo(w)}>
+                <button className={`aj-status-badge ${w.activo ? 'aj-status-active' : 'aj-status-inactive'}`} onClick={() => handleToggleActivo(w)} aria-label={w.activo ? 'Desactivar webhook' : 'Activar webhook'}>
                   {w.activo ? 'Activo' : 'Inactivo'}
-                </span>
+                </button>
               </div>
               <div className="aj-webhook-url">
                 <code>{getWebhookUrl(w)}</code>
-                <button className="aj-btn-icon" onClick={() => copiarUrl(w)} title="Copiar URL">
+                <button className="aj-btn-icon" onClick={() => copiarUrl(w)} aria-label="Copiar URL">
                   <CopyIcon />
-                  {copiado === w.id && <span className="aj-copiado">¡Copiado!</span>}
+                  {copiado === w.id && <span className="aj-copiado" aria-live="polite">¡Copiado!</span>}
                 </button>
               </div>
               {w.fuente && <div className="aj-card-meta">Fuente: {w.fuente}</div>}
@@ -158,8 +158,8 @@ export default function AjustesWebhooks({
                 <button className="aj-btn-sm" onClick={() => abrirMapeo(w)}>Mapeo</button>
                 <button className="aj-btn-sm" onClick={() => abrirLogs(w)}>Logs</button>
                 <button className="aj-btn-sm" onClick={() => abrirEditar(w)}>Editar</button>
-                <button className="aj-btn-icon-danger" onClick={() => setConfirmDelete(w)}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                <button className="aj-btn-icon-danger" onClick={() => setConfirmDelete(w)} aria-label="Eliminar webhook">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="aj-icon-sm" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                 </button>
               </div>
             </div>
@@ -211,8 +211,8 @@ export default function AjustesWebhooks({
               <option value="">Seleccionar</option>
               {CRM_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
             </Select>
-            <button className="aj-btn-icon-danger" onClick={() => removeMapeoRow(i)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <button className="aj-btn-icon-danger" onClick={() => removeMapeoRow(i)} aria-label="Eliminar mapeo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="aj-icon-sm" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
         ))}
