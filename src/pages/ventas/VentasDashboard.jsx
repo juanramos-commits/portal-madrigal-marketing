@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useRef } from 'react'
+import { useMemo, useCallback, useState, useRef, useEffect } from 'react'
 import { ResponsiveGridLayout } from 'react-grid-layout'
 import { useAuth } from '../../contexts/AuthContext'
 import { useDashboard } from '../../hooks/useDashboard'
@@ -65,6 +65,16 @@ export default function VentasDashboard() {
         if (w > 0) setGridWidth(w)
       })
       observerRef.current.observe(node)
+    }
+  }, [])
+
+  // Disconnect observer on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+        observerRef.current = null
+      }
     }
   }, [])
 
