@@ -78,6 +78,7 @@ export default function NotificacionesLista({
     else if (e.key === 'End') next = list.length - 1
 
     list[next]?.focus()
+    list[next]?.scrollIntoView({ block: 'nearest' })
   }, [])
 
   if (error && notificaciones.length === 0) {

@@ -15,7 +15,8 @@ export function useNotificaciones() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [hayMas, setHayMas] = useState(false)
-  const [realtimeStatus, setRealtimeStatus] = useState('connecting')
+  const [realtimeStatus, setRealtimeStatus] = useState(null)
+  const hasConnectedRef = useRef(false)
   const channelRef = useRef(null)
   const offsetRef = useRef(0)
   const filtroRef = useRef(filtro)
@@ -144,13 +145,6 @@ export function useNotificaciones() {
   const marcarTodasComoLeidas = useCallback(() => {
     if (!user?.id || markingAllRef.current) return
 
-    // If already pending, execute immediately
-    if (pendingMarkAllRef.current) {
-      clearTimeout(pendingMarkAllRef.current.timerId)
-      ejecutarMarcarTodas()
-      return
-    }
-
     markingAllRef.current = true
     const clearingList = filtroRef.current === 'no_leidas'
 
@@ -214,13 +208,6 @@ export function useNotificaciones() {
   const eliminarNotificacion = useCallback((notifId) => {
     if (!notifId || !user?.id) return
 
-    // If already pending, execute immediately
-    if (pendingDeletesRef.current[notifId]) {
-      clearTimeout(pendingDeletesRef.current[notifId].timerId)
-      ejecutarDelete(notifId, pendingDeletesRef.current[notifId].removedItem)
-      return
-    }
-
     // Optimistic remove from UI
     let removedItem = null
     setNotificaciones(prev => {
@@ -261,8 +248,6 @@ export function useNotificaciones() {
       channelRef.current.unsubscribe()
       channelRef.current = null
     }
-    setRealtimeStatus('connecting')
-
     const channel = supabase
       .channel(`notif-lista-${user.id}`)
       .on('postgres_changes', {
@@ -305,9 +290,13 @@ export function useNotificaciones() {
         contarNoLeidas()
       })
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') setRealtimeStatus('connected')
-        else if (status === 'CHANNEL_ERROR') setRealtimeStatus('error')
-        else if (status === 'TIMED_OUT' || status === 'CLOSED') setRealtimeStatus('reconnecting')
+        if (status === 'SUBSCRIBED') {
+          hasConnectedRef.current = true
+          setRealtimeStatus('connected')
+        } else if (hasConnectedRef.current) {
+          if (status === 'CHANNEL_ERROR') setRealtimeStatus('error')
+          else if (status === 'TIMED_OUT' || status === 'CLOSED') setRealtimeStatus('reconnecting')
+        }
       })
 
     channelRef.current = channel
