@@ -1,6 +1,7 @@
+import { memo } from 'react'
 import { GripVertical, X } from 'lucide-react'
 
-export default function WidgetShell({ widgetDef, editMode, onRemove, loading, children }) {
+export default memo(function WidgetShell({ widgetDef, editMode, onRemove, loading, children }) {
   if (!widgetDef) return null
 
   const Icon = widgetDef.icon
@@ -29,4 +30,4 @@ export default function WidgetShell({ widgetDef, editMode, onRemove, loading, ch
       </div>
     </div>
   )
-}
+})
