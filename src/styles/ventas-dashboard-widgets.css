@@ -915,8 +915,13 @@
 }
 
 .db-wpipeline-stage {
-  transition: flex 0.4s ease;
+  transition: flex 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   min-width: 4px;
+  animation: db-wpipeline-grow 0.6s ease both;
+}
+
+@keyframes db-wpipeline-grow {
+  from { flex: 0; opacity: 0; }
 }
 
 .db-wpipeline-stage:first-child {
