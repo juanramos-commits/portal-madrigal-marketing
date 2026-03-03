@@ -64,10 +64,12 @@ export default function VentasCRM() {
         <div className="crm-header-row">
           {/* Pipeline tabs */}
           {crm.pipelines.length > 1 && (
-            <div className="crm-pipeline-tabs">
+            <div className="crm-pipeline-tabs" role="tablist" aria-label="Pipelines">
               {crm.pipelines.map(p => (
                 <button
                   key={p.id}
+                  role="tab"
+                  aria-selected={crm.pipelineActivo?.id === p.id}
                   className={`crm-pipeline-tab${crm.pipelineActivo?.id === p.id ? ' active' : ''}`}
                   onClick={() => crm.setPipelineActivo(p)}
                 >
@@ -78,11 +80,13 @@ export default function VentasCRM() {
           )}
 
           {/* View toggle */}
-          <div className="crm-view-toggle">
+          <div className="crm-view-toggle" role="group" aria-label="Vista">
             <button
               className={`crm-view-btn${crm.vista === 'kanban' ? ' active' : ''}`}
               onClick={() => crm.setVista('kanban')}
               title="Vista Kanban"
+              aria-label="Vista Kanban"
+              aria-pressed={crm.vista === 'kanban'}
             >
               <Kanban />
             </button>
@@ -90,6 +94,8 @@ export default function VentasCRM() {
               className={`crm-view-btn${crm.vista === 'tabla' ? ' active' : ''}`}
               onClick={() => crm.setVista('tabla')}
               title="Vista Tabla"
+              aria-label="Vista Tabla"
+              aria-pressed={crm.vista === 'tabla'}
             >
               <List />
             </button>
