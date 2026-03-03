@@ -57,8 +57,8 @@ export default function WidgetKPI({ widgetDef, data }) {
       <span className="db-wkpi-value" ref={numRef}>0</span>
       {diffText != null && (
         <span className={`db-wkpi-diff db-wkpi-diff-${diffType}`}>
-          {diffType === 'up' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: 12, height: 12 }}><polyline points="18 15 12 9 6 15"/></svg>}
-          {diffType === 'down' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ width: 12, height: 12 }}><polyline points="6 9 12 15 18 9"/></svg>}
+          {diffType === 'up' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="db-wkpi-arrow"><polyline points="18 15 12 9 6 15"/></svg>}
+          {diffType === 'down' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="db-wkpi-arrow"><polyline points="6 9 12 15 18 9"/></svg>}
           {diffText} vs anterior
         </span>
       )}
