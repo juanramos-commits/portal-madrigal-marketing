@@ -6,11 +6,13 @@ import AddWidgetModal from './AddWidgetModal'
 export default function DashboardToolbar({
   nombre,
   periodo, onPeriodoChange, fechaInicio, fechaFin, onFechaPersonalizada,
+  usuarioFiltro, onUsuarioFiltroChange, miembrosEquipo,
   editMode, setEditMode,
   onSave, onReset, onAddWidget,
   rol, layout,
 }) {
   const [showAdd, setShowAdd] = useState(false)
+  const showUserFilter = (rol === 'admin' || rol === 'director_ventas') && miembrosEquipo?.length > 0
 
   const handleAdd = (type) => {
     onAddWidget(type)
@@ -26,13 +28,27 @@ export default function DashboardToolbar({
       </div>
 
       <div className="db-toolbar-right">
-        <DashboardFiltroFecha
-          periodo={periodo}
-          onPeriodoChange={onPeriodoChange}
-          fechaInicio={fechaInicio}
-          fechaFin={fechaFin}
-          onFechaPersonalizada={onFechaPersonalizada}
-        />
+        <div className="db-toolbar-filters">
+          <DashboardFiltroFecha
+            periodo={periodo}
+            onPeriodoChange={onPeriodoChange}
+            fechaInicio={fechaInicio}
+            fechaFin={fechaFin}
+            onFechaPersonalizada={onFechaPersonalizada}
+          />
+          {showUserFilter && (
+            <select
+              className="db-select-periodo db-select-usuario"
+              value={usuarioFiltro}
+              onChange={e => onUsuarioFiltroChange(e.target.value)}
+            >
+              <option value="">Todo el equipo</option>
+              {miembrosEquipo.map(m => (
+                <option key={m.id} value={m.id}>{m.nombre}</option>
+              ))}
+            </select>
+          )}
+        </div>
 
         {editMode ? (
           <div className="db-toolbar-actions">

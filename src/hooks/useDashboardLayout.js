@@ -26,7 +26,7 @@ export function useDashboardLayout() {
     if (!user?.id) return
     ;(async () => {
       try {
-        const { data } = await supabase.from('ventas_roles_comerciales').select('*').eq('activo', true)
+        const { data } = await supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true)
         setRolesComerciales(data || [])
       } catch {
         setRolesComerciales([])

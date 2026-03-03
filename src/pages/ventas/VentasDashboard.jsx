@@ -108,6 +108,9 @@ export default function VentasDashboard() {
         fechaInicio={db.fechaInicio}
         fechaFin={db.fechaFin}
         onFechaPersonalizada={db.setFechaPersonalizada}
+        usuarioFiltro={db.usuarioFiltro}
+        onUsuarioFiltroChange={db.setUsuarioFiltro}
+        miembrosEquipo={db.miembrosEquipo}
         editMode={db.editMode}
         setEditMode={db.setEditMode}
         onSave={db.handleSave}
