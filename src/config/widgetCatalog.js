@@ -179,7 +179,7 @@ export const WIDGET_CATALOG = {
     roles: ['admin', 'director_ventas', 'setter'],
   },
   dist_leads_por_categoria: {
-    type: 'dist_leads_por_categoria', label: 'Leads por categoria', category: 'distribution',
+    type: 'dist_leads_por_categoria', label: 'Leads por categoría', category: 'distribution',
     icon: PieChart, dataKey: 'leads_por_categoria', chartType: 'pie',
     defaultSize: { w: 4, h: 4 }, minSize: { w: 3, h: 3 },
     roles: ['admin', 'director_ventas'],
@@ -191,7 +191,7 @@ export const WIDGET_CATALOG = {
     roles: ['admin', 'director_ventas', 'closer'],
   },
   dist_ventas_por_metodo_pago: {
-    type: 'dist_ventas_por_metodo_pago', label: 'Ventas por metodo pago', category: 'distribution',
+    type: 'dist_ventas_por_metodo_pago', label: 'Ventas por método de pago', category: 'distribution',
     icon: PieChart, dataKey: 'ventas_por_metodo_pago', chartType: 'pie',
     defaultSize: { w: 4, h: 4 }, minSize: { w: 3, h: 3 },
     roles: ['admin', 'director_ventas', 'closer'],
@@ -243,7 +243,7 @@ export const WIDGET_CATALOG = {
     roles: ['admin', 'director_ventas', 'setter'],
   },
   table_citas_proximas: {
-    type: 'table_citas_proximas', label: 'Citas proximas', category: 'tables',
+    type: 'table_citas_proximas', label: 'Citas próximas', category: 'tables',
     icon: CalendarClock, dataKey: 'citas_proximas',
     defaultSize: { w: 6, h: 5 }, minSize: { w: 4, h: 3 },
     roles: ['admin', 'director_ventas', 'closer', 'setter'],
