@@ -9,12 +9,16 @@ export function useNotificacionesBadge() {
 
   const cargarConteo = useCallback(async () => {
     if (!user?.id) return
-    const { count } = await supabase
-      .from('ventas_notificaciones')
-      .select('*', { count: 'exact', head: true })
-      .eq('usuario_id', user.id)
-      .eq('leida', false)
-    setContador(count || 0)
+    try {
+      const { count, error } = await supabase
+        .from('ventas_notificaciones')
+        .select('*', { count: 'exact', head: true })
+        .eq('usuario_id', user.id)
+        .eq('leida', false)
+      if (!error) setContador(count || 0)
+    } catch {
+      // Non-critical — badge keeps stale count
+    }
   }, [user?.id])
 
   useEffect(() => {
@@ -34,6 +38,14 @@ export function useNotificacionesBadge() {
       })
       .on('postgres_changes', {
         event: 'UPDATE',
+        schema: 'public',
+        table: 'ventas_notificaciones',
+        filter: `usuario_id=eq.${user.id}`,
+      }, () => {
+        cargarConteo()
+      })
+      .on('postgres_changes', {
+        event: 'DELETE',
         schema: 'public',
         table: 'ventas_notificaciones',
         filter: `usuario_id=eq.${user.id}`,
