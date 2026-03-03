@@ -38,32 +38,40 @@ BEGIN
   -- ── KPI: total_leads ──
   IF 'total_leads' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('total_leads', jsonb_build_object(
-      'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin),
-      'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date BETWEEN v_fecha_prev_inicio AND v_fecha_prev_fin)
+      'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)),
+      'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date BETWEEN v_fecha_prev_inicio AND v_fecha_prev_fin
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id))
     ));
   END IF;
 
   -- ── KPI: leads_hoy ──
   IF 'leads_hoy' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('leads_hoy', jsonb_build_object(
-      'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date = CURRENT_DATE),
-      'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date = CURRENT_DATE - 1)
+      'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date = CURRENT_DATE
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)),
+      'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date = CURRENT_DATE - 1
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id))
     ));
   END IF;
 
   -- ── KPI: leads_esta_semana ──
   IF 'leads_esta_semana' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('leads_esta_semana', jsonb_build_object(
-      'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= date_trunc('week', CURRENT_DATE)::date),
-      'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= (date_trunc('week', CURRENT_DATE) - interval '7 days')::date AND created_at::date < date_trunc('week', CURRENT_DATE)::date)
+      'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= date_trunc('week', CURRENT_DATE)::date
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)),
+      'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= (date_trunc('week', CURRENT_DATE) - interval '7 days')::date AND created_at::date < date_trunc('week', CURRENT_DATE)::date
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id))
     ));
   END IF;
 
   -- ── KPI: leads_este_mes ──
   IF 'leads_este_mes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('leads_este_mes', jsonb_build_object(
-      'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= date_trunc('month', CURRENT_DATE)::date),
-      'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= (date_trunc('month', CURRENT_DATE) - interval '1 month')::date AND created_at::date < date_trunc('month', CURRENT_DATE)::date)
+      'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= date_trunc('month', CURRENT_DATE)::date
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)),
+      'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= (date_trunc('month', CURRENT_DATE) - interval '1 month')::date AND created_at::date < date_trunc('month', CURRENT_DATE)::date
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id))
     ));
   END IF;
 
@@ -135,6 +143,7 @@ BEGIN
         SELECT created_at::date as fecha, COUNT(*) as total
         FROM ventas_leads
         WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
+          AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
         GROUP BY created_at::date
         ORDER BY fecha
       ) t
@@ -267,6 +276,7 @@ BEGIN
         SELECT date_trunc('week', created_at)::date as fecha, COUNT(*) as total
         FROM ventas_leads
         WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
+          AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
         GROUP BY date_trunc('week', created_at)::date
         ORDER BY fecha
       ) t
@@ -354,6 +364,7 @@ BEGIN
           SELECT created_at::date as fecha, COUNT(*) as total
           FROM ventas_leads
           WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
+            AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
           GROUP BY created_at::date
         ) le ON le.fecha = d.fecha::date
         LEFT JOIN (
@@ -381,6 +392,7 @@ BEGIN
         SELECT COALESCE(l.fuente, 'Sin fuente') as nombre, COUNT(*) as valor
         FROM ventas_leads l
         WHERE l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
+          AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
         GROUP BY l.fuente
         ORDER BY valor DESC
       ) t
@@ -396,6 +408,7 @@ BEGIN
         FROM ventas_leads l
         LEFT JOIN ventas_categorias c ON c.id = l.categoria_id
         WHERE l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
+          AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
         GROUP BY c.nombre
         ORDER BY valor DESC
       ) t
@@ -443,7 +456,9 @@ BEGIN
         SELECT e.nombre, COUNT(lp.id) as valor, e.color
         FROM ventas_lead_pipeline lp
         JOIN ventas_etapas e ON e.id = lp.etapa_id
+        JOIN ventas_leads l ON l.id = lp.lead_id
         WHERE e.activo = true
+          AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
         GROUP BY e.nombre, e.color, e.orden
         ORDER BY e.orden
       ) t
@@ -750,7 +765,9 @@ BEGIN
         SELECT e.nombre, e.color, COALESCE(COUNT(lp.id), 0) as total, e.orden
         FROM ventas_etapas e
         LEFT JOIN ventas_lead_pipeline lp ON lp.etapa_id = e.id
+        LEFT JOIN ventas_leads l ON l.id = lp.lead_id
         WHERE e.activo = true
+          AND (lp.id IS NULL OR v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
         GROUP BY e.id, e.nombre, e.color, e.orden
         ORDER BY e.orden
       ) t
@@ -769,6 +786,7 @@ BEGIN
         JOIN ventas_etapas e ON e.id = lp.etapa_id
         JOIN ventas_leads l ON l.id = lp.lead_id
         WHERE l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
+          AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
       ), 0),
       'anterior', NULL
     ));
@@ -823,7 +841,8 @@ BEGIN
     BEGIN
       SELECT COUNT(*) INTO v_leads_count
       FROM ventas_leads
-      WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin;
+      WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id);
 
       SELECT COUNT(*) INTO v_ventas_count
       FROM ventas_ventas
@@ -833,7 +852,8 @@ BEGIN
 
       SELECT COUNT(*) INTO v_leads_prev
       FROM ventas_leads
-      WHERE created_at::date BETWEEN v_fecha_prev_inicio AND v_fecha_prev_fin;
+      WHERE created_at::date BETWEEN v_fecha_prev_inicio AND v_fecha_prev_fin
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id);
 
       SELECT COUNT(*) INTO v_ventas_prev
       FROM ventas_ventas

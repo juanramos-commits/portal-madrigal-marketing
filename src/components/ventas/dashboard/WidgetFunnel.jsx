@@ -1,3 +1,6 @@
+import { memo } from 'react'
+import { formatCurrency } from '../../../config/formatters'
+
 const NIVELES_SETTERS = [
   { key: 'leads', label: 'Leads nuevos', color: 'var(--color-category)' },
   { key: 'contactados', label: 'Contactados', color: 'var(--warning)' },
@@ -10,9 +13,6 @@ const NIVELES_CLOSERS = [
   { key: 'realizadas', label: 'Realizadas', color: 'var(--warning)' },
   { key: 'ventas', label: 'Ventas cerradas', color: 'var(--success)' },
 ]
-
-import { memo } from 'react'
-import { formatCurrency } from '../../../config/formatters'
 
 export default memo(function WidgetFunnel({ widgetDef, data }) {
   if (!data || typeof data !== 'object') return <div className="db-widget-empty">Sin datos para este periodo</div>
