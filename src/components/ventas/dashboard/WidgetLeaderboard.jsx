@@ -31,7 +31,7 @@ export default function WidgetLeaderboard({ widgetDef, data }) {
             <MedalIcon pos={i} />
             <div className="db-wlead-info">
               <div className="db-wlead-top">
-                <span className="db-wlead-name">{r.nombre || r.email}</span>
+                <span className="db-wlead-name" title={r.nombre || r.email}>{r.nombre || r.email}</span>
                 <span className="db-wlead-stats">
                   {isCloser
                     ? `${Number(r.ventas) || 0} ventas · ${formatCurrency(Number(r.facturacion) || 0)}`

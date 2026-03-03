@@ -45,7 +45,7 @@ function LeadsTable({ data }) {
       <tbody>
         {data.map(l => (
           <tr key={l.id}>
-            <td className="db-wtable-name">{l.nombre || '-'}</td>
+            <td className="db-wtable-name" title={l.nombre || undefined}>{l.nombre || '-'}</td>
             <td>{l.nombre_negocio || '-'}</td>
             <td>{l.fuente || '-'}</td>
             <td className="db-wtable-date">{formatDate(l.created_at)}</td>
@@ -72,7 +72,7 @@ function VentasTable({ data }) {
       <tbody>
         {data.map(v => (
           <tr key={v.id}>
-            <td className="db-wtable-name">{v.lead_nombre || '-'}</td>
+            <td className="db-wtable-name" title={v.lead_nombre || undefined}>{v.lead_nombre || '-'}</td>
             <td>{v.paquete_nombre || '-'}</td>
             <td className="db-wtable-amount">{formatCurrency(Number(v.importe) || 0)}</td>
             <td>
@@ -103,7 +103,7 @@ function ComisionesTable({ data }) {
       <tbody>
         {data.map((c, i) => (
           <tr key={c.id || i}>
-            <td className="db-wtable-name">{c.lead_nombre || '-'}</td>
+            <td className="db-wtable-name" title={c.lead_nombre || undefined}>{c.lead_nombre || '-'}</td>
             <td>{c.concepto || '-'}</td>
             <td className="db-wtable-amount">{formatCurrency(Number(c.monto) || 0)}</td>
             <td className="db-wtable-date">{formatDate(c.created_at)}</td>
@@ -157,7 +157,7 @@ function LeadsSinContactarTable({ data }) {
       <tbody>
         {data.map((l, i) => (
           <tr key={l.id || i}>
-            <td className="db-wtable-name">{l.nombre || '-'}</td>
+            <td className="db-wtable-name" title={l.nombre || undefined}>{l.nombre || '-'}</td>
             <td>{l.nombre_negocio || '-'}</td>
             <td>{l.telefono || '-'}</td>
             <td className="db-wtable-date">{tiempoRelativo(l.created_at)}</td>
@@ -183,7 +183,7 @@ function CitasProximasTable({ data }) {
       <tbody>
         {data.map((c, i) => (
           <tr key={c.id || i}>
-            <td className="db-wtable-name">{c.lead_nombre || '-'}</td>
+            <td className="db-wtable-name" title={c.lead_nombre || undefined}>{c.lead_nombre || '-'}</td>
             <td>{c.closer_nombre || '-'}</td>
             <td className="db-wtable-date">{formatDateTime(c.fecha_hora)}</td>
             <td>
