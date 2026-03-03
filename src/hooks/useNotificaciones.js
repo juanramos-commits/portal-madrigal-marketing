@@ -179,7 +179,10 @@ export function useNotificaciones() {
         table: 'ventas_notificaciones',
         filter: `usuario_id=eq.${user.id}`,
       }, (payload) => {
-        setNotificaciones(prev => [payload.new, ...prev])
+        setNotificaciones(prev => {
+          if (prev.some(n => n.id === payload.new.id)) return prev
+          return [payload.new, ...prev]
+        })
         setContadorNoLeidas(prev => prev + 1)
       })
       .on('postgres_changes', {
