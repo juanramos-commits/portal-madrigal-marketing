@@ -1152,13 +1152,14 @@
   min-height: 300px;
   color: var(--text-muted);
   font-size: var(--font-sm);
+  letter-spacing: 0.02em;
 }
 
 .db-loading::before {
   content: '';
   width: 28px;
   height: 28px;
-  border: 3px solid var(--border);
+  border: var(--space-2xs) solid var(--border);
   border-top-color: var(--primary);
   border-radius: var(--radius-full);
   animation: db-loading-spin 0.7s linear infinite;

@@ -103,7 +103,7 @@ export default function VentasDashboard() {
   if (db.layoutLoading) {
     return (
       <div className="db-page">
-        <div className="db-loading" role="status" aria-label="Cargando dashboard">Cargando dashboard...</div>
+        <div className="db-loading" role="status" aria-label="Cargando dashboard"><span aria-hidden="true">Cargando dashboard...</span></div>
       </div>
     )
   }
