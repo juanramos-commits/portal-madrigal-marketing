@@ -28,9 +28,8 @@ export default function DashboardToolbar({
   return (
     <div className="db-toolbar">
       <div className="db-toolbar-left">
-        <h1 className="db-toolbar-greeting">
-          {saludo(nombre)}
-        </h1>
+        <h1 className="db-toolbar-title">Dashboard</h1>
+        <span className="db-toolbar-greeting">{saludo(nombre)}</span>
       </div>
 
       <div className="db-toolbar-right">

@@ -82,18 +82,23 @@
 
 .db-toolbar-left {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: var(--space-sm);
   min-width: 0;
 }
 
-.db-toolbar-greeting {
+.db-toolbar-title {
   font-size: var(--font-2xl);
   font-weight: var(--weight-bold);
   letter-spacing: -0.02em;
   line-height: var(--leading-tight);
   color: var(--text);
   margin: 0;
+}
+
+.db-toolbar-greeting {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1217,7 +1222,7 @@
     justify-content: flex-end;
   }
 
-  .db-toolbar-greeting {
+  .db-toolbar-title {
     font-size: var(--font-xl);
   }
 
