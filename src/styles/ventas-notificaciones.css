@@ -250,10 +250,14 @@
 }
 
 .ntf-titulo {
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-medium);
   font-size: var(--font-base);
   color: var(--text);
   margin-bottom: 2px;
+}
+
+.ntf-no-leida .ntf-titulo {
+  font-weight: var(--weight-semibold);
 }
 
 .ntf-mensaje {
