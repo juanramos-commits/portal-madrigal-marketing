@@ -29,6 +29,9 @@ export default function VentasNotificaciones() {
           onClick={() => ntf.setFiltro('todas')}
         >
           Todas
+          {ntf.notificaciones.length > 0 && ntf.filtro === 'todas' && (
+            <span className="ntf-filtro-count ntf-filtro-count--muted">{ntf.notificaciones.length}</span>
+          )}
         </button>
         <button
           className={`ntf-filtro${ntf.filtro === 'no_leidas' ? ' active' : ''}`}

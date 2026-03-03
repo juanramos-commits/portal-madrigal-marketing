@@ -105,6 +105,11 @@
   font-weight: var(--weight-semibold);
 }
 
+.ntf-filtro-count--muted {
+  background: var(--bg-skeleton);
+  color: var(--text-muted);
+}
+
 .ntf-filtro.active .ntf-filtro-count {
   background: var(--bg-active);
   color: var(--text);
