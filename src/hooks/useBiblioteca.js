@@ -352,23 +352,7 @@ export function useBiblioteca() {
   // Copy URL to clipboard
   const copiarAlPortapapeles = useCallback(async (texto) => {
     try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(texto)
-        return true
-      }
-    } catch (_) {
-      // fallback
-    }
-    // Fallback for older browsers
-    try {
-      const textarea = document.createElement('textarea')
-      textarea.value = texto
-      textarea.style.position = 'fixed'
-      textarea.style.opacity = '0'
-      document.body.appendChild(textarea)
-      textarea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textarea)
+      await navigator.clipboard.writeText(texto)
       return true
     } catch (_) {
       return false
