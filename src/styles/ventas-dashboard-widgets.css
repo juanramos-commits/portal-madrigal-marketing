@@ -868,7 +868,7 @@
   height: 8px;
   border-radius: var(--radius-full);
   flex-shrink: 0;
-  margin-top: 5px;
+  margin-top: var(--space-1-5);
 }
 
 .db-wactivity-content {
