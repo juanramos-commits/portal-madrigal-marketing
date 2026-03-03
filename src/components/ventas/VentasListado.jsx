@@ -1,4 +1,4 @@
-import { useState, useCallback, Fragment } from 'react'
+import { useState, useCallback, useRef, Fragment } from 'react'
 import { Check, Minus } from 'lucide-react'
 import VentaDetalle from './VentaDetalle'
 import VentaCambioEstado from './VentaCambioEstado'
@@ -41,6 +41,7 @@ export default function VentasListado({
   const [comisionesMap, setComisionesMap] = useState({})
   const [loadingComisiones, setLoadingComisiones] = useState({})
   const [modal, setModal] = useState(null)
+  const loadedComisionesRef = useRef({})
 
   const handleCambioEstado = (ventaId, nuevoEstado, venta) => {
     setModal({ type: 'cambio-estado', ventaId, nuevoEstado, venta })
@@ -53,17 +54,18 @@ export default function VentasListado({
   }
 
   const handleLoadComisiones = useCallback(async (ventaId) => {
-    if (comisionesMap[ventaId]) return
+    if (loadedComisionesRef.current[ventaId]) return
+    loadedComisionesRef.current[ventaId] = true
     setLoadingComisiones(prev => ({ ...prev, [ventaId]: true }))
     try {
       const data = await cargarComisiones(ventaId)
       setComisionesMap(prev => ({ ...prev, [ventaId]: data }))
-    } catch (_) {
-      // Non-critical
+    } catch {
+      loadedComisionesRef.current[ventaId] = false
     } finally {
       setLoadingComisiones(prev => ({ ...prev, [ventaId]: false }))
     }
-  }, [cargarComisiones, comisionesMap])
+  }, [cargarComisiones])
 
   const handleActionDone = () => {
     setModal(null)

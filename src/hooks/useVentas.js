@@ -29,6 +29,7 @@ export function useVentas() {
 
   const busquedaTimeoutRef = useRef(null)
   const searchRequestRef = useRef(0)
+  const realtimeDebounceRef = useRef(null)
   const [searchResultCount, setSearchResultCount] = useState(null)
   const [exportando, setExportando] = useState(false)
 
@@ -202,7 +203,7 @@ export function useVentas() {
         rechazada: rechazada || 0,
         devolucion: devolucion || 0,
       })
-    } catch (_) {
+    } catch {
       // Non-critical
     }
   }, [esAdminODirector, esCloser, esSetter, user?.id, filtros])
@@ -249,7 +250,7 @@ export function useVentas() {
       })
 
       setContadores(conteos)
-    } catch (_) {
+    } catch {
       // Non-critical
     }
   }, [esAdminODirector, user?.id])
@@ -598,7 +599,8 @@ export function useVentas() {
         schema: 'public',
         table: 'ventas_ventas',
       }, () => {
-        refrescar()
+        clearTimeout(realtimeDebounceRef.current)
+        realtimeDebounceRef.current = setTimeout(() => refrescar(), 500)
       })
       .subscribe()
 
@@ -621,7 +623,7 @@ export function useVentas() {
     } else {
       cargarVentas()
     }
-  }, [filtroEstado, paginaActual, filtros])
+  }, [filtroEstado, paginaActual, filtros]) // eslint-disable-line react-hooks/exhaustive-deps -- buscarVentas/cargarVentas are stable via useCallback; guards check user/roles
 
   // ── Reload counters on filter change ───────────────────────────────
   useEffect(() => {
@@ -629,7 +631,7 @@ export function useVentas() {
     if (!busqueda.trim()) {
       cargarContadores()
     }
-  }, [filtroEstado, filtros])
+  }, [filtroEstado, filtros]) // eslint-disable-line react-hooks/exhaustive-deps -- cargarContadores stable via useCallback; guards check user/roles
 
   // ── Debounced search ───────────────────────────────────────────────
   useEffect(() => {
@@ -646,17 +648,17 @@ export function useVentas() {
       }
     }, 300)
     return () => clearTimeout(busquedaTimeoutRef.current)
-  }, [busqueda])
+  }, [busqueda]) // eslint-disable-line react-hooks/exhaustive-deps -- intentionally only re-run on search text change; 300ms debounce handles the rest
 
   return {
     ventas, paquetes, filtroEstado, busqueda, loading, error,
     paginaActual, totalVentas, contadores, searchResultCount,
     esAdmin, esAdminODirector, esCloser, esSetter, esDirector,
 
-    setFiltroEstado: (estado) => { setPaginaActual(0); setFiltroEstado(estado) },
+    setFiltroEstado: (estado) => { setPaginaActual(0); setFiltroEstado(estado); if (!busqueda.trim()) setSearchResultCount(null) },
     setBusqueda,
     setPaginaActual,
-    setFiltros: (f) => { setPaginaActual(0); setFiltrosState(f) },
+    setFiltros: (f) => { setPaginaActual(0); setFiltrosState(f); if (!busqueda.trim()) setSearchResultCount(null) },
     filtros, settersList, closersList,
 
     cargarVentas,
