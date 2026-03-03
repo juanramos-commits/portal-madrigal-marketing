@@ -86,7 +86,10 @@ export default function NotificacionesLista({
     return (
       <div className="ntf-empty">
         <div className="ntf-empty-icon"><Bell size={48} /></div>
-        <p>No tienes notificaciones</p>
+        <p>{filtroActivo === 'no_leidas' ? 'No tienes notificaciones sin leer' : 'No tienes notificaciones'}</p>
+        {filtroActivo === 'no_leidas' && (
+          <span className="ntf-empty-hint">Todas tus notificaciones han sido leídas</span>
+        )}
       </div>
     )
   }

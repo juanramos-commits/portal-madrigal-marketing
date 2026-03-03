@@ -41,6 +41,7 @@ export default function VentasNotificaciones() {
         loading={ntf.loading}
         error={ntf.error}
         hayMas={ntf.hayMas}
+        filtroActivo={ntf.filtro}
         onCargarMas={ntf.cargarMas}
         onMarcarLeida={ntf.marcarComoLeida}
         onEliminar={ntf.eliminarNotificacion}
