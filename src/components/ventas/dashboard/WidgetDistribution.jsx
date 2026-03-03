@@ -10,8 +10,8 @@ function CustomTooltip({ active, payload }) {
   const d = payload[0]
   return (
     <div className="db-wchart-tooltip">
-      <div style={{ color: d.payload?.fill || d.color }}>{d.name || d.payload?.nombre}</div>
-      <div style={{ color: 'var(--text)' }}>{d.value}</div>
+      <div style={{ color: d.payload?.fill || d.color }}>{d.name || d.payload?.nombre || '-'}</div>
+      <div style={{ color: 'var(--text)' }}>{d.value ?? 0}</div>
     </div>
   )
 }
