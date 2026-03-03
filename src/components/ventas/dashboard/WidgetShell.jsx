@@ -14,7 +14,7 @@ export default function WidgetShell({ widgetDef, editMode, onRemove, loading, ch
           {widgetDef.label}
         </div>
         {editMode && (
-          <button className="db-widget-remove" onClick={onRemove} title="Quitar widget">
+          <button className="db-widget-remove" onClick={onRemove} title="Quitar widget" aria-label={`Quitar ${widgetDef.label}`}>
             <X size={14} />
           </button>
         )}
