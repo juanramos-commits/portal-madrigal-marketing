@@ -1,15 +1,15 @@
 const NIVELES_SETTERS = [
-  { key: 'leads', label: 'Leads nuevos', color: '#6366F1' },
-  { key: 'contactados', label: 'Contactados', color: '#8B5CF6' },
-  { key: 'citas', label: 'Citas agendadas', color: '#A855F7' },
-  { key: 'llamadas', label: 'Llamadas realizadas', color: '#22C55E' },
-  { key: 'ventas', label: 'Ventas cerradas', color: '#10B981' },
+  { key: 'leads', label: 'Leads nuevos', color: 'var(--color-category)' },
+  { key: 'contactados', label: 'Contactados', color: 'var(--warning)' },
+  { key: 'citas', label: 'Citas agendadas', color: 'var(--warning)' },
+  { key: 'llamadas', label: 'Llamadas realizadas', color: 'var(--success)' },
+  { key: 'ventas', label: 'Ventas cerradas', color: 'var(--success)' },
 ]
 
 const NIVELES_CLOSERS = [
-  { key: 'citas_recibidas', label: 'Citas recibidas', color: '#6366F1' },
-  { key: 'realizadas', label: 'Realizadas', color: '#8B5CF6' },
-  { key: 'ventas', label: 'Ventas cerradas', color: '#22C55E' },
+  { key: 'citas_recibidas', label: 'Citas recibidas', color: 'var(--color-category)' },
+  { key: 'realizadas', label: 'Realizadas', color: 'var(--warning)' },
+  { key: 'ventas', label: 'Ventas cerradas', color: 'var(--success)' },
 ]
 
 function formatCurrency(v) {
