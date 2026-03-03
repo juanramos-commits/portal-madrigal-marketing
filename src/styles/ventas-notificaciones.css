@@ -123,16 +123,21 @@
 
 /* ── Grupo ── */
 .ntf-grupo {
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.ntf-grupo + .ntf-grupo {
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-xs);
 }
 
 .ntf-grupo-label {
-  font-size: var(--font-sm);
+  font-size: var(--font-xs);
   font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: var(--space-sm) var(--space-3);
+  letter-spacing: 0.6px;
+  padding: var(--space-sm) var(--space-3) var(--space-xs);
 }
 
 /* ── Item ── */
