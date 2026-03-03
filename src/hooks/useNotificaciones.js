@@ -10,51 +10,66 @@ export function useNotificaciones() {
   const [contadorNoLeidas, setContadorNoLeidas] = useState(0)
   const [filtro, setFiltro] = useState('todas')
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [hayMas, setHayMas] = useState(true)
   const channelRef = useRef(null)
   const offsetRef = useRef(0)
 
   const contarNoLeidas = useCallback(async () => {
     if (!user?.id) return
-    const { count } = await supabase
-      .from('ventas_notificaciones')
-      .select('*', { count: 'exact', head: true })
-      .eq('usuario_id', user.id)
-      .eq('leida', false)
-    setContadorNoLeidas(count || 0)
+    try {
+      const { count, error: countErr } = await supabase
+        .from('ventas_notificaciones')
+        .select('*', { count: 'exact', head: true })
+        .eq('usuario_id', user.id)
+        .eq('leida', false)
+      if (!countErr) setContadorNoLeidas(count || 0)
+    } catch {
+      // Non-critical — badge will show stale count
+    }
   }, [user?.id])
 
   const cargarNotificaciones = useCallback(async (reset = true) => {
     if (!user?.id) return
     setLoading(true)
+    setError(null)
 
-    const offset = reset ? 0 : offsetRef.current
+    try {
+      const offset = reset ? 0 : offsetRef.current
 
-    let query = supabase
-      .from('ventas_notificaciones')
-      .select('*')
-      .eq('usuario_id', user.id)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + PAGE_SIZE - 1)
+      let query = supabase
+        .from('ventas_notificaciones')
+        .select('*')
+        .eq('usuario_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1)
 
-    if (filtro === 'no_leidas') {
-      query = query.eq('leida', false)
+      if (filtro === 'no_leidas') {
+        query = query.eq('leida', false)
+      }
+
+      const { data, error: queryErr } = await query
+      if (queryErr) {
+        setError('No se pudieron cargar las notificaciones')
+        setLoading(false)
+        return
+      }
+
+      const items = data || []
+      if (reset) {
+        setNotificaciones(items)
+        offsetRef.current = items.length
+      } else {
+        setNotificaciones(prev => [...prev, ...items])
+        offsetRef.current += items.length
+      }
+
+      setHayMas(items.length === PAGE_SIZE)
+    } catch {
+      setError('Error de conexión al cargar notificaciones')
+    } finally {
+      setLoading(false)
     }
-
-    const { data, error } = await query
-    if (error) { setLoading(false); return }
-
-    const items = data || []
-    if (reset) {
-      setNotificaciones(items)
-      offsetRef.current = items.length
-    } else {
-      setNotificaciones(prev => [...prev, ...items])
-      offsetRef.current += items.length
-    }
-
-    setHayMas(items.length === PAGE_SIZE)
-    setLoading(false)
   }, [user?.id, filtro])
 
   const cargarMas = useCallback(() => {
@@ -63,26 +78,79 @@ export function useNotificaciones() {
   }, [hayMas, loading, cargarNotificaciones])
 
   const marcarComoLeida = useCallback(async (notifId) => {
-    const { error } = await supabase
-      .from('ventas_notificaciones')
-      .update({ leida: true })
-      .eq('id', notifId)
-    if (error) return
-    setNotificaciones(prev => prev.map(n => n.id === notifId ? { ...n, leida: true } : n))
+    if (!notifId) return
+    // Optimistic update — remove from list when filtering unread
+    setNotificaciones(prev =>
+      filtro === 'no_leidas'
+        ? prev.filter(n => n.id !== notifId)
+        : prev.map(n => n.id === notifId ? { ...n, leida: true } : n)
+    )
     setContadorNoLeidas(prev => Math.max(0, prev - 1))
-  }, [])
+    try {
+      const { error: updateErr } = await supabase
+        .from('ventas_notificaciones')
+        .update({ leida: true })
+        .eq('id', notifId)
+        .eq('usuario_id', user?.id)
+      if (updateErr) {
+        // Rollback — reload to restore correct state
+        cargarNotificaciones(true)
+        contarNoLeidas()
+      }
+    } catch {
+      cargarNotificaciones(true)
+      contarNoLeidas()
+    }
+  }, [user?.id, filtro, cargarNotificaciones, contarNoLeidas])
 
   const marcarTodasComoLeidas = useCallback(async () => {
     if (!user?.id) return
-    const { error } = await supabase
-      .from('ventas_notificaciones')
-      .update({ leida: true })
-      .eq('usuario_id', user.id)
-      .eq('leida', false)
-    if (error) return
-    setNotificaciones(prev => prev.map(n => ({ ...n, leida: true })))
+    // Optimistic update — clear list when filtering unread
+    const prevNotifs = notificaciones
+    const prevCount = contadorNoLeidas
+    setNotificaciones(prev =>
+      filtro === 'no_leidas' ? [] : prev.map(n => ({ ...n, leida: true }))
+    )
     setContadorNoLeidas(0)
-  }, [user?.id])
+    try {
+      const { error: updateErr } = await supabase
+        .from('ventas_notificaciones')
+        .update({ leida: true })
+        .eq('usuario_id', user.id)
+        .eq('leida', false)
+      if (updateErr) {
+        // Rollback
+        setNotificaciones(prevNotifs)
+        setContadorNoLeidas(prevCount)
+      }
+    } catch {
+      setNotificaciones(prevNotifs)
+      setContadorNoLeidas(prevCount)
+    }
+  }, [user?.id, filtro, notificaciones, contadorNoLeidas])
+
+  const eliminarNotificacion = useCallback(async (notifId) => {
+    if (!notifId || !user?.id) return
+    const prev = notificaciones
+    const target = notificaciones.find(n => n.id === notifId)
+    // Optimistic remove
+    setNotificaciones(p => p.filter(n => n.id !== notifId))
+    if (target && !target.leida) setContadorNoLeidas(c => Math.max(0, c - 1))
+    try {
+      const { error: delErr } = await supabase
+        .from('ventas_notificaciones')
+        .delete()
+        .eq('id', notifId)
+        .eq('usuario_id', user.id)
+      if (delErr) {
+        setNotificaciones(prev)
+        if (target && !target.leida) setContadorNoLeidas(c => c + 1)
+      }
+    } catch {
+      setNotificaciones(prev)
+      if (target && !target.leida) setContadorNoLeidas(c => c + 1)
+    }
+  }, [user?.id, notificaciones])
 
   // Realtime subscription
   const suscribirseRealtime = useCallback(() => {
@@ -149,6 +217,7 @@ export function useNotificaciones() {
     contadorNoLeidas,
     filtro,
     loading,
+    error,
     hayMas,
 
     setFiltro,
@@ -158,6 +227,7 @@ export function useNotificaciones() {
     contarNoLeidas,
     marcarComoLeida,
     marcarTodasComoLeidas,
+    eliminarNotificacion,
     suscribirseRealtime,
     desuscribirseRealtime,
 
