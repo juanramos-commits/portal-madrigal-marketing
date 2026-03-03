@@ -217,7 +217,7 @@
 
 .db-widget:not(.db-widget--editing):hover {
   border-color: var(--border-hover);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .db-widget--editing {
@@ -433,7 +433,7 @@
   padding: var(--space-sm) var(--space-3);
   font-size: var(--font-sm);
   backdrop-filter: var(--backdrop-blur);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .db-wchart-tooltip-date {
@@ -777,7 +777,7 @@
 }
 
 .db-wlead-gold {
-  background: rgba(245, 158, 11, 0.15);
+  background: var(--warning-bg);
   color: var(--warning);
 }
 
