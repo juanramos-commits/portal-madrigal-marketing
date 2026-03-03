@@ -89,14 +89,12 @@ export default function NotificacionItem({ notificacion, onMarcarLeida, onElimin
       {!notificacion.leida && <span className="ntf-dot" />}
       <div className={`ntf-icon${colorClass ? ` ${colorClass}` : ''}`}><Icon size={20} /></div>
       <div className="ntf-content">
-        <div className="ntf-top-row">
-          <div className="ntf-titulo">{notificacion.titulo}</div>
-          <span className="ntf-tiempo">{tiempoRelativo(notificacion.created_at)}</span>
-        </div>
+        <div className="ntf-titulo">{notificacion.titulo}</div>
         {notificacion.mensaje && (
           <div className="ntf-mensaje">{notificacion.mensaje}</div>
         )}
       </div>
+      <span className="ntf-tiempo">{tiempoRelativo(notificacion.created_at)}</span>
       <button type="button" className="ntf-btn-eliminar" onClick={handleEliminar} aria-label={`Eliminar: ${notificacion.titulo}`}>
         <X size={14} />
       </button>

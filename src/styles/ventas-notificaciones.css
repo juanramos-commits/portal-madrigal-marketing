@@ -295,14 +295,6 @@
   min-width: 0;
 }
 
-.ntf-top-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-0-5, 2px);
-}
-
 .ntf-titulo {
   flex: 1;
   font-weight: var(--weight-medium);
@@ -333,6 +325,7 @@
   color: var(--text-disabled, var(--text-muted));
   white-space: nowrap;
   flex-shrink: 0;
+  align-self: center;
 }
 
 /* ── Inline error ── */
