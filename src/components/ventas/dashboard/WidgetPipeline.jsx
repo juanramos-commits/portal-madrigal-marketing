@@ -1,6 +1,6 @@
 export default function WidgetPipeline({ widgetDef, data }) {
   const stages = Array.isArray(data) ? data.filter(d => d.total > 0 || d.nombre) : []
-  if (stages.length === 0) return <div className="db-widget-empty">Sin datos de pipeline</div>
+  if (stages.length === 0) return <div className="db-widget-empty">Sin datos para este periodo</div>
 
   const totalLeads = stages.reduce((s, d) => s + (Number(d.total) || 0), 0)
 

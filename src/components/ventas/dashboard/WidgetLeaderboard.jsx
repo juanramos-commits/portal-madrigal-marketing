@@ -10,7 +10,7 @@ function MedalIcon({ pos }) {
 
 export default function WidgetLeaderboard({ widgetDef, data }) {
   const rows = Array.isArray(data) ? data : []
-  if (rows.length === 0) return <div className="db-widget-empty">Sin datos</div>
+  if (rows.length === 0) return <div className="db-widget-empty">Sin datos para este periodo</div>
 
   const isCloser = widgetDef?.dataKey === 'ranking_closers'
 

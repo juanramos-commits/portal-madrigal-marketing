@@ -81,7 +81,7 @@ function HorizontalBarDistribution({ data, label }) {
 
 export default function WidgetDistribution({ widgetDef, data }) {
   const items = Array.isArray(data) ? data : []
-  if (items.length === 0) return <div className="db-widget-empty">Sin datos</div>
+  if (items.length === 0) return <div className="db-widget-empty">Sin datos para este periodo</div>
 
   const label = widgetDef?.label || 'Distribución'
 

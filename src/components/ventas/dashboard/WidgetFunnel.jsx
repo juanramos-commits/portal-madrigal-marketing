@@ -15,7 +15,7 @@ const NIVELES_CLOSERS = [
 import { formatCurrency } from '../../../config/formatters'
 
 export default function WidgetFunnel({ widgetDef, data }) {
-  if (!data || typeof data !== 'object') return <div className="db-widget-empty">Sin datos</div>
+  if (!data || typeof data !== 'object') return <div className="db-widget-empty">Sin datos para este periodo</div>
 
   const isCloser = widgetDef?.dataKey === 'funnel_closers'
   const niveles = isCloser ? NIVELES_CLOSERS : NIVELES_SETTERS
