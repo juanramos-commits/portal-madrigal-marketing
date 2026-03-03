@@ -60,6 +60,11 @@
   color: var(--text-inverse);
 }
 
+.ntf-btn-marcar-todas:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
+
 /* ── Filtros — matches CRM/Ventas/Wallet pill pattern ── */
 .ntf-filtros {
   display: flex;
@@ -87,6 +92,11 @@
 .ntf-filtro:hover {
   background: var(--bg-skeleton);
   color: var(--text);
+}
+
+.ntf-filtro:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
 }
 
 .ntf-filtro.active {
@@ -208,6 +218,12 @@
 .ntf-btn-eliminar:hover {
   background: var(--error-bg);
   color: var(--error);
+}
+
+.ntf-btn-eliminar:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
 }
 
 /* ── Dot (no leída) ── */
@@ -436,6 +452,11 @@
 .ntf-btn-reintentar:hover {
   background: var(--bg-card);
   color: var(--text);
+}
+
+.ntf-btn-reintentar:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
 }
 
 /* ── Loading skeleton ── */

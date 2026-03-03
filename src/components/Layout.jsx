@@ -497,7 +497,7 @@ export default function Layout() {
                 >
                   <Icon />
                   <span className="nav-label" style={{ flex: 1 }}>{child.name}</span>
-                  {child.name === 'Notificaciones' && <NotificacionesBadge contador={notifContador} />}
+                  {child.href === '/ventas/notificaciones' && <NotificacionesBadge contador={notifContador} />}
                 </Link>
               )
             })
@@ -526,7 +526,7 @@ export default function Layout() {
                               <Link key={child.href} to={child.href} className={`nav-item ${isActive(child.href) ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <child.icon />
                                 <span className="nav-label" style={{ flex: 1 }}>{child.name}</span>
-                                {child.name === 'Notificaciones' && <NotificacionesBadge contador={notifContador} />}
+                                {child.href === '/ventas/notificaciones' && <NotificacionesBadge contador={notifContador} />}
                               </Link>
                             ))}
                           </div>

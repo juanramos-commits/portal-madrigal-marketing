@@ -149,9 +149,10 @@ export function useNotificaciones() {
     let removedItem = null
     setNotificaciones(prev => {
       removedItem = prev.find(n => n.id === notifId)
-      return prev.filter(n => n.id !== notifId)
+      return removedItem ? prev.filter(n => n.id !== notifId) : prev
     })
-    if (removedItem && !removedItem.leida) setContadorNoLeidas(c => Math.max(0, c - 1))
+    if (!removedItem) return
+    if (!removedItem.leida) setContadorNoLeidas(c => Math.max(0, c - 1))
     try {
       const { error: delErr } = await supabase
         .from('ventas_notificaciones')
@@ -159,14 +160,13 @@ export function useNotificaciones() {
         .eq('id', notifId)
         .eq('usuario_id', user.id)
       if (delErr) {
-        // Rollback — re-insert at correct position
         setNotificaciones(prev => {
           const restored = [...prev, removedItem].sort(
             (a, b) => new Date(b.created_at) - new Date(a.created_at)
           )
           return restored
         })
-        if (removedItem && !removedItem.leida) setContadorNoLeidas(c => c + 1)
+        if (!removedItem.leida) setContadorNoLeidas(c => c + 1)
       }
     } catch {
       setNotificaciones(prev => {
@@ -175,7 +175,7 @@ export function useNotificaciones() {
         )
         return restored
       })
-      if (removedItem && !removedItem.leida) setContadorNoLeidas(c => c + 1)
+      if (!removedItem.leida) setContadorNoLeidas(c => c + 1)
     }
   }, [user?.id])
 

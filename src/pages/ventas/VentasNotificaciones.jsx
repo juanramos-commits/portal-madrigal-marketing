@@ -21,7 +21,7 @@ export default function VentasNotificaciones() {
         <div className="ntf-header-left">
           <h1>Notificaciones</h1>
           {ntf.contadorNoLeidas > 0 && (
-            <span className="ntf-header-badge">{ntf.contadorNoLeidas}</span>
+            <span className="ntf-header-badge" aria-label={`${ntf.contadorNoLeidas} sin leer`}>{ntf.contadorNoLeidas}</span>
           )}
         </div>
         {ntf.contadorNoLeidas > 0 && (
@@ -32,10 +32,11 @@ export default function VentasNotificaciones() {
         )}
       </div>
 
-      <div className="ntf-filtros">
+      <div className="ntf-filtros" role="group" aria-label="Filtrar notificaciones">
         <button
           type="button"
           className={`ntf-filtro${ntf.filtro === 'todas' ? ' active' : ''}`}
+          aria-pressed={ntf.filtro === 'todas'}
           onClick={() => ntf.setFiltro('todas')}
         >
           Todas
@@ -46,6 +47,7 @@ export default function VentasNotificaciones() {
         <button
           type="button"
           className={`ntf-filtro${ntf.filtro === 'no_leidas' ? ' active' : ''}`}
+          aria-pressed={ntf.filtro === 'no_leidas'}
           onClick={() => ntf.setFiltro('no_leidas')}
         >
           No leídas
