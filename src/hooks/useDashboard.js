@@ -17,7 +17,7 @@ export function useDashboard() {
       await layoutHook.saveLayout(layoutHook.layout)
       layoutHook.setEditMode(false)
     } catch (e) {
-      console.error('Error guardando layout:', e)
+      import.meta.env.DEV && console.error('Error guardando layout:', e)
     } finally {
       setIsSaving(false)
     }
@@ -30,7 +30,7 @@ export function useDashboard() {
       await layoutHook.resetLayout()
       layoutHook.setEditMode(false)
     } catch (e) {
-      console.error('Error reseteando layout:', e)
+      import.meta.env.DEV && console.error('Error reseteando layout:', e)
     } finally {
       setIsSaving(false)
     }

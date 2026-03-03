@@ -81,7 +81,7 @@ export function useDashboardData(layout) {
       if (rpcError) throw rpcError
       if (reqId === requestRef.current) setData(result || {})
     } catch (e) {
-      console.error('Dashboard data error:', e)
+      import.meta.env.DEV && console.error('Dashboard data error:', e)
       if (reqId === requestRef.current) {
         setData({})
         setError(e?.message || 'Error cargando datos')

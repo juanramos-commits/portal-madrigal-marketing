@@ -29,7 +29,7 @@ export function useDashboardLayout() {
         const { data } = await supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true)
         setRolesComerciales(data || [])
       } catch (e) {
-        console.error('Error loading roles comerciales:', e)
+        import.meta.env.DEV && console.error('Error loading roles comerciales:', e)
         setRolesComerciales([])
       }
     })()
@@ -73,7 +73,7 @@ export function useDashboardLayout() {
           setLayout(DEFAULT_LAYOUTS[rol] || [])
         }
       } catch (e) {
-        console.error('Error loading dashboard layout:', e)
+        import.meta.env.DEV && console.error('Error loading dashboard layout:', e)
         setLayout(DEFAULT_LAYOUTS[rol] || [])
       } finally {
         setLoading(false)
@@ -92,7 +92,7 @@ export function useDashboardLayout() {
           updated_at: new Date().toISOString(),
         }, { onConflict: 'usuario_id' })
     } catch (e) {
-      console.error('Error saving dashboard layout:', e)
+      import.meta.env.DEV && console.error('Error saving dashboard layout:', e)
     }
   }, [user?.id])
 
