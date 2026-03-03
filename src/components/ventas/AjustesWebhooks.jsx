@@ -233,7 +233,7 @@ export default function AjustesWebhooks({
         ) : (
           <div className="aj-logs-list">
             {logs.map(l => (
-              <div key={l.id} className="aj-log-row" onClick={() => setExpandedLog(expandedLog === l.id ? null : l.id)}>
+              <div key={l.id} className="aj-log-row" role="button" tabIndex={0} onClick={() => setExpandedLog(expandedLog === l.id ? null : l.id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedLog(expandedLog === l.id ? null : l.id) } }} aria-expanded={expandedLog === l.id}>
                 <div className="aj-log-main">
                   <span className="aj-log-fecha">{new Date(l.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                   <span className={`aj-log-resultado ${l.resultado === 'exito' ? 'aj-text-success' : 'aj-text-error'}`}>

@@ -114,7 +114,7 @@ export default function CalendarioBloqueos({
         </div>
         <div className="aj-field">
           <label>Motivo</label>
-          <input type="text" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Ej: Vacaciones, Cita médica..." />
+          <input type="text" value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Ej: Vacaciones, Cita médica..." aria-label="Motivo del bloqueo" />
         </div>
         {error && <div className="aj-error">{error}</div>}
       </Modal>
