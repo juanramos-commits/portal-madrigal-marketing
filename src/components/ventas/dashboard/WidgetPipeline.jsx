@@ -17,7 +17,7 @@ export default function WidgetPipeline({ widgetDef, data }) {
             if (val === 0) return null
             return (
               <div
-                key={i}
+                key={s.nombre || i}
                 className="db-wpipeline-stage"
                 style={{ flex: val, background: s.color || 'var(--text-muted)' }}
                 aria-hidden="true"
@@ -28,7 +28,7 @@ export default function WidgetPipeline({ widgetDef, data }) {
       )}
       <div className="db-wpipeline-labels">
         {stages.map((s, i) => (
-          <div key={i} className="db-wpipeline-label">
+          <div key={s.nombre || i} className="db-wpipeline-label">
             <span className="db-wpipeline-label-dot" style={{ background: s.color || 'var(--text-muted)' }} />
             <span>{s.nombre}</span>
             <span className="db-wpipeline-label-count">{Number(s.total) || 0}</span>
