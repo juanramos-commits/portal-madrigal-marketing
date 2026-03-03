@@ -1127,6 +1127,7 @@
   font-size: var(--font-sm);
   outline: none;
   cursor: pointer;
+  transition: border-color var(--transition-fast);
 }
 
 .db-select-periodo:focus-visible {
@@ -1149,6 +1150,7 @@
   color: var(--text);
   font-size: var(--font-sm);
   outline: none;
+  transition: border-color var(--transition-fast);
 }
 
 .db-input-fecha:focus-visible {
