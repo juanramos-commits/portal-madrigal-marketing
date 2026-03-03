@@ -667,6 +667,13 @@
   min-width: 0;
 }
 
+.db-wlead-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
 .db-wlead-name {
   font-size: var(--font-sm);
   font-weight: var(--weight-medium);
@@ -699,8 +706,9 @@
 }
 
 .db-wlead-stats {
-  display: flex;
-  gap: var(--space-sm);
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
