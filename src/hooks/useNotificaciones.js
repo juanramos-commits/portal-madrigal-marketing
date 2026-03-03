@@ -122,7 +122,6 @@ export function useNotificaciones() {
   }, [user?.id, cargarNotificaciones, contarNoLeidas])
 
   const ejecutarMarcarTodas = useCallback(async () => {
-    const pending = pendingMarkAllRef.current
     pendingMarkAllRef.current = null
     try {
       const { error: updateErr } = await supabase
@@ -166,7 +165,7 @@ export function useNotificaciones() {
 
     pendingMarkAllRef.current = { timerId, prevNotifs, prevCount, prevOffset }
 
-    showToast('Todas marcadas como leidas', 'success', 5000, {
+    showToast('Todas marcadas como leídas', 'success', 5000, {
       label: 'Deshacer',
       onClick: () => {
         if (!pendingMarkAllRef.current) return
@@ -224,7 +223,7 @@ export function useNotificaciones() {
 
     pendingDeletesRef.current[notifId] = { timerId, removedItem }
 
-    showToast('Notificacion eliminada', 'info', 5000, {
+    showToast('Notificación eliminada', 'info', 5000, {
       label: 'Deshacer',
       onClick: () => {
         clearTimeout(pendingDeletesRef.current[notifId]?.timerId)

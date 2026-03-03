@@ -43,7 +43,7 @@ function tiempoRelativo(fecha) {
   if (diffMs < 0 || diffMin < 1) return 'Ahora mismo'
   if (diffMin < 60) return `Hace ${diffMin} minuto${diffMin === 1 ? '' : 's'}`
   if (diffHoras < 24) return `Hace ${diffHoras} hora${diffHoras === 1 ? '' : 's'}`
-  if (diffDias === 1) return f.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  if (diffDias === 1) return `Ayer, ${f.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`
   if (diffDias < 7) return `Hace ${diffDias} días`
   return f.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
 }

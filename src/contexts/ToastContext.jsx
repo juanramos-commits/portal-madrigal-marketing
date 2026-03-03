@@ -40,7 +40,7 @@ export function ToastProvider({ children }) {
             <div
               key={toast.id}
               className={`ui-toast ui-toast--${toast.type} ${toast.removing ? 'ui-toast--removing' : ''}`}
-              onClick={() => removeToast(toast.id)}
+              onClick={() => !toast.action && removeToast(toast.id)}
             >
               <span className="ui-toast-icon">
                 {toast.type === 'success' && (

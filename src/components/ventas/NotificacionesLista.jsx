@@ -69,7 +69,8 @@ export default function NotificacionesLista({
 
     e.preventDefault()
     const list = Array.from(items)
-    const idx = list.indexOf(document.activeElement)
+    const active = document.activeElement?.closest('.ntf-item') || document.activeElement
+    const idx = list.indexOf(active)
 
     let next
     if (e.key === 'ArrowDown') next = idx < list.length - 1 ? idx + 1 : 0
