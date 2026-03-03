@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { WIDGET_CATALOG } from '../config/widgetCatalog'
@@ -42,22 +42,23 @@ export function useDashboardData(layout) {
     setFechaFin(fin)
   }, [])
 
-  const getDataKeys = useCallback(() => {
+  // Stabilize: only recalculate when the set of widget types changes, not on drag/resize
+  const dataKeysStr = useMemo(() => {
     const keys = new Set()
     layout.forEach(item => {
       const def = WIDGET_CATALOG[item.type]
       if (def?.dataKey) keys.add(def.dataKey)
     })
-    return [...keys]
+    return [...keys].sort().join(',')
   }, [layout])
 
   const cargarDatos = useCallback(async () => {
-    if (!user?.id || !fechaInicio || !fechaFin || layout.length === 0) {
+    if (!user?.id || !fechaInicio || !fechaFin || !dataKeysStr) {
       setLoading(false)
       return
     }
-    const keys = getDataKeys()
-    if (keys.length === 0) { setLoading(false); return }
+    const keys = dataKeysStr.split(',')
+    if (keys.length === 0 || keys[0] === '') { setLoading(false); return }
 
     const reqId = ++requestRef.current
     setLoading(true)
@@ -76,7 +77,7 @@ export function useDashboardData(layout) {
     } finally {
       if (reqId === requestRef.current) setLoading(false)
     }
-  }, [user?.id, usuarioFiltro, fechaInicio, fechaFin, layout, getDataKeys])
+  }, [user?.id, usuarioFiltro, fechaInicio, fechaFin, dataKeysStr])
 
   useEffect(() => { cargarDatos() }, [cargarDatos])
 
