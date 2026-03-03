@@ -27,7 +27,7 @@ export default function WidgetConversionTable({ widgetDef, data }) {
             <td className="db-wtable-name">{r.nombre || r.email || '-'}</td>
             <td>{isCloser ? (r.citas || 0) : (r.leads || 0)}</td>
             <td>{isCloser ? (r.ventas || 0) : (r.citas || 0)}</td>
-            <td className={tasaClass(r.tasa)}>{Number(r.tasa || 0).toFixed(1)}%</td>
+            <td className={tasaClass(r.tasa)}>{(Number(r.tasa) || 0).toFixed(1)}%</td>
           </tr>
         ))}
       </tbody>
