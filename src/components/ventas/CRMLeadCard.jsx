@@ -49,7 +49,7 @@ export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }
     e.preventDefault()
     if (!lead.telefono) return
     const phone = lead.telefono.replace(/[^0-9+]/g, '')
-    window.open(`https://wa.me/${phone}`, '_blank')
+    window.open(`https://wa.me/${phone}`, '_blank', 'noopener,noreferrer')
   }
 
   const handleMoverMobile = (e) => {

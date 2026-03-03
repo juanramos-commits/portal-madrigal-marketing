@@ -31,7 +31,7 @@ export default function CRMTabla({
     e.stopPropagation()
     if (!phone) return
     const cleaned = phone.replace(/[^0-9+]/g, '')
-    window.open(`https://wa.me/${cleaned}`, '_blank')
+    window.open(`https://wa.me/${cleaned}`, '_blank', 'noopener,noreferrer')
   }
 
   const columns = [
@@ -103,7 +103,7 @@ export default function CRMTabla({
                   onClick={() => navigate(`/ventas/crm/lead/${lead.id}`)}
                   onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/ventas/crm/lead/${lead.id}`) } }}
                   tabIndex={0}
-                  role="link"
+                  style={{ cursor: 'pointer' }}
                 >
                   <td style={{ fontWeight: 600 }}>{lead.nombre}</td>
                   <td>{lead.telefono || '-'}</td>

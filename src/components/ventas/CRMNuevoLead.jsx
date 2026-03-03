@@ -21,6 +21,7 @@ export default function CRMNuevoLead({ categorias = [], onCrear, onCerrar }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (saving) return
     if (!form.nombre.trim()) {
       setError('El nombre es obligatorio')
       return

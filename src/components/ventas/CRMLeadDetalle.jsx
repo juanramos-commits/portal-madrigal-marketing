@@ -75,6 +75,7 @@ export default function CRMLeadDetalle() {
   const [actividad, setActividad] = useState([])
   const [actividadOffset, setActividadOffset] = useState(0)
   const [hasMoreActividad, setHasMoreActividad] = useState(true)
+  const [loadingMoreActividad, setLoadingMoreActividad] = useState(false)
   const [rolesComerciales, setRolesComerciales] = useState([])
   const [allEtapas, setAllEtapas] = useState([])
   const [setters, setSetters] = useState([])
@@ -209,15 +210,21 @@ export default function CRMLeadDetalle() {
 
   // ── Load more activity ─────────────────────────────────────────────
   const cargarMasActividad = async () => {
-    const { data } = await supabase.from('ventas_actividad')
-      .select('*, usuario:usuarios(id, nombre)')
-      .eq('lead_id', id)
-      .order('created_at', { ascending: false })
-      .range(actividadOffset, actividadOffset + 19)
+    if (loadingMoreActividad) return
+    setLoadingMoreActividad(true)
+    try {
+      const { data } = await supabase.from('ventas_actividad')
+        .select('*, usuario:usuarios(id, nombre)')
+        .eq('lead_id', id)
+        .order('created_at', { ascending: false })
+        .range(actividadOffset, actividadOffset + 19)
 
-    setActividad(prev => [...prev, ...(data || [])])
-    setActividadOffset(prev => prev + 20)
-    setHasMoreActividad((data || []).length >= 20)
+      setActividad(prev => [...prev, ...(data || [])])
+      setActividadOffset(prev => prev + 20)
+      setHasMoreActividad((data || []).length >= 20)
+    } finally {
+      setLoadingMoreActividad(false)
+    }
   }
 
   // ── Update lead field with debounce ────────────────────────────────
@@ -543,7 +550,7 @@ export default function CRMLeadDetalle() {
             <button
               className="crm-card-wa"
               style={{ width: 36, height: 36 }}
-              onClick={() => window.open(`https://wa.me/${lead.telefono.replace(/[^0-9+]/g, '')}`, '_blank')}
+              onClick={() => window.open(`https://wa.me/${lead.telefono.replace(/[^0-9+]/g, '')}`, '_blank', 'noopener,noreferrer')}
               title="WhatsApp"
             >
               <WhatsAppIcon />
@@ -721,8 +728,8 @@ export default function CRMLeadDetalle() {
               <label>Resumen Setter</label>
               <textarea
                 value={lead.resumen_setter || ''}
-                onChange={e => updateField('resumen_setter', e.target.value)}
-                onBlur={registrarCambiosCamposDebounced}
+                onChange={(esAdminODirector || esMiLeadSetter) ? e => updateField('resumen_setter', e.target.value) : undefined}
+                onBlur={(esAdminODirector || esMiLeadSetter) ? registrarCambiosCamposDebounced : undefined}
                 rows={3}
                 placeholder="Resumen del setter..."
                 readOnly={!esAdminODirector && !esMiLeadSetter}
@@ -733,8 +740,8 @@ export default function CRMLeadDetalle() {
               <label>Resumen Closer</label>
               <textarea
                 value={lead.resumen_closer || ''}
-                onChange={e => updateField('resumen_closer', e.target.value)}
-                onBlur={registrarCambiosCamposDebounced}
+                onChange={(esAdminODirector || esMiLeadCloser) ? e => updateField('resumen_closer', e.target.value) : undefined}
+                onBlur={(esAdminODirector || esMiLeadCloser) ? registrarCambiosCamposDebounced : undefined}
                 rows={3}
                 placeholder="Resumen del closer..."
                 readOnly={!esAdminODirector && !esMiLeadCloser}
@@ -752,8 +759,8 @@ export default function CRMLeadDetalle() {
                   <ExternalLink className="crm-input-icon" />
                   <input
                     value={lead.enlace_grabacion || ''}
-                    onChange={e => updateField('enlace_grabacion', e.target.value)}
-                    onBlur={registrarCambiosCamposDebounced}
+                    onChange={(esAdminODirector || esMiLeadCloser) ? e => updateField('enlace_grabacion', e.target.value) : undefined}
+                    onBlur={(esAdminODirector || esMiLeadCloser) ? registrarCambiosCamposDebounced : undefined}
                     placeholder="https://..."
                     readOnly={!esAdminODirector && !esMiLeadCloser}
                     style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
@@ -895,8 +902,9 @@ export default function CRMLeadDetalle() {
                   className="ui-btn ui-btn--secondary ui-btn--sm"
                   style={{ margin: 'var(--space-sm) auto', display: 'block' }}
                   onClick={cargarMasActividad}
+                  disabled={loadingMoreActividad}
                 >
-                  Cargar más
+                  {loadingMoreActividad ? 'Cargando...' : 'Cargar más'}
                 </button>
               )}
             </div>

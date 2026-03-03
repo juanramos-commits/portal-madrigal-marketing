@@ -60,6 +60,7 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (submitting) return
     if (!validar()) return
 
     setSubmitting(true)
@@ -93,10 +94,10 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
       title="Registrar venta"
       footer={
         <>
-          <button type="button" className="vv-btn-ghost" onClick={onCancel} disabled={submitting}>
+          <button type="button" className="ui-btn ui-btn--secondary ui-btn--md" onClick={onCancel} disabled={submitting}>
             Cancelar
           </button>
-          <button type="submit" form="venta-cierre-form" className="vv-btn-success" disabled={submitting}>
+          <button type="submit" form="venta-cierre-form" className="ui-btn ui-btn--primary ui-btn--md" disabled={submitting}>
             {submitting ? 'Registrando...' : 'Registrar venta'}
           </button>
         </>
