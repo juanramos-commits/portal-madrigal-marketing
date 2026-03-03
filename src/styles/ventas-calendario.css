@@ -182,7 +182,7 @@
 .vc-mes-celda:nth-child(7n) { border-right: none; }
 .vc-mes-celda:hover { background: rgba(255,255,255,0.02); }
 .vc-mes-celda.vc-otro-mes { opacity: 0.35; }
-.vc-mes-celda.vc-hoy { background: rgba(100,149,237,0.06); }
+.vc-mes-celda.vc-hoy { background: var(--bg-active); }
 
 .vc-mes-numero {
   display: inline-flex;
@@ -197,8 +197,8 @@
 }
 
 .vc-hoy-numero {
-  background: var(--info);
-  color: white;
+  background: var(--primary);
+  color: var(--text-inverse);
   border-radius: 50%;
   font-weight: 700;
 }
@@ -307,7 +307,7 @@
   padding: 6px 4px;
   gap: 2px;
 }
-.vc-semana-dia-header.vc-hoy { background: rgba(100,149,237,0.06); }
+.vc-semana-dia-header.vc-hoy { background: var(--bg-active); }
 
 .vc-semana-dia-nombre {
   font-size: 11px;
@@ -328,8 +328,8 @@
 }
 
 .vc-semana-dia-num.vc-hoy-numero {
-  background: var(--info);
-  color: white;
+  background: var(--primary);
+  color: var(--text-inverse);
   border-radius: 50%;
   font-weight: 700;
 }
@@ -528,14 +528,14 @@
   gap: 4px;
   background: transparent;
   border: none;
-  color: var(--info);
+  color: var(--text-muted);
   font-size: 13px;
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
-.vc-link-btn:hover { background: rgba(100,149,237,0.1); }
+.vc-link-btn:hover { background: var(--bg-hover); color: var(--text); }
 
 .vc-meet-link {
   display: inline-flex;
@@ -615,7 +615,7 @@
   padding: 8px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  background: var(--info);
+  background: var(--primary);
   color: var(--text-inverse);
   font-size: 13px;
   font-weight: 600;

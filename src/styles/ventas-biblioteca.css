@@ -51,16 +51,15 @@
 }
 
 .bib-btn-gestion-active {
-  background: var(--info);
-  border-color: var(--info);
+  background: var(--primary);
+  border-color: var(--primary);
   color: var(--text-inverse);
 }
 
 .bib-btn-gestion-active:hover {
-  background: var(--info);
-  border-color: var(--info);
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
   color: var(--text-inverse);
-  opacity: 0.9;
 }
 
 /* ── Search ── */
@@ -101,7 +100,7 @@
 }
 
 .bib-buscador-input:focus {
-  border-color: var(--info);
+  border-color: var(--border-focus);
 }
 
 .bib-buscador-clear {
@@ -274,7 +273,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--info);
+  color: var(--text-muted);
 }
 
 .bib-recurso-icono svg {
@@ -345,8 +344,8 @@
 }
 
 .bib-badge-setter {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
 }
 
 .bib-badge-closer {
@@ -444,7 +443,7 @@
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  background: var(--info);
+  background: var(--primary);
   color: var(--text-inverse);
   cursor: pointer;
   transition: opacity 0.15s;
@@ -502,7 +501,7 @@
   top: -1.75rem;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--info);
+  background: var(--success);
   color: var(--text-inverse);
   font-size: 0.688rem;
   padding: 0.125rem 0.5rem;
@@ -602,7 +601,7 @@
 .bib-field input:focus,
 .bib-field select:focus,
 .bib-field textarea:focus {
-  border-color: var(--info);
+  border-color: var(--border-focus);
 }
 
 .bib-field textarea {
@@ -635,7 +634,7 @@
 .bib-role-check input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: var(--info);
+  accent-color: var(--success);
   cursor: pointer;
 }
 
@@ -826,8 +825,8 @@
 }
 
 .bib-admin-seccion-tab.active {
-  background: var(--info);
-  border-color: var(--info);
+  background: var(--primary);
+  border-color: var(--primary);
   color: var(--text-inverse);
 }
 

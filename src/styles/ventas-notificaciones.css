@@ -125,11 +125,11 @@
 }
 
 .ntf-item.ntf-no-leida {
-  background: rgba(59, 130, 246, 0.04);
+  background: var(--bg-subtle);
 }
 
 .ntf-item.ntf-no-leida:hover {
-  background: rgba(59, 130, 246, 0.08);
+  background: var(--bg-active);
 }
 
 /* ── Dot (no leída) ── */
@@ -141,7 +141,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--info);
+  background: var(--primary);
   flex-shrink: 0;
 }
 

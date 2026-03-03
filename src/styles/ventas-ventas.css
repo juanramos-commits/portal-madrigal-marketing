@@ -606,7 +606,7 @@
   gap: var(--space-xs);
   background: transparent;
   border: none;
-  color: var(--info);
+  color: var(--text-muted);
   font-size: var(--font-sm);
   cursor: pointer;
   padding: var(--space-2xs) var(--space-1-5);
@@ -615,7 +615,8 @@
 }
 
 .vv-detalle-link:hover {
-  background: var(--info-bg);
+  background: var(--bg-hover);
+  color: var(--text);
 }
 
 .vv-detalle-loading,

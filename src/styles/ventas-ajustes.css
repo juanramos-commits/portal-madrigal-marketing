@@ -384,7 +384,7 @@
   padding: 10px 20px;
   border-radius: var(--radius-sm);
   border: none;
-  background: var(--info);
+  background: var(--primary);
   color: var(--text-inverse);
   font-size: 0.85rem;
   font-weight: 600;
@@ -504,7 +504,7 @@
 
 /* Override vc-* buttons inside aj-seccion to match aj-btn styles */
 .aj-seccion .vc-btn-primary {
-  background: var(--info);
+  background: var(--primary);
 }
 
 .aj-seccion .vc-config h3,
@@ -786,8 +786,8 @@
 }
 
 .aj-role-setter {
-  background: rgba(100, 149, 237, 0.15);
-  color: var(--info);
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
 }
 
 .aj-role-closer {
@@ -901,7 +901,7 @@
 }
 
 .aj-check-label input[type="checkbox"] {
-  accent-color: var(--info);
+  accent-color: var(--success);
 }
 
 /* ═══ ROLES CHECKS ═══ */
@@ -966,7 +966,7 @@
 .aj-pipeline-tab.active {
   color: var(--text);
   font-weight: 700;
-  border-bottom: 2px solid var(--info);
+  border-bottom: 2px solid var(--primary);
 }
 
 /* ═══ REPARTO ═══ */
@@ -1244,7 +1244,7 @@
   white-space: nowrap;
 }
 .aj-modulo-auth       { background: rgba(148,163,184,0.15); color: #94a3b8; }
-.aj-modulo-crm        { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+.aj-modulo-crm        { background: rgba(56,189,248,0.15);  color: #38bdf8; }
 .aj-modulo-ventas     { background: rgba(34,197,94,0.15);   color: var(--success); }
 .aj-modulo-wallet     { background: rgba(245,158,11,0.15);  color: #f59e0b; }
 .aj-modulo-ajustes    { background: rgba(168,85,247,0.15);  color: #c084fc; }
@@ -1395,7 +1395,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--info);
+  background: var(--primary);
   color: var(--text-inverse);
   border: 2px solid var(--bg);
   display: flex;
@@ -1470,9 +1470,9 @@
 }
 
 .aj-tema-opcion.active {
-  border-color: var(--info);
+  border-color: var(--primary);
   color: var(--text);
-  background: rgba(59, 130, 246, 0.06);
+  background: var(--bg-active);
 }
 
 .aj-tema-opcion-icon {
@@ -1487,8 +1487,8 @@
 }
 
 .aj-tema-opcion.active .aj-tema-opcion-icon {
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--info);
+  background: var(--primary-muted);
+  color: var(--primary);
 }
 
 .aj-tema-opcion span {
