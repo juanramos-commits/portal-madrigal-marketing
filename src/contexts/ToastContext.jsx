@@ -19,13 +19,15 @@ export function ToastProvider({ children }) {
     }, 200)
   }, [])
 
-  const showToast = useCallback((message, type = 'info', duration = 3000) => {
+  const showToast = useCallback((message, type = 'info', duration = 3000, action = null) => {
     const id = ++toastId
     setToasts(prev => {
-      const next = [...prev, { id, message, type, removing: false }]
+      const next = [...prev, { id, message, type, removing: false, action }]
       return next.slice(-3)
     })
-    timersRef.current[id] = setTimeout(() => removeToast(id), duration)
+    if (duration > 0) {
+      timersRef.current[id] = setTimeout(() => removeToast(id), duration)
+    }
     return id
   }, [removeToast])
 
@@ -55,6 +57,19 @@ export function ToastProvider({ children }) {
                 )}
               </span>
               <span className="ui-toast-msg">{toast.message}</span>
+              {toast.action && (
+                <button
+                  type="button"
+                  className="ui-toast-action"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toast.action.onClick()
+                    removeToast(toast.id)
+                  }}
+                >
+                  {toast.action.label}
+                </button>
+              )}
             </div>
           ))}
         </div>

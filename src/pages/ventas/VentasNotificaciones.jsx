@@ -67,6 +67,7 @@ export default function VentasNotificaciones() {
         onMarcarLeida={ntf.marcarComoLeida}
         onEliminar={ntf.eliminarNotificacion}
         onReintentar={ntf.refrescar}
+        realtimeStatus={ntf.realtimeStatus}
       />
     </div>
   )

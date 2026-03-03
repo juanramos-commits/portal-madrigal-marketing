@@ -1,4 +1,6 @@
+import { useCallback, useRef } from 'react'
 import { AlertCircle, Bell } from 'lucide-react'
+import { useTick } from '../../hooks/useTick'
 import NotificacionItem from './NotificacionItem'
 
 function agruparPorFecha(notificaciones) {
@@ -53,7 +55,31 @@ export default function NotificacionesLista({
   onMarcarLeida,
   onEliminar,
   onReintentar,
+  realtimeStatus,
 }) {
+  // Force re-render every 60s to update relative timestamps
+  useTick(60000)
+
+  const listaRef = useRef(null)
+
+  const handleKeyDown = useCallback((e) => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(e.key)) return
+    const items = listaRef.current?.querySelectorAll('.ntf-item')
+    if (!items || items.length === 0) return
+
+    e.preventDefault()
+    const list = Array.from(items)
+    const idx = list.indexOf(document.activeElement)
+
+    let next
+    if (e.key === 'ArrowDown') next = idx < list.length - 1 ? idx + 1 : 0
+    else if (e.key === 'ArrowUp') next = idx > 0 ? idx - 1 : list.length - 1
+    else if (e.key === 'Home') next = 0
+    else if (e.key === 'End') next = list.length - 1
+
+    list[next]?.focus()
+  }, [])
+
   if (error && notificaciones.length === 0) {
     return (
       <div className="ntf-empty ntf-empty--error" role="alert">
@@ -101,7 +127,15 @@ export default function NotificacionesLista({
   const grupos = agruparPorFecha(notificaciones)
 
   return (
-    <div className="ntf-lista" aria-live="polite" aria-relevant="additions removals">
+    <div ref={listaRef} className="ntf-lista" aria-live="polite" aria-relevant="additions removals" onKeyDown={handleKeyDown}>
+      {realtimeStatus && realtimeStatus !== 'connected' && (
+        <div className="ntf-realtime-banner" role="status">
+          <span className="ntf-spinner" />
+          {realtimeStatus === 'connecting' && 'Conectando...'}
+          {realtimeStatus === 'reconnecting' && 'Reconectando...'}
+          {realtimeStatus === 'error' && 'Conexión perdida. Reconectando...'}
+        </div>
+      )}
       {Object.entries(GRUPO_LABELS).map(([key, label]) => {
         const items = grupos[key]
         if (!items || items.length === 0) return null

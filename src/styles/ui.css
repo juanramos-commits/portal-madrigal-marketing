@@ -442,6 +442,23 @@
 .ui-toast--warning .ui-toast-icon { color: var(--warning); }
 .ui-toast--info .ui-toast-icon { color: var(--info); }
 .ui-toast-msg { flex: 1; line-height: var(--leading-normal); }
+.ui-toast-action {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
+  border: 1px solid currentColor;
+  border-radius: var(--radius-xs-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+  transition: background var(--transition-fast);
+}
+.ui-toast-action:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
 @media (max-width: 768px) {
   .ui-toast-container { left: var(--space-md); right: var(--space-md); bottom: var(--space-md); align-items: center; }
   .ui-toast { min-width: auto; max-width: 100%; width: 100%; }

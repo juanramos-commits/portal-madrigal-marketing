@@ -1,22 +1,27 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 
 const PAGE_SIZE = 30
 const NOTIF_COLUMNS = 'id,tipo,titulo,mensaje,datos,leida,created_at,usuario_id'
 
 export function useNotificaciones() {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const [notificaciones, setNotificaciones] = useState([])
   const [contadorNoLeidas, setContadorNoLeidas] = useState(0)
   const [filtro, setFiltro] = useState('todas')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [hayMas, setHayMas] = useState(false)
+  const [realtimeStatus, setRealtimeStatus] = useState('connecting')
   const channelRef = useRef(null)
   const offsetRef = useRef(0)
   const filtroRef = useRef(filtro)
   const markingAllRef = useRef(false)
+  const pendingDeletesRef = useRef({})
+  const pendingMarkAllRef = useRef(null)
 
   const contarNoLeidas = useCallback(async () => {
     if (!user?.id) return
@@ -115,43 +120,108 @@ export function useNotificaciones() {
     }
   }, [user?.id, cargarNotificaciones, contarNoLeidas])
 
-  const marcarTodasComoLeidas = useCallback(async () => {
-    if (!user?.id || markingAllRef.current) return
-    markingAllRef.current = true
-    // Capture snapshot for rollback inside updaters
-    let snapshotNotifs = null
-    let snapshotCount = 0
-    const clearingList = filtroRef.current === 'no_leidas'
-    let snapshotOffset = offsetRef.current
-    setNotificaciones(prev => {
-      snapshotNotifs = prev
-      return clearingList ? [] : prev.map(n => ({ ...n, leida: true }))
-    })
-    if (clearingList) offsetRef.current = 0
-    setContadorNoLeidas(prev => { snapshotCount = prev; return 0 })
+  const ejecutarMarcarTodas = useCallback(async () => {
+    const pending = pendingMarkAllRef.current
+    pendingMarkAllRef.current = null
     try {
       const { error: updateErr } = await supabase
         .from('ventas_notificaciones')
         .update({ leida: true })
-        .eq('usuario_id', user.id)
+        .eq('usuario_id', user?.id)
         .eq('leida', false)
       if (updateErr) {
-        setNotificaciones(snapshotNotifs)
-        setContadorNoLeidas(snapshotCount)
-        offsetRef.current = snapshotOffset
+        cargarNotificaciones(true)
+        contarNoLeidas()
       }
     } catch {
-      setNotificaciones(snapshotNotifs)
-      setContadorNoLeidas(snapshotCount)
-      offsetRef.current = snapshotOffset
+      cargarNotificaciones(true)
+      contarNoLeidas()
     } finally {
       markingAllRef.current = false
     }
+  }, [user?.id, cargarNotificaciones, contarNoLeidas])
+
+  const marcarTodasComoLeidas = useCallback(() => {
+    if (!user?.id || markingAllRef.current) return
+
+    // If already pending, execute immediately
+    if (pendingMarkAllRef.current) {
+      clearTimeout(pendingMarkAllRef.current.timerId)
+      ejecutarMarcarTodas()
+      return
+    }
+
+    markingAllRef.current = true
+    const clearingList = filtroRef.current === 'no_leidas'
+
+    let prevNotifs = null
+    let prevCount = 0
+    const prevOffset = offsetRef.current
+
+    setNotificaciones(prev => {
+      prevNotifs = prev
+      return clearingList ? [] : prev.map(n => ({ ...n, leida: true }))
+    })
+    if (clearingList) offsetRef.current = 0
+    setContadorNoLeidas(prev => { prevCount = prev; return 0 })
+
+    // Delayed update — 5s window for undo
+    const timerId = setTimeout(() => {
+      ejecutarMarcarTodas()
+    }, 5000)
+
+    pendingMarkAllRef.current = { timerId, prevNotifs, prevCount, prevOffset }
+
+    showToast('Todas marcadas como leidas', 'success', 5000, {
+      label: 'Deshacer',
+      onClick: () => {
+        if (!pendingMarkAllRef.current) return
+        clearTimeout(pendingMarkAllRef.current.timerId)
+        const { prevNotifs: pn, prevCount: pc, prevOffset: po } = pendingMarkAllRef.current
+        pendingMarkAllRef.current = null
+        markingAllRef.current = false
+        setNotificaciones(pn)
+        setContadorNoLeidas(pc)
+        offsetRef.current = po
+      },
+    })
+  }, [user?.id, ejecutarMarcarTodas, showToast])
+
+  const ejecutarDelete = useCallback(async (notifId, removedItem) => {
+    delete pendingDeletesRef.current[notifId]
+    try {
+      const { error: delErr } = await supabase
+        .from('ventas_notificaciones')
+        .delete()
+        .eq('id', notifId)
+        .eq('usuario_id', user?.id)
+      if (delErr) restaurarItem(removedItem)
+    } catch {
+      restaurarItem(removedItem)
+    }
+
+    function restaurarItem(item) {
+      setNotificaciones(prev => {
+        if (prev.some(n => n.id === item.id)) return prev
+        return [...prev, item].sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        )
+      })
+      if (!item.leida) setContadorNoLeidas(c => c + 1)
+    }
   }, [user?.id])
 
-  const eliminarNotificacion = useCallback(async (notifId) => {
+  const eliminarNotificacion = useCallback((notifId) => {
     if (!notifId || !user?.id) return
-    // Capture current state for rollback before optimistic update
+
+    // If already pending, execute immediately
+    if (pendingDeletesRef.current[notifId]) {
+      clearTimeout(pendingDeletesRef.current[notifId].timerId)
+      ejecutarDelete(notifId, pendingDeletesRef.current[notifId].removedItem)
+      return
+    }
+
+    // Optimistic remove from UI
     let removedItem = null
     setNotificaciones(prev => {
       removedItem = prev.find(n => n.id === notifId)
@@ -159,27 +229,29 @@ export function useNotificaciones() {
     })
     if (!removedItem) return
     if (!removedItem.leida) setContadorNoLeidas(c => Math.max(0, c - 1))
-    try {
-      const { error: delErr } = await supabase
-        .from('ventas_notificaciones')
-        .delete()
-        .eq('id', notifId)
-        .eq('usuario_id', user.id)
-      if (delErr) rollbackEliminar()
-    } catch {
-      rollbackEliminar()
-    }
 
-    function rollbackEliminar() {
-      setNotificaciones(prev => {
-        const restored = [...prev, removedItem].sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        )
-        return restored
-      })
-      if (!removedItem.leida) setContadorNoLeidas(c => c + 1)
-    }
-  }, [user?.id])
+    // Delayed delete — 5s window for undo
+    const timerId = setTimeout(() => {
+      ejecutarDelete(notifId, removedItem)
+    }, 5000)
+
+    pendingDeletesRef.current[notifId] = { timerId, removedItem }
+
+    showToast('Notificacion eliminada', 'info', 5000, {
+      label: 'Deshacer',
+      onClick: () => {
+        clearTimeout(pendingDeletesRef.current[notifId]?.timerId)
+        delete pendingDeletesRef.current[notifId]
+        setNotificaciones(prev => {
+          if (prev.some(n => n.id === notifId)) return prev
+          return [...prev, removedItem].sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          )
+        })
+        if (!removedItem.leida) setContadorNoLeidas(c => c + 1)
+      },
+    })
+  }, [user?.id, ejecutarDelete, showToast])
 
   // Realtime subscription
   const suscribirseRealtime = useCallback(() => {
@@ -189,6 +261,7 @@ export function useNotificaciones() {
       channelRef.current.unsubscribe()
       channelRef.current = null
     }
+    setRealtimeStatus('connecting')
 
     const channel = supabase
       .channel(`notif-lista-${user.id}`)
@@ -231,7 +304,11 @@ export function useNotificaciones() {
         setNotificaciones(prev => prev.filter(n => n.id !== payload.old.id))
         contarNoLeidas()
       })
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') setRealtimeStatus('connected')
+        else if (status === 'CHANNEL_ERROR') setRealtimeStatus('error')
+        else if (status === 'TIMED_OUT' || status === 'CLOSED') setRealtimeStatus('reconnecting')
+      })
 
     channelRef.current = channel
     return channel
@@ -274,6 +351,20 @@ export function useNotificaciones() {
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [user?.id, contarNoLeidas])
 
+  // Flush pending operations on unmount
+  useEffect(() => {
+    return () => {
+      Object.entries(pendingDeletesRef.current).forEach(([id, { timerId, removedItem }]) => {
+        clearTimeout(timerId)
+        ejecutarDelete(id, removedItem)
+      })
+      if (pendingMarkAllRef.current) {
+        clearTimeout(pendingMarkAllRef.current.timerId)
+        ejecutarMarcarTodas()
+      }
+    }
+  }, [ejecutarDelete, ejecutarMarcarTodas])
+
   const refrescar = useCallback(() => {
     cargarNotificaciones(true)
     contarNoLeidas()
@@ -286,6 +377,7 @@ export function useNotificaciones() {
     loading,
     error,
     hayMas,
+    realtimeStatus,
 
     setFiltro,
 
