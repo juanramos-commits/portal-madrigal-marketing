@@ -21,7 +21,7 @@ export default memo(function WidgetPipeline({ widgetDef, data }) {
               <div
                 key={s.nombre || i}
                 className="db-wpipeline-stage"
-                style={{ flex: val, background: s.color || 'var(--text-muted)' }}
+                style={{ flex: val, '--stage-bg': s.color || undefined }}
                 aria-hidden="true"
               />
             )
@@ -31,7 +31,7 @@ export default memo(function WidgetPipeline({ widgetDef, data }) {
       <div className="db-wpipeline-labels">
         {stages.map((s, i) => (
           <div key={s.nombre || i} className="db-wpipeline-label">
-            <span className="db-wpipeline-label-dot" style={{ background: s.color || 'var(--text-muted)' }} aria-hidden="true" />
+            <span className="db-wpipeline-label-dot" style={{ '--dot-bg': s.color || undefined }} aria-hidden="true" />
             <span>{s.nombre}</span>
             <span className="db-wpipeline-label-count">{Number(s.total) || 0}</span>
           </div>

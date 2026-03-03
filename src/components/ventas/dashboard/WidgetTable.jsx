@@ -131,7 +131,7 @@ function RetirosTable({ data }) {
           <tr key={r.id || i}>
             <td className="db-wtable-amount">{formatCurrency(Number(r.monto) || 0)}</td>
             <td>
-              <span className="db-wtable-estado" style={{ color: ESTADO_COLORS[r.estado] || 'var(--text-muted)' }}>
+              <span className="db-wtable-estado" style={{ '--estado-color': ESTADO_COLORS[r.estado] || 'var(--text-muted)' }}>
                 {r.estado}
               </span>
             </td>

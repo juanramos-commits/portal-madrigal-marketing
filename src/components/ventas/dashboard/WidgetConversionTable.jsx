@@ -1,11 +1,11 @@
+import { memo } from 'react'
+
 function tasaClass(tasa) {
   const v = Number(tasa) || 0
   if (v >= 50) return 'db-wconv-tasa-high'
   if (v >= 25) return 'db-wconv-tasa-mid'
   return 'db-wconv-tasa-low'
 }
-
-import { memo } from 'react'
 
 export default memo(function WidgetConversionTable({ widgetDef, data }) {
   const rows = Array.isArray(data) ? data : []

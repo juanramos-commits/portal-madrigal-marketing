@@ -37,7 +37,7 @@ export default memo(function WidgetFunnel({ widgetDef, data }) {
           const convRate = prevVal && prevVal > 0 ? ((val / prevVal) * 100).toFixed(1) : null
 
           return (
-            <div key={nivel.key} className="db-wfunnel-row" role="listitem" style={{ '--anim-delay': `${i * 100}ms` }}>
+            <div key={nivel.key} className="db-wfunnel-row" role="listitem" style={{ '--anim-delay': `${i * 50}ms` }}>
               <div className="db-wfunnel-info">
                 <span className="db-wfunnel-label">{nivel.label}</span>
                 <span className="db-wfunnel-count">{val}</span>

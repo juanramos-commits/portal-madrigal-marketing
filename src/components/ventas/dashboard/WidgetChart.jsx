@@ -14,9 +14,11 @@ function CustomTooltip({ active, payload, label }) {
       <div className="db-wchart-tooltip-date">{formatDate(label)}</div>
       {payload.map((p, i) => (
         <div key={p.name || i} className="db-wchart-tooltip-row">
-          <span style={{ color: p.stroke || p.fill || p.color }}>{p.name}:</span>{' '}
-          {p.name === 'Ingresos' || p.name === 'Comisiones' ? formatCurrency(p.value) : p.value}
-          {p.name === 'Tasa' && '%'}
+          <span className="db-wchart-tooltip-label" style={{ '--label-color': p.stroke || p.fill || p.color }}>{p.name}:</span>{' '}
+          <span className="db-wchart-tooltip-value">
+            {p.name === 'Ingresos' || p.name === 'Comisiones' ? formatCurrency(p.value) : p.value}
+            {p.name === 'Tasa' && '%'}
+          </span>
         </div>
       ))}
     </div>
@@ -71,7 +73,7 @@ export default memo(function WidgetChart({ widgetDef, data }) {
     return (
       <div className="db-wchart" role="img" aria-label={`Gráfico: ${widgetDef?.label || name}`}>
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-          <BarChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+          <BarChart data={series} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
             <XAxis dataKey="fecha" tickFormatter={formatDate} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
@@ -86,7 +88,7 @@ export default memo(function WidgetChart({ widgetDef, data }) {
   return (
     <div className="db-wchart" role="img" aria-label={`Gráfico: ${widgetDef?.label || name}`}>
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-        <AreaChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+        <AreaChart data={series} margin={{ top: 4, right: 4, left: -12, bottom: 0 }}>
           <defs>
             <linearGradient id={`grad_${gradId}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={colors.stroke} stopOpacity={0.2} />
