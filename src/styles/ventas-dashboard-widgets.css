@@ -208,6 +208,7 @@
   overflow: hidden;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   animation: db-widget-in 0.3s ease both;
+  contain: layout style;
 }
 
 @keyframes db-widget-in {
@@ -825,6 +826,7 @@
   transition: width 0.6s ease;
   background: var(--primary);
   pointer-events: none;
+  will-change: width;
 }
 
 .db-wlead-bar--closer {
@@ -967,6 +969,7 @@
   transition: width 0.6s ease;
   min-width: 3%;
   pointer-events: none;
+  will-change: width;
 }
 
 .db-wfunnel-rate {
@@ -1111,6 +1114,7 @@
 .db-wgoal-remaining {
   font-size: var(--font-xs);
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Table link style ──────────────────────────────────────────────────── */
