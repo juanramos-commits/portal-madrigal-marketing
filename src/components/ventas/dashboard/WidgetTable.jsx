@@ -36,12 +36,13 @@ const ESTADO_COLORS = {
 function LeadsTable({ data }) {
   return (
     <table className="db-wtable">
+      <caption className="sr-only">Leads recientes</caption>
       <thead>
         <tr>
-          <th>Nombre</th>
-          <th>Negocio</th>
-          <th>Fuente</th>
-          <th>Fecha</th>
+          <th scope="col">Nombre</th>
+          <th scope="col">Negocio</th>
+          <th scope="col">Fuente</th>
+          <th scope="col">Fecha</th>
         </tr>
       </thead>
       <tbody>
@@ -61,13 +62,14 @@ function LeadsTable({ data }) {
 function VentasTable({ data }) {
   return (
     <table className="db-wtable">
+      <caption className="sr-only">Ventas recientes</caption>
       <thead>
         <tr>
-          <th>Lead</th>
-          <th>Paquete</th>
-          <th>Importe</th>
-          <th>Estado</th>
-          <th>Fecha</th>
+          <th scope="col">Lead</th>
+          <th scope="col">Paquete</th>
+          <th scope="col">Importe</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Fecha</th>
         </tr>
       </thead>
       <tbody>
@@ -92,12 +94,13 @@ function VentasTable({ data }) {
 function ComisionesTable({ data }) {
   return (
     <table className="db-wtable">
+      <caption className="sr-only">Comisiones recientes</caption>
       <thead>
         <tr>
-          <th>Lead</th>
-          <th>Concepto</th>
-          <th>Monto</th>
-          <th>Fecha</th>
+          <th scope="col">Lead</th>
+          <th scope="col">Concepto</th>
+          <th scope="col">Monto</th>
+          <th scope="col">Fecha</th>
         </tr>
       </thead>
       <tbody>
@@ -117,11 +120,12 @@ function ComisionesTable({ data }) {
 function RetirosTable({ data }) {
   return (
     <table className="db-wtable">
+      <caption className="sr-only">Retiros recientes</caption>
       <thead>
         <tr>
-          <th>Monto</th>
-          <th>Estado</th>
-          <th>Fecha</th>
+          <th scope="col">Monto</th>
+          <th scope="col">Estado</th>
+          <th scope="col">Fecha</th>
         </tr>
       </thead>
       <tbody>
@@ -144,12 +148,13 @@ function RetirosTable({ data }) {
 function LeadsSinContactarTable({ data }) {
   return (
     <table className="db-wtable">
+      <caption className="sr-only">Leads sin contactar</caption>
       <thead>
         <tr>
-          <th>Nombre</th>
-          <th>Negocio</th>
-          <th>Teléfono</th>
-          <th>Tiempo</th>
+          <th scope="col">Nombre</th>
+          <th scope="col">Negocio</th>
+          <th scope="col">Teléfono</th>
+          <th scope="col">Tiempo</th>
         </tr>
       </thead>
       <tbody>
@@ -169,12 +174,13 @@ function LeadsSinContactarTable({ data }) {
 function CitasProximasTable({ data }) {
   return (
     <table className="db-wtable">
+      <caption className="sr-only">Citas próximas</caption>
       <thead>
         <tr>
-          <th>Lead</th>
-          <th>Closer</th>
-          <th>Hora</th>
-          <th>Meet</th>
+          <th scope="col">Lead</th>
+          <th scope="col">Closer</th>
+          <th scope="col">Hora</th>
+          <th scope="col">Meet</th>
         </tr>
       </thead>
       <tbody>
