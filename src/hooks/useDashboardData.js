@@ -67,6 +67,7 @@ export function useDashboardData(layout) {
 
     const reqId = ++requestRef.current
     setLoading(true)
+    setData({})
 
     try {
       const { data: result, error } = await supabase.rpc('ventas_dashboard_widget_data', {
@@ -79,6 +80,7 @@ export function useDashboardData(layout) {
       if (reqId === requestRef.current) setData(result || {})
     } catch (e) {
       console.error('Dashboard data error:', e)
+      if (reqId === requestRef.current) setData({})
     } finally {
       if (reqId === requestRef.current) setLoading(false)
     }
