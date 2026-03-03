@@ -453,9 +453,13 @@ export default function CRMLeadDetalle() {
   }
 
   // ── Close menu on outside click ────────────────────────────────────
+  const menuRef = useRef(null)
   useEffect(() => {
     if (!showMenu) return
-    const handler = () => setShowMenu(false)
+    const handler = (e) => {
+      if (menuRef.current && menuRef.current.contains(e.target)) return
+      setShowMenu(false)
+    }
     // Defer to avoid capturing the opening click
     const rafId = requestAnimationFrame(() => {
       document.addEventListener('mousedown', handler)
@@ -565,7 +569,7 @@ export default function CRMLeadDetalle() {
             </button>
           )}
 
-          <div className="crm-dropdown" onClick={e => e.stopPropagation()}>
+          <div className="crm-dropdown" ref={menuRef} onClick={e => e.stopPropagation()}>
             <button className="crm-detail-menu-btn" onClick={() => setShowMenu(!showMenu)}>
               <MoreVertical />
             </button>
