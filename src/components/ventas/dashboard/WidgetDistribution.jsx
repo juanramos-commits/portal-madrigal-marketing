@@ -14,7 +14,7 @@ function CustomTooltip({ active, payload }) {
 }
 
 function PieDistribution({ data }) {
-  const total = data.reduce((s, d) => s + d.valor, 0)
+  const total = data.reduce((s, d) => s + (Number(d.valor) || 0), 0)
 
   return (
     <div className="db-wdist">
