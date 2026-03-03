@@ -662,6 +662,14 @@
   background: var(--primary);
 }
 
+.db-wlead-bar--closer {
+  background: var(--success);
+}
+
+.db-wlead-bar--setter {
+  background: var(--warning);
+}
+
 .db-wlead-stats {
   display: flex;
   gap: var(--space-sm);
