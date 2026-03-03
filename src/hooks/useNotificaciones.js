@@ -158,10 +158,10 @@ export function useNotificaciones() {
     if (clearingList) offsetRef.current = 0
     setContadorNoLeidas(prev => { prevCount = prev; return 0 })
 
-    // Delayed update — 5s window for undo
+    // Delayed update — fires after toast auto-dismiss + exit animation
     const timerId = setTimeout(() => {
       ejecutarMarcarTodas()
-    }, 5000)
+    }, 5200)
 
     pendingMarkAllRef.current = { timerId, prevNotifs, prevCount, prevOffset }
 
@@ -216,10 +216,10 @@ export function useNotificaciones() {
     if (!removedItem) return
     if (!removedItem.leida) setContadorNoLeidas(c => Math.max(0, c - 1))
 
-    // Delayed delete — 5s window for undo
+    // Delayed delete — fires after toast auto-dismiss + exit animation
     const timerId = setTimeout(() => {
       ejecutarDelete(notifId, removedItem)
-    }, 5000)
+    }, 5200)
 
     pendingDeletesRef.current[notifId] = { timerId, removedItem }
 
