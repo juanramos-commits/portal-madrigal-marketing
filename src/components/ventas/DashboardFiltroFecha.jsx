@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Select from '../ui/Select'
 
 const OPCIONES = [
@@ -21,6 +21,11 @@ export default function DashboardFiltroFecha({
 }) {
   const [desde, setDesde] = useState(fechaInicio ? formatInputDate(fechaInicio) : '')
   const [hasta, setHasta] = useState(fechaFin ? formatInputDate(fechaFin) : '')
+
+  useEffect(() => {
+    if (fechaInicio) setDesde(formatInputDate(fechaInicio))
+    if (fechaFin) setHasta(formatInputDate(fechaFin))
+  }, [fechaInicio, fechaFin])
 
   const handleSelect = (e) => {
     const val = e.target.value
