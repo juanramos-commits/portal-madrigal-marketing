@@ -14,9 +14,16 @@ export default function WidgetGoal({ widgetDef, data, config }) {
   const offset = circumference - (pct / 100) * circumference
 
   return (
-    <div className={`db-wgoal ${colorClass}`}>
+    <div
+      className={`db-wgoal ${colorClass}`}
+      role="meter"
+      aria-valuenow={Math.round(pct)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`Objetivo: ${actual} de ${objetivo} (${Math.round(pct)}%)`}
+    >
       <div className="db-wgoal-ring">
-        <svg width={size} height={size}>
+        <svg width={size} height={size} aria-hidden="true">
           <circle
             className="db-wgoal-ring-bg"
             cx={size / 2}
