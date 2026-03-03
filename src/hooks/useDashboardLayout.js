@@ -60,16 +60,18 @@ export function useDashboardLayout() {
     cargar()
   }, [user?.id, rol])
 
-  const saveLayout = useCallback((newLayout) => {
+  const saveLayout = useCallback(async (newLayout) => {
     if (!user?.id) return
-    supabase.from('dashboard_layouts')
-      .upsert({
-        usuario_id: user.id,
-        layout: newLayout,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'usuario_id' })
-      .then(() => {})
-      .catch(() => {})
+    try {
+      await supabase.from('dashboard_layouts')
+        .upsert({
+          usuario_id: user.id,
+          layout: newLayout,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'usuario_id' })
+    } catch {
+      // Silent save — layout persistence should never break the UI
+    }
   }, [user?.id])
 
   const onLayoutChange = useCallback((rglLayout) => {

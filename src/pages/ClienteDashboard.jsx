@@ -38,13 +38,11 @@ export default function ClienteDashboard() {
         supabase.from('campanas')
           .select('id', { count: 'exact', head: true })
           .eq('cliente_id', usuario.cliente_id)
-          .eq('estado', 'activa')
-          .catch(() => ({ count: 0 })),
+          .eq('estado', 'activa'),
         supabase.from('leads')
           .select('id', { count: 'exact', head: true })
           .eq('cliente_id', usuario.cliente_id)
           .gte('created_at', mesInicio.toISOString())
-          .catch(() => ({ count: 0 }))
       ])
 
       setStats({

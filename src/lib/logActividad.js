@@ -10,12 +10,18 @@ import { supabase } from './supabase'
  * @param {{ entidad?: string, entidad_id?: string, datos?: object }} [opts]
  */
 export function logActividad(modulo, accion, descripcion, opts = {}) {
-  supabase.rpc('ventas_log', {
-    p_modulo: modulo,
-    p_accion: accion,
-    p_descripcion: descripcion,
-    p_entidad: opts.entidad || null,
-    p_entidad_id: opts.entidad_id || null,
-    p_datos: opts.datos || {},
-  }).catch(() => {})
+  ;(async () => {
+    try {
+      await supabase.rpc('ventas_log', {
+        p_modulo: modulo,
+        p_accion: accion,
+        p_descripcion: descripcion,
+        p_entidad: opts.entidad || null,
+        p_entidad_id: opts.entidad_id || null,
+        p_datos: opts.datos || {},
+      })
+    } catch {
+      // Fire-and-forget: logging never breaks the app
+    }
+  })()
 }

@@ -98,8 +98,10 @@ export default function SecurityDashboard() {
   }
 
   const loadSecurityChecks = async () => {
-    const [rlsCheck, alertCheck, inactiveCheck] = await Promise.all([
-      supabase.rpc('verificar_rls_tablas').catch(() => ({ data: null })),
+    let rlsData = null
+    try { rlsData = (await supabase.rpc('verificar_rls_tablas')).data } catch { /* ignore */ }
+
+    const [alertCheck, inactiveCheck] = await Promise.all([
       supabase.from('security_alerts').select('id', { count: 'exact', head: true })
         .eq('resuelta', false).eq('severidad', 'critica'),
       supabase.from('usuarios').select('id', { count: 'exact', head: true })
@@ -110,7 +112,7 @@ export default function SecurityDashboard() {
     setSecurityChecks({
       sinAlertasCriticas: (alertCheck.count || 0) === 0,
       sinInactivos: (inactiveCheck.count || 0) === 0,
-      rlsActivo: true // If we're here, RLS is working
+      rlsActivo: true
     })
   }
 
