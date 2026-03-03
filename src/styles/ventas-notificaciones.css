@@ -417,13 +417,29 @@
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .ntf-page {
-    /* padding handled by parent .page wrapper */
+  .ntf-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
   }
 
   .ntf-header h1 {
     font-size: var(--font-xl-2xl);
   }
+
+  .ntf-btn-marcar-todas {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ntf-filtros {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: var(--space-xs);
+  }
+
+  .ntf-filtros::-webkit-scrollbar { display: none; }
 
   .ntf-item {
     padding: var(--space-3) var(--space-sm);
@@ -433,5 +449,10 @@
     opacity: 1;
     width: 36px;
     height: 36px;
+  }
+
+  .ntf-grupo-label {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
   }
 }
