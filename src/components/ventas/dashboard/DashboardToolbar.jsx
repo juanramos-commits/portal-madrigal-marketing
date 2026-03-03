@@ -50,11 +50,11 @@ export default function DashboardToolbar({
               <Plus size={14} />
               <span>Añadir</span>
             </button>
-            <button type="button" className="db-toolbar-btn" onClick={onReset} disabled={isSaving} aria-label="Resetear layout">
+            <button type="button" className="db-toolbar-btn" onClick={onReset} disabled={isSaving} aria-busy={isSaving} aria-label="Resetear layout">
               <RotateCcw size={14} />
               <span>Resetear</span>
             </button>
-            <button type="button" className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave} disabled={isSaving} aria-label="Guardar layout">
+            <button type="button" className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave} disabled={isSaving} aria-busy={isSaving} aria-label="Guardar layout">
               <Save size={14} />
               <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
             </button>
