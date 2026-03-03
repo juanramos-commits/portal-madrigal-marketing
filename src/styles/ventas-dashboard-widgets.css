@@ -413,6 +413,11 @@
   height: 12px;
 }
 
+.db-widget-body:has(.db-wchart),
+.db-widget-body:has(.db-wdist) {
+  padding: var(--space-xs);
+}
+
 /* ── Widget Chart ───────────────────────────────────────────────────────── */
 
 .db-wchart {
