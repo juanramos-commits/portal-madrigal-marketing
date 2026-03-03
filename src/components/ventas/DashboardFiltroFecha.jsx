@@ -19,8 +19,10 @@ function formatInputDate(d) {
 }
 
 function parseLocalDate(s) {
-  const [yyyy, mm, dd] = s.split('-').map(Number)
-  return new Date(yyyy, mm - 1, dd)
+  if (!s || typeof s !== 'string') return null
+  const parts = s.split('-').map(Number)
+  if (parts.length < 3 || parts.some(Number.isNaN)) return null
+  return new Date(parts[0], parts[1] - 1, parts[2])
 }
 
 export default function DashboardFiltroFecha({
@@ -43,7 +45,8 @@ export default function DashboardFiltroFecha({
     const val = e.target.value
     setDesde(val)
     if (val && hasta && val <= hasta) {
-      onFechaPersonalizada(parseLocalDate(val), parseLocalDate(hasta))
+      const d1 = parseLocalDate(val), d2 = parseLocalDate(hasta)
+      if (d1 && d2) onFechaPersonalizada(d1, d2)
     }
   }
 
@@ -51,7 +54,8 @@ export default function DashboardFiltroFecha({
     const val = e.target.value
     setHasta(val)
     if (desde && val && desde <= val) {
-      onFechaPersonalizada(parseLocalDate(desde), parseLocalDate(val))
+      const d1 = parseLocalDate(desde), d2 = parseLocalDate(val)
+      if (d1 && d2) onFechaPersonalizada(d1, d2)
     }
   }
 
@@ -64,9 +68,9 @@ export default function DashboardFiltroFecha({
       </select>
       {periodo === 'personalizado' && (
         <div className="db-fechas-custom">
-          <input type="date" value={desde} onChange={handleDesde} max={hasta || undefined} className="db-input-fecha" />
-          <span className="db-fecha-sep">-</span>
-          <input type="date" value={hasta} onChange={handleHasta} min={desde || undefined} className="db-input-fecha" />
+          <input type="date" value={desde} onChange={handleDesde} max={hasta || undefined} className="db-input-fecha" aria-label="Fecha de inicio" />
+          <span className="db-fecha-sep" aria-hidden="true">-</span>
+          <input type="date" value={hasta} onChange={handleHasta} min={desde || undefined} className="db-input-fecha" aria-label="Fecha de fin" />
         </div>
       )}
     </div>
