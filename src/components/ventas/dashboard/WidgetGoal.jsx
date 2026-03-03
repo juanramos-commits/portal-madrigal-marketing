@@ -15,7 +15,7 @@ export default function WidgetGoal({ widgetDef, data, config }) {
 
   return (
     <div className={`db-wgoal ${colorClass}`}>
-      <div className="db-wgoal-ring" style={{ width: size, height: size }}>
+      <div className="db-wgoal-ring">
         <svg width={size} height={size}>
           <circle
             className="db-wgoal-ring-bg"

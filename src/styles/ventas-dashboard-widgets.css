@@ -899,6 +899,8 @@
 
 .db-wgoal-ring {
   position: relative;
+  width: 100px;
+  height: 100px;
 }
 
 .db-wgoal-ring svg {
