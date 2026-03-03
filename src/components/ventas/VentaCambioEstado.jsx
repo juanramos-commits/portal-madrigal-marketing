@@ -68,15 +68,18 @@ export default function VentaCambioEstado({ venta, onCambio }) {
         ref={btnRef}
         className={`vv-badge vv-badge-${estadoActual} vv-estado-editable`}
         onClick={toggleOpen}
+        aria-expanded={abierto}
+        aria-haspopup="menu"
       >
         {estadoLabels[estadoActual]}
         <ChevronDown size={12} />
       </button>
       {abierto && pos && (
-        <div className="vv-estado-dropdown" style={{ position: 'fixed', top: pos.top, left: pos.left }}>
+        <div className="vv-estado-dropdown" role="menu" style={{ position: 'fixed', top: pos.top, left: pos.left }}>
           {opciones.map(opcion => (
             <button
               key={opcion}
+              role="menuitem"
               className={`vv-estado-option vv-estado-opt-${opcion}`}
               onClick={(e) => {
                 e.stopPropagation()

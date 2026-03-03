@@ -10,10 +10,6 @@
   --color-sequra-bg: rgba(0, 196, 180, 0.12);
   --color-devolucion: #a078ff;
   --color-devolucion-bg: rgba(160, 120, 255, 0.15);
-  --color-devolucion-border: rgba(160, 120, 255, 0.3);
-  --color-devolucion-hover: rgba(160, 120, 255, 0.1);
-  --color-success-border: rgba(46, 229, 157, 0.3);
-  --color-error-border: rgba(255, 107, 107, 0.3);
 }
 
 /* ── Page layout ──────────────────────────────────────────────────── */
@@ -47,6 +43,11 @@
   white-space: nowrap;
   margin: 0;
   color: var(--text);
+}
+
+.vv-title-row {
+  display: flex;
+  align-items: baseline;
 }
 
 .vv-count {
@@ -102,7 +103,6 @@
 
 .vv-search input:focus {
   border-color: var(--border-focus);
-  box-shadow: var(--focus-ring);
   background: var(--bg-input-focus);
 }
 
@@ -111,7 +111,7 @@
   right: var(--space-xl);
   top: 50%;
   transform: translateY(-50%);
-  font-size: 11px;
+  font-size: var(--font-xs);
   color: var(--text-muted);
   white-space: nowrap;
   pointer-events: none;
@@ -474,11 +474,32 @@
   border-radius: var(--radius-md);
 }
 
+/* ── Table utility classes ────────────────────────────────────────── */
+.vv-table-container {
+  position: relative;
+}
+
+.vv-table-empty {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--text-muted);
+}
+
+.vv-cell-bold {
+  font-weight: var(--weight-semibold);
+}
+
 /* ── Skeleton ─────────────────────────────────────────────────────── */
 .vv-skeleton {
   background: var(--bg-badge);
   border-radius: var(--radius-xs);
   animation: vv-pulse 1.5s infinite;
+}
+
+.vv-skeleton-cell {
+  display: block;
+  width: 80%;
+  height: 14px;
 }
 
 @keyframes vv-pulse {
@@ -608,13 +629,13 @@
 
 /* ── Modal utility classes (used inside shared Modal) ────────────── */
 .vv-modal-hint {
-  font-size: var(--font-sm-md) !important;
-  color: var(--text-muted) !important;
+  font-size: var(--font-sm-md);
+  color: var(--text-muted);
 }
 
 .vv-modal-warning {
-  font-size: var(--font-sm-md) !important;
-  color: var(--warning) !important;
+  font-size: var(--font-sm-md);
+  color: var(--warning);
   background: var(--warning-bg);
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
@@ -658,7 +679,6 @@
 .vv-field select:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: var(--focus-ring);
 }
 
 .vv-field select {
@@ -939,7 +959,6 @@
 .vv-filter-field select:focus,
 .vv-filter-field input:focus {
   border-color: var(--border-focus);
-  box-shadow: var(--focus-ring);
 }
 
 .vv-filter-row {
@@ -1051,10 +1070,80 @@
   }
 }
 
+/* ── Focus visible ───────────────────────────────────────────────── */
+.vv-tab:focus-visible,
+.vv-search-clear:focus-visible,
+.vv-table-row:focus-visible,
+.vv-pagination-btns button:focus-visible,
+.vv-detalle-link:focus-visible,
+.vv-btn-ghost:focus-visible,
+.vv-btn-success:focus-visible,
+.vv-btn-danger:focus-visible,
+.vv-btn-warning:focus-visible,
+.vv-btn-devolucion:focus-visible,
+.vv-btn-primary:focus-visible,
+.vv-estado-editable:focus-visible,
+.vv-estado-option:focus-visible,
+.vv-filters-close:focus-visible,
+.vv-filter-btn:focus-visible,
+.vv-export-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.vv-search input:focus-visible,
+.vv-field input:focus-visible,
+.vv-field select:focus-visible,
+.vv-filter-field select:focus-visible,
+.vv-filter-field input:focus-visible {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: var(--focus-ring);
+}
+
 /* ── Reduced motion ──────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .vv-skeleton { animation: none; }
-  .vv-estado-dropdown { animation: none; }
-  .vv-filters-panel { animation: none; }
-  .vv-modal-content { animation: none; }
+  .vv-skeleton,
+  .vv-detalle,
+  .vv-estado-dropdown,
+  .vv-filters-overlay,
+  .vv-filters-panel,
+  .vv-modal-content {
+    animation: none;
+  }
+
+  .vv-tab,
+  .vv-table-row,
+  .vv-btn-ghost,
+  .vv-btn-success,
+  .vv-btn-danger,
+  .vv-filter-btn,
+  .vv-export-btn,
+  .vv-estado-option,
+  .vv-detalle-link,
+  .vv-pagination-btns button {
+    transition: none;
+  }
+}
+
+/* ── Print ────────────────────────────────────────────────────────── */
+@media print {
+  .vv-search,
+  .vv-filter-btn,
+  .vv-export-btn,
+  .vv-pagination,
+  .vv-estado-editable svg,
+  .vv-loading-overlay,
+  .vv-card-actions {
+    display: none;
+  }
+
+  .vv-table-wrap {
+    border: none;
+    overflow: visible;
+  }
+
+  .vv-table-row {
+    break-inside: avoid;
+  }
 }

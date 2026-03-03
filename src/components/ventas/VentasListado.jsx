@@ -87,7 +87,7 @@ export default function VentasListado({
             {[1, 2, 3, 4, 5].map(i => (
               <tr key={i}>
                 {Array(9).fill(0).map((_, j) => (
-                  <td key={j}><span className="vv-skeleton" style={{ width: '80%', height: 14, display: 'block' }} /></td>
+                  <td key={j}><span className="vv-skeleton vv-skeleton-cell" /></td>
                 ))}
               </tr>
             ))}
@@ -166,7 +166,7 @@ export default function VentasListado({
         <tbody>
           {ventas.length === 0 ? (
             <tr>
-              <td colSpan={9} style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
+              <td colSpan={9} className="vv-table-empty">
                 No se encontraron ventas
               </td>
             </tr>
@@ -181,12 +181,11 @@ export default function VentasListado({
                   tabIndex={0}
                   aria-expanded={isExpanded}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(venta.id) } }}
-                  style={{ cursor: 'pointer' }}
                 >
-                  <td style={{ fontWeight: 600 }}>{venta.lead?.nombre || '-'}</td>
+                  <td className="vv-cell-bold">{venta.lead?.nombre || '-'}</td>
                   <td>{formatDate(venta.fecha_venta)}</td>
                   <td>{venta.paquete?.nombre || '-'}</td>
-                  <td style={{ fontWeight: 600 }}>{formatImporte(venta.importe)}</td>
+                  <td className="vv-cell-bold">{formatImporte(venta.importe)}</td>
                   <td>
                     <span className={`vv-metodo-badge vv-metodo-${venta.metodo_pago}`}>
                       {metodoLabels[venta.metodo_pago] || '-'}
@@ -226,7 +225,7 @@ export default function VentasListado({
   return (
     <>
       {/* Desktop table / Mobile cards */}
-      <div style={{ position: 'relative' }}>
+      <div className="vv-table-container">
         {loading && ventas.length > 0 && (
           <div className="vv-loading-overlay" />
         )}

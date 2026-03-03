@@ -24,7 +24,7 @@ export default function VentasVentas() {
       {/* Header */}
       <div className="vv-header">
         <div className="vv-header-top">
-          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+          <div className="vv-title-row">
             <h1>Ventas</h1>
             <span className="vv-count">{ventas.totalVentas} ventas</span>
           </div>
@@ -48,7 +48,7 @@ export default function VentasVentas() {
               </button>
             ))}
           </div>
-          <div className="vv-search" style={{ position: 'relative' }}>
+          <div className="vv-search">
             <Search size={15} />
             <input
               type="text"
@@ -83,7 +83,7 @@ export default function VentasVentas() {
             className="vv-export-btn"
             onClick={ventas.exportarCSV}
             disabled={ventas.exportando || ventas.totalVentas === 0}
-            title="Exportar a CSV"
+            aria-label="Exportar a CSV"
           >
             <Download size={16} />
             <span className="vv-toolbar-label">Exportar CSV</span>
