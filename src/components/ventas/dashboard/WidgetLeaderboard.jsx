@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+
 const currencyFmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 })
 function formatCurrency(v) {
   return currencyFmt.format(Number(v) || 0)
@@ -16,9 +18,10 @@ export default function WidgetLeaderboard({ widgetDef, data }) {
 
   const isCloser = widgetDef?.dataKey === 'ranking_closers'
 
-  const maxVal = isCloser
+  const maxVal = useMemo(() => isCloser
     ? Math.max(...rows.map(r => Number(r.facturacion) || 0), 1)
-    : Math.max(...rows.map(r => Number(r.citas) || 0), 1)
+    : Math.max(...rows.map(r => Number(r.citas) || 0), 1),
+  [rows, isCloser])
 
   return (
     <div className="db-wlead">
