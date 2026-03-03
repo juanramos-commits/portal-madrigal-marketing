@@ -25,7 +25,7 @@ export default function VentasNotificaciones() {
           )}
         </div>
         {ntf.contadorNoLeidas > 0 && (
-          <button type="button" className="ntf-btn-marcar-todas" onClick={ntf.marcarTodasComoLeidas}>
+          <button type="button" className="ntf-btn-marcar-todas" onClick={ntf.marcarTodasComoLeidas} aria-label={`Marcar ${ntf.contadorNoLeidas} notificaciones como leídas`}>
             <CheckCheck size={16} />
             Marcar todas como leídas
           </button>

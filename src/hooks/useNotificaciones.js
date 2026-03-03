@@ -74,6 +74,7 @@ export function useNotificaciones() {
       setHayMas(items.length === PAGE_SIZE)
     } catch {
       setError('Error de conexión al cargar notificaciones')
+      setHayMas(false)
     } finally {
       setLoading(false)
     }
@@ -121,6 +122,7 @@ export function useNotificaciones() {
     let snapshotNotifs = null
     let snapshotCount = 0
     const clearingList = filtroRef.current === 'no_leidas'
+    let snapshotOffset = offsetRef.current
     setNotificaciones(prev => {
       snapshotNotifs = prev
       return clearingList ? [] : prev.map(n => ({ ...n, leida: true }))
@@ -136,10 +138,12 @@ export function useNotificaciones() {
       if (updateErr) {
         setNotificaciones(snapshotNotifs)
         setContadorNoLeidas(snapshotCount)
+        offsetRef.current = snapshotOffset
       }
     } catch {
       setNotificaciones(snapshotNotifs)
       setContadorNoLeidas(snapshotCount)
+      offsetRef.current = snapshotOffset
     } finally {
       markingAllRef.current = false
     }
@@ -161,16 +165,12 @@ export function useNotificaciones() {
         .delete()
         .eq('id', notifId)
         .eq('usuario_id', user.id)
-      if (delErr) {
-        setNotificaciones(prev => {
-          const restored = [...prev, removedItem].sort(
-            (a, b) => new Date(b.created_at) - new Date(a.created_at)
-          )
-          return restored
-        })
-        if (!removedItem.leida) setContadorNoLeidas(c => c + 1)
-      }
+      if (delErr) rollbackEliminar()
     } catch {
+      rollbackEliminar()
+    }
+
+    function rollbackEliminar() {
       setNotificaciones(prev => {
         const restored = [...prev, removedItem].sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
@@ -289,9 +289,7 @@ export function useNotificaciones() {
 
     setFiltro,
 
-    cargarNotificaciones,
     cargarMas,
-    contarNoLeidas,
     marcarComoLeida,
     marcarTodasComoLeidas,
     eliminarNotificacion,
