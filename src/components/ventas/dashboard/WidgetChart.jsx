@@ -73,7 +73,7 @@ export default function WidgetChart({ widgetDef, data }) {
 
   if (chartType === 'bar') {
     return (
-      <div className="db-wchart">
+      <div className="db-wchart" role="img" aria-label={`Gráfico: ${widgetDef?.label || name}`}>
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <BarChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -88,7 +88,7 @@ export default function WidgetChart({ widgetDef, data }) {
   }
 
   return (
-    <div className="db-wchart">
+    <div className="db-wchart" role="img" aria-label={`Gráfico: ${widgetDef?.label || name}`}>
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <AreaChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
