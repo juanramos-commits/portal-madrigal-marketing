@@ -46,25 +46,25 @@ export default function DashboardToolbar({
 
         {editMode ? (
           <div className="db-toolbar-actions">
-            <button className="db-toolbar-btn db-toolbar-btn--add" onClick={() => setShowAdd(true)} aria-label="Añadir widget">
+            <button type="button" className="db-toolbar-btn db-toolbar-btn--add" onClick={() => setShowAdd(true)} aria-label="Añadir widget">
               <Plus size={14} />
               <span>Añadir</span>
             </button>
-            <button className="db-toolbar-btn" onClick={onReset} disabled={isSaving} aria-label="Resetear layout">
+            <button type="button" className="db-toolbar-btn" onClick={onReset} disabled={isSaving} aria-label="Resetear layout">
               <RotateCcw size={14} />
               <span>Resetear</span>
             </button>
-            <button className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave} disabled={isSaving} aria-label="Guardar layout">
+            <button type="button" className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave} disabled={isSaving} aria-label="Guardar layout">
               <Save size={14} />
               <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
             </button>
-            <button className="db-toolbar-btn db-toolbar-btn--cancel" onClick={() => setEditMode(false)} aria-label="Cancelar edición">
+            <button type="button" className="db-toolbar-btn db-toolbar-btn--cancel" onClick={() => setEditMode(false)} aria-label="Cancelar edición">
               <X size={14} />
               <span>Cancelar</span>
             </button>
           </div>
         ) : (
-          <button className="db-toolbar-btn db-toolbar-btn--edit" onClick={() => setEditMode(true)} aria-label="Editar dashboard">
+          <button type="button" className="db-toolbar-btn db-toolbar-btn--edit" onClick={() => setEditMode(true)} aria-label="Editar dashboard">
             <Settings size={14} />
             <span>Editar</span>
           </button>
