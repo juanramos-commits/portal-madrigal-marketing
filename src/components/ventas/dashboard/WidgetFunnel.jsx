@@ -47,7 +47,7 @@ export default function WidgetFunnel({ widgetDef, data }) {
             <div className="db-wfunnel-bar-bg">
               <div className="db-wfunnel-bar" style={{ width: `${Math.max(pct, 3)}%`, background: nivel.color }} />
             </div>
-            {convRate && <span className="db-wfunnel-rate">{convRate}%</span>}
+            <span className="db-wfunnel-rate">{convRate ? `${convRate}%` : ''}</span>
           </div>
         )
       })}
