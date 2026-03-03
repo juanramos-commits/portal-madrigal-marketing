@@ -1014,19 +1014,61 @@
   font-size: var(--font-sm);
 }
 
-/* ── Filtro fecha overrides (dentro de toolbar) ─────────────────────────── */
+/* ── Filtro fecha (base + toolbar overrides) ────────────────────────────── */
+
+.db-filtro-fecha {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.db-select-periodo {
+  padding: var(--space-sm) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: var(--font-sm);
+  outline: none;
+  cursor: pointer;
+}
+
+.db-select-periodo:focus {
+  border-color: var(--border-focus);
+}
+
+.db-fechas-custom {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.db-input-fecha {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: var(--font-sm);
+  outline: none;
+}
+
+.db-input-fecha:focus {
+  border-color: var(--border-focus);
+}
+
+.db-fecha-sep {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+}
 
 .db-toolbar .db-filtro-fecha {
   flex-shrink: 0;
 }
 
 .db-toolbar .db-select-periodo {
-  font-size: var(--font-sm);
   min-width: 130px;
-}
-
-.db-toolbar .db-input-fecha {
-  font-size: var(--font-sm);
 }
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
