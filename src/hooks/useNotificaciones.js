@@ -106,13 +106,14 @@ export function useNotificaciones() {
 
   const marcarTodasComoLeidas = useCallback(async () => {
     if (!user?.id) return
-    // Optimistic update — clear list when filtering unread
-    const prevNotifs = notificaciones
-    const prevCount = contadorNoLeidas
-    setNotificaciones(prev =>
-      filtro === 'no_leidas' ? [] : prev.map(n => ({ ...n, leida: true }))
-    )
-    setContadorNoLeidas(0)
+    // Capture snapshot for rollback inside updaters
+    let snapshotNotifs = null
+    let snapshotCount = 0
+    setNotificaciones(prev => {
+      snapshotNotifs = prev
+      return filtroRef.current === 'no_leidas' ? [] : prev.map(n => ({ ...n, leida: true }))
+    })
+    setContadorNoLeidas(prev => { snapshotCount = prev; return 0 })
     try {
       const { error: updateErr } = await supabase
         .from('ventas_notificaciones')
@@ -120,15 +121,14 @@ export function useNotificaciones() {
         .eq('usuario_id', user.id)
         .eq('leida', false)
       if (updateErr) {
-        // Rollback
-        setNotificaciones(prevNotifs)
-        setContadorNoLeidas(prevCount)
+        setNotificaciones(snapshotNotifs)
+        setContadorNoLeidas(snapshotCount)
       }
     } catch {
-      setNotificaciones(prevNotifs)
-      setContadorNoLeidas(prevCount)
+      setNotificaciones(snapshotNotifs)
+      setContadorNoLeidas(snapshotCount)
     }
-  }, [user?.id, filtro, notificaciones, contadorNoLeidas])
+  }, [user?.id])
 
   const eliminarNotificacion = useCallback(async (notifId) => {
     if (!notifId || !user?.id) return
