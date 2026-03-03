@@ -29,14 +29,18 @@ export function useBiblioteca() {
   const esDirector = misRoles.some(r => r.rol === 'director_ventas') || esAdmin
   const puedeGestionar = esDirector || esAdmin
 
-  // My role keys for visibility filtering
-  const misRolesKeys = []
-  if (esSetter) misRolesKeys.push('setter')
-  if (esCloser) misRolesKeys.push('closer')
-  if (esDirector) misRolesKeys.push('director_ventas')
-  if (esAdmin) misRolesKeys.push('super_admin')
+  // My role keys for visibility filtering (memoized to avoid breaking useMemo deps)
+  const misRolesKeys = useMemo(() => {
+    const keys = []
+    if (esSetter) keys.push('setter')
+    if (esCloser) keys.push('closer')
+    if (esDirector) keys.push('director_ventas')
+    if (esAdmin) keys.push('super_admin')
+    return keys
+  }, [esSetter, esCloser, esDirector, esAdmin])
 
   // Load roles
+  const [rolesLoaded, setRolesLoaded] = useState(false)
   useEffect(() => {
     if (!user?.id) return
     const cargar = async () => {
@@ -45,6 +49,7 @@ export function useBiblioteca() {
         .select('*')
         .eq('activo', true)
       setRolesComerciales(data || [])
+      setRolesLoaded(true)
     }
     cargar()
   }, [user?.id])
@@ -111,13 +116,13 @@ export function useBiblioteca() {
 
   // Initial load
   useEffect(() => {
-    if (user?.id && rolesComerciales.length > 0) {
+    if (user?.id && rolesLoaded) {
       const cargar = async () => {
         setLoading(true)
         setError(null)
         try {
           await Promise.all([cargarSecciones(), cargarRecursos()])
-        } catch (_) {
+        } catch {
           setError('Error al cargar la biblioteca')
         } finally {
           setLoading(false)
@@ -125,7 +130,7 @@ export function useBiblioteca() {
       }
       cargar()
     }
-  }, [user?.id, rolesComerciales.length, cargarSecciones, cargarRecursos])
+  }, [user?.id, rolesLoaded, cargarSecciones, cargarRecursos])
 
   // Filter recursos by visibility (unless admin/director or in management mode)
   const recursosFiltrados = useMemo(() => {
@@ -134,7 +139,7 @@ export function useBiblioteca() {
     // Visibility filter: non-admins only see resources where their role is in visible_para
     if (!puedeGestionar) {
       filtered = filtered.filter(r => {
-        if (!r.visible_para || r.visible_para.length === 0) return true
+        if (!r.visible_para || r.visible_para.length === 0) return false
         return r.visible_para.some(vp => misRolesKeys.includes(vp))
       })
     }
