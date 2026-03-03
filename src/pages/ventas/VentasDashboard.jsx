@@ -40,7 +40,7 @@ function renderWidget(widgetDef, data, config) {
     if (dk === 'tasa_ghosting') return <WidgetKPI widgetDef={widgetDef} data={data} />
   }
   if (cat === 'goals') return <WidgetGoal widgetDef={widgetDef} data={data} config={config} />
-  return null
+  return <div className="db-widget-empty">Widget no soportado</div>
 }
 
 export default function VentasDashboard() {
