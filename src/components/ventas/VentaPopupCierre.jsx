@@ -19,16 +19,24 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
     es_pago_unico: false,
   })
 
+  const [paquetesError, setPaquetesError] = useState(null)
   useEffect(() => {
     const cargar = async () => {
       setLoadingPaquetes(true)
-      const { data } = await supabase
-        .from('ventas_paquetes')
-        .select('*')
-        .eq('activo', true)
-        .order('orden')
-      setPaquetes(data || [])
-      setLoadingPaquetes(false)
+      try {
+        const { data, error } = await supabase
+          .from('ventas_paquetes')
+          .select('*')
+          .eq('activo', true)
+          .order('orden')
+        if (error) throw error
+        setPaquetes(data || [])
+      } catch (err) {
+        console.error('[VentaPopup] Error loading paquetes:', err)
+        setPaquetesError('Error al cargar paquetes')
+      } finally {
+        setLoadingPaquetes(false)
+      }
     }
     cargar()
   }, [])
@@ -142,6 +150,8 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
           <label>Producto / Paquete</label>
           {loadingPaquetes ? (
             <div className="vv-field-readonly">Cargando paquetes...</div>
+          ) : paquetesError ? (
+            <div className="vv-field-error">{paquetesError}</div>
           ) : (
             <Select
               value={form.paquete_id}

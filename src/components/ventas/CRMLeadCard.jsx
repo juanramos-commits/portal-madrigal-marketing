@@ -84,7 +84,13 @@ export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }
             </button>
           )}
           {lead.telefono && (
-            <button className="crm-card-wa" onClick={handleWhatsApp} title="WhatsApp">
+            <button
+              className="crm-card-wa"
+              onClick={handleWhatsApp}
+              onPointerDown={(e) => e.stopPropagation()}
+              title="WhatsApp"
+              aria-label="Enviar WhatsApp"
+            >
               <WhatsAppIcon />
             </button>
           )}

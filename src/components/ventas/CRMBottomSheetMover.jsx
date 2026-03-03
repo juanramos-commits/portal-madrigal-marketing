@@ -40,7 +40,7 @@ export default function CRMBottomSheetMover({
 
   return (
     <>
-      <div className="crm-sheet-overlay" onClick={onCerrar} />
+      <div className="crm-sheet-overlay" onClick={onCerrar} aria-hidden="true" />
       <div className="crm-sheet" ref={sheetRef} role="dialog" aria-modal="true">
         <div className="crm-sheet-handle" />
 

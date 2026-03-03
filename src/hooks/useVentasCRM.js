@@ -960,13 +960,17 @@ export function useVentasCRM() {
   const [fuentes, setFuentes] = useState([])
   useEffect(() => {
     const cargar = async () => {
-      const { data } = await supabase
-        .from('ventas_leads')
-        .select('fuente')
-        .not('fuente', 'is', null)
-        .limit(200)
-      const unique = [...new Set((data || []).map(d => d.fuente).filter(Boolean))]
-      setFuentes(unique)
+      try {
+        const { data } = await supabase
+          .from('ventas_leads')
+          .select('fuente')
+          .not('fuente', 'is', null)
+          .limit(200)
+        const unique = [...new Set((data || []).map(d => d.fuente).filter(Boolean))]
+        setFuentes(unique)
+      } catch (err) {
+        console.error('[CRM] Error loading fuentes:', err)
+      }
     }
     cargar()
   }, [])

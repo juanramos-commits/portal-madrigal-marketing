@@ -23,10 +23,6 @@ export default function VentasCRM() {
     return Object.values(crm.filtros).filter(v => v != null && v !== '' && !(Array.isArray(v) && v.length === 0)).length
   }, [crm.filtros])
 
-  const handleCrearLead = async (datos) => {
-    await crm.crearLead(datos)
-  }
-
   // Error state
   if (crm.error && !crm.loading && crm.pipelines.length === 0) {
     return (
@@ -105,7 +101,7 @@ export default function VentasCRM() {
           <CRMBuscador value={crm.busqueda} onChange={crm.setBusqueda} resultCount={crm.searchResultCount} />
 
           {/* Filter button */}
-          <button className="crm-filter-btn" onClick={() => setShowFilters(true)}>
+          <button className="crm-filter-btn" onClick={() => setShowFilters(true)} aria-label="Filtros">
             <Filter />
             <span className="crm-toolbar-label">Filtros</span>
             {filtroCount > 0 && <span className="crm-filter-badge">{filtroCount}</span>}
@@ -123,7 +119,7 @@ export default function VentasCRM() {
 
           {/* Nuevo Lead */}
           {crm.esAdminODirector && (
-            <button className="crm-new-btn" onClick={() => setShowNewLead(true)}>
+            <button className="crm-new-btn" onClick={() => setShowNewLead(true)} aria-label="Nuevo Lead">
               <Plus /> <span className="crm-toolbar-label">Nuevo Lead</span>
             </button>
           )}
@@ -166,7 +162,6 @@ export default function VentasCRM() {
           setters={crm.setters}
           closers={crm.closers}
           categorias={crm.categorias}
-          etiquetas={crm.etiquetas}
           etapas={crm.etapas}
           fuentes={crm.fuentes}
         />
@@ -176,7 +171,7 @@ export default function VentasCRM() {
       {showNewLead && (
         <CRMNuevoLead
           categorias={crm.categorias}
-          onCrear={handleCrearLead}
+          onCrear={crm.crearLead}
           onCerrar={() => setShowNewLead(false)}
         />
       )}
