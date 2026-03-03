@@ -65,6 +65,9 @@
   --color-whatsapp-hover: rgba(37, 211, 102, 0.25);
   --color-category: #a5b4fc;
   --color-category-subtle: rgba(99, 102, 241, 0.15);
+  --color-purple: #a78bfa;
+  --color-pink: #f472b6;
+  --color-sky: #38bdf8;
 
   /* ========== TIPOGRAFIA ========== */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -202,6 +205,9 @@
   --color-whatsapp-hover: rgba(37, 211, 102, 0.2);
   --color-category: #6366f1;
   --color-category-subtle: rgba(99, 102, 241, 0.1);
+  --color-purple: #9575fa;
+  --color-pink: #f27ab8;
+  --color-sky: #42b3f5;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);

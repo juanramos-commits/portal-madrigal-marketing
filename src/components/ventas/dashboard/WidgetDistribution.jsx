@@ -2,7 +2,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, 
 
 const COLORS = [
   'var(--color-category)', 'var(--success)', 'var(--warning)', 'var(--error)',
-  'var(--text-muted)', '#a78bfa', '#f472b6', '#38bdf8',
+  'var(--text-muted)', 'var(--color-purple)', 'var(--color-pink)', 'var(--color-sky)',
 ]
 
 function CustomTooltip({ active, payload }) {
