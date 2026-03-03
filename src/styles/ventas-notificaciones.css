@@ -1,6 +1,5 @@
 /* ── Notificaciones ── */
 .ntf-page {
-  max-width: 800px;
 }
 
 .ntf-header {
@@ -126,10 +125,6 @@
 }
 
 /* ── Grupo ── */
-.ntf-grupo {
-  margin-bottom: var(--space-xs);
-}
-
 .ntf-grupo + .ntf-grupo {
   border-top: 1px solid var(--border);
   padding-top: var(--space-xs);
