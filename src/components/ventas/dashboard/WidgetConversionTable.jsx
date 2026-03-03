@@ -30,8 +30,8 @@ export default memo(function WidgetConversionTable({ widgetDef, data }) {
         {rows.map((r, i) => (
           <tr key={r.usuario_id || i}>
             <td className="db-wtable-name" title={r.nombre || r.email || undefined}>{r.nombre || r.email || '-'}</td>
-            <td>{isCloser ? (r.citas || 0) : (r.leads || 0)}</td>
-            <td>{isCloser ? (r.ventas || 0) : (r.citas || 0)}</td>
+            <td className="db-wconv-count">{isCloser ? (r.citas || 0) : (r.leads || 0)}</td>
+            <td className="db-wconv-count">{isCloser ? (r.ventas || 0) : (r.citas || 0)}</td>
             <td className={tasaClass(r.tasa)}>{(Number(r.tasa) || 0).toFixed(1)}%</td>
           </tr>
         ))}

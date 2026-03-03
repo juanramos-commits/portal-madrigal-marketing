@@ -44,6 +44,7 @@ export default memo(function WidgetGoal({ widgetDef, data, config }) {
             strokeLinecap="round"
             strokeDasharray={circumference}
             strokeDashoffset={offset}
+            style={{ '--circumference': circumference }}
           />
         </svg>
         <div className="db-wgoal-center">

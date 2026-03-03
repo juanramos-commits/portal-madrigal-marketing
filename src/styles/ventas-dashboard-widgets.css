@@ -509,12 +509,16 @@
   max-width: 160px;
 }
 
+.db-wtable tbody tr:nth-child(even) td {
+  background: var(--bg-hover);
+}
+
 .db-wtable tbody tr:last-child td {
   border-bottom: none;
 }
 
 .db-wtable tbody tr:hover td {
-  background: var(--bg-hover);
+  background: var(--bg-active);
 }
 
 .db-wtable-name {
@@ -891,6 +895,13 @@
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
   transition: background var(--transition-fast);
+  animation: db-wactivity-in 0.3s ease both;
+  animation-delay: var(--anim-delay, 0ms);
+}
+
+@keyframes db-wactivity-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 .db-wactivity-item:hover {
@@ -945,6 +956,11 @@
 .db-wconv-tasa-mid { color: var(--warning); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
 .db-wconv-tasa-low { color: var(--error); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
 
+.db-wconv-count {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Widget Funnel ─────────────────────────────────────────────────────── */
 
 .db-wfunnel {
@@ -983,7 +999,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 140px;
+  width: clamp(100px, 30%, 160px);
   flex-shrink: 0;
 }
 
@@ -1073,6 +1089,10 @@
   from { flex: 0; opacity: 0; }
 }
 
+.db-wpipeline-stage:hover {
+  filter: brightness(1.15);
+}
+
 .db-wpipeline-stage:first-child {
   border-radius: var(--radius-full) 0 0 var(--radius-full);
 }
@@ -1141,6 +1161,11 @@
 
 .db-wgoal-ring-fill {
   transition: stroke-dashoffset 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation: db-wgoal-draw 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+@keyframes db-wgoal-draw {
+  from { stroke-dashoffset: var(--circumference, 290); }
 }
 
 .db-wgoal-center {
@@ -1362,10 +1387,6 @@
     grid-template-columns: 1fr;
   }
 
-  .db-wfunnel-info {
-    width: 100px;
-  }
-
   .db-wfunnel-rate {
     width: 36px;
   }
@@ -1405,7 +1426,9 @@
 
   .db-wlead-item,
   .db-wfunnel-row,
-  .db-wpipeline-stage {
+  .db-wpipeline-stage,
+  .db-wactivity-item,
+  .db-wgoal-ring-fill {
     animation: none !important;
   }
 
@@ -1435,6 +1458,8 @@
   .db-wlead-item,
   .db-wfunnel-row,
   .db-wpipeline-stage,
+  .db-wactivity-item,
+  .db-wgoal-ring-fill,
   .db-widget--editing {
     animation: none !important;
   }

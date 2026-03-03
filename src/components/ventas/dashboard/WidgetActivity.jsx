@@ -1,3 +1,5 @@
+import { memo } from 'react'
+
 function tiempoRelativo(fecha) {
   if (!fecha) return ''
   const diffMs = Date.now() - new Date(fecha).getTime()
@@ -23,8 +25,6 @@ const TIPO_COLORS = {
   creacion: 'var(--success)',
 }
 
-import { memo } from 'react'
-
 export default memo(function WidgetActivity({ widgetDef, data }) {
   const items = Array.isArray(data) ? data : []
   if (items.length === 0) return <div className="db-widget-empty">Sin actividad reciente</div>
@@ -34,7 +34,7 @@ export default memo(function WidgetActivity({ widgetDef, data }) {
       {items.map((a, i) => {
         const color = TIPO_COLORS[a.tipo] || 'var(--text-muted)'
         return (
-          <div key={a.id || i} className="db-wactivity-item">
+          <div key={a.id || i} className="db-wactivity-item" style={{ '--anim-delay': `${i * 40}ms` }}>
             <div className="db-wactivity-dot" style={{ '--dot-color': color }} aria-hidden="true" />
             <div className="db-wactivity-content">
               <span className="db-wactivity-time">{tiempoRelativo(a.created_at)}</span>
