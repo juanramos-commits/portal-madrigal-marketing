@@ -166,6 +166,16 @@
   border-color: var(--error);
 }
 
+.db-toolbar-btn--edit {
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+
+.db-toolbar-btn--edit:hover {
+  background: var(--bg-active);
+  color: var(--text);
+}
+
 @media (max-width: 480px) {
   .db-toolbar-btn span {
     display: none;
