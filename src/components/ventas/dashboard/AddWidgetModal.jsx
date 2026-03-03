@@ -50,7 +50,7 @@ export default function AddWidgetModal({ open, onClose, onAdd, rol, layout }) {
             filtered.map(w => {
               const Icon = w.icon
               return (
-                <button key={w.type} className="db-addw-item" onClick={() => onAdd(w.type)}>
+                <button key={w.type} className="db-addw-item" onClick={() => onAdd(w.type)} aria-label={`Añadir ${w.label}`}>
                   <div className="db-addw-item-icon">
                     {Icon && <Icon size={18} />}
                   </div>
