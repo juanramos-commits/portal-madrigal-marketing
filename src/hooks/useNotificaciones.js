@@ -54,7 +54,7 @@ export function useNotificaciones() {
       const { data, error: queryErr } = await query
       if (queryErr) {
         setError('No se pudieron cargar las notificaciones')
-        setLoading(false)
+        setHayMas(false)
         return
       }
 
