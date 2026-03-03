@@ -1205,3 +1205,31 @@
     gap: 0;
   }
 }
+
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .db-widget,
+  .db-wlead-item,
+  .db-wfunnel-row,
+  .db-wpipeline-stage,
+  .db-widget--editing {
+    animation: none !important;
+  }
+
+  .db-sk-block {
+    animation: none !important;
+    opacity: 0.6;
+  }
+
+  .db-loading::before {
+    animation: none !important;
+    border-top-color: var(--text-muted);
+  }
+
+  .db-wlead-bar,
+  .db-wfunnel-bar,
+  .db-wgoal-ring-fill {
+    transition: none !important;
+  }
+}
