@@ -132,6 +132,13 @@ export default function VentasDashboard() {
         layout={db.layout}
       />
 
+      {db.error && !db.dataLoading && (
+        <div className="db-error" role="alert">
+          <span>Error al cargar datos.</span>
+          <button type="button" className="db-toolbar-btn" onClick={db.refrescar}>Reintentar</button>
+        </div>
+      )}
+
       <div ref={measureRef} className="db-grid-container">
         {gridWidth > 0 && (
           <ResponsiveGridLayout

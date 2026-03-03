@@ -1143,6 +1143,19 @@
   min-height: 200px;
 }
 
+.db-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-3);
+  background: var(--error-bg);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+}
+
 .db-loading {
   display: flex;
   flex-direction: column;
