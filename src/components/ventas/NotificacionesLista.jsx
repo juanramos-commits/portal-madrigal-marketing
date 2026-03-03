@@ -55,11 +55,11 @@ export default function NotificacionesLista({
 }) {
   if (error && notificaciones.length === 0) {
     return (
-      <div className="ntf-empty">
-        <div className="ntf-empty-icon"><AlertCircle size={48} /></div>
+      <div className="ntf-empty ntf-empty--error">
+        <div className="ntf-empty-icon"><AlertCircle size={32} /></div>
         <p>{error}</p>
         {onReintentar && (
-          <button className="ntf-cargar-mas" onClick={onReintentar}>Reintentar</button>
+          <button className="ntf-btn-reintentar" onClick={onReintentar}>Reintentar</button>
         )}
       </div>
     )
