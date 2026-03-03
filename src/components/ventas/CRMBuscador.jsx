@@ -9,6 +9,7 @@ export default function CRMBuscador({ value, onChange, resultCount }) {
         placeholder="Buscar en todos los campos..."
         value={value}
         onChange={e => onChange(e.target.value)}
+        aria-label="Buscar leads"
       />
       {value && resultCount !== null && resultCount !== undefined && (
         <span className="crm-search-count">

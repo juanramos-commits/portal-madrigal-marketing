@@ -51,13 +51,6 @@
   margin-left: var(--space-sm);
 }
 
-.crm-header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-
 .crm-header-row {
   display: flex;
   align-items: center;
@@ -235,6 +228,7 @@
 .crm-filter-btn svg {
   width: 14px;
   height: 14px;
+  transition: transform var(--transition-slow);
 }
 
 .crm-filter-badge {
@@ -284,10 +278,6 @@
 }
 
 /* ── Refresh Button Spin ───────────────────────────────────────────────── */
-.crm-filter-btn svg {
-  transition: transform var(--transition-slow);
-}
-
 .crm-filter-btn[title="Refrescar"]:hover svg {
   transform: rotate(180deg);
 }
@@ -432,9 +422,6 @@
   flex-direction: column;
   gap: var(--space-1-5);
   min-height: 60px;
-}
-
-.crm-column-body {
   scrollbar-width: thin;
   scrollbar-color: var(--bg-active) transparent;
 }
@@ -1453,18 +1440,6 @@
   height: 28px;
 }
 
-/* ── Confirm Dialog ─────────────────────────────────────────────────────── */
-.crm-confirm {
-  text-align: center;
-  padding: var(--space-md) 0;
-}
-
-.crm-confirm p {
-  font-size: var(--font-base);
-  color: var(--text-muted);
-  margin-bottom: var(--space-lg);
-}
-
 /* ── Animations ─────────────────────────────────────────────────────────── */
 @keyframes crm-fade-in {
   from { opacity: 0; }
@@ -1481,11 +1456,6 @@
   to { transform: translateX(0); }
 }
 
-@keyframes crm-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.7; }
-}
-
 @keyframes crm-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -1499,11 +1469,6 @@
 @keyframes crm-badge-pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.15); }
-}
-
-@keyframes crm-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(180deg); }
 }
 
 @keyframes crm-section-in {

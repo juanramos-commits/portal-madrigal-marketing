@@ -11,7 +11,6 @@ export default function CRMFiltros({
   setters = [],
   closers = [],
   categorias = [],
-  etiquetas = [],
   etapas = [],
   fuentes = [],
 }) {
@@ -47,7 +46,7 @@ export default function CRMFiltros({
       <div className="crm-filters-panel" role="dialog" aria-modal="true" aria-label="Filtros">
         <div className="crm-filters-header">
           <h2>Filtros</h2>
-          <button className="crm-modal-close" onClick={onCerrar}>
+          <button className="crm-modal-close" onClick={onCerrar} aria-label="Cerrar filtros">
             <X />
           </button>
         </div>

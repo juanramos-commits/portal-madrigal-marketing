@@ -110,6 +110,7 @@ export default function VentasCRM() {
             className="crm-filter-btn"
             onClick={crm.refrescar}
             title="Refrescar"
+            aria-label="Refrescar datos"
           >
             <RefreshCw />
           </button>

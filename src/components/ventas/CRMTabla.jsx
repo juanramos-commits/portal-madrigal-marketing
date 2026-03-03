@@ -98,7 +98,13 @@ export default function CRMTabla({
               </tr>
             ) : (
               leads.map(lead => (
-                <tr key={lead.id} onClick={() => navigate(`/ventas/crm/lead/${lead.id}`)}>
+                <tr
+                  key={lead.id}
+                  onClick={() => navigate(`/ventas/crm/lead/${lead.id}`)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/ventas/crm/lead/${lead.id}`) } }}
+                  tabIndex={0}
+                  role="link"
+                >
                   <td style={{ fontWeight: 600 }}>{lead.nombre}</td>
                   <td>{lead.telefono || '-'}</td>
                   <td>{lead.email || '-'}</td>
