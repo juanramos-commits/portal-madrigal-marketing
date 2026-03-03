@@ -391,7 +391,7 @@
 .db-wkpi-diff {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--space-2xs);
   font-size: var(--font-xs);
   font-weight: var(--weight-medium);
   color: var(--text-muted);
@@ -797,7 +797,7 @@
   height: 8px;
   background: var(--bg-skeleton);
   border-radius: var(--radius-full);
-  margin-top: 3px;
+  margin-top: var(--space-2xs);
 }
 
 .db-wlead-bar {
