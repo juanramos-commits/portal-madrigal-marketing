@@ -847,7 +847,7 @@
 
 .db-wfunnel-bar-bg {
   flex: 1;
-  height: 10px;
+  height: 14px;
   background: var(--bg-skeleton);
   border-radius: var(--radius-full);
   overflow: hidden;
