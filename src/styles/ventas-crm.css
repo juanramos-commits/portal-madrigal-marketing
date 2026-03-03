@@ -44,6 +44,11 @@
   line-height: var(--leading-tight);
 }
 
+.crm-title-row {
+  display: flex;
+  align-items: baseline;
+}
+
 .crm-lead-count {
   font-size: var(--font-sm);
   color: var(--text-tertiary);
@@ -139,7 +144,7 @@
 
 .crm-search > svg {
   position: absolute;
-  left: 10px;
+  left: var(--space-2-5);
   top: 50%;
   transform: translateY(-50%);
   width: 15px;
@@ -173,7 +178,7 @@
 
 .crm-search-clear {
   position: absolute;
-  right: 8px;
+  right: var(--space-sm);
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -296,7 +301,15 @@
 .crm-card-wa:focus-visible,
 .crm-field input:focus-visible,
 .crm-field textarea:focus-visible,
-.crm-field select:focus-visible {
+.crm-field select:focus-visible,
+.crm-search-clear:focus-visible,
+.crm-load-more button:focus-visible,
+.crm-tag-remove:focus-visible,
+.crm-modal-close:focus-visible,
+.crm-sheet-stage:focus-visible,
+.crm-table tr:focus-visible,
+.crm-card-move:focus-visible,
+.crm-btn-reintentar:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
@@ -804,12 +817,7 @@
   gap: var(--space-md);
 }
 
-.crm-detail-main {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-}
-
+.crm-detail-main,
 .crm-detail-sidebar {
   display: flex;
   flex-direction: column;
@@ -1180,7 +1188,8 @@
 }
 
 /* ── Filter Panel ───────────────────────────────────────────────────────── */
-.crm-filters-overlay {
+.crm-filters-overlay,
+.crm-sheet-overlay {
   position: fixed;
   inset: 0;
   background: var(--bg-overlay);
@@ -1349,12 +1358,12 @@
   border: 1px solid var(--border);
 }
 
-.crm-dropdown-item-sm {
-  font-size: var(--font-sm) !important;
-  padding: var(--space-1-5) var(--space-3) !important;
+.crm-dropdown-submenu .crm-dropdown-item {
+  font-size: var(--font-sm);
+  padding: var(--space-1-5) var(--space-3);
 }
 
-.crm-dropdown-item-sm.active {
+.crm-dropdown-submenu .crm-dropdown-item.active {
   color: var(--primary);
   font-weight: var(--weight-medium);
 }
@@ -1379,7 +1388,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-md);
-  padding: 48px var(--space-lg);
+  padding: var(--space-2xl) var(--space-lg);
   text-align: center;
 }
 
@@ -1481,16 +1490,6 @@
 }
 
 /* ── Bottom Sheet ──────────────────────────────────────────────────────── */
-.crm-sheet-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--bg-overlay);
-  z-index: var(--z-overlay);
-  animation: crm-fade-in 0.15s ease;
-  backdrop-filter: var(--backdrop-blur);
-  -webkit-backdrop-filter: var(--backdrop-blur);
-}
-
 .crm-sheet {
   position: fixed;
   bottom: 0;
@@ -1708,10 +1707,50 @@
 
 /* ── Reduced Motion ────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .crm-page *,
-  .crm-detail * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  .crm-column,
+  .crm-card,
+  .crm-skeleton,
+  .crm-section,
+  .crm-filters-overlay,
+  .crm-filters-panel,
+  .crm-sheet-overlay,
+  .crm-sheet,
+  .crm-dropdown-menu,
+  .crm-badge-pulse,
+  .crm-empty {
+    animation: none;
   }
+
+  .crm-page *,
+  .crm-detail *,
+  .crm-filters-overlay,
+  .crm-filters-panel,
+  .crm-sheet-overlay,
+  .crm-sheet {
+    transition: none;
+  }
+}
+
+/* ── Print ─────────────────────────────────────────────────────────────── */
+@media print {
+  .crm-page { overflow: visible; height: auto; }
+  .crm-kanban { overflow: visible; flex-wrap: wrap; }
+  .crm-column { break-inside: avoid; page-break-inside: avoid; }
+
+  .crm-filters-overlay,
+  .crm-filters-panel,
+  .crm-sheet-overlay,
+  .crm-sheet,
+  .crm-filter-btn,
+  .crm-new-btn,
+  .crm-view-toggle,
+  .crm-search-clear,
+  .crm-card-move,
+  .crm-card-wa,
+  .crm-detail-menu-btn,
+  .crm-skeleton { display: none; }
+
+  .crm-detail { padding: 0; max-width: none; }
+  .crm-detail-sidebar { position: static; max-height: none; overflow: visible; }
+  .crm-detail-body { flex-direction: column; }
 }

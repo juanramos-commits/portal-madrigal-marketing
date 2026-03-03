@@ -27,7 +27,7 @@ export default function VentasCRM() {
   if (crm.error && !crm.loading && crm.pipelines.length === 0) {
     return (
       <div className="crm-page">
-        <div className="crm-error">
+        <div className="crm-error" role="alert">
           <p>{crm.error}</p>
           <button className="ui-btn ui-btn--primary ui-btn--md" onClick={crm.refrescar}>Reintentar</button>
         </div>
@@ -39,7 +39,7 @@ export default function VentasCRM() {
   if (!crm.loading && crm.pipelines.length === 0 && crm.misRoles.length === 0) {
     return (
       <div className="crm-page">
-        <div className="crm-error">
+        <div className="crm-error" role="status">
           <p>No tienes un rol comercial asignado. Contacta con tu administrador.</p>
         </div>
       </div>
@@ -51,7 +51,7 @@ export default function VentasCRM() {
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="crm-header">
         <div className="crm-header-top">
-          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+          <div className="crm-title-row">
             <h1>CRM</h1>
             <span className="crm-lead-count">{crm.totalLeads} leads</span>
           </div>
@@ -101,7 +101,7 @@ export default function VentasCRM() {
           <CRMBuscador value={crm.busqueda} onChange={crm.setBusqueda} resultCount={crm.searchResultCount} />
 
           {/* Filter button */}
-          <button className="crm-filter-btn" onClick={() => setShowFilters(true)} aria-label="Filtros">
+          <button className="crm-filter-btn" onClick={() => setShowFilters(true)} aria-label="Filtros" aria-expanded={showFilters}>
             <Filter />
             <span className="crm-toolbar-label">Filtros</span>
             {filtroCount > 0 && <span className="crm-filter-badge">{filtroCount}</span>}

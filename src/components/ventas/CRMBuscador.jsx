@@ -2,8 +2,8 @@ import { Search, X } from 'lucide-react'
 
 export default function CRMBuscador({ value, onChange, resultCount }) {
   return (
-    <div className="crm-search">
-      <Search />
+    <div className="crm-search" role="search">
+      <Search aria-hidden="true" />
       <input
         type="text"
         placeholder="Buscar en todos los campos..."
@@ -12,7 +12,7 @@ export default function CRMBuscador({ value, onChange, resultCount }) {
         aria-label="Buscar leads"
       />
       {value && resultCount !== null && resultCount !== undefined && (
-        <span className="crm-search-count">
+        <span className="crm-search-count" role="status" aria-live="polite">
           {resultCount} {resultCount === 1 ? 'resultado' : 'resultados'}
         </span>
       )}
@@ -20,7 +20,7 @@ export default function CRMBuscador({ value, onChange, resultCount }) {
         <button
           className="crm-search-clear"
           onClick={() => onChange('')}
-          title="Limpiar búsqueda"
+          aria-label="Limpiar búsqueda"
         >
           <X size={16} />
         </button>

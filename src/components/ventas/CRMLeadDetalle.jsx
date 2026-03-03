@@ -541,6 +541,7 @@ export default function CRMLeadDetalle() {
             onChange={e => updateField('nombre', e.target.value)}
             onBlur={registrarCambiosCamposDebounced}
             placeholder="Nombre del lead"
+            aria-label="Nombre del lead"
           />
           <div className="crm-detail-badges">
             {lead.pipeline_states?.map(ps => ps.etapa && (
@@ -563,19 +564,19 @@ export default function CRMLeadDetalle() {
               className="crm-card-wa"
               style={{ width: 36, height: 36 }}
               onClick={() => window.open(`https://wa.me/${lead.telefono.replace(/[^0-9+]/g, '')}`, '_blank', 'noopener,noreferrer')}
-              title="WhatsApp"
+              aria-label="Contactar por WhatsApp"
             >
               <WhatsAppIcon />
             </button>
           )}
 
           <div className="crm-dropdown" ref={menuRef} onClick={e => e.stopPropagation()}>
-            <button className="crm-detail-menu-btn" onClick={() => setShowMenu(!showMenu)}>
+            <button className="crm-detail-menu-btn" onClick={() => setShowMenu(!showMenu)} aria-label="Menú de acciones" aria-expanded={showMenu} aria-haspopup="menu">
               <MoreVertical />
             </button>
 
             {showMenu && (
-              <div className="crm-dropdown-menu">
+              <div className="crm-dropdown-menu" role="menu">
                 {lead.pipeline_states?.map(ps => (
                   <div key={ps.pipeline_id}>
                     <button
@@ -590,7 +591,7 @@ export default function CRMLeadDetalle() {
                         {allEtapas.filter(e => e.pipeline?.id === ps.pipeline_id).map(e => (
                           <button
                             key={e.id}
-                            className="crm-dropdown-item crm-dropdown-item-sm"
+                            className="crm-dropdown-item"
                             onClick={() => cambiarEtapa(ps.pipeline_id, e.id)}
                           >
                             <span className="crm-badge-dot" style={{ background: e.color || 'var(--text-muted)' }} />
@@ -616,7 +617,7 @@ export default function CRMLeadDetalle() {
                     {showAssignDropdown === 'setter' && (
                       <div className="crm-dropdown-submenu">
                         <button
-                          className={`crm-dropdown-item crm-dropdown-item-sm${!lead.setter_asignado_id ? ' active' : ''}`}
+                          className={`crm-dropdown-item${!lead.setter_asignado_id ? ' active' : ''}`}
                           onClick={() => { setShowMenu(false); asignarSetter('') }}
                         >
                           Sin setter
@@ -624,7 +625,7 @@ export default function CRMLeadDetalle() {
                         {setters.map(s => (
                           <button
                             key={s.usuario_id}
-                            className={`crm-dropdown-item crm-dropdown-item-sm${lead.setter_asignado_id === s.usuario_id ? ' active' : ''}`}
+                            className={`crm-dropdown-item${lead.setter_asignado_id === s.usuario_id ? ' active' : ''}`}
                             onClick={() => { setShowMenu(false); asignarSetter(s.usuario_id) }}
                           >
                             {s.usuario?.nombre || s.usuario?.email}
@@ -642,7 +643,7 @@ export default function CRMLeadDetalle() {
                     {showAssignDropdown === 'closer' && (
                       <div className="crm-dropdown-submenu">
                         <button
-                          className={`crm-dropdown-item crm-dropdown-item-sm${!lead.closer_asignado_id ? ' active' : ''}`}
+                          className={`crm-dropdown-item${!lead.closer_asignado_id ? ' active' : ''}`}
                           onClick={() => { setShowMenu(false); asignarCloser('') }}
                         >
                           Sin closer
@@ -650,7 +651,7 @@ export default function CRMLeadDetalle() {
                         {closers.map(c => (
                           <button
                             key={c.usuario_id}
-                            className={`crm-dropdown-item crm-dropdown-item-sm${lead.closer_asignado_id === c.usuario_id ? ' active' : ''}`}
+                            className={`crm-dropdown-item${lead.closer_asignado_id === c.usuario_id ? ' active' : ''}`}
                             onClick={() => { setShowMenu(false); asignarCloser(c.usuario_id) }}
                           >
                             {c.usuario?.nombre || c.usuario?.email}
