@@ -211,6 +211,6 @@ export default function WidgetTable({ widgetDef, data }) {
   }
 
   const TableComponent = TABLE_MAP[widgetDef?.dataKey]
-  if (!TableComponent) return null
+  if (!TableComponent) return <div className="db-widget-empty">Tabla no soportada</div>
   return <TableComponent data={rows} />
 }
