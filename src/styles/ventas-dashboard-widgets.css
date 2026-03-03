@@ -860,6 +860,7 @@
   font-size: var(--font-sm);
   font-weight: var(--weight-bold);
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .db-wfunnel-bar-bg {
@@ -1004,12 +1005,14 @@
   font-size: var(--font-lg);
   font-weight: var(--weight-bold);
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .db-wgoal-fraction {
   font-size: var(--font-sm);
   font-weight: var(--weight-semibold);
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .db-wgoal-remaining {
