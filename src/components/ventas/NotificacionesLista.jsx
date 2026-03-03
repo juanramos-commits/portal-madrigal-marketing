@@ -70,7 +70,7 @@ export default function NotificacionesLista({
         {Array.from({ length: 5 }, (_, i) => (
           <div key={i} className="ntf-skeleton-item">
             <div className="ntf-skeleton-icon" />
-            <div style={{ flex: 1 }}>
+            <div className="ntf-skeleton-content">
               <div className="ntf-skeleton-line ntf-skeleton-line--title" />
               <div className="ntf-skeleton-line ntf-skeleton-line--msg" />
               <div className="ntf-skeleton-line ntf-skeleton-line--time" />

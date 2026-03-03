@@ -130,6 +130,7 @@
   background: var(--bg-card);
 }
 
+.ntf-item:focus { outline: none; }
 .ntf-item:focus-visible {
   outline: 2px solid var(--info);
   outline-offset: -2px;
@@ -296,6 +297,8 @@
   gap: var(--space-3);
   padding: var(--space-3-5) var(--space-3);
 }
+
+.ntf-skeleton-content { flex: 1; }
 
 .ntf-skeleton-icon {
   width: 36px;
