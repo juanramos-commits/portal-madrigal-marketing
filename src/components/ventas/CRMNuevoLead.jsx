@@ -47,10 +47,10 @@ export default function CRMNuevoLead({ categorias = [], onCrear, onCerrar }) {
       title="Nuevo Lead"
       footer={
         <>
-          <button type="button" className="btn" onClick={onCerrar} disabled={saving}>
+          <button type="button" className="ui-btn ui-btn--secondary ui-btn--md" onClick={onCerrar} disabled={saving}>
             Cancelar
           </button>
-          <button type="submit" form="crm-nuevo-lead-form" className="btn primary" disabled={saving}>
+          <button type="submit" form="crm-nuevo-lead-form" className="ui-btn ui-btn--primary ui-btn--md" disabled={saving}>
             {saving ? 'Creando...' : 'Crear Lead'}
           </button>
         </>

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import Select from '../ui/Select'
@@ -14,6 +15,19 @@ export default function CRMFiltros({
   etapas = [],
   fuentes = [],
 }) {
+  // Close on Escape key
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === 'Escape') onCerrar() }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [onCerrar])
+
+  // Lock body scroll while open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
   const handleChange = (key, value) => {
     onFiltrosChange({ ...filtros, [key]: value })
   }
@@ -29,8 +43,8 @@ export default function CRMFiltros({
 
   return createPortal(
     <>
-      <div className="crm-filters-overlay" onClick={onCerrar} />
-      <div className="crm-filters-panel">
+      <div className="crm-filters-overlay" onClick={onCerrar} aria-hidden="true" />
+      <div className="crm-filters-panel" role="dialog" aria-modal="true" aria-label="Filtros">
         <div className="crm-filters-header">
           <h2>Filtros</h2>
           <button className="crm-modal-close" onClick={onCerrar}>
@@ -132,8 +146,8 @@ export default function CRMFiltros({
         </div>
 
         <div className="crm-filters-footer">
-          <button className="btn" onClick={limpiar}>Limpiar</button>
-          <button className="btn primary" onClick={aplicar}>Aplicar filtros</button>
+          <button className="ui-btn ui-btn--secondary ui-btn--md" onClick={limpiar}>Limpiar</button>
+          <button className="ui-btn ui-btn--primary ui-btn--md" onClick={aplicar}>Aplicar filtros</button>
         </div>
       </div>
     </>,

@@ -482,7 +482,7 @@ export default function CRMLeadDetalle() {
         </button>
         <div className="crm-error">
           <p>{error || 'Lead no encontrado'}</p>
-          <button className="btn" onClick={() => navigate('/ventas/crm')}>Volver</button>
+          <button className="ui-btn ui-btn--secondary ui-btn--md" onClick={() => navigate('/ventas/crm')}>Volver</button>
         </div>
       </div>
     )
@@ -746,7 +746,7 @@ export default function CRMLeadDetalle() {
               </div>
               {lead.enlace_grabacion && (
                 <button
-                  className="btn btn-sm"
+                  className="ui-btn ui-btn--secondary ui-btn--sm"
                   style={{ flexShrink: 0, marginTop: 'auto' }}
                   onClick={() => window.open(lead.enlace_grabacion, '_blank')}
                 >
@@ -843,7 +843,7 @@ export default function CRMLeadDetalle() {
                       </span>
                     )}
                     {cita.google_meet_url && (
-                      <button className="btn btn-sm" onClick={() => window.open(cita.google_meet_url, '_blank')}>Meet</button>
+                      <button className="ui-btn ui-btn--secondary ui-btn--sm" onClick={() => window.open(cita.google_meet_url, '_blank')}>Meet</button>
                     )}
                   </div>
                 </div>
@@ -876,7 +876,7 @@ export default function CRMLeadDetalle() {
               })}
               {hasMoreActividad && (
                 <button
-                  className="btn btn-sm"
+                  className="ui-btn ui-btn--secondary ui-btn--sm"
                   style={{ margin: 'var(--space-sm) auto', display: 'block' }}
                   onClick={cargarMasActividad}
                 >

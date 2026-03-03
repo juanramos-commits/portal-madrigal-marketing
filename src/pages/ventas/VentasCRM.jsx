@@ -33,7 +33,7 @@ export default function VentasCRM() {
       <div className="crm-page">
         <div className="crm-error">
           <p>{crm.error}</p>
-          <button className="btn primary" onClick={crm.refrescar}>Reintentar</button>
+          <button className="ui-btn ui-btn--primary ui-btn--md" onClick={crm.refrescar}>Reintentar</button>
         </div>
       </div>
     )
