@@ -31,8 +31,10 @@ const RUTAS = {
 }
 
 function tiempoRelativo(fecha) {
-  const ahora = new Date()
+  if (!fecha) return ''
   const f = new Date(fecha)
+  if (isNaN(f.getTime())) return ''
+  const ahora = new Date()
   const diffMs = ahora - f
   const diffMin = Math.floor(diffMs / 60000)
   const diffHoras = Math.floor(diffMs / 3600000)
