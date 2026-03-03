@@ -1062,4 +1062,17 @@
   .db-addw-list {
     grid-template-columns: 1fr;
   }
+
+  .db-wfunnel-info {
+    width: 100px;
+  }
+
+  .db-wfunnel-rate {
+    width: 36px;
+  }
+
+  .db-wlead-top {
+    flex-direction: column;
+    gap: 0;
+  }
 }
