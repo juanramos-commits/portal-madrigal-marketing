@@ -744,6 +744,13 @@
   display: flex;
   gap: var(--space-3);
   align-items: flex-start;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.db-wactivity-item:hover {
+  background: var(--bg-hover);
 }
 
 .db-wactivity-dot {
