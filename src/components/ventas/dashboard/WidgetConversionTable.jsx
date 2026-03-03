@@ -23,7 +23,7 @@ export default function WidgetConversionTable({ widgetDef, data }) {
       </thead>
       <tbody>
         {rows.map((r, i) => (
-          <tr key={i}>
+          <tr key={r.usuario_id || i}>
             <td className="db-wtable-name">{r.nombre || r.email || '-'}</td>
             <td>{isCloser ? (r.citas || 0) : (r.leads || 0)}</td>
             <td>{isCloser ? (r.ventas || 0) : (r.citas || 0)}</td>
