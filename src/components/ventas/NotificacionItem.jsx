@@ -99,7 +99,7 @@ export default function NotificacionItem({ notificacion, onMarcarLeida, onElimin
           <div className="ntf-mensaje">{notificacion.mensaje}</div>
         )}
       </div>
-      <button className="ntf-btn-eliminar" onClick={handleEliminar} aria-label="Eliminar notificación">
+      <button type="button" className="ntf-btn-eliminar" onClick={handleEliminar} aria-label="Eliminar notificación">
         <X size={14} />
       </button>
     </div>

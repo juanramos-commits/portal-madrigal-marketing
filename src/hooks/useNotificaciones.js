@@ -16,13 +16,14 @@ export function useNotificaciones() {
   const channelRef = useRef(null)
   const offsetRef = useRef(0)
   const filtroRef = useRef(filtro)
+  const markingAllRef = useRef(false)
 
   const contarNoLeidas = useCallback(async () => {
     if (!user?.id) return
     try {
       const { count, error: countErr } = await supabase
         .from('ventas_notificaciones')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('usuario_id', user.id)
         .eq('leida', false)
       if (!countErr) setContadorNoLeidas(count || 0)
@@ -114,7 +115,8 @@ export function useNotificaciones() {
   }, [user?.id, cargarNotificaciones, contarNoLeidas])
 
   const marcarTodasComoLeidas = useCallback(async () => {
-    if (!user?.id) return
+    if (!user?.id || markingAllRef.current) return
+    markingAllRef.current = true
     // Capture snapshot for rollback inside updaters
     let snapshotNotifs = null
     let snapshotCount = 0
@@ -136,6 +138,8 @@ export function useNotificaciones() {
     } catch {
       setNotificaciones(snapshotNotifs)
       setContadorNoLeidas(snapshotCount)
+    } finally {
+      markingAllRef.current = false
     }
   }, [user?.id])
 
@@ -187,11 +191,13 @@ export function useNotificaciones() {
         table: 'ventas_notificaciones',
         filter: `usuario_id=eq.${user.id}`,
       }, (payload) => {
+        const isUnread = !payload.new.leida
+        if (filtroRef.current === 'no_leidas' && !isUnread) return
         setNotificaciones(prev => {
           if (prev.some(n => n.id === payload.new.id)) return prev
           return [payload.new, ...prev]
         })
-        setContadorNoLeidas(prev => prev + 1)
+        if (isUnread) setContadorNoLeidas(prev => prev + 1)
       })
       .on('postgres_changes', {
         event: 'UPDATE',

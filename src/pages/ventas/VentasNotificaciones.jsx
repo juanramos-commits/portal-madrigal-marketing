@@ -25,7 +25,7 @@ export default function VentasNotificaciones() {
           )}
         </div>
         {ntf.contadorNoLeidas > 0 && (
-          <button className="ntf-btn-marcar-todas" onClick={ntf.marcarTodasComoLeidas}>
+          <button type="button" className="ntf-btn-marcar-todas" onClick={ntf.marcarTodasComoLeidas}>
             <CheckCheck size={16} />
             Marcar todas como leídas
           </button>
@@ -34,6 +34,7 @@ export default function VentasNotificaciones() {
 
       <div className="ntf-filtros">
         <button
+          type="button"
           className={`ntf-filtro${ntf.filtro === 'todas' ? ' active' : ''}`}
           onClick={() => ntf.setFiltro('todas')}
         >
@@ -43,6 +44,7 @@ export default function VentasNotificaciones() {
           )}
         </button>
         <button
+          type="button"
           className={`ntf-filtro${ntf.filtro === 'no_leidas' ? ' active' : ''}`}
           onClick={() => ntf.setFiltro('no_leidas')}
         >

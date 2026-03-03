@@ -18,6 +18,7 @@ function agruparPorFecha(notificaciones) {
 
   for (const n of notificaciones) {
     const fecha = new Date(n.created_at)
+    if (isNaN(fecha.getTime())) { grupos.anteriores.push(n); continue }
     fecha.setHours(0, 0, 0, 0)
 
     if (fecha.getTime() === hoy.getTime()) {
@@ -117,7 +118,16 @@ export default function NotificacionesLista({
         )
       })}
 
-      {hayMas && (
+      {error && (
+        <div className="ntf-error-inline">
+          {error}
+          {onReintentar && (
+            <button className="ntf-error-inline-btn" onClick={onReintentar}>Reintentar</button>
+          )}
+        </div>
+      )}
+
+      {hayMas && !error && (
         <button className="ntf-cargar-mas" onClick={onCargarMas} disabled={loading}>
           {loading && <span className="ntf-spinner" />}
           {loading ? 'Cargando...' : 'Cargar más'}

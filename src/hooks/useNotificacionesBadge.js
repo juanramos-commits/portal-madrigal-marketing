@@ -12,7 +12,7 @@ export function useNotificacionesBadge() {
     try {
       const { count, error } = await supabase
         .from('ventas_notificaciones')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('usuario_id', user.id)
         .eq('leida', false)
       if (!error) setContador(count || 0)
@@ -33,8 +33,8 @@ export function useNotificacionesBadge() {
         schema: 'public',
         table: 'ventas_notificaciones',
         filter: `usuario_id=eq.${user.id}`,
-      }, () => {
-        setContador(prev => prev + 1)
+      }, (payload) => {
+        if (!payload.new.leida) setContador(prev => prev + 1)
       })
       .on('postgres_changes', {
         event: 'UPDATE',
