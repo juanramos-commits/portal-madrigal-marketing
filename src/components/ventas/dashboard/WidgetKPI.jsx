@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import { formatCurrency, formatPercent } from '../../../config/formatters'
 
-export default function WidgetKPI({ widgetDef, data }) {
+export default memo(function WidgetKPI({ widgetDef, data }) {
   const numRef = useRef(null)
   const rafRef = useRef(null)
 
@@ -74,4 +74,4 @@ export default function WidgetKPI({ widgetDef, data }) {
       )}
     </div>
   )
-}
+})

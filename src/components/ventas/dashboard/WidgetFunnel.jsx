@@ -12,9 +12,10 @@ const NIVELES_CLOSERS = [
   { key: 'ventas', label: 'Ventas cerradas', color: 'var(--success)' },
 ]
 
+import { memo } from 'react'
 import { formatCurrency } from '../../../config/formatters'
 
-export default function WidgetFunnel({ widgetDef, data }) {
+export default memo(function WidgetFunnel({ widgetDef, data }) {
   if (!data || typeof data !== 'object') return <div className="db-widget-empty">Sin datos para este periodo</div>
 
   const isCloser = widgetDef?.dataKey === 'funnel_closers'
@@ -60,4 +61,4 @@ export default function WidgetFunnel({ widgetDef, data }) {
       </div>
     </div>
   )
-}
+})

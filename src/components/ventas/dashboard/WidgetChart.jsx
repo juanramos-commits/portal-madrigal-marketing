@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { memo, useId } from 'react'
 import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Area, AreaChart, BarChart, Bar } from 'recharts'
 import { formatCurrency } from '../../../config/formatters'
 
@@ -53,7 +53,7 @@ function getSeriesName(dataKey) {
   return 'Leads'
 }
 
-export default function WidgetChart({ widgetDef, data }) {
+export default memo(function WidgetChart({ widgetDef, data }) {
   const gradId = useId()
   const series = Array.isArray(data) ? data : []
 
@@ -102,4 +102,4 @@ export default function WidgetChart({ widgetDef, data }) {
       </ResponsiveContainer>
     </div>
   )
-}
+})

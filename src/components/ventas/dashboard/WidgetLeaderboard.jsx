@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { memo, useMemo } from 'react'
 import { formatCurrency } from '../../../config/formatters'
 
 function MedalIcon({ pos }) {
@@ -8,7 +8,7 @@ function MedalIcon({ pos }) {
   return <span className="db-wlead-pos">{pos + 1}</span>
 }
 
-export default function WidgetLeaderboard({ widgetDef, data }) {
+export default memo(function WidgetLeaderboard({ widgetDef, data }) {
   const rows = Array.isArray(data) ? data : []
   if (rows.length === 0) return <div className="db-widget-empty">Sin datos para este periodo</div>
 
@@ -51,4 +51,4 @@ export default function WidgetLeaderboard({ widgetDef, data }) {
       })}
     </div>
   )
-}
+})

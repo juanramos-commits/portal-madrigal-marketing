@@ -1,4 +1,6 @@
-export default function WidgetPipeline({ widgetDef, data }) {
+import { memo } from 'react'
+
+export default memo(function WidgetPipeline({ widgetDef, data }) {
   const stages = Array.isArray(data) ? data.filter(d => d.total > 0 || d.nombre) : []
   if (stages.length === 0) return <div className="db-widget-empty">Sin datos para este periodo</div>
 
@@ -37,4 +39,4 @@ export default function WidgetPipeline({ widgetDef, data }) {
       </div>
     </div>
   )
-}
+})

@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { formatCurrency } from '../../../config/formatters'
 
 function formatDate(d) {
@@ -207,7 +208,7 @@ const TABLE_MAP = {
   citas_proximas: CitasProximasTable,
 }
 
-export default function WidgetTable({ widgetDef, data }) {
+export default memo(function WidgetTable({ widgetDef, data }) {
   const rows = Array.isArray(data) ? data : []
 
   if (rows.length === 0) {
@@ -217,4 +218,4 @@ export default function WidgetTable({ widgetDef, data }) {
   const TableComponent = TABLE_MAP[widgetDef?.dataKey]
   if (!TableComponent) return <div className="db-widget-empty">Tabla no soportada</div>
   return <TableComponent data={rows} />
-}
+})

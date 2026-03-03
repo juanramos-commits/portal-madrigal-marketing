@@ -23,7 +23,9 @@ const TIPO_COLORS = {
   creacion: 'var(--success)',
 }
 
-export default function WidgetActivity({ widgetDef, data }) {
+import { memo } from 'react'
+
+export default memo(function WidgetActivity({ widgetDef, data }) {
   const items = Array.isArray(data) ? data : []
   if (items.length === 0) return <div className="db-widget-empty">Sin actividad reciente</div>
 
@@ -47,4 +49,4 @@ export default function WidgetActivity({ widgetDef, data }) {
       })}
     </div>
   )
-}
+})

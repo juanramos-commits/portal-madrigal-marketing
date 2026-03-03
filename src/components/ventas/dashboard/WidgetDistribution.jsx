@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 
 const COLORS = [
@@ -79,7 +80,7 @@ function HorizontalBarDistribution({ data, label }) {
   )
 }
 
-export default function WidgetDistribution({ widgetDef, data }) {
+export default memo(function WidgetDistribution({ widgetDef, data }) {
   const items = Array.isArray(data) ? data : []
   if (items.length === 0) return <div className="db-widget-empty">Sin datos para este periodo</div>
 
@@ -89,4 +90,4 @@ export default function WidgetDistribution({ widgetDef, data }) {
     return <HorizontalBarDistribution data={items} label={label} />
   }
   return <PieDistribution data={items} label={label} />
-}
+})

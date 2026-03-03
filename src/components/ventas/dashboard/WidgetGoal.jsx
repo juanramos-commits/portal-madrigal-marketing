@@ -1,4 +1,6 @@
-export default function WidgetGoal({ widgetDef, data, config }) {
+import { memo } from 'react'
+
+export default memo(function WidgetGoal({ widgetDef, data, config }) {
   const objetivo = config?.objetivo || widgetDef?.defaultConfig?.objetivo || 10
   const actual = Number(data?.actual) || 0
   const diasRestantes = Math.max(Number(data?.dias_restantes) || 0, 0)
@@ -52,4 +54,4 @@ export default function WidgetGoal({ widgetDef, data, config }) {
       <span className="db-wgoal-remaining">{diasRestantes} {diasRestantes === 1 ? 'día' : 'días'} restantes</span>
     </div>
   )
-}
+})
