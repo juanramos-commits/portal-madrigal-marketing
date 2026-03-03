@@ -18,6 +18,11 @@ function formatInputDate(d) {
   return `${yyyy}-${mm}-${dd}`
 }
 
+function parseLocalDate(s) {
+  const [yyyy, mm, dd] = s.split('-').map(Number)
+  return new Date(yyyy, mm - 1, dd)
+}
+
 export default function DashboardFiltroFecha({
   periodo, onPeriodoChange, fechaInicio, fechaFin, onFechaPersonalizada,
 }) {
@@ -38,7 +43,7 @@ export default function DashboardFiltroFecha({
     const val = e.target.value
     setDesde(val)
     if (val && hasta && val <= hasta) {
-      onFechaPersonalizada(new Date(val), new Date(hasta))
+      onFechaPersonalizada(parseLocalDate(val), parseLocalDate(hasta))
     }
   }
 
@@ -46,7 +51,7 @@ export default function DashboardFiltroFecha({
     const val = e.target.value
     setHasta(val)
     if (desde && val && desde <= val) {
-      onFechaPersonalizada(new Date(desde), new Date(val))
+      onFechaPersonalizada(parseLocalDate(desde), parseLocalDate(val))
     }
   }
 
