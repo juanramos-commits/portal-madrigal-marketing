@@ -39,7 +39,7 @@ export default function WidgetLeaderboard({ widgetDef, data }) {
                   }
                 </span>
               </div>
-              <div className="db-wlead-bar-bg">
+              <div className="db-wlead-bar-bg" aria-hidden="true">
                 <div
                   className={`db-wlead-bar ${isCloser ? 'db-wlead-bar--closer' : 'db-wlead-bar--setter'}`}
                   style={{ width: `${barPct}%` }}

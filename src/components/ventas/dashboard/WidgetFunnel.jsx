@@ -42,7 +42,7 @@ export default function WidgetFunnel({ widgetDef, data }) {
                 <span className="db-wfunnel-label">{nivel.label}</span>
                 <span className="db-wfunnel-count">{val}</span>
               </div>
-              <div className="db-wfunnel-bar-bg">
+              <div className="db-wfunnel-bar-bg" aria-hidden="true">
                 <div className="db-wfunnel-bar" style={{ width: `${Math.max(pct, 3)}%`, background: nivel.color }} />
               </div>
               <span className="db-wfunnel-rate">{convRate ? `${convRate}%` : ''}</span>
