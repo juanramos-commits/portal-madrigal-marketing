@@ -1,7 +1,7 @@
 export default function WidgetGoal({ widgetDef, data, config }) {
   const objetivo = config?.objetivo || widgetDef?.defaultConfig?.objetivo || 10
   const actual = Number(data?.actual) || 0
-  const diasRestantes = Number(data?.dias_restantes) || 0
+  const diasRestantes = Math.max(Number(data?.dias_restantes) || 0, 0)
   const pct = objetivo > 0 ? Math.min((actual / objetivo) * 100, 100) : 0
 
   const colorClass = pct >= 66 ? 'db-wgoal--green' : pct >= 33 ? 'db-wgoal--yellow' : 'db-wgoal--red'
