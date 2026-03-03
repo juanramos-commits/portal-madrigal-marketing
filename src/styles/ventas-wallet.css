@@ -376,7 +376,7 @@
 
 .wt-search > svg {
   position: absolute;
-  left: 10px;
+  left: var(--space-2-5);
   top: 50%;
   transform: translateY(-50%);
   width: 15px;
@@ -410,13 +410,13 @@
 
 .wt-search-clear {
   position: absolute;
-  right: 8px;
+  right: var(--space-sm);
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: var(--space-xs);
   color: var(--text-muted);
   display: flex;
   align-items: center;
@@ -638,8 +638,8 @@
 
 /* ── Modal utility classes (used inside shared Modal) ────────────── */
 .wt-modal-hint {
-  font-size: var(--font-sm-md) !important;
-  color: var(--text-muted) !important;
+  font-size: var(--font-sm-md);
+  color: var(--text-muted);
 }
 
 /* ── Steps indicator ──────────────────────────────────────────────── */
@@ -992,7 +992,7 @@
 }
 
 .wt-pagination-btns button:disabled {
-  opacity: 0.3;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -1168,5 +1168,88 @@
   .wt-fp-row {
     grid-template-columns: 1fr;
     gap: var(--space-md);
+  }
+}
+
+/* ── Focus-visible ───────────────────────────────────────────────── */
+.wt-tab:focus-visible,
+.wt-tab-mini:focus-visible,
+.wt-btn-retiro:focus-visible,
+.wt-btn-ghost:focus-visible,
+.wt-btn-primary:focus-visible,
+.wt-btn-success:focus-visible,
+.wt-btn-danger:focus-visible,
+.wt-btn-max:focus-visible,
+.wt-action-btn:focus-visible,
+.wt-link-btn:focus-visible,
+.wt-search-clear:focus-visible,
+.wt-pagination-btns button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .wt-tab,
+  .wt-tab-mini,
+  .wt-action-btn,
+  .wt-btn-retiro,
+  .wt-btn-ghost,
+  .wt-btn-primary,
+  .wt-btn-success,
+  .wt-btn-danger,
+  .wt-btn-max,
+  .wt-card,
+  .wt-link-btn,
+  .wt-search input,
+  .wt-search-clear,
+  .wt-pagination-btns button,
+  .wt-table tbody tr,
+  .wt-field input,
+  .wt-field select,
+  .wt-field textarea,
+  .wt-step,
+  .wt-filtros-row input[type="date"] {
+    transition: none;
+  }
+
+  .wt-skeleton-bar {
+    animation: none;
+  }
+
+  .wt-btn-retiro:hover:not(:disabled),
+  .wt-btn-success:hover:not(:disabled),
+  .wt-btn-danger:hover:not(:disabled),
+  .wt-card:hover {
+    transform: none;
+  }
+}
+
+/* ── Print ────────────────────────────────────────────────────────── */
+@media print {
+  .wt-header button,
+  .wt-tabs,
+  .wt-tabs-mini,
+  .wt-filtros-row,
+  .wt-pagination,
+  .wt-btn-retiro,
+  .wt-search,
+  .wt-mobile-only,
+  .wt-admin-card-actions,
+  .wt-action-btn {
+    display: none !important;
+  }
+
+  .wt-page {
+    gap: var(--space-sm);
+  }
+
+  .wt-card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .wt-table-wrap {
+    border: 1px solid #ccc;
   }
 }

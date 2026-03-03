@@ -66,12 +66,14 @@ export default function VentasWallet() {
         </button>
       </div>
 
-      <div className="wt-tabs">
+      <div className="wt-tabs" role="tablist" aria-label="Secciones de wallet">
         {tabs.map(t => (
           <button
             key={t.key}
             className={`wt-tab${tab === t.key ? ' active' : ''}`}
             onClick={() => setTab(t.key)}
+            role="tab"
+            aria-selected={tab === t.key}
           >
             {t.label}
           </button>
@@ -79,7 +81,7 @@ export default function VentasWallet() {
       </div>
 
       {w.error && (
-        <div className="wt-error-general">{w.error}</div>
+        <div className="wt-error-general" role="alert">{w.error}</div>
       )}
 
       {tab === 'resumen' && (

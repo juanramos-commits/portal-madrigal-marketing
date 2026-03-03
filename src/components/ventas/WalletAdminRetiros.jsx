@@ -78,15 +78,16 @@ export default function WalletAdminRetiros({
 
       <div className="wt-filtros-row">
         <div className="wt-search">
-          <Search size={15} />
+          <Search size={15} aria-hidden="true" />
           <input
             type="text"
             placeholder="Buscar retiros..."
             value={busqueda}
             onChange={e => onBusquedaChange(e.target.value)}
+            aria-label="Buscar retiros"
           />
           {busqueda && (
-            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} title="Limpiar">
+            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} aria-label="Limpiar búsqueda">
               <X size={14} />
             </button>
           )}

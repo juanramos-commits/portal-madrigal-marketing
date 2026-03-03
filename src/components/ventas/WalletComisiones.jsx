@@ -1,4 +1,3 @@
-import { Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ExternalLink, Search, X, FileSpreadsheet } from 'lucide-react'
 import Select from '../ui/Select'
@@ -46,15 +45,16 @@ export default function WalletComisiones({
       {/* Filters */}
       <div className="wt-filtros-row">
         <div className="wt-search">
-          <Search size={15} />
+          <Search size={15} aria-hidden="true" />
           <input
             type="text"
             placeholder="Buscar comisiones..."
             value={busqueda}
             onChange={e => onBusquedaChange(e.target.value)}
+            aria-label="Buscar comisiones"
           />
           {busqueda && (
-            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} title="Limpiar">
+            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} aria-label="Limpiar búsqueda">
               <X size={14} />
             </button>
           )}

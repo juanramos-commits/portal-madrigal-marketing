@@ -26,15 +26,16 @@ export default function WalletAdminFacturas({
       {/* Filters */}
       <div className="wt-filtros-row">
         <div className="wt-search">
-          <Search size={15} />
+          <Search size={15} aria-hidden="true" />
           <input
             type="text"
             placeholder="Buscar facturas..."
             value={busqueda}
             onChange={e => onBusquedaChange(e.target.value)}
+            aria-label="Buscar facturas"
           />
           {busqueda && (
-            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} title="Limpiar">
+            <button className="wt-search-clear" onClick={() => onBusquedaChange('')} aria-label="Limpiar búsqueda">
               <X size={14} />
             </button>
           )}
