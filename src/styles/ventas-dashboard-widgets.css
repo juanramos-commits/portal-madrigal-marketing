@@ -712,19 +712,6 @@
   flex-shrink: 0;
 }
 
-.db-wlead-stat {
-  text-align: right;
-  font-size: var(--font-xs);
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.db-wlead-stat strong {
-  display: block;
-  font-size: var(--font-sm);
-  color: var(--text);
-}
-
 /* ── Widget Activity Feed ──────────────────────────────────────────────── */
 
 .db-wactivity {
