@@ -162,7 +162,7 @@
 }
 
 .ntf-item:hover {
-  background: var(--bg-card);
+  background: var(--bg-hover);
 }
 
 .ntf-item:focus { outline: none; }
