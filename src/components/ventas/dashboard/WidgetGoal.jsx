@@ -23,7 +23,7 @@ export default function WidgetGoal({ widgetDef, data, config }) {
       aria-label={`Objetivo: ${actual} de ${objetivo} (${Math.round(pct)}%)`}
     >
       <div className="db-wgoal-ring">
-        <svg width={size} height={size} aria-hidden="true">
+        <svg viewBox={`0 0 ${size} ${size}`} width="100%" height="100%" aria-hidden="true">
           <circle
             className="db-wgoal-ring-bg"
             cx={size / 2}

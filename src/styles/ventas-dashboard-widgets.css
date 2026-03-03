@@ -1063,8 +1063,8 @@
 
 .db-wgoal-ring {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: clamp(72px, 50%, 110px);
+  aspect-ratio: 1;
 }
 
 .db-wgoal-ring svg {
