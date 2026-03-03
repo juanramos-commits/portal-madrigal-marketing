@@ -18,7 +18,7 @@ export default function AddWidgetModal({ open, onClose, onAdd, rol, layout }) {
   const filtered = availableWidgets.filter(w => w.category === tab)
 
   return (
-    <Modal open={open} onClose={onClose} title="Anadir widget" size="md">
+    <Modal open={open} onClose={onClose} title="Añadir widget" size="md">
       <div className="db-addw">
         <div className="db-addw-tabs">
           {WIDGET_CATEGORIES.map(cat => {
@@ -40,7 +40,7 @@ export default function AddWidgetModal({ open, onClose, onAdd, rol, layout }) {
         <div className="db-addw-list">
           {filtered.length === 0 ? (
             <div className="db-addw-empty">
-              Todos los widgets de esta categoria ya estan agregados
+              Todos los widgets de esta categoría ya están agregados
             </div>
           ) : (
             filtered.map(w => {

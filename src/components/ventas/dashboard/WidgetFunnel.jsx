@@ -52,7 +52,7 @@ export default function WidgetFunnel({ widgetDef, data }) {
       })}
       {isCloser && data.facturacion != null && (
         <div className="db-wfunnel-global">
-          Facturacion: <strong>{formatCurrency(Number(data.facturacion) || 0)}</strong>
+          Facturación: <strong>{formatCurrency(Number(data.facturacion) || 0)}</strong>
         </div>
       )}
       <div className="db-wfunnel-global">

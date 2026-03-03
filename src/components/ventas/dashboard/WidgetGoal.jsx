@@ -42,7 +42,7 @@ export default function WidgetGoal({ widgetDef, data, config }) {
         </div>
       </div>
       <span className="db-wgoal-fraction">{actual} / {objetivo}</span>
-      <span className="db-wgoal-remaining">{diasRestantes} dias restantes</span>
+      <span className="db-wgoal-remaining">{diasRestantes} días restantes</span>
     </div>
   )
 }
