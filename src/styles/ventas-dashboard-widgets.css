@@ -885,7 +885,7 @@
 
 .db-wpipeline-stages {
   display: flex;
-  height: 12px;
+  height: 18px;
   border-radius: var(--radius-full);
   overflow: hidden;
   gap: 2px;
