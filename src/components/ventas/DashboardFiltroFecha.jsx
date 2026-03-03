@@ -30,7 +30,7 @@ export default function DashboardFiltroFecha({
   const handleDesde = (e) => {
     const val = e.target.value
     setDesde(val)
-    if (val && hasta) {
+    if (val && hasta && val <= hasta) {
       onFechaPersonalizada(new Date(val), new Date(hasta))
     }
   }
@@ -38,7 +38,7 @@ export default function DashboardFiltroFecha({
   const handleHasta = (e) => {
     const val = e.target.value
     setHasta(val)
-    if (desde && val) {
+    if (desde && val && desde <= val) {
       onFechaPersonalizada(new Date(desde), new Date(val))
     }
   }
@@ -52,9 +52,9 @@ export default function DashboardFiltroFecha({
       </Select>
       {periodo === 'personalizado' && (
         <div className="db-fechas-custom">
-          <input type="date" value={desde} onChange={handleDesde} className="db-input-fecha" />
+          <input type="date" value={desde} onChange={handleDesde} max={hasta || undefined} className="db-input-fecha" />
           <span className="db-fecha-sep">-</span>
-          <input type="date" value={hasta} onChange={handleHasta} className="db-input-fecha" />
+          <input type="date" value={hasta} onChange={handleHasta} min={desde || undefined} className="db-input-fecha" />
         </div>
       )}
     </div>
