@@ -64,5 +64,16 @@ export function useNotificacionesBadge() {
     }
   }, [user?.id, cargarConteo])
 
+  // Refresh stale badge when tab becomes visible again
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && user?.id) {
+        cargarConteo()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [user?.id, cargarConteo])
+
   return { contador, refrescar: cargarConteo }
 }

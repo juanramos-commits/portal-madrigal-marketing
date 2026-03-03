@@ -208,6 +208,7 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
+  touch-action: manipulation;
   opacity: 0;
   transition: opacity var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
 }
@@ -230,7 +231,7 @@
 /* ── Dot (no leída) ── */
 .ntf-dot {
   position: absolute;
-  left: 2px;
+  left: var(--space-0-5, 2px);
   top: 50%;
   transform: translateY(-50%);
   width: 6px;
@@ -391,6 +392,7 @@
 .ntf-cargar-mas:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* ── Inline spinner ── */

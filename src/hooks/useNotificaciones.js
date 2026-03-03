@@ -120,10 +120,12 @@ export function useNotificaciones() {
     // Capture snapshot for rollback inside updaters
     let snapshotNotifs = null
     let snapshotCount = 0
+    const clearingList = filtroRef.current === 'no_leidas'
     setNotificaciones(prev => {
       snapshotNotifs = prev
-      return filtroRef.current === 'no_leidas' ? [] : prev.map(n => ({ ...n, leida: true }))
+      return clearingList ? [] : prev.map(n => ({ ...n, leida: true }))
     })
+    if (clearingList) offsetRef.current = 0
     setContadorNoLeidas(prev => { snapshotCount = prev; return 0 })
     try {
       const { error: updateErr } = await supabase
@@ -251,7 +253,7 @@ export function useNotificaciones() {
       cargarNotificaciones(true)
       contarNoLeidas()
     }
-  }, [user?.id, filtro])
+  }, [user?.id, filtro, cargarNotificaciones, contarNoLeidas])
 
   // Realtime
   useEffect(() => {
@@ -259,7 +261,7 @@ export function useNotificaciones() {
       suscribirseRealtime()
     }
     return () => desuscribirseRealtime()
-  }, [user?.id])
+  }, [user?.id, suscribirseRealtime, desuscribirseRealtime])
 
   // Refresh stale data when tab becomes visible again
   useEffect(() => {

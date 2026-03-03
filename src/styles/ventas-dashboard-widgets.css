@@ -1123,8 +1123,10 @@
   cursor: pointer;
 }
 
-.db-select-periodo:focus {
+.db-select-periodo:focus-visible {
   border-color: var(--border-focus);
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .db-fechas-custom {
@@ -1143,8 +1145,10 @@
   outline: none;
 }
 
-.db-input-fecha:focus {
+.db-input-fecha:focus-visible {
   border-color: var(--border-focus);
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .db-fecha-sep {

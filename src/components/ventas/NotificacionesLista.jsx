@@ -56,7 +56,7 @@ export default function NotificacionesLista({
 }) {
   if (error && notificaciones.length === 0) {
     return (
-      <div className="ntf-empty ntf-empty--error">
+      <div className="ntf-empty ntf-empty--error" role="alert">
         <div className="ntf-empty-icon"><AlertCircle size={32} /></div>
         <p>{error}</p>
         {onReintentar && (
@@ -88,7 +88,7 @@ export default function NotificacionesLista({
 
   if (notificaciones.length === 0) {
     return (
-      <div className="ntf-empty">
+      <div className="ntf-empty" role="status">
         <div className="ntf-empty-icon"><Bell size={48} /></div>
         <p>{filtroActivo === 'no_leidas' ? 'No tienes notificaciones sin leer' : 'No tienes notificaciones'}</p>
         {filtroActivo === 'no_leidas' && (
@@ -107,8 +107,8 @@ export default function NotificacionesLista({
         if (!items || items.length === 0) return null
 
         return (
-          <div key={key} className="ntf-grupo">
-            <h3 className="ntf-grupo-label">{label}</h3>
+          <section key={key} className="ntf-grupo" aria-labelledby={`ntf-grupo-${key}`}>
+            <h3 id={`ntf-grupo-${key}`} className="ntf-grupo-label">{label}</h3>
             {items.map(n => (
               <NotificacionItem
                 key={n.id}
@@ -117,7 +117,7 @@ export default function NotificacionesLista({
                 onEliminar={onEliminar}
               />
             ))}
-          </div>
+          </section>
         )
       })}
 

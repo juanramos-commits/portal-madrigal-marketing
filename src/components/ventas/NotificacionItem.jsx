@@ -40,7 +40,7 @@ function tiempoRelativo(fecha) {
   const diffHoras = Math.floor(diffMs / 3600000)
   const diffDias = Math.floor(diffMs / 86400000)
 
-  if (diffMin < 1) return 'Ahora mismo'
+  if (diffMs < 0 || diffMin < 1) return 'Ahora mismo'
   if (diffMin < 60) return `Hace ${diffMin} minuto${diffMin === 1 ? '' : 's'}`
   if (diffHoras < 24) return `Hace ${diffHoras} hora${diffHoras === 1 ? '' : 's'}`
   if (diffDias === 1) return f.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
