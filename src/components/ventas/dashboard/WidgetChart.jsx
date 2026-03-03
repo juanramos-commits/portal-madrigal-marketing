@@ -17,7 +17,7 @@ function CustomTooltip({ active, payload, label }) {
     <div className="db-wchart-tooltip">
       <div className="db-wchart-tooltip-date">{formatDate(label)}</div>
       {payload.map((p, i) => (
-        <div key={i} className="db-wchart-tooltip-row">
+        <div key={p.name || i} className="db-wchart-tooltip-row">
           <span style={{ color: p.stroke || p.fill || p.color }}>{p.name}:</span>{' '}
           {p.name === 'Ingresos' || p.name === 'Comisiones' ? formatCurrency(p.value) : p.value}
           {p.name === 'Tasa' && '%'}
