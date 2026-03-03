@@ -93,17 +93,14 @@ export function useNotificaciones() {
 
   const marcarComoLeida = useCallback(async (notifId) => {
     if (!notifId) return
+    const target = notificaciones.find(n => n.id === notifId)
+    if (!target || target.leida) return
     // Optimistic update — remove from list when filtering unread
-    let wasUnread = false
-    setNotificaciones(prev => {
-      const target = prev.find(n => n.id === notifId)
-      if (!target || target.leida) return prev
-      wasUnread = true
-      return filtroRef.current === 'no_leidas'
+    setNotificaciones(prev =>
+      filtroRef.current === 'no_leidas'
         ? prev.filter(n => n.id !== notifId)
         : prev.map(n => n.id === notifId ? { ...n, leida: true } : n)
-    })
-    if (!wasUnread) return
+    )
     setContadorNoLeidas(prev => Math.max(0, prev - 1))
     try {
       const { error: updateErr } = await supabase
@@ -119,7 +116,7 @@ export function useNotificaciones() {
       cargarNotificaciones(true)
       contarNoLeidas()
     }
-  }, [user?.id, cargarNotificaciones, contarNoLeidas])
+  }, [user?.id, notificaciones, cargarNotificaciones, contarNoLeidas])
 
   const ejecutarMarcarTodas = useCallback(async () => {
     pendingMarkAllRef.current = null
@@ -147,16 +144,13 @@ export function useNotificaciones() {
     markingAllRef.current = true
     const clearingList = filtroRef.current === 'no_leidas'
 
-    let prevNotifs = null
-    let prevCount = 0
+    const prevNotifs = notificaciones
+    const prevCount = contadorNoLeidas
     const prevOffset = offsetRef.current
 
-    setNotificaciones(prev => {
-      prevNotifs = prev
-      return clearingList ? [] : prev.map(n => ({ ...n, leida: true }))
-    })
+    setNotificaciones(clearingList ? [] : notificaciones.map(n => ({ ...n, leida: true })))
     if (clearingList) offsetRef.current = 0
-    setContadorNoLeidas(prev => { prevCount = prev; return 0 })
+    setContadorNoLeidas(0)
 
     // Delayed update — fires after toast auto-dismiss + exit animation
     const timerId = setTimeout(() => {
@@ -178,7 +172,7 @@ export function useNotificaciones() {
         offsetRef.current = po
       },
     })
-  }, [user?.id, ejecutarMarcarTodas, showToast])
+  }, [user?.id, notificaciones, contadorNoLeidas, ejecutarMarcarTodas, showToast])
 
   const ejecutarDelete = useCallback(async (notifId, removedItem) => {
     delete pendingDeletesRef.current[notifId]
@@ -207,13 +201,10 @@ export function useNotificaciones() {
   const eliminarNotificacion = useCallback((notifId) => {
     if (!notifId || !user?.id) return
 
-    // Optimistic remove from UI
-    let removedItem = null
-    setNotificaciones(prev => {
-      removedItem = prev.find(n => n.id === notifId)
-      return removedItem ? prev.filter(n => n.id !== notifId) : prev
-    })
+    const removedItem = notificaciones.find(n => n.id === notifId)
     if (!removedItem) return
+    // Optimistic remove from UI
+    setNotificaciones(prev => prev.filter(n => n.id !== notifId))
     if (!removedItem.leida) setContadorNoLeidas(c => Math.max(0, c - 1))
 
     // Delayed delete — fires after toast auto-dismiss + exit animation
@@ -237,7 +228,7 @@ export function useNotificaciones() {
         if (!removedItem.leida) setContadorNoLeidas(c => c + 1)
       },
     })
-  }, [user?.id, ejecutarDelete, showToast])
+  }, [user?.id, notificaciones, ejecutarDelete, showToast])
 
   // Realtime subscription
   const suscribirseRealtime = useCallback(() => {
