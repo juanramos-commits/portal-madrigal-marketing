@@ -10,7 +10,9 @@ function formatDate(d) {
 }
 
 function formatImporte(v) {
-  return Number(v).toLocaleString('es-ES', { minimumFractionDigits: 2 }) + '€'
+  const n = Number(v)
+  if (isNaN(n)) return '0,00€'
+  return n.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + '€'
 }
 
 const estadoConfig = {
@@ -68,7 +70,12 @@ export default memo(function VentasListado({
     }
   }, [cargarComisiones])
 
-  const handleActionDone = () => {
+  const handleActionDone = (ventaId) => {
+    // Invalidate cached commissions so they reload with new state
+    if (ventaId) {
+      delete loadedComisionesRef.current[ventaId]
+      setComisionesMap(prev => { const next = { ...prev }; delete next[ventaId]; return next })
+    }
     setModal(null)
   }
 
@@ -150,7 +157,7 @@ export default memo(function VentasListado({
   // ── Desktop table ─────────────────────────────────────────────────
   const renderTable = () => (
     <div className="vv-table-wrap">
-      <table className="vv-table">
+      <table className="vv-table" aria-label="Listado de ventas">
         <thead>
           <tr>
             <th>Lead</th>
@@ -236,7 +243,7 @@ export default memo(function VentasListado({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="vv-pagination">
+        <nav className="vv-pagination" role="navigation" aria-label="Paginación de ventas">
           <span>Página {page + 1} de {totalPages} ({totalCount} ventas)</span>
           <div className="vv-pagination-btns">
             <button disabled={page === 0} onClick={() => onPageChange(page - 1)}>
@@ -246,7 +253,7 @@ export default memo(function VentasListado({
               Siguiente
             </button>
           </div>
-        </div>
+        </nav>
       )}
 
       {/* Modal de cambio de estado */}
@@ -256,7 +263,7 @@ export default memo(function VentasListado({
           nuevoEstado={modal.nuevoEstado}
           onConfirm={async () => {
             await onCambiarEstado(modal.ventaId, modal.nuevoEstado, modal.venta)
-            handleActionDone()
+            handleActionDone(modal.ventaId)
           }}
           onCancel={() => setModal(null)}
         />

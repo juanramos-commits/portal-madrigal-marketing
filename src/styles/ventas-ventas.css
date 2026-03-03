@@ -252,6 +252,8 @@
 .vv-metodo-stripe { color: var(--color-stripe); background: var(--color-stripe-bg); }
 .vv-metodo-sequra { color: var(--color-sequra); background: var(--color-sequra-bg); }
 .vv-metodo-transferencia { color: var(--warning); background: var(--warning-bg); }
+.vv-metodo-efectivo { color: var(--success); background: var(--success-bg); }
+.vv-metodo-otro { color: var(--text-muted); background: var(--bg-badge); }
 
 /* ── Desktop table ────────────────────────────────────────────────── */
 .vv-table-wrap {
@@ -1095,8 +1097,7 @@
   .vv-detalle,
   .vv-estado-dropdown,
   .vv-filters-overlay,
-  .vv-filters-panel,
-  .vv-modal-content {
+  .vv-filters-panel {
     animation: none;
   }
 
@@ -1105,6 +1106,8 @@
   .vv-btn-ghost,
   .vv-btn-success,
   .vv-btn-danger,
+  .vv-btn-warning,
+  .vv-btn-devolucion,
   .vv-filter-btn,
   .vv-export-btn,
   .vv-estado-option,

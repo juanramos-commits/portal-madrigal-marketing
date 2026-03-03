@@ -62,7 +62,7 @@ export default function VentasFiltros({
       <div className="vv-filters-panel" ref={panelRef} role="dialog" aria-modal="true" aria-label="Filtros">
         <div className="vv-filters-header">
           <h2>Filtros</h2>
-          <button className="vv-filters-close" onClick={onCerrar}>
+          <button className="vv-filters-close" onClick={onCerrar} aria-label="Cerrar filtros">
             <X size={18} />
           </button>
         </div>

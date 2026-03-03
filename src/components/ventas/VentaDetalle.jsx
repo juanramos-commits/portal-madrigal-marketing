@@ -13,7 +13,9 @@ function formatDateTime(d) {
 }
 
 function formatImporte(v) {
-  return Number(v).toLocaleString('es-ES', { minimumFractionDigits: 2 }) + '€'
+  const n = Number(v)
+  if (isNaN(n)) return '0,00€'
+  return n.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + '€'
 }
 
 const metodoLabels = { stripe: 'Stripe', sequra: 'SeQura', transferencia: 'Transferencia', efectivo: 'Efectivo', otro: 'Otro' }
