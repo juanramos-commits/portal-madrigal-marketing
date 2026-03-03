@@ -85,6 +85,7 @@ export default function NotificacionItem({ notificacion, onMarcarLeida, onElimin
       onKeyDown={handleKeyDown}
       role="button"
       tabIndex={0}
+      aria-label={`${notificacion.leida ? '' : 'No leída: '}${notificacion.titulo}${notificacion.mensaje ? ` — ${notificacion.mensaje}` : ''}`}
     >
       {!notificacion.leida && <span className="ntf-dot" />}
       <div className={`ntf-icon${colorClass ? ` ${colorClass}` : ''}`}><Icon size={20} /></div>

@@ -23,6 +23,7 @@ export function useNotificaciones() {
   const markingAllRef = useRef(false)
   const pendingDeletesRef = useRef({})
   const pendingMarkAllRef = useRef(null)
+  const notificacionesRef = useRef(notificaciones)
 
   const contarNoLeidas = useCallback(async () => {
     if (!user?.id) return
@@ -33,8 +34,8 @@ export function useNotificaciones() {
         .eq('usuario_id', user.id)
         .eq('leida', false)
       if (!countErr) setContadorNoLeidas(count || 0)
-    } catch {
-      // Non-critical — badge will show stale count
+    } catch (err) {
+      console.warn('Error contando no leídas:', err)
     }
   }, [user?.id])
 
@@ -78,7 +79,8 @@ export function useNotificaciones() {
       }
 
       setHayMas(items.length === PAGE_SIZE)
-    } catch {
+    } catch (err) {
+      console.warn('Error cargando notificaciones:', err)
       setError('Error de conexión al cargar notificaciones')
       setHayMas(false)
     } finally {
@@ -93,7 +95,7 @@ export function useNotificaciones() {
 
   const marcarComoLeida = useCallback(async (notifId) => {
     if (!notifId) return
-    const target = notificaciones.find(n => n.id === notifId)
+    const target = notificacionesRef.current.find(n => n.id === notifId)
     if (!target || target.leida) return
     // Optimistic update — remove from list when filtering unread
     setNotificaciones(prev =>
@@ -112,11 +114,12 @@ export function useNotificaciones() {
         cargarNotificaciones(true)
         contarNoLeidas()
       }
-    } catch {
+    } catch (err) {
+      console.warn('Error marcando notificación como leída:', err)
       cargarNotificaciones(true)
       contarNoLeidas()
     }
-  }, [user?.id, notificaciones, cargarNotificaciones, contarNoLeidas])
+  }, [user?.id, cargarNotificaciones, contarNoLeidas])
 
   const ejecutarMarcarTodas = useCallback(async () => {
     pendingMarkAllRef.current = null
@@ -130,7 +133,8 @@ export function useNotificaciones() {
         cargarNotificaciones(true)
         contarNoLeidas()
       }
-    } catch {
+    } catch (err) {
+      console.warn('Error marcando todas como leídas:', err)
       cargarNotificaciones(true)
       contarNoLeidas()
     } finally {
@@ -144,12 +148,12 @@ export function useNotificaciones() {
     markingAllRef.current = true
     const clearingList = filtroRef.current === 'no_leidas'
 
-    const prevNotifs = notificaciones
-    const prevCount = contadorNoLeidas
+    const prevNotifs = notificacionesRef.current
     const prevOffset = offsetRef.current
 
-    setNotificaciones(clearingList ? [] : notificaciones.map(n => ({ ...n, leida: true })))
+    setNotificaciones(clearingList ? [] : prevNotifs.map(n => ({ ...n, leida: true })))
     if (clearingList) offsetRef.current = 0
+    const prevCount = contadorNoLeidas
     setContadorNoLeidas(0)
 
     // Delayed update — fires after toast auto-dismiss + exit animation
@@ -172,7 +176,7 @@ export function useNotificaciones() {
         offsetRef.current = po
       },
     })
-  }, [user?.id, notificaciones, contadorNoLeidas, ejecutarMarcarTodas, showToast])
+  }, [user?.id, contadorNoLeidas, ejecutarMarcarTodas, showToast])
 
   const ejecutarDelete = useCallback(async (notifId, removedItem) => {
     delete pendingDeletesRef.current[notifId]
@@ -183,7 +187,8 @@ export function useNotificaciones() {
         .eq('id', notifId)
         .eq('usuario_id', user?.id)
       if (delErr) restaurarItem(removedItem)
-    } catch {
+    } catch (err) {
+      console.warn('Error eliminando notificación:', err)
       restaurarItem(removedItem)
     }
 
@@ -201,7 +206,7 @@ export function useNotificaciones() {
   const eliminarNotificacion = useCallback((notifId) => {
     if (!notifId || !user?.id) return
 
-    const removedItem = notificaciones.find(n => n.id === notifId)
+    const removedItem = notificacionesRef.current.find(n => n.id === notifId)
     if (!removedItem) return
     // Optimistic remove from UI
     setNotificaciones(prev => prev.filter(n => n.id !== notifId))
@@ -228,7 +233,7 @@ export function useNotificaciones() {
         if (!removedItem.leida) setContadorNoLeidas(c => c + 1)
       },
     })
-  }, [user?.id, notificaciones, ejecutarDelete, showToast])
+  }, [user?.id, ejecutarDelete, showToast])
 
   // Realtime subscription
   const suscribirseRealtime = useCallback(() => {
@@ -300,8 +305,9 @@ export function useNotificaciones() {
     }
   }, [])
 
-  // Keep filtroRef in sync
+  // Keep refs in sync
   useEffect(() => { filtroRef.current = filtro }, [filtro])
+  useEffect(() => { notificacionesRef.current = notificaciones }, [notificaciones])
 
   // Load on mount and filter change
   useEffect(() => {

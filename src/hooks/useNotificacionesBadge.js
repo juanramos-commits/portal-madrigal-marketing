@@ -16,8 +16,8 @@ export function useNotificacionesBadge() {
         .eq('usuario_id', user.id)
         .eq('leida', false)
       if (!error) setContador(count || 0)
-    } catch {
-      // Non-critical — badge keeps stale count
+    } catch (err) {
+      console.warn('Error cargando conteo de notificaciones:', err)
     }
   }, [user?.id])
 
