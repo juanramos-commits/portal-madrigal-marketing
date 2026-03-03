@@ -635,9 +635,32 @@
   flex-shrink: 0;
 }
 
-.db-wlead-pos--1 { color: #F59E0B; }
-.db-wlead-pos--2 { color: #94A3B8; }
-.db-wlead-pos--3 { color: #CD7F32; }
+.db-wlead-medal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.db-wlead-gold {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+}
+
+.db-wlead-silver {
+  background: var(--bg-badge);
+  color: var(--text-muted);
+}
+
+.db-wlead-bronze {
+  background: rgba(205, 127, 50, 0.15);
+  color: #CD7F32;
+}
 
 .db-wlead-info {
   flex: 1;
