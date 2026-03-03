@@ -197,6 +197,7 @@ export function useVentasCRM() {
           etapa: (etapasData || []).find(e => e.id === item.etapa_id),
         })))
         setTablaTotalCount(count || 0)
+        setTotalLeads(count || 0)
       }
     } catch (err) {
       if (requestId === loadRequestRef.current) {
@@ -341,6 +342,7 @@ export function useVentasCRM() {
         newCounts[etapa.id] = count || 0
         total += count || 0
         hasMoreRef.current[etapa.id] = (count || 0) > LEADS_PER_BATCH
+        leadsOffsetRef.current[etapa.id] = (data || []).length
       }))
 
       if (requestId !== loadRequestRef.current) return
@@ -428,6 +430,7 @@ export function useVentasCRM() {
 
       setLeadsTabla(mapped)
       setTablaTotalCount(count || 0)
+      setTotalLeads(count || 0)
     } catch (_) {
       if (requestId === loadRequestRef.current) {
         setError('Error al cargar leads')
@@ -563,6 +566,7 @@ export function useVentasCRM() {
     } catch (err) {
       if (requestId !== searchRequestRef.current) return
       // Fallback: use the old simple search (buildLeadQuery with ilike)
+      // Delegate loading state entirely to the fallback function
       console.warn('RPC ventas_buscar_leads no disponible, usando búsqueda simple:', err.message)
       setSearchResultCount(null)
       if (vista === 'kanban') {
@@ -570,6 +574,7 @@ export function useVentasCRM() {
       } else {
         await cargarLeadsTabla()
       }
+      return // Skip finally's setLoading — fallback manages its own loading state
     } finally {
       if (requestId === searchRequestRef.current) {
         setLoading(false)
@@ -988,11 +993,16 @@ export function useVentasCRM() {
         table: 'ventas_lead_pipeline',
         filter: `pipeline_id=eq.${pipelineActivo.id}`,
       }, () => {
-        refrescar()
+        // Debounce to avoid thundering herd from rapid changes
+        if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current)
+        realtimeDebounceRef.current = setTimeout(() => refrescar(), 500)
       })
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current)
+      supabase.removeChannel(channel)
+    }
   }, [pipelineActivo?.id, refrescar])
 
   // ── Reload leads on filter or vista change ─────────────────────────
