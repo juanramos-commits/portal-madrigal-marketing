@@ -82,12 +82,12 @@ export default function AjustesWebhooks({
 
   const handleEliminar = async () => {
     if (!confirmDelete) return
-    try { await onEliminar(confirmDelete.id) } catch (_) {}
+    try { await onEliminar(confirmDelete.id) } catch (err) { console.warn('Error al eliminar webhook:', err) }
     setConfirmDelete(null)
   }
 
   const handleToggleActivo = async (w) => {
-    try { await onEditar(w.id, { activo: !w.activo }) } catch (_) {}
+    try { await onEditar(w.id, { activo: !w.activo }) } catch (err) { console.warn('Error al cambiar estado webhook:', err) }
   }
 
   // Mapeo
@@ -114,7 +114,7 @@ export default function AjustesWebhooks({
     try {
       await onGuardarMapeo(showMapeo.id, obj)
       setShowMapeo(null)
-    } catch (_) {}
+    } catch (err) { console.warn('Error al guardar mapeo:', err) }
     finally { setSavingMapeo(false) }
   }
 

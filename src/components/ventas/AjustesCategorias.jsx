@@ -68,7 +68,7 @@ export default function AjustesCategorias({
 
   const handleEliminar = async () => {
     if (!confirmDelete) return
-    try { await onEliminar(confirmDelete.id) } catch (_) {}
+    try { await onEliminar(confirmDelete.id) } catch (err) { console.warn('Error al eliminar categoría:', err) }
     setConfirmDelete(null)
   }
 

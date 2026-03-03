@@ -73,7 +73,7 @@ export default function AjustesReunionEstados({
 
   const handleEliminar = async () => {
     if (!confirmDelete) return
-    try { await onEliminar(confirmDelete.id) } catch (_) {}
+    try { await onEliminar(confirmDelete.id) } catch (err) { console.warn('Error al eliminar estado:', err) }
     setConfirmDelete(null)
   }
 

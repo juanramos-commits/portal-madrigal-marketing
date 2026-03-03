@@ -688,8 +688,8 @@ export function useAjustes() {
     setLoading(true)
     try {
       await cargarPerfil()
-    } catch (_) {
-      // non-critical
+    } catch (err) {
+      console.warn('Error al refrescar perfil:', err)
     } finally {
       setLoading(false)
     }

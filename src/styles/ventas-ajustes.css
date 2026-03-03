@@ -530,7 +530,7 @@
 .aj-psm-bar {
   height: 100%;
   border-radius: 2px;
-  transition: all 0.3s ease;
+  transition: all var(--transition-base);
 }
 
 .aj-psm-label {
@@ -642,7 +642,7 @@
   border-radius: var(--radius-sm);
   border: none;
   background: var(--error);
-  color: #fff;
+  color: var(--text-inverse);
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
@@ -651,9 +651,9 @@
 
 .aj-btn-danger:hover { opacity: 0.9; }
 
-.aj-btn-warning {
-  color: var(--warning) !important;
-  border-color: var(--warning) !important;
+.aj-btn-ghost.aj-btn-warning {
+  color: var(--warning);
+  border-color: var(--warning);
 }
 
 .aj-btn-sm {
@@ -1229,7 +1229,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text-muted) !important;
+  color: var(--text-muted);
 }
 
 /* ═══ MODULE BADGES ═══ */
@@ -1661,5 +1661,104 @@
   .aj-log-filtros select,
   .aj-log-filtros input[type="date"] {
     width: 100%;
+  }
+}
+
+/* ── Icon utility ────────────────────────────────────────────────── */
+.aj-icon-nav {
+  width: 16px;
+  height: 16px;
+}
+
+.aj-icon-back {
+  width: 18px;
+  height: 18px;
+}
+
+.aj-icon-chevron {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  opacity: 0.4;
+}
+
+/* ── Focus-visible ───────────────────────────────────────────────── */
+.aj-nav-item:focus-visible,
+.aj-mobile-item:focus-visible,
+.aj-pipeline-tab:focus-visible,
+.aj-btn-primary:focus-visible,
+.aj-btn-ghost:focus-visible,
+.aj-btn-danger:focus-visible,
+.aj-btn-sm:focus-visible,
+.aj-btn-icon:focus-visible,
+.aj-btn-icon-danger:focus-visible,
+.aj-btn-xs:focus-visible,
+.aj-back-btn:focus-visible,
+.aj-drag-handle:focus-visible,
+.aj-tema-opcion:focus-visible,
+.aj-avatar:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .aj-nav-item,
+  .aj-mobile-item,
+  .aj-pipeline-tab,
+  .aj-btn-primary,
+  .aj-btn-ghost,
+  .aj-btn-danger,
+  .aj-btn-sm,
+  .aj-btn-icon,
+  .aj-btn-icon-danger,
+  .aj-btn-xs,
+  .aj-tema-opcion,
+  .aj-avatar-overlay,
+  .aj-psm-bar,
+  .aj-reparto-bar-fill,
+  .aj-log-row,
+  .aj-field input,
+  .aj-field textarea,
+  .aj-field select,
+  .aj-disp-franja input[type="time"],
+  .aj-log-date-field input[type="date"],
+  .aj-reparto-input input,
+  .aj-comisiones-table input[type="number"],
+  .aj-mapeo-row input,
+  .aj-mapeo-row select {
+    transition: none;
+  }
+}
+
+/* ── Print ────────────────────────────────────────────────────────── */
+@media print {
+  .aj-sidebar,
+  .aj-mobile-bar,
+  .aj-mobile-nav,
+  .aj-btn-primary,
+  .aj-btn-ghost,
+  .aj-btn-danger,
+  .aj-btn-sm,
+  .aj-btn-icon,
+  .aj-btn-icon-danger,
+  .aj-drag-handle,
+  .aj-tema-opcion,
+  .aj-avatar-overlay {
+    display: none !important;
+  }
+
+  .aj-page {
+    margin: 0;
+    width: 100%;
+    height: auto;
+  }
+
+  .aj-layout {
+    display: block;
+  }
+
+  .aj-content {
+    padding: 0;
   }
 }
