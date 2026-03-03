@@ -41,6 +41,7 @@ export default function DashboardToolbar({
               className="db-select-periodo db-select-usuario"
               value={usuarioFiltro}
               onChange={e => onUsuarioFiltroChange(e.target.value)}
+              aria-label="Filtrar por miembro del equipo"
             >
               <option value="">Todo el equipo</option>
               {miembrosEquipo.map(m => (
@@ -52,25 +53,25 @@ export default function DashboardToolbar({
 
         {editMode ? (
           <div className="db-toolbar-actions">
-            <button className="db-toolbar-btn db-toolbar-btn--add" onClick={() => setShowAdd(true)}>
+            <button className="db-toolbar-btn db-toolbar-btn--add" onClick={() => setShowAdd(true)} aria-label="Añadir widget">
               <Plus size={14} />
               <span>Añadir</span>
             </button>
-            <button className="db-toolbar-btn" onClick={onReset} title="Restaurar layout por defecto">
+            <button className="db-toolbar-btn" onClick={onReset} aria-label="Resetear layout">
               <RotateCcw size={14} />
               <span>Resetear</span>
             </button>
-            <button className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave}>
+            <button className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave} aria-label="Guardar layout">
               <Save size={14} />
               <span>Guardar</span>
             </button>
-            <button className="db-toolbar-btn db-toolbar-btn--cancel" onClick={() => setEditMode(false)}>
+            <button className="db-toolbar-btn db-toolbar-btn--cancel" onClick={() => setEditMode(false)} aria-label="Cancelar edición">
               <X size={14} />
               <span>Cancelar</span>
             </button>
           </div>
         ) : (
-          <button className="db-toolbar-btn db-toolbar-btn--edit" onClick={() => setEditMode(true)}>
+          <button className="db-toolbar-btn db-toolbar-btn--edit" onClick={() => setEditMode(true)} aria-label="Editar dashboard">
             <Settings size={14} />
             <span>Editar</span>
           </button>
