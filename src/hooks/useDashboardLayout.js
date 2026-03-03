@@ -35,6 +35,15 @@ export function useDashboardLayout() {
     })()
   }, [user?.id])
 
+  // Reset initialLoadDone when user changes (logout → new login)
+  const prevUserId = useRef(null)
+  useEffect(() => {
+    if (user?.id !== prevUserId.current) {
+      prevUserId.current = user?.id
+      initialLoadDone.current = false
+    }
+  }, [user?.id])
+
   useEffect(() => {
     if (!user?.id) return
     setRol(getUserRole(usuario, rolesComerciales, user.id))
