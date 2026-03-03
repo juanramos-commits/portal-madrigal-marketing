@@ -20,12 +20,16 @@ export default function AddWidgetModal({ open, onClose, onAdd, rol, layout }) {
   return (
     <Modal open={open} onClose={onClose} title="Añadir widget" size="md">
       <div className="db-addw">
-        <div className="db-addw-tabs">
+        <div className="db-addw-tabs" role="tablist" aria-label="Categorías de widgets">
           {WIDGET_CATEGORIES.map(cat => {
             const count = availableWidgets.filter(w => w.category === cat.key).length
             return (
               <button
                 key={cat.key}
+                role="tab"
+                aria-selected={tab === cat.key}
+                aria-controls="db-addw-panel"
+                id={`db-addw-tab-${cat.key}`}
                 className={`db-addw-tab${tab === cat.key ? ' db-addw-tab--active' : ''}`}
                 onClick={() => setTab(cat.key)}
               >
@@ -37,7 +41,7 @@ export default function AddWidgetModal({ open, onClose, onAdd, rol, layout }) {
           })}
         </div>
 
-        <div className="db-addw-list">
+        <div className="db-addw-list" id="db-addw-panel" role="tabpanel" aria-labelledby={`db-addw-tab-${tab}`}>
           {filtered.length === 0 ? (
             <div className="db-addw-empty">
               Todos los widgets de esta categoría ya están agregados
