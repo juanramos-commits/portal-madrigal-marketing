@@ -816,9 +816,9 @@
 
 /* ── Widget Conversion Table ───────────────────────────────────────────── */
 
-.db-wconv-tasa-high { color: var(--success); font-weight: var(--weight-semibold); }
-.db-wconv-tasa-mid { color: var(--warning); font-weight: var(--weight-semibold); }
-.db-wconv-tasa-low { color: var(--error); font-weight: var(--weight-semibold); }
+.db-wconv-tasa-high { color: var(--success); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
+.db-wconv-tasa-mid { color: var(--warning); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
+.db-wconv-tasa-low { color: var(--error); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
 
 /* ── Widget Funnel ─────────────────────────────────────────────────────── */
 
