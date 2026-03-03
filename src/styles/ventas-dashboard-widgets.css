@@ -200,8 +200,14 @@
 }
 
 .db-widget--editing {
-  border-color: var(--border-hover);
-  box-shadow: 0 0 0 1px var(--primary-muted);
+  border-color: var(--primary-muted);
+  box-shadow: 0 0 0 2px var(--primary-muted);
+  animation: db-widget-edit-pulse 2s ease-in-out infinite;
+}
+
+@keyframes db-widget-edit-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--primary-muted); }
+  50% { box-shadow: 0 0 0 3px var(--primary-muted), 0 0 8px var(--primary-muted); }
 }
 
 .db-widget-header {
