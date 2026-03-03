@@ -583,6 +583,21 @@
   gap: var(--space-sm);
   max-height: 320px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.db-addw-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.db-addw-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.db-addw-list::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .db-addw-empty {
