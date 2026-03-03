@@ -47,7 +47,13 @@ export default function VentaCambioEstado({ venta, onCambio }) {
     e.stopPropagation()
     if (!abierto && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
-      setPos({ top: rect.bottom + 4, left: rect.left })
+      const dropdownHeight = opciones.length * 36 + 8 // approx height
+      const spaceBelow = window.innerHeight - rect.bottom - 4
+      const openAbove = spaceBelow < dropdownHeight && rect.top > dropdownHeight
+      setPos({
+        top: openAbove ? rect.top - dropdownHeight - 4 : rect.bottom + 4,
+        left: rect.left,
+      })
     }
     setAbierto(!abierto)
   }
