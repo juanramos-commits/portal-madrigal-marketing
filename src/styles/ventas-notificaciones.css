@@ -12,6 +12,12 @@
   flex-wrap: wrap;
 }
 
+.ntf-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
 .ntf-header h1 {
   font-size: var(--font-2xl);
   font-weight: var(--weight-bold);
@@ -19,6 +25,21 @@
   line-height: var(--leading-tight);
   color: var(--text);
   margin: 0;
+}
+
+.ntf-header-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 var(--space-1-5);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-bold);
+  color: var(--text-inverse);
+  background: var(--primary);
+  border-radius: var(--radius-pill);
+  line-height: 1;
 }
 
 .ntf-btn-marcar-todas {

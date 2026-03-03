@@ -9,7 +9,12 @@ export default function VentasNotificaciones() {
   return (
     <div className="ntf-page">
       <div className="ntf-header">
-        <h1>Notificaciones</h1>
+        <div className="ntf-header-left">
+          <h1>Notificaciones</h1>
+          {ntf.contadorNoLeidas > 0 && (
+            <span className="ntf-header-badge">{ntf.contadorNoLeidas}</span>
+          )}
+        </div>
         {ntf.contadorNoLeidas > 0 && (
           <button className="ntf-btn-marcar-todas" onClick={ntf.marcarTodasComoLeidas}>
             <CheckCheck size={16} />
