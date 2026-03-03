@@ -56,7 +56,7 @@ export default function WidgetKPI({ widgetDef, data }) {
 
   return (
     <div className="db-wkpi">
-      <span className="db-wkpi-value" ref={numRef}>0</span>
+      <span className="db-wkpi-value" ref={numRef} aria-live="polite" aria-atomic="true">0</span>
       {diffText != null && (
         <span className={`db-wkpi-diff db-wkpi-diff-${diffType}`}>
           {diffType === 'up' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="db-wkpi-arrow"><polyline points="18 15 12 9 6 15"/></svg>}
