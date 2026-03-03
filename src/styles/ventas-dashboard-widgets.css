@@ -475,6 +475,7 @@
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
+  transition: background var(--transition-fast);
   text-overflow: ellipsis;
   max-width: 160px;
 }
