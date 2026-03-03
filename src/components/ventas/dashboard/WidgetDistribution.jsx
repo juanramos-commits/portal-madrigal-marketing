@@ -46,7 +46,7 @@ function PieDistribution({ data, label }) {
       <div className="db-wdist-legend">
         {data.map((d, i) => (
           <div key={d.nombre || i} className="db-wdist-legend-item">
-            <span className="db-wdist-legend-dot" style={{ background: d.color || COLORS[i % COLORS.length] }} />
+            <span className="db-wdist-legend-dot" style={{ background: d.color || COLORS[i % COLORS.length] }} aria-hidden="true" />
             <span>{d.nombre}</span>
             <span className="db-wdist-legend-value">{d.valor}</span>
             {total > 0 && <span className="db-wdist-legend-pct">({Math.round(d.valor / total * 100)}%)</span>}
