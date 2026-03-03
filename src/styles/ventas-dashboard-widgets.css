@@ -664,6 +664,7 @@
 .db-wdist-legend-value {
   font-weight: var(--weight-semibold);
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .db-wdist-legend-pct {
@@ -784,6 +785,7 @@
   color: var(--text-muted);
   white-space: nowrap;
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Widget Activity Feed ──────────────────────────────────────────────── */
@@ -916,6 +918,7 @@
   white-space: nowrap;
   width: 42px;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .db-wfunnel-global {
@@ -989,6 +992,7 @@
 .db-wpipeline-label-count {
   font-weight: var(--weight-semibold);
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Widget Goal ───────────────────────────────────────────────────────── */
