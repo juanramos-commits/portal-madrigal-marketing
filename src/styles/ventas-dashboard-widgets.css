@@ -531,6 +531,11 @@
   color: var(--text);
 }
 
+.db-addw-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .db-addw-tab--active {
   color: var(--text);
   background: var(--bg-active);
