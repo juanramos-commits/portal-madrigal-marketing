@@ -126,6 +126,7 @@ export default function VentasDashboard() {
         setEditMode={db.setEditMode}
         onSave={db.handleSave}
         onReset={db.handleReset}
+        isSaving={db.isSaving}
         onAddWidget={db.addWidget}
         rol={db.rol}
         layout={db.layout}

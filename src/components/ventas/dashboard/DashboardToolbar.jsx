@@ -8,6 +8,7 @@ export default function DashboardToolbar({
   usuarioFiltro, onUsuarioFiltroChange, miembrosEquipo,
   editMode, setEditMode,
   onSave, onReset, onAddWidget,
+  isSaving,
   rol, layout,
 }) {
   const [showAdd, setShowAdd] = useState(false)
@@ -49,13 +50,13 @@ export default function DashboardToolbar({
               <Plus size={14} />
               <span>Añadir</span>
             </button>
-            <button className="db-toolbar-btn" onClick={onReset} aria-label="Resetear layout">
+            <button className="db-toolbar-btn" onClick={onReset} disabled={isSaving} aria-label="Resetear layout">
               <RotateCcw size={14} />
               <span>Resetear</span>
             </button>
-            <button className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave} aria-label="Guardar layout">
+            <button className="db-toolbar-btn db-toolbar-btn--save" onClick={onSave} disabled={isSaving} aria-label="Guardar layout">
               <Save size={14} />
-              <span>Guardar</span>
+              <span>{isSaving ? 'Guardando...' : 'Guardar'}</span>
             </button>
             <button className="db-toolbar-btn db-toolbar-btn--cancel" onClick={() => setEditMode(false)} aria-label="Cancelar edición">
               <X size={14} />

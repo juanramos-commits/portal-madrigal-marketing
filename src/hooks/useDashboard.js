@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback, useState } from 'react'
 import { useDashboardLayout } from './useDashboardLayout'
 import { useDashboardData } from './useDashboardData'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
@@ -6,18 +6,35 @@ import { useRefreshOnFocus } from './useRefreshOnFocus'
 export function useDashboard() {
   const layoutHook = useDashboardLayout()
   const dataHook = useDashboardData(layoutHook.layout)
+  const [isSaving, setIsSaving] = useState(false)
 
   useRefreshOnFocus(dataHook.refrescar, { enabled: !layoutHook.loading })
 
-  const handleSave = async () => {
-    await layoutHook.saveLayout(layoutHook.layout)
-    layoutHook.setEditMode(false)
-  }
+  const handleSave = useCallback(async () => {
+    if (isSaving) return
+    setIsSaving(true)
+    try {
+      await layoutHook.saveLayout(layoutHook.layout)
+      layoutHook.setEditMode(false)
+    } catch (e) {
+      console.error('Error guardando layout:', e)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [isSaving, layoutHook.saveLayout, layoutHook.layout, layoutHook.setEditMode])
 
-  const handleReset = async () => {
-    await layoutHook.resetLayout()
-    layoutHook.setEditMode(false)
-  }
+  const handleReset = useCallback(async () => {
+    if (isSaving) return
+    setIsSaving(true)
+    try {
+      await layoutHook.resetLayout()
+      layoutHook.setEditMode(false)
+    } catch (e) {
+      console.error('Error reseteando layout:', e)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [isSaving, layoutHook.resetLayout, layoutHook.setEditMode])
 
   const miembrosEquipo = useMemo(() => {
     const seen = new Map()
@@ -41,5 +58,6 @@ export function useDashboard() {
     miembrosEquipo,
     handleSave,
     handleReset,
+    isSaving,
   }
 }
