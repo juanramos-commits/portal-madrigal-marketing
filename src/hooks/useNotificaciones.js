@@ -82,11 +82,16 @@ export function useNotificaciones() {
   const marcarComoLeida = useCallback(async (notifId) => {
     if (!notifId) return
     // Optimistic update — remove from list when filtering unread
-    setNotificaciones(prev =>
-      filtro === 'no_leidas'
+    let wasUnread = false
+    setNotificaciones(prev => {
+      const target = prev.find(n => n.id === notifId)
+      if (!target || target.leida) return prev
+      wasUnread = true
+      return filtroRef.current === 'no_leidas'
         ? prev.filter(n => n.id !== notifId)
         : prev.map(n => n.id === notifId ? { ...n, leida: true } : n)
-    )
+    })
+    if (!wasUnread) return
     setContadorNoLeidas(prev => Math.max(0, prev - 1))
     try {
       const { error: updateErr } = await supabase
@@ -95,7 +100,6 @@ export function useNotificaciones() {
         .eq('id', notifId)
         .eq('usuario_id', user?.id)
       if (updateErr) {
-        // Rollback — reload to restore correct state
         cargarNotificaciones(true)
         contarNoLeidas()
       }
@@ -103,7 +107,7 @@ export function useNotificaciones() {
       cargarNotificaciones(true)
       contarNoLeidas()
     }
-  }, [user?.id, filtro, cargarNotificaciones, contarNoLeidas])
+  }, [user?.id, cargarNotificaciones, contarNoLeidas])
 
   const marcarTodasComoLeidas = useCallback(async () => {
     if (!user?.id) return
