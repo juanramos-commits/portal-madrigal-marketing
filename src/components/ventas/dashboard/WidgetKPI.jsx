@@ -9,35 +9,51 @@ function formatPercent(v) {
   return `${Number(v).toFixed(1)}%`
 }
 
-function animateValue(el, end, formato, duration) {
-  if (!el) return
-  const numEnd = typeof end === 'number' ? end : parseFloat(String(end).replace(/[^0-9.-]/g, '')) || 0
-  const startTime = performance.now()
-  const step = (now) => {
-    const progress = Math.min((now - startTime) / duration, 1)
-    const eased = 1 - Math.pow(1 - progress, 3)
-    const current = numEnd * eased
-    if (formato === 'currency') {
-      el.textContent = formatCurrency(current)
-    } else if (formato === 'percent') {
-      el.textContent = formatPercent(current)
-    } else {
-      el.textContent = Math.round(current).toLocaleString('es-ES')
-    }
-    if (progress < 1) requestAnimationFrame(step)
-  }
-  requestAnimationFrame(step)
-}
-
 export default function WidgetKPI({ widgetDef, data }) {
   const numRef = useRef(null)
+  const rafRef = useRef(null)
 
   const valor = Number(data?.valor) || 0
   const anterior = data?.anterior != null ? Number(data.anterior) : null
   const formato = widgetDef?.formato || 'number'
 
   useEffect(() => {
-    if (numRef.current) animateValue(numRef.current, valor, formato, 600)
+    const el = numRef.current
+    if (!el) return
+
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+
+    const numEnd = typeof valor === 'number' ? valor : parseFloat(String(valor).replace(/[^0-9.-]/g, '')) || 0
+    const startTime = performance.now()
+    let cancelled = false
+
+    const step = (now) => {
+      if (cancelled) return
+      const progress = Math.min((now - startTime) / 600, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      const current = numEnd * eased
+      if (formato === 'currency') {
+        el.textContent = formatCurrency(current)
+      } else if (formato === 'percent') {
+        el.textContent = formatPercent(current)
+      } else {
+        el.textContent = Math.round(current).toLocaleString('es-ES')
+      }
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(step)
+      } else {
+        rafRef.current = null
+      }
+    }
+    rafRef.current = requestAnimationFrame(step)
+
+    return () => {
+      cancelled = true
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+    }
   }, [valor, formato])
 
   const rawDiff = anterior != null ? valor - anterior : null
