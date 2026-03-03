@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Area, AreaChart, BarChart, Bar } from 'recharts'
 
 function formatDate(d) {
@@ -57,6 +58,7 @@ function getSeriesName(dataKey) {
 }
 
 export default function WidgetChart({ widgetDef, data }) {
+  const gradId = useId()
   const series = Array.isArray(data) ? data : []
 
   if (series.length === 0) {
@@ -90,7 +92,7 @@ export default function WidgetChart({ widgetDef, data }) {
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <AreaChart data={series} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id={`grad_${widgetDef.type}`} x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={`grad_${gradId}`} x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor={colors.stroke} stopOpacity={0.2} />
               <stop offset="95%" stopColor={colors.stroke} stopOpacity={0} />
             </linearGradient>
@@ -99,7 +101,7 @@ export default function WidgetChart({ widgetDef, data }) {
           <XAxis dataKey="fecha" tickFormatter={formatDate} tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
           <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} allowDecimals={false} />
           <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--border-hover)' }} />
-          <Area type="monotone" dataKey={field} stroke={colors.stroke} fill={`url(#grad_${widgetDef.type})`} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} name={name} />
+          <Area type="monotone" dataKey={field} stroke={colors.stroke} fill={`url(#grad_${gradId})`} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} name={name} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
