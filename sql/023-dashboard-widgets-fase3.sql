@@ -89,7 +89,7 @@ BEGIN
   IF 'ventas_pendientes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('ventas_pendientes', jsonb_build_object(
       'valor', (SELECT COUNT(*) FROM ventas_ventas WHERE estado = 'pendiente'
-        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id)),
+        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id OR setter_id = p_usuario_id)),
       'anterior', NULL
     ));
   END IF;
@@ -108,9 +108,9 @@ BEGIN
   IF 'ingresos_totales' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('ingresos_totales', jsonb_build_object(
       'valor', COALESCE((SELECT SUM(importe) FROM ventas_ventas WHERE estado = 'aprobada' AND es_devolucion = false AND fecha_venta BETWEEN p_fecha_inicio AND p_fecha_fin
-        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id)), 0),
+        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id OR setter_id = p_usuario_id)), 0),
       'anterior', COALESCE((SELECT SUM(importe) FROM ventas_ventas WHERE estado = 'aprobada' AND es_devolucion = false AND fecha_venta BETWEEN v_fecha_prev_inicio AND v_fecha_prev_fin
-        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id)), 0)
+        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id OR setter_id = p_usuario_id)), 0)
     ));
   END IF;
 
@@ -118,10 +118,10 @@ BEGIN
   IF 'ingresos_mes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('ingresos_mes', jsonb_build_object(
       'valor', COALESCE((SELECT SUM(importe) FROM ventas_ventas WHERE estado = 'aprobada' AND es_devolucion = false AND fecha_venta >= date_trunc('month', CURRENT_DATE)::date
-        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id)), 0),
+        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id OR setter_id = p_usuario_id)), 0),
       'anterior', COALESCE((SELECT SUM(importe) FROM ventas_ventas WHERE estado = 'aprobada' AND es_devolucion = false
         AND fecha_venta >= (date_trunc('month', CURRENT_DATE) - interval '1 month')::date AND fecha_venta < date_trunc('month', CURRENT_DATE)::date
-        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id)), 0)
+        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id OR setter_id = p_usuario_id)), 0)
     ));
   END IF;
 
@@ -129,9 +129,9 @@ BEGIN
   IF 'ticket_medio' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('ticket_medio', jsonb_build_object(
       'valor', COALESCE((SELECT AVG(importe) FROM ventas_ventas WHERE estado = 'aprobada' AND es_devolucion = false AND fecha_venta BETWEEN p_fecha_inicio AND p_fecha_fin
-        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id)), 0),
+        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id OR setter_id = p_usuario_id)), 0),
       'anterior', COALESCE((SELECT AVG(importe) FROM ventas_ventas WHERE estado = 'aprobada' AND es_devolucion = false AND fecha_venta BETWEEN v_fecha_prev_inicio AND v_fecha_prev_fin
-        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id)), 0)
+        AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id OR setter_id = p_usuario_id)), 0)
     ));
   END IF;
 
@@ -159,7 +159,7 @@ BEGIN
         FROM ventas_ventas
         WHERE estado = 'aprobada' AND es_devolucion = false
           AND fecha_venta BETWEEN p_fecha_inicio AND p_fecha_fin
-          AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id)
+          AND (v_es_admin OR v_rol = 'director_ventas' OR closer_id = p_usuario_id OR setter_id = p_usuario_id)
         GROUP BY fecha_venta
         ORDER BY fecha
       ) t
@@ -543,7 +543,7 @@ BEGIN
           COALESCE(l.nombre_negocio, '') as nombre_negocio,
           COALESCE(cl.nombre, '') as closer_nombre,
           COALESCE(st.nombre, '') as setter_nombre,
-          ci.google_meet_url
+          ci.google_meet_url as meet_link
         FROM ventas_citas ci
         LEFT JOIN ventas_leads l ON l.id = ci.lead_id
         LEFT JOIN usuarios cl ON cl.id = ci.closer_id
