@@ -1,9 +1,5 @@
 /* ── Notificaciones ── */
 
-.ntf-page {
-  max-width: 560px;
-}
-
 .ntf-header {
   display: flex;
   align-items: center;
