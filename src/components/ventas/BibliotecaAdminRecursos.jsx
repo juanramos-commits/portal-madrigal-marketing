@@ -110,6 +110,8 @@ export default function BibliotecaAdminRecursos({
 }) {
   const [seccionActiva, setSeccionActiva] = useState(secciones[0]?.id || '')
   const [confirmEliminar, setConfirmEliminar] = useState(null)
+  const [eliminando, setEliminando] = useState(false)
+  const [errorEliminar, setErrorEliminar] = useState(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -130,12 +132,16 @@ export default function BibliotecaAdminRecursos({
 
   const handleConfirmEliminar = async () => {
     if (!confirmEliminar) return
+    setEliminando(true)
+    setErrorEliminar(null)
     try {
       await onEliminar(confirmEliminar.id)
-    } catch (_) {
-      // silently fail
+      setConfirmEliminar(null)
+    } catch (e) {
+      setErrorEliminar(e?.message || 'Error al eliminar el recurso')
+    } finally {
+      setEliminando(false)
     }
-    setConfirmEliminar(null)
   }
 
   return (
@@ -190,11 +196,12 @@ export default function BibliotecaAdminRecursos({
       <ConfirmDialog
         open={!!confirmEliminar}
         title="Eliminar recurso"
-        message={<>¿Eliminar el recurso <strong>{confirmEliminar?.nombre}</strong>?<br /><span className="bib-text-muted">Esta acción no se puede deshacer.</span></>}
+        message={<>¿Eliminar el recurso <strong>{confirmEliminar?.nombre}</strong>?<br /><span className="bib-text-muted">Esta acción no se puede deshacer.</span>{errorEliminar && <><br /><span style={{ color: '#ef4444', fontSize: 13 }}>{errorEliminar}</span></>}</>}
         variant="danger"
         confirmText="Eliminar"
+        loading={eliminando}
         onConfirm={handleConfirmEliminar}
-        onCancel={() => setConfirmEliminar(null)}
+        onCancel={() => { setConfirmEliminar(null); setErrorEliminar(null) }}
       />
     </div>
   )

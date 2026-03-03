@@ -91,6 +91,8 @@ export default function BibliotecaAdminSecciones({
   onReordenar,
 }) {
   const [confirmEliminar, setConfirmEliminar] = useState(null)
+  const [eliminando, setEliminando] = useState(false)
+  const [errorEliminar, setErrorEliminar] = useState(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -109,12 +111,16 @@ export default function BibliotecaAdminSecciones({
 
   const handleConfirmEliminar = async () => {
     if (!confirmEliminar) return
+    setEliminando(true)
+    setErrorEliminar(null)
     try {
       await onEliminar(confirmEliminar.id)
-    } catch (_) {
-      // silently fail
+      setConfirmEliminar(null)
+    } catch (e) {
+      setErrorEliminar(e?.message || 'Error al eliminar la sección')
+    } finally {
+      setEliminando(false)
     }
-    setConfirmEliminar(null)
   }
 
   return (
@@ -149,11 +155,12 @@ export default function BibliotecaAdminSecciones({
       <ConfirmDialog
         open={!!confirmEliminar}
         title="Eliminar sección"
-        message={<>¿Eliminar la sección <strong>{confirmEliminar?.nombre}</strong> y todos sus recursos?<br /><span className="bib-text-muted">Esta acción no se puede deshacer.</span></>}
+        message={<>¿Eliminar la sección <strong>{confirmEliminar?.nombre}</strong> y todos sus recursos?<br /><span className="bib-text-muted">Esta acción no se puede deshacer.</span>{errorEliminar && <><br /><span style={{ color: '#ef4444', fontSize: 13 }}>{errorEliminar}</span></>}</>}
         variant="danger"
         confirmText="Eliminar"
+        loading={eliminando}
         onConfirm={handleConfirmEliminar}
-        onCancel={() => setConfirmEliminar(null)}
+        onCancel={() => { setConfirmEliminar(null); setErrorEliminar(null) }}
       />
     </div>
   )
