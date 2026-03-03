@@ -1,3 +1,4 @@
+import { AlertCircle, Bell } from 'lucide-react'
 import NotificacionItem from './NotificacionItem'
 
 function agruparPorFecha(notificaciones) {
@@ -40,27 +41,50 @@ const GRUPO_LABELS = {
   anteriores: 'Anteriores',
 }
 
-const BellIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-  </svg>
-)
 
 export default function NotificacionesLista({
   notificaciones,
   loading,
+  error,
   hayMas,
   onCargarMas,
   onMarcarLeida,
+  onEliminar,
+  onReintentar,
 }) {
+  if (error && notificaciones.length === 0) {
+    return (
+      <div className="ntf-empty">
+        <div className="ntf-empty-icon"><AlertCircle size={48} /></div>
+        <p>{error}</p>
+        {onReintentar && (
+          <button className="ntf-cargar-mas" onClick={onReintentar}>Reintentar</button>
+        )}
+      </div>
+    )
+  }
+
   if (loading && notificaciones.length === 0) {
-    return <div className="ntf-loading">Cargando notificaciones...</div>
+    return (
+      <div className="ntf-skeleton-list">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="ntf-skeleton-item">
+            <div className="ntf-skeleton-icon" />
+            <div style={{ flex: 1 }}>
+              <div className="ntf-skeleton-line ntf-skeleton-line--title" />
+              <div className="ntf-skeleton-line ntf-skeleton-line--msg" />
+              <div className="ntf-skeleton-line ntf-skeleton-line--time" />
+            </div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
   if (notificaciones.length === 0) {
     return (
       <div className="ntf-empty">
-        <div className="ntf-empty-icon"><BellIcon /></div>
+        <div className="ntf-empty-icon"><Bell size={48} /></div>
         <p>No tienes notificaciones</p>
       </div>
     )
@@ -82,6 +106,7 @@ export default function NotificacionesLista({
                 key={n.id}
                 notificacion={n}
                 onMarcarLeida={onMarcarLeida}
+                onEliminar={onEliminar}
               />
             ))}
           </div>
