@@ -47,6 +47,7 @@ export default function NotificacionesLista({
   loading,
   error,
   hayMas,
+  filtroActivo,
   onCargarMas,
   onMarcarLeida,
   onEliminar,
