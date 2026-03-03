@@ -23,8 +23,9 @@ export default function CRMFiltros({
 
   // Lock body scroll while open
   useEffect(() => {
+    const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    return () => { document.body.style.overflow = prev }
   }, [])
 
   const handleChange = (key, value) => {

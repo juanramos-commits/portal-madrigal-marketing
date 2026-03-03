@@ -454,8 +454,14 @@ export default function CRMLeadDetalle() {
   useEffect(() => {
     if (!showMenu) return
     const handler = () => setShowMenu(false)
-    document.addEventListener('click', handler)
-    return () => document.removeEventListener('click', handler)
+    // Defer to avoid capturing the opening click
+    const rafId = requestAnimationFrame(() => {
+      document.addEventListener('mousedown', handler)
+    })
+    return () => {
+      cancelAnimationFrame(rafId)
+      document.removeEventListener('mousedown', handler)
+    }
   }, [showMenu])
 
   // ── Close tag picker on outside click ────────────────────────────
@@ -511,7 +517,7 @@ export default function CRMLeadDetalle() {
     )
   }
 
-  const tagIdsOnLead = new Set(lead.lead_etiquetas.map(e => e.id))
+  const tagIdsOnLead = new Set((lead.lead_etiquetas || []).map(e => e.id))
   const availableTags = etiquetasDisponibles.filter(e => !tagIdsOnLead.has(e.id))
 
   return (

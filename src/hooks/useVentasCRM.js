@@ -615,15 +615,14 @@ export function useVentasCRM() {
     }
 
     // Optimistic update
+    const nuevoContadorOptimistic = (etapaDestino.tipo === 'ghosting' || etapaDestino.tipo === 'seguimiento')
+      ? (leadData.contador_intentos || 0) + 1
+      : 0
+
     setLeads(prev => {
       const newLeads = { ...prev }
       newLeads[etapaOrigenId] = (prev[etapaOrigenId] || []).filter(l => l.id !== leadId)
-      const movedLead = { ...leadData, etapa_id: etapaDestinoId, contador_intentos: 0 }
-
-      if (etapaDestino.tipo === 'ghosting' || etapaDestino.tipo === 'seguimiento') {
-        movedLead.contador_intentos = (leadData.contador_intentos || 0) + 1
-      }
-
+      const movedLead = { ...leadData, etapa_id: etapaDestinoId, contador_intentos: nuevoContadorOptimistic }
       newLeads[etapaDestinoId] = [movedLead, ...(prev[etapaDestinoId] || [])]
       return newLeads
     })

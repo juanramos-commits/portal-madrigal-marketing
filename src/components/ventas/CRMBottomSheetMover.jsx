@@ -12,8 +12,9 @@ export default function CRMBottomSheetMover({
 
   // Lock body scroll while open
   useEffect(() => {
+    const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
+    return () => { document.body.style.overflow = prev }
   }, [])
 
   // Close on Escape

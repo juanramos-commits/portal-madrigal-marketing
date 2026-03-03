@@ -1,6 +1,6 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { useCallback, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { Inbox } from 'lucide-react'
 import CRMLeadCard from './CRMLeadCard'
 
@@ -20,7 +20,7 @@ export default function CRMKanbanColumn({
   })
 
   const scrollRef = useRef(null)
-  const leadIds = leads.map(l => l.id)
+  const leadIds = useMemo(() => leads.map(l => l.id), [leads])
 
   const handleScroll = useCallback(() => {
     if (!hasMore || loadingMore || !scrollRef.current) return
