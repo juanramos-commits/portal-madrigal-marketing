@@ -1,7 +1,7 @@
 import { memo } from 'react'
 
 export default memo(function WidgetGoal({ widgetDef, data, config }) {
-  const objetivo = config?.objetivo || widgetDef?.defaultConfig?.objetivo || 10
+  const objetivo = Math.max(Number(config?.objetivo || widgetDef?.defaultConfig?.objetivo) || 10, 1)
   const actual = Number(data?.actual) || 0
   const diasRestantes = Math.max(Number(data?.dias_restantes) || 0, 0)
   const pct = objetivo > 0 ? Math.min((actual / objetivo) * 100, 100) : 0
