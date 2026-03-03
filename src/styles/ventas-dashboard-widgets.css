@@ -209,7 +209,7 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.db-widget:hover {
+.db-widget:not(.db-widget--editing):hover {
   border-color: var(--border-hover);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
