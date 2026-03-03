@@ -62,7 +62,11 @@ export function useNotificaciones() {
         setNotificaciones(items)
         offsetRef.current = items.length
       } else {
-        setNotificaciones(prev => [...prev, ...items])
+        setNotificaciones(prev => {
+          const existingIds = new Set(prev.map(n => n.id))
+          const newItems = items.filter(n => !existingIds.has(n.id))
+          return [...prev, ...newItems]
+        })
         offsetRef.current += items.length
       }
 
