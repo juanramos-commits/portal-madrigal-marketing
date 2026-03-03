@@ -84,6 +84,7 @@ export default function CRMLeadDetalle() {
   const [error, setError] = useState(null)
   const [showMenu, setShowMenu] = useState(false)
   const [showEtapaDropdown, setShowEtapaDropdown] = useState(null)
+  const [showAssignDropdown, setShowAssignDropdown] = useState(null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [showTagPicker, setShowTagPicker] = useState(false)
 
@@ -601,34 +602,58 @@ export default function CRMLeadDetalle() {
                   <>
                     <div className="crm-dropdown-sep" />
                     <div className="crm-dropdown-label">Asignaciones</div>
-                    <div className="crm-dropdown-select-item" onClick={e => e.stopPropagation()}>
+                    <button
+                      className="crm-dropdown-item"
+                      onClick={(e) => { e.stopPropagation(); setShowAssignDropdown(showAssignDropdown === 'setter' ? null : 'setter') }}
+                    >
                       <UserCheck size={14} />
-                      <Select
-                        value={lead.setter_asignado_id || ''}
-                        onChange={e => asignarSetter(e.target.value)}
-                      >
-                        <option value="">Sin setter</option>
+                      Setter: {lead.setter?.nombre || 'Sin asignar'}
+                    </button>
+                    {showAssignDropdown === 'setter' && (
+                      <div className="crm-dropdown-submenu">
+                        <button
+                          className={`crm-dropdown-item crm-dropdown-item-sm${!lead.setter_asignado_id ? ' active' : ''}`}
+                          onClick={() => { setShowMenu(false); asignarSetter('') }}
+                        >
+                          Sin setter
+                        </button>
                         {setters.map(s => (
-                          <option key={s.usuario_id} value={s.usuario_id}>
+                          <button
+                            key={s.usuario_id}
+                            className={`crm-dropdown-item crm-dropdown-item-sm${lead.setter_asignado_id === s.usuario_id ? ' active' : ''}`}
+                            onClick={() => { setShowMenu(false); asignarSetter(s.usuario_id) }}
+                          >
                             {s.usuario?.nombre || s.usuario?.email}
-                          </option>
+                          </button>
                         ))}
-                      </Select>
-                    </div>
-                    <div className="crm-dropdown-select-item" onClick={e => e.stopPropagation()}>
+                      </div>
+                    )}
+                    <button
+                      className="crm-dropdown-item"
+                      onClick={(e) => { e.stopPropagation(); setShowAssignDropdown(showAssignDropdown === 'closer' ? null : 'closer') }}
+                    >
                       <Users size={14} />
-                      <Select
-                        value={lead.closer_asignado_id || ''}
-                        onChange={e => asignarCloser(e.target.value)}
-                      >
-                        <option value="">Sin closer</option>
+                      Closer: {lead.closer?.nombre || 'Sin asignar'}
+                    </button>
+                    {showAssignDropdown === 'closer' && (
+                      <div className="crm-dropdown-submenu">
+                        <button
+                          className={`crm-dropdown-item crm-dropdown-item-sm${!lead.closer_asignado_id ? ' active' : ''}`}
+                          onClick={() => { setShowMenu(false); asignarCloser('') }}
+                        >
+                          Sin closer
+                        </button>
                         {closers.map(c => (
-                          <option key={c.usuario_id} value={c.usuario_id}>
+                          <button
+                            key={c.usuario_id}
+                            className={`crm-dropdown-item crm-dropdown-item-sm${lead.closer_asignado_id === c.usuario_id ? ' active' : ''}`}
+                            onClick={() => { setShowMenu(false); asignarCloser(c.usuario_id) }}
+                          >
                             {c.usuario?.nombre || c.usuario?.email}
-                          </option>
+                          </button>
                         ))}
-                      </Select>
-                    </div>
+                      </div>
+                    )}
                     <div className="crm-dropdown-sep" />
                     <button className="crm-dropdown-item danger" onClick={() => { setShowMenu(false); setShowConfirmDelete(true) }}>
                       <Trash2 size={14} />
