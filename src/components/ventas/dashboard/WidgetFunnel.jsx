@@ -38,13 +38,13 @@ export default memo(function WidgetFunnel({ widgetDef, data }) {
           const convRate = prevVal && prevVal > 0 ? ((val / prevVal) * 100).toFixed(1) : null
 
           return (
-            <div key={nivel.key} className="db-wfunnel-row" role="listitem" style={{ animationDelay: `${i * 100}ms` }}>
+            <div key={nivel.key} className="db-wfunnel-row" role="listitem" style={{ '--anim-delay': `${i * 100}ms` }}>
               <div className="db-wfunnel-info">
                 <span className="db-wfunnel-label">{nivel.label}</span>
                 <span className="db-wfunnel-count">{val}</span>
               </div>
               <div className="db-wfunnel-bar-bg" aria-hidden="true">
-                <div className="db-wfunnel-bar" style={{ width: `${Math.max(pct, 3)}%`, background: nivel.color }} />
+                <div className="db-wfunnel-bar" style={{ '--bar-w': `${Math.max(pct, 3)}%`, '--bar-color': nivel.color }} />
               </div>
               <span className="db-wfunnel-rate">{convRate ? `${convRate}%` : ''}</span>
             </div>

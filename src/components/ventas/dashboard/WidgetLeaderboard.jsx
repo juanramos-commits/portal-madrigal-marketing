@@ -27,7 +27,7 @@ export default memo(function WidgetLeaderboard({ widgetDef, data }) {
           : ((Number(r.citas) || 0) / maxVal) * 100
 
         return (
-          <div key={r.usuario_id || i} className="db-wlead-item" style={{ animationDelay: `${i * 60}ms` }}>
+          <div key={r.usuario_id || i} className="db-wlead-item" style={{ '--anim-delay': `${i * 60}ms` }}>
             <MedalIcon pos={i} />
             <div className="db-wlead-info">
               <div className="db-wlead-top">
@@ -42,7 +42,7 @@ export default memo(function WidgetLeaderboard({ widgetDef, data }) {
               <div className="db-wlead-bar-bg" aria-hidden="true">
                 <div
                   className={`db-wlead-bar ${isCloser ? 'db-wlead-bar--closer' : 'db-wlead-bar--setter'}`}
-                  style={{ width: `${barPct}%` }}
+                  style={{ '--bar-w': `${barPct}%` }}
                 />
               </div>
             </div>

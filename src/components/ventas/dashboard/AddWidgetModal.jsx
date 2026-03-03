@@ -1,9 +1,22 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Modal from '../../ui/Modal'
 import { WIDGET_CATALOG, WIDGET_CATEGORIES, getWidgetsForRole } from '../../../config/widgetCatalog'
 
 export default function AddWidgetModal({ open, onClose, onAdd, rol, layout }) {
   const [tab, setTab] = useState('kpis')
+
+  const handleTabKeyDown = useCallback((e) => {
+    const keys = WIDGET_CATEGORIES.map(c => c.key)
+    const idx = keys.indexOf(tab)
+    let next = idx
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); next = (idx + 1) % keys.length }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); next = (idx - 1 + keys.length) % keys.length }
+    else if (e.key === 'Home') { e.preventDefault(); next = 0 }
+    else if (e.key === 'End') { e.preventDefault(); next = keys.length - 1 }
+    else return
+    setTab(keys[next])
+    document.getElementById(`db-addw-tab-${keys[next]}`)?.focus()
+  }, [tab])
 
   const usedTypes = useMemo(() => {
     if (!layout) return new Set()
@@ -20,18 +33,20 @@ export default function AddWidgetModal({ open, onClose, onAdd, rol, layout }) {
   return (
     <Modal open={open} onClose={onClose} title="Añadir widget" size="md">
       <div className="db-addw">
-        <div className="db-addw-tabs" role="tablist" aria-label="Categorías de widgets">
+        <div className="db-addw-tabs" role="tablist" aria-label="Categorías de widgets" onKeyDown={handleTabKeyDown}>
           {WIDGET_CATEGORIES.map(cat => {
+            const isActive = tab === cat.key
             const count = availableWidgets.filter(w => w.category === cat.key).length
             return (
               <button
                 key={cat.key}
                 type="button"
                 role="tab"
-                aria-selected={tab === cat.key}
+                aria-selected={isActive}
                 aria-controls="db-addw-panel"
                 id={`db-addw-tab-${cat.key}`}
-                className={`db-addw-tab${tab === cat.key ? ' db-addw-tab--active' : ''}`}
+                tabIndex={isActive ? 0 : -1}
+                className={`db-addw-tab${isActive ? ' db-addw-tab--active' : ''}`}
                 onClick={() => setTab(cat.key)}
               >
                 <cat.icon size={14} />

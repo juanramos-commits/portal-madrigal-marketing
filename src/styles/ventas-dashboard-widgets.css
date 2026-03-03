@@ -63,11 +63,11 @@
   border-bottom: 2px solid var(--text-muted);
 }
 
-.react-grid-placeholder {
-  background: var(--primary-muted) !important;
-  border: 1px dashed var(--border-hover) !important;
-  border-radius: var(--radius-md) !important;
-  opacity: 0.4 !important;
+.react-grid-layout .react-grid-placeholder {
+  background: var(--primary-muted);
+  border: 1px dashed var(--border-hover);
+  border-radius: var(--radius-md);
+  opacity: 0.4;
 }
 
 /* ── Toolbar ────────────────────────────────────────────────────────────── */
@@ -455,6 +455,14 @@
   margin-bottom: var(--space-2xs);
 }
 
+.db-wchart-tooltip-label {
+  color: var(--label-color, var(--text-muted));
+}
+
+.db-wchart-tooltip-value {
+  color: var(--text);
+}
+
 .db-wchart-tooltip-row {
   display: flex;
   align-items: center;
@@ -524,6 +532,7 @@
   font-size: var(--font-xs);
   font-weight: var(--weight-semibold);
   text-transform: capitalize;
+  color: var(--estado-color, var(--text-muted));
 }
 
 /* ── Add Widget Modal ───────────────────────────────────────────────────── */
@@ -726,6 +735,7 @@
   height: 8px;
   border-radius: var(--radius-full);
   flex-shrink: 0;
+  background: var(--dot-color, var(--text-muted));
 }
 
 .db-wdist-legend-value {
@@ -753,6 +763,7 @@
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
   animation: db-wlead-in 0.3s ease both;
+  animation-delay: var(--anim-delay, 0ms);
   transition: background var(--transition-fast);
 }
 
@@ -839,6 +850,7 @@
   background: var(--primary);
   pointer-events: none;
   will-change: width;
+  width: var(--bar-w, 0%);
 }
 
 .db-wlead-bar--closer {
@@ -885,6 +897,7 @@
   flex-shrink: 0;
   margin-top: var(--space-1-5);
   pointer-events: none;
+  background: var(--dot-color, var(--text-muted));
 }
 
 .db-wactivity-content {
@@ -944,6 +957,7 @@
   align-items: center;
   gap: var(--space-3);
   animation: db-wfunnel-in 0.4s ease both;
+  animation-delay: var(--anim-delay, 0ms);
 }
 
 @keyframes db-wfunnel-in {
@@ -989,6 +1003,8 @@
   min-width: 3%;
   pointer-events: none;
   will-change: width;
+  width: var(--bar-w, 0%);
+  background: var(--bar-color);
 }
 
 .db-wfunnel-rate {
@@ -1342,6 +1358,54 @@
 
   .db-wtable tbody td {
     max-width: 100px;
+  }
+}
+
+/* ── Print ─────────────────────────────────────────────────────────────── */
+
+@media print {
+  .db-toolbar,
+  .db-widget-drag-handle,
+  .db-widget-remove,
+  .react-resizable-handle {
+    display: none !important;
+  }
+
+  .db-widget {
+    break-inside: avoid;
+    animation: none !important;
+    box-shadow: none !important;
+    border: 1px solid #ccc;
+  }
+
+  .db-widget--editing {
+    border-color: #ccc;
+    box-shadow: none !important;
+    animation: none !important;
+  }
+
+  .db-wlead-item,
+  .db-wfunnel-row,
+  .db-wpipeline-stage {
+    animation: none !important;
+  }
+
+  .db-wlead-bar,
+  .db-wfunnel-bar {
+    transition: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .react-grid-item {
+    position: static !important;
+    transform: none !important;
+    width: 100% !important;
+    margin-bottom: 12px;
+  }
+
+  .react-grid-layout {
+    height: auto !important;
   }
 }
 

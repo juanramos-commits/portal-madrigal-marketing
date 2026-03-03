@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useState, useRef, useEffect } from 'react'
+import { useMemo, useCallback, useState, useRef, useEffect, memo } from 'react'
 import { ResponsiveGridLayout } from 'react-grid-layout'
 import { useAuth } from '../../contexts/AuthContext'
 import { useDashboard } from '../../hooks/useDashboard'
@@ -165,7 +165,8 @@ export default function VentasDashboard() {
                   <WidgetShell
                     widgetDef={widgetDef}
                     editMode={db.editMode}
-                    onRemove={() => db.removeWidget(item.i)}
+                    widgetId={item.i}
+                    onRemove={db.removeWidget}
                     loading={db.dataLoading}
                   >
                     {renderWidget(widgetDef, widgetData, item.config)}

@@ -11,8 +11,8 @@ function CustomTooltip({ active, payload }) {
   const d = payload[0]
   return (
     <div className="db-wchart-tooltip">
-      <div style={{ color: d.payload?.fill || d.color }}>{d.name || d.payload?.nombre || '-'}</div>
-      <div style={{ color: 'var(--text)' }}>{d.value ?? 0}</div>
+      <div className="db-wchart-tooltip-label" style={{ '--label-color': d.payload?.fill || d.color }}>{d.name || d.payload?.nombre || '-'}</div>
+      <div className="db-wchart-tooltip-value">{d.value ?? 0}</div>
     </div>
   )
 }
@@ -47,7 +47,7 @@ function PieDistribution({ data, label }) {
       <div className="db-wdist-legend">
         {data.map((d, i) => (
           <div key={d.nombre || i} className="db-wdist-legend-item">
-            <span className="db-wdist-legend-dot" style={{ background: d.color || COLORS[i % COLORS.length] }} aria-hidden="true" />
+            <span className="db-wdist-legend-dot" style={{ '--dot-color': d.color || COLORS[i % COLORS.length] }} aria-hidden="true" />
             <span>{d.nombre}</span>
             <span className="db-wdist-legend-value">{d.valor}</span>
             {total > 0 && <span className="db-wdist-legend-pct">({Math.round(d.valor / total * 100)}%)</span>}

@@ -19,6 +19,12 @@ export default function DashboardToolbar({
     setShowAdd(false)
   }
 
+  const handleReset = () => {
+    if (window.confirm('¿Restablecer el layout por defecto? Se perderán los cambios actuales.')) {
+      onReset()
+    }
+  }
+
   return (
     <div className="db-toolbar">
       <div className="db-toolbar-filters">
@@ -50,7 +56,7 @@ export default function DashboardToolbar({
               <Plus size={14} />
               <span>Añadir</span>
             </button>
-            <button type="button" className="db-toolbar-btn" onClick={onReset} disabled={isSaving} aria-busy={isSaving} aria-label="Resetear layout">
+            <button type="button" className="db-toolbar-btn" onClick={handleReset} disabled={isSaving} aria-busy={isSaving} aria-label="Resetear layout">
               <RotateCcw size={14} />
               <span>Resetear</span>
             </button>

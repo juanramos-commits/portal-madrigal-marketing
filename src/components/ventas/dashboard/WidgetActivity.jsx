@@ -35,7 +35,7 @@ export default memo(function WidgetActivity({ widgetDef, data }) {
         const color = TIPO_COLORS[a.tipo] || 'var(--text-muted)'
         return (
           <div key={a.id || i} className="db-wactivity-item">
-            <div className="db-wactivity-dot" style={{ background: color }} aria-hidden="true" />
+            <div className="db-wactivity-dot" style={{ '--dot-color': color }} aria-hidden="true" />
             <div className="db-wactivity-content">
               <span className="db-wactivity-time">{tiempoRelativo(a.created_at)}</span>
               <span className="db-wactivity-desc">

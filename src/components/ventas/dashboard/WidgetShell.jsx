@@ -1,10 +1,11 @@
-import { memo } from 'react'
+import { memo, useCallback } from 'react'
 import { GripVertical, X } from 'lucide-react'
 
-export default memo(function WidgetShell({ widgetDef, editMode, onRemove, loading, children }) {
+export default memo(function WidgetShell({ widgetDef, editMode, widgetId, onRemove, loading, children }) {
   if (!widgetDef) return null
 
   const Icon = widgetDef.icon
+  const handleRemove = useCallback(() => onRemove(widgetId), [onRemove, widgetId])
 
   return (
     <div className={`db-widget${editMode ? ' db-widget--editing' : ''}`}>
@@ -15,7 +16,7 @@ export default memo(function WidgetShell({ widgetDef, editMode, onRemove, loadin
           {widgetDef.label}
         </div>
         {editMode && (
-          <button type="button" className="db-widget-remove" onClick={onRemove} title="Quitar widget" aria-label={`Quitar ${widgetDef.label}`}>
+          <button type="button" className="db-widget-remove" onClick={handleRemove} title="Quitar widget" aria-label={`Quitar ${widgetDef.label}`}>
             <X size={14} />
           </button>
         )}

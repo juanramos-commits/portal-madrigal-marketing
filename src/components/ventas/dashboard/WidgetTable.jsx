@@ -77,7 +77,7 @@ function VentasTable({ data }) {
             <td>{v.paquete_nombre || '-'}</td>
             <td className="db-wtable-amount">{formatCurrency(Number(v.importe) || 0)}</td>
             <td>
-              <span className="db-wtable-estado" style={{ color: ESTADO_COLORS[v.estado] || 'var(--text-muted)' }}>
+              <span className="db-wtable-estado" style={{ '--estado-color': ESTADO_COLORS[v.estado] || 'var(--text-muted)' }}>
                 {v.estado}
               </span>
             </td>
