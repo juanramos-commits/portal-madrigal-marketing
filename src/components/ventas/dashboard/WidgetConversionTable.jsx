@@ -18,10 +18,10 @@ export default function WidgetConversionTable({ widgetDef, data }) {
       </caption>
       <thead>
         <tr>
-          <th>Nombre</th>
-          <th>{isCloser ? 'Citas' : 'Leads'}</th>
-          <th>{isCloser ? 'Ventas' : 'Citas'}</th>
-          <th>Tasa</th>
+          <th scope="col">Nombre</th>
+          <th scope="col">{isCloser ? 'Citas' : 'Leads'}</th>
+          <th scope="col">{isCloser ? 'Ventas' : 'Citas'}</th>
+          <th scope="col">Tasa</th>
         </tr>
       </thead>
       <tbody>
