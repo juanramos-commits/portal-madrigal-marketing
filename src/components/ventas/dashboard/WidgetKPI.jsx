@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react'
 
+const currencyFmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 })
 function formatCurrency(v) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v)
+  return currencyFmt.format(v)
 }
 
 function formatPercent(v) {
