@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 
 const PAGE_SIZE = 30
+const NOTIF_COLUMNS = 'id,tipo,titulo,mensaje,datos,leida,created_at,usuario_id'
 
 export function useNotificaciones() {
   const { user } = useAuth()
@@ -40,7 +41,7 @@ export function useNotificaciones() {
 
       let query = supabase
         .from('ventas_notificaciones')
-        .select('*')
+        .select(NOTIF_COLUMNS)
         .eq('usuario_id', user.id)
         .order('created_at', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1)
