@@ -1,9 +1,5 @@
 import { useMemo } from 'react'
-
-const currencyFmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 })
-function formatCurrency(v) {
-  return currencyFmt.format(Number(v) || 0)
-}
+import { formatCurrency } from '../../../config/formatters'
 
 function MedalIcon({ pos }) {
   if (pos === 0) return <span className="db-wlead-medal db-wlead-gold">1</span>

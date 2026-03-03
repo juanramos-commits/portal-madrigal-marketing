@@ -1,11 +1,8 @@
+import { formatCurrency } from '../../../config/formatters'
+
 function formatDate(d) {
   if (!d) return '-'
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
-}
-
-const currencyFmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 })
-function formatCurrency(v) {
-  return currencyFmt.format(Number(v) || 0)
 }
 
 function tiempoRelativo(fecha) {

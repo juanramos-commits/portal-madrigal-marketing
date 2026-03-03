@@ -1,13 +1,5 @@
 import { useEffect, useRef } from 'react'
-
-const currencyFmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 })
-function formatCurrency(v) {
-  return currencyFmt.format(v)
-}
-
-function formatPercent(v) {
-  return `${Number(v).toFixed(1)}%`
-}
+import { formatCurrency, formatPercent } from '../../../config/formatters'
 
 export default function WidgetKPI({ widgetDef, data }) {
   const numRef = useRef(null)

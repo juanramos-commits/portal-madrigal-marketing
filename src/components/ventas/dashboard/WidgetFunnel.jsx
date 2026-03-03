@@ -12,10 +12,7 @@ const NIVELES_CLOSERS = [
   { key: 'ventas', label: 'Ventas cerradas', color: 'var(--success)' },
 ]
 
-const currencyFmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 })
-function formatCurrency(v) {
-  return currencyFmt.format(Number(v) || 0)
-}
+import { formatCurrency } from '../../../config/formatters'
 
 export default function WidgetFunnel({ widgetDef, data }) {
   if (!data || typeof data !== 'object') return <div className="db-widget-empty">Sin datos</div>

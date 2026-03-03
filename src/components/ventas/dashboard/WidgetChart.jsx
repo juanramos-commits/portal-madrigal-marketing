@@ -1,14 +1,10 @@
 import { useId } from 'react'
 import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Area, AreaChart, BarChart, Bar } from 'recharts'
+import { formatCurrency } from '../../../config/formatters'
 
 function formatDate(d) {
   if (!d) return ''
   return new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
-}
-
-const currencyFmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 })
-function formatCurrency(v) {
-  return currencyFmt.format(Number(v) || 0)
 }
 
 function CustomTooltip({ active, payload, label }) {
