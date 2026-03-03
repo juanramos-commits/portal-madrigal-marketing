@@ -111,7 +111,8 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
       })
       setGuardado(true)
       setTimeout(() => setGuardado(false), 3000)
-    } catch (_) {
+    } catch (err) {
+      console.warn('Error al guardar datos fiscales:', err)
       setErrores({ _general: 'Error al guardar datos' })
     } finally {
       setSaving(false)
