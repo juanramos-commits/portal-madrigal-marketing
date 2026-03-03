@@ -54,7 +54,6 @@ export function useVentasCRM() {
   const [searchResultCount, setSearchResultCount] = useState(null)
 
   const esAdmin = usuario?.tipo === 'super_admin'
-  const rolComercialActual = rolesComerciales.find(r => r.usuario_id === user?.id)
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
   const esSetter = misRoles.some(r => r.rol === 'setter')
   const esCloser = misRoles.some(r => r.rol === 'closer')
@@ -590,7 +589,6 @@ export function useVentasCRM() {
   // ── Venta popup state ──────────────────────────────────────────────
   const [leadParaVenta, setLeadParaVenta] = useState(null)
   const [etapaVentaDestino, setEtapaVentaDestino] = useState(null)
-  const [etapaVentaOrigen, setEtapaVentaOrigen] = useState(null)
 
   // ── Move lead (drag & drop) ────────────────────────────────────────
   const moverLead = useCallback(async (leadId, etapaOrigenId, etapaDestinoId) => {
@@ -608,7 +606,6 @@ export function useVentasCRM() {
     if (etapaDestino.tipo === 'venta') {
       setLeadParaVenta(leadData)
       setEtapaVentaDestino(etapaDestinoId)
-      setEtapaVentaOrigen(etapaOrigenId)
       return
     }
 
@@ -1077,7 +1074,7 @@ export function useVentasCRM() {
     actualizarLead, eliminarLead,
 
     // Venta popup
-    leadParaVenta, etapaVentaDestino, etapaVentaOrigen,
+    leadParaVenta, etapaVentaDestino,
     setLeadParaVenta, setEtapaVentaDestino,
 
     // Detail

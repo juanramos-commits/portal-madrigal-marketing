@@ -179,16 +179,21 @@ export default function VentasCRM() {
         <VentaPopupCierre
           lead={crm.leadParaVenta}
           onConfirm={async (datosVenta) => {
-            await ventasHook.registrarVenta(datosVenta)
-            await ventasHook.moverLeadAVenta(
-              crm.leadParaVenta.id,
-              crm.pipelineActivo.id,
-              crm.etapaVentaDestino
-            )
-            crm.setLeadParaVenta(null)
-            crm.setEtapaVentaDestino(null)
-            crm.refrescar()
-            showToast('Venta registrada correctamente', 'success', 3000)
+            try {
+              await ventasHook.registrarVenta(datosVenta)
+              await ventasHook.moverLeadAVenta(
+                crm.leadParaVenta.id,
+                crm.pipelineActivo.id,
+                crm.etapaVentaDestino
+              )
+              crm.refrescar()
+              showToast('Venta registrada correctamente', 'success', 3000)
+            } catch (err) {
+              showToast(err.message || 'Error al registrar la venta', 'error', 4000)
+            } finally {
+              crm.setLeadParaVenta(null)
+              crm.setEtapaVentaDestino(null)
+            }
           }}
           onCancel={() => {
             crm.setLeadParaVenta(null)

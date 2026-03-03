@@ -33,6 +33,16 @@ function formatRelative(d) {
   return formatDateTime(d)
 }
 
+function isSafeUrl(url) {
+  if (!url) return false
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 const TRACKED_FIELDS = [
   { key: 'nombre', label: 'Nombre' },
   { key: 'telefono', label: 'Teléfono' },
@@ -78,6 +88,7 @@ export default function CRMLeadDetalle() {
 
   const { showToast } = useToast()
   const debounceRefs = useRef({})
+  const pendingFieldUpdatesRef = useRef({})
   const snapshotRef = useRef(null)
   const registroTimeoutRef = useRef(null)
   const loadDetailRef = useRef(0)
@@ -212,9 +223,11 @@ export default function CRMLeadDetalle() {
   // ── Update lead field with debounce ────────────────────────────────
   const updateField = (field, value) => {
     setLead(prev => ({ ...prev, [field]: value }))
+    pendingFieldUpdatesRef.current[field] = value
 
     if (debounceRefs.current[field]) clearTimeout(debounceRefs.current[field])
     debounceRefs.current[field] = setTimeout(async () => {
+      delete pendingFieldUpdatesRef.current[field]
       try {
         await supabase.from('ventas_leads').update({ [field]: value }).eq('id', id)
       } catch (_) {
@@ -297,15 +310,23 @@ export default function CRMLeadDetalle() {
   // Cleanup: flush pending saves and activity tracking on unmount
   useEffect(() => {
     return () => {
-      // Clear field debounce timers
+      // 1. Clear debounce timers (prevent double-saves)
       Object.values(debounceRefs.current).forEach(clearTimeout)
       debounceRefs.current = {}
-      // Flush activity tracking
+
+      // 2. Flush any pending field saves in a single call
+      const pending = pendingFieldUpdatesRef.current
+      if (Object.keys(pending).length > 0) {
+        supabase.from('ventas_leads').update(pending).eq('id', id)
+        pendingFieldUpdatesRef.current = {}
+      }
+
+      // 3. Flush activity tracking
       if (registroTimeoutRef.current) clearTimeout(registroTimeoutRef.current)
       registrarRef.current?.()
       snapshotRef.current = null
     }
-  }, [])
+  }, [id])
 
   // ── Change stage ───────────────────────────────────────────────────
   const cambiarEtapa = async (pipelineId, nuevaEtapaId) => {
@@ -739,11 +760,11 @@ export default function CRMLeadDetalle() {
                   />
                 </div>
               </div>
-              {lead.enlace_grabacion && (
+              {lead.enlace_grabacion && isSafeUrl(lead.enlace_grabacion) && (
                 <button
                   className="ui-btn ui-btn--secondary ui-btn--sm"
                   style={{ flexShrink: 0, marginTop: 'auto' }}
-                  onClick={() => window.open(lead.enlace_grabacion, '_blank')}
+                  onClick={() => window.open(lead.enlace_grabacion, '_blank', 'noopener,noreferrer')}
                 >
                   <ExternalLink size={14} /> Abrir
                 </button>
@@ -837,8 +858,8 @@ export default function CRMLeadDetalle() {
                         {cita.estado}
                       </span>
                     )}
-                    {cita.google_meet_url && (
-                      <button className="ui-btn ui-btn--secondary ui-btn--sm" onClick={() => window.open(cita.google_meet_url, '_blank')}>Meet</button>
+                    {cita.google_meet_url && isSafeUrl(cita.google_meet_url) && (
+                      <button className="ui-btn ui-btn--secondary ui-btn--sm" onClick={() => window.open(cita.google_meet_url, '_blank', 'noopener,noreferrer')}>Meet</button>
                     )}
                   </div>
                 </div>
