@@ -5,12 +5,12 @@ import {
 } from 'lucide-react'
 
 const TIPO_CONFIG = {
-  lead_asignado:    { icon: UserPlus,       color: null },
-  cita_agendada:    { icon: CalendarCheck,   color: null },
+  lead_asignado:    { icon: UserPlus,       color: 'ntf-color-info' },
+  cita_agendada:    { icon: CalendarCheck,   color: 'ntf-color-info' },
   cita_cancelada:   { icon: CalendarX,       color: 'ntf-color-error' },
   venta_aprobada:   { icon: CircleCheckBig,  color: 'ntf-color-success' },
   venta_rechazada:  { icon: CircleX,         color: 'ntf-color-error' },
-  comision_añadida: { icon: DollarSign,      color: null },
+  comision_añadida: { icon: DollarSign,      color: 'ntf-color-success' },
   retiro_aprobado:  { icon: CircleCheckBig,  color: 'ntf-color-success' },
   retiro_rechazado: { icon: CircleX,         color: 'ntf-color-error' },
   retiro_pendiente: { icon: Clock,           color: 'ntf-color-warning' },
