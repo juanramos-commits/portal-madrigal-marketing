@@ -1,6 +1,9 @@
 import { ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 
-const COLORS = ['#6366F1', '#2ee59d', '#ffa94d', '#ff6b6b', '#6495ed', '#a78bfa', '#f472b6', '#38bdf8']
+const COLORS = [
+  'var(--color-category)', 'var(--success)', 'var(--warning)', 'var(--error)',
+  'var(--text-muted)', '#a78bfa', '#f472b6', '#38bdf8',
+]
 
 function CustomTooltip({ active, payload }) {
   if (!active || !payload?.length) return null
