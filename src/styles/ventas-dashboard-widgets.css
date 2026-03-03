@@ -1064,6 +1064,12 @@
   text-decoration: underline;
 }
 
+.db-wtable-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+  border-radius: var(--radius-xs);
+}
+
 /* ── Dashboard Page Layout ──────────────────────────────────────────────── */
 
 .db-page {
