@@ -627,11 +627,42 @@ td { padding: 16px; border-bottom: 1px solid var(--border); }
 /* Button Small */
 .btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
 
+/* ── Mobile Menu FAB ─────────────────────────────────────────────── */
+.mobile-menu-btn-float {
+  display: none;
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  right: 20px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 1px solid var(--border-hover);
+  box-shadow: var(--shadow-lg);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 40;
+  color: var(--text-inverse);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.mobile-menu-btn-float:active {
+  transform: scale(0.92);
+}
+
 @media (max-width: 768px) {
   .sidebar { position: fixed; left: -240px; z-index: 100; transition: left var(--transition-base); }
   .sidebar.open { left: 0; }
 
-  .page { padding: 16px; }
+  .page { padding: 16px; padding-bottom: 88px; }
+
+  .mobile-menu-btn-float { display: flex; }
+
+  /* Hide FAB when overlays are open */
+  .app-shell:has(.crm-filters-overlay, .ui-modal-overlay, .crm-sheet-overlay, .vv-filters-overlay) > .mobile-menu-btn-float {
+    display: none;
+  }
 
   .login-card { padding: 32px 24px; }
 }

@@ -586,23 +586,10 @@ export default function Layout() {
       <button
         className="mobile-menu-btn-float"
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        style={{
-          position: 'fixed', bottom: '24px', right: '24px', width: '56px', height: '56px',
-          borderRadius: '50%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          border: 'none', boxShadow: '0 8px 24px rgba(102, 126, 234, 0.4)',
-          display: 'none', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', zIndex: 40, color: 'white'
-        }}
+        aria-label="Abrir menú"
       >
         <Icons.Menu />
       </button>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .mobile-menu-btn-float { display: flex !important; }
-          .app-shell:has(.crm-filters-overlay, .ui-modal-overlay, .crm-sheet-overlay, .vv-filters-overlay) > .mobile-menu-btn-float { display: none !important; }
-        }
-      `}</style>
     </div>
   )
 }
