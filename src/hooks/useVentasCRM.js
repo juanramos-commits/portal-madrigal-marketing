@@ -313,6 +313,7 @@ export function useVentasCRM() {
       setLeadCounts(newCounts)
       setTotalLeads(total)
     } catch (err) {
+      console.error('CRM cargarDatosIniciales error:', err)
       if (requestId === loadRequestRef.current) {
         setError('Error al cargar datos iniciales')
       }
