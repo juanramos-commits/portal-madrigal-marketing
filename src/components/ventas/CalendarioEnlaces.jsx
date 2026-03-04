@@ -121,10 +121,14 @@ export default function CalendarioEnlaces({
     }
   }
 
-  const copiarUrl = (slug) => {
-    navigator.clipboard.writeText(BASE_URL + slug)
-    setCopiado(slug)
-    setTimeout(() => setCopiado(null), 2000)
+  const copiarUrl = async (slug) => {
+    try {
+      await navigator.clipboard.writeText(BASE_URL + slug)
+      setCopiado(slug)
+      setTimeout(() => setCopiado(null), 2000)
+    } catch {
+      setError('No se pudo copiar. Usa HTTPS o copia manualmente.')
+    }
   }
 
   return (

@@ -6,6 +6,10 @@ import WalletTableSkeleton from './WalletTableSkeleton'
 export default function WalletFacturas({ facturas, total, pagina, onPageChange, pageSize, loading, datosFiscales, busqueda, onBusquedaChange }) {
   const totalPages = Math.ceil(total / pageSize)
   const handleDescargar = (factura) => {
+    if (!datosFiscales) {
+      alert('Completa tus datos fiscales antes de descargar facturas.')
+      return
+    }
     try {
       generarFacturaPDF({
         ...factura,
