@@ -143,11 +143,12 @@ export function useAjustes() {
 
   // ═══ PIPELINES & ETAPAS ═══
   const cargarPipelines = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_pipelines')
       .select('*')
       .eq('activo', true)
       .order('orden')
+    if (error) { console.error('[Pipelines] Error cargando:', error); return }
     setPipelines(data || [])
   }, [])
 
@@ -158,7 +159,8 @@ export function useAjustes() {
       .eq('activo', true)
       .order('orden')
     if (pipelineId) query = query.eq('pipeline_id', pipelineId)
-    const { data } = await query
+    const { data, error } = await query
+    if (error) { console.error('[Etapas] Error cargando:', error); return }
     setEtapas(data || [])
   }, [])
 
@@ -223,11 +225,12 @@ export function useAjustes() {
 
   // ═══ PAQUETES ═══
   const cargarPaquetes = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_paquetes')
       .select('*')
       .eq('activo', true)
       .order('nombre')
+    if (error) { console.error('[Paquetes] Error cargando:', error); return }
     setPaquetes(data || [])
   }, [])
 
@@ -267,11 +270,12 @@ export function useAjustes() {
 
   // ═══ CATEGORÍAS ═══
   const cargarCategorias = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_categorias')
       .select('*')
       .eq('activo', true)
       .order('orden')
+    if (error) { console.error('[Categorias] Error cargando:', error); return }
     setCategorias(data || [])
   }, [])
 
@@ -324,11 +328,12 @@ export function useAjustes() {
 
   // ═══ COMISIONES CONFIG ═══
   const cargarComisionesConfig = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_comisiones_config')
       .select('*')
       .eq('activo', true)
       .order('rol')
+    if (error) { console.error('[Comisiones] Error cargando:', error); return }
     setComisionesConfig(data || [])
   }, [])
 
@@ -382,11 +387,12 @@ export function useAjustes() {
 
   // ═══ EMPRESA FISCAL ═══
   const cargarEmpresaFiscal = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_empresa_fiscal')
       .select('*')
       .limit(1)
-      .single()
+      .maybeSingle()
+    if (error) { console.error('[EmpresaFiscal] Error cargando:', error); return }
     setEmpresaFiscal(data || null)
   }, [])
 
@@ -414,18 +420,31 @@ export function useAjustes() {
 
   // ═══ EQUIPO ═══
   const cargarEquipo = useCallback(async () => {
-    // Fetch full data (including inactive) for equipo management
-    const { data } = await supabase
+    // Fetch roles
+    const { data: rolesData, error: rolesError } = await supabase
       .from('ventas_roles_comerciales')
-      .select('*, usuario:usuarios(id, nombre, email, avatar_url)')
+      .select('*')
       .order('created_at', { ascending: false })
+    if (rolesError) { console.error('[Equipo] Error cargando roles:', rolesError); return }
+
+    // Fetch user details separately to avoid FK join hangs
+    const userIds = [...new Set((rolesData || []).map(r => r.usuario_id))]
+    let usersMap = {}
+    if (userIds.length > 0) {
+      const { data: usersData } = await supabase
+        .from('usuarios')
+        .select('id, nombre, email, avatar_url')
+        .in('id', userIds)
+      for (const u of (usersData || [])) usersMap[u.id] = u
+    }
+
     // Group by usuario
     const map = {}
-    for (const r of (data || [])) {
+    for (const r of (rolesData || [])) {
       if (!map[r.usuario_id]) {
         map[r.usuario_id] = {
           usuario_id: r.usuario_id,
-          usuario: r.usuario,
+          usuario: usersMap[r.usuario_id] || null,
           roles: [],
           activo: false,
         }
@@ -550,11 +569,12 @@ export function useAjustes() {
 
   // ═══ REUNIÓN ESTADOS ═══
   const cargarReunionEstados = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_reunion_estados')
       .select('*')
       .eq('activo', true)
       .order('orden')
+    if (error) { console.error('[ReunionEstados] Error cargando:', error); return }
     setReunionEstados(data || [])
   }, [])
 
@@ -607,10 +627,11 @@ export function useAjustes() {
 
   // ═══ CAMPOS OBLIGATORIOS ═══
   const cargarCamposObligatorios = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_campos_obligatorios')
       .select('*')
       .order('campo')
+    if (error) { console.error('[CamposObligatorios] Error cargando:', error); return }
     setCamposObligatorios(data || [])
   }, [])
 
@@ -667,7 +688,8 @@ export function useAjustes() {
     if (filtros.desde) query = query.gte('created_at', filtros.desde)
     if (filtros.hasta) query = query.lte('created_at', filtros.hasta)
 
-    const { data, count } = await query
+    const { data, count, error } = await query
+    if (error) { console.error('[Actividad] Error cargando:', error); return }
     setActividad(data || [])
     setActividadTotal(count || 0)
   }, [])
