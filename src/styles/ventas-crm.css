@@ -1031,6 +1031,20 @@
   border-radius: var(--radius-sm);
 }
 
+.crm-agendar-lead-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-sm) var(--space-3);
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.crm-agendar-lead-info strong { font-size: var(--font-sm-md); }
+.crm-agendar-lead-info span { color: var(--text-muted); }
+
 .crm-field {
   display: flex;
   flex-direction: column;

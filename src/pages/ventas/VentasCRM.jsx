@@ -10,6 +10,7 @@ import CRMBuscador from '../../components/ventas/CRMBuscador'
 import CRMFiltros from '../../components/ventas/CRMFiltros'
 import CRMNuevoLead from '../../components/ventas/CRMNuevoLead'
 import VentaPopupCierre from '../../components/ventas/VentaPopupCierre'
+import CRMAgendarCita from '../../components/ventas/CRMAgendarCita'
 import '../../styles/ventas-crm.css'
 import '../../styles/ventas-ventas.css'
 
@@ -172,6 +173,24 @@ export default function VentasCRM() {
           categorias={crm.categorias}
           onCrear={crm.crearLead}
           onCerrar={() => setShowNewLead(false)}
+        />
+      )}
+
+      {/* ── Agendar Cita Popup ────────────────────────────────────────── */}
+      {crm.leadParaCita && (
+        <CRMAgendarCita
+          lead={crm.leadParaCita}
+          closers={crm.closers}
+          onSuccess={async () => {
+            crm.refrescar()
+            showToast('Reunión agendada correctamente', 'success', 3000)
+            crm.setLeadParaCita(null)
+            crm.setEtapaCitaDestino(null)
+          }}
+          onCancel={() => {
+            crm.setLeadParaCita(null)
+            crm.setEtapaCitaDestino(null)
+          }}
         />
       )}
 

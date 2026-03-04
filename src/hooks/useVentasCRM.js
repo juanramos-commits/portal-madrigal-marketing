@@ -606,6 +606,10 @@ export function useVentasCRM() {
   const [leadParaVenta, setLeadParaVenta] = useState(null)
   const [etapaVentaDestino, setEtapaVentaDestino] = useState(null)
 
+  // ── Cita popup state (interceptar drag a Agendado) ────────────────
+  const [leadParaCita, setLeadParaCita] = useState(null)
+  const [etapaCitaDestino, setEtapaCitaDestino] = useState(null)
+
   // ── Move lead (drag & drop) ────────────────────────────────────────
   const movingLeadsRef = useRef(new Set())
   const moverLead = useCallback(async (leadId, etapaOrigenId, etapaDestinoId) => {
@@ -627,6 +631,15 @@ export function useVentasCRM() {
       if (!tienePermiso('ventas.ventas.crear')) throw new Error('No tienes permiso para registrar ventas')
       setLeadParaVenta(leadData)
       setEtapaVentaDestino(etapaDestinoId)
+      movingLeadsRef.current.delete(leadId)
+      return
+    }
+
+    // Intercept agendado/cita stages — require scheduling a meeting
+    const nombreLower = etapaDestino.nombre.toLowerCase()
+    if (nombreLower.includes('agendad') || nombreLower.includes('llamada agendada')) {
+      setLeadParaCita(leadData)
+      setEtapaCitaDestino(etapaDestinoId)
       movingLeadsRef.current.delete(leadId)
       return
     }
@@ -1109,6 +1122,10 @@ export function useVentasCRM() {
     // Venta popup
     leadParaVenta, etapaVentaDestino,
     setLeadParaVenta, setEtapaVentaDestino,
+
+    // Cita popup (interceptar drag a Agendado)
+    leadParaCita, etapaCitaDestino,
+    setLeadParaCita, setEtapaCitaDestino,
 
     // Detail
     cargarLeadDetalle, cargarActividad,
