@@ -1,147 +1,158 @@
 /* ============================================================================
-   RESERVAR CITA — Premium booking page
+   RESERVAR CITA — Premium booking page (redesign v2)
    ============================================================================ */
 
 /* ── Variables ─────────────────────────────────────────────────── */
 .rb-page {
-  --rb-accent: #1a1a1a;
-  --rb-accent-soft: #333;
-  --rb-accent-bg: rgba(26, 26, 26, 0.06);
-  --rb-text: #1a1a1a;
-  --rb-text-secondary: #555;
-  --rb-text-muted: #999;
-  --rb-bg: #f5f6f8;
+  --rb-primary: #2563eb;
+  --rb-primary-dark: #1d4ed8;
+  --rb-primary-soft: rgba(37, 99, 235, 0.08);
+  --rb-primary-ring: rgba(37, 99, 235, 0.18);
+  --rb-text: #0f172a;
+  --rb-text-secondary: #475569;
+  --rb-text-muted: #94a3b8;
+  --rb-bg: #f8fafc;
   --rb-card: #ffffff;
-  --rb-border: #e8e8ec;
-  --rb-border-light: #f0f0f3;
-  --rb-radius: 14px;
-  --rb-radius-sm: 10px;
+  --rb-border: #e2e8f0;
+  --rb-border-light: #f1f5f9;
+  --rb-radius: 16px;
+  --rb-radius-sm: 12px;
   --rb-radius-xs: 8px;
-  --rb-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.04);
-  --rb-shadow-hover: 0 2px 4px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08), 0 16px 56px rgba(0,0,0,0.06);
+  --rb-shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --rb-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06);
+  --rb-shadow-lg: 0 4px 6px rgba(0,0,0,0.04), 0 16px 48px rgba(0,0,0,0.08);
   --rb-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --rb-success: #16a34a;
+  --rb-success-bg: #f0fdf4;
+  --rb-error: #dc2626;
+  --rb-error-bg: #fef2f2;
 }
 
 /* ── Page wrapper ──────────────────────────────────────────────── */
 .rb-page {
   min-height: 100vh;
-  background: linear-gradient(160deg, #f0f2f5 0%, #e8eaef 50%, #f5f6f8 100%);
+  min-height: 100dvh;
+  background: var(--rb-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 48px 20px 32px;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  padding: 40px 20px 32px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   color: var(--rb-text);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .rb-container {
   width: 100%;
-  max-width: 880px;
+  max-width: 920px;
   background: var(--rb-card);
-  border-radius: 20px;
+  border-radius: var(--rb-radius);
   box-shadow: var(--rb-shadow);
+  border: 1px solid var(--rb-border-light);
   overflow: hidden;
-  animation: rb-fadeIn 0.4s ease;
+  animation: rb-fadeIn 0.5s ease both;
 }
 
 @keyframes rb-fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Header ─────────────────────────────────────────────────────── */
 .rb-header {
-  padding: 36px 40px 32px;
+  padding: 32px 40px 28px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
-  gap: 16px;
+  gap: 20px;
   border-bottom: 1px solid var(--rb-border-light);
 }
 
 .rb-logo {
-  height: 48px;
+  height: 44px;
   width: auto;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .rb-header-info {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
 .rb-header-info h1 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   margin: 0;
   color: var(--rb-text);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.4px;
+  line-height: 1.2;
 }
 
 .rb-header-meta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  background: var(--rb-accent-bg);
+  gap: 5px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--rb-text-secondary);
+  color: var(--rb-text-muted);
 }
 
 .rb-header-meta svg {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  opacity: 0.7;
 }
 
 /* ── Main content: calendar + slots side by side ────────────────── */
 .rb-body {
   display: flex;
-  min-height: 440px;
+  min-height: 460px;
 }
 
 .rb-calendar-panel {
   flex: 1;
-  padding: 28px 32px;
+  padding: 28px 36px 32px;
   border-right: 1px solid var(--rb-border-light);
 }
 
 .rb-slots-panel {
-  width: 260px;
+  width: 280px;
+  flex-shrink: 0;
   padding: 28px 24px;
   overflow-y: auto;
-  max-height: 520px;
+  max-height: 540px;
   display: flex;
   flex-direction: column;
+  background: var(--rb-bg);
 }
+
+/* Custom scrollbar for slots panel */
+.rb-slots-panel::-webkit-scrollbar { width: 4px; }
+.rb-slots-panel::-webkit-scrollbar-track { background: transparent; }
+.rb-slots-panel::-webkit-scrollbar-thumb { background: var(--rb-border); border-radius: 4px; }
 
 /* ── Mini calendar ──────────────────────────────────────────────── */
 .rb-cal-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .rb-cal-nav h2 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   margin: 0;
   color: var(--rb-text);
   text-transform: capitalize;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.3px;
 }
 
 .rb-cal-nav button {
-  background: none;
+  background: var(--rb-card);
   border: 1px solid var(--rb-border);
   border-radius: var(--rb-radius-xs);
   width: 36px;
@@ -155,16 +166,15 @@
   transition: all var(--rb-transition);
 }
 .rb-cal-nav button:hover {
-  background: var(--rb-accent-bg);
-  border-color: var(--rb-accent);
-  color: var(--rb-text);
+  background: var(--rb-primary-soft);
+  border-color: var(--rb-primary);
+  color: var(--rb-primary);
 }
 
 .rb-cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .rb-cal-weekday {
@@ -174,13 +184,13 @@
   color: var(--rb-text-muted);
   padding: 8px 0;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.06em;
 }
 
 .rb-cal-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
+  gap: 2px;
 }
 
 .rb-cal-day {
@@ -193,8 +203,8 @@
   background: none;
   font-size: 14px;
   font-weight: 400;
-  color: #ccc;
-  border-radius: 50%;
+  color: var(--rb-border);
+  border-radius: var(--rb-radius-xs);
   cursor: default;
   transition: all var(--rb-transition);
 }
@@ -205,41 +215,33 @@
   cursor: pointer;
 }
 
-/* Dot indicator for days with slots */
-.rb-cal-day.has-slots::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--rb-accent);
-  opacity: 0.3;
-  transition: opacity var(--rb-transition);
-}
-
 .rb-cal-day.has-slots:hover {
-  background: var(--rb-accent-bg);
-}
-.rb-cal-day.has-slots:hover::after {
-  opacity: 0.6;
+  background: var(--rb-primary-soft);
+  color: var(--rb-primary);
 }
 
 .rb-cal-day.selected {
-  background: var(--rb-accent);
+  background: var(--rb-primary);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.25);
-}
-.rb-cal-day.selected::after {
-  display: none;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
 .rb-cal-day.today:not(.selected) {
-  border: 2px solid var(--rb-accent);
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--rb-primary);
+  position: relative;
+}
+.rb-cal-day.today:not(.selected)::before {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--rb-primary);
 }
 
 .rb-cal-day.other-month {
@@ -249,7 +251,7 @@
 /* ── Slots panel ────────────────────────────────────────────────── */
 .rb-slots-title {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--rb-text);
   margin: 0 0 16px 0;
   text-transform: capitalize;
@@ -260,7 +262,7 @@
   font-size: 14px;
   color: var(--rb-text-muted);
   text-align: center;
-  padding: 60px 16px;
+  padding: 48px 16px;
   line-height: 1.6;
 }
 
@@ -268,11 +270,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  animation: rb-slideUp 0.25s ease;
+  animation: rb-slideUp 0.3s ease both;
 }
 
 @keyframes rb-slideUp {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -287,45 +289,45 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 12px 16px;
+  padding: 11px 16px;
   border: 1.5px solid var(--rb-border);
   border-radius: var(--rb-radius-xs);
   background: var(--rb-card);
-  color: var(--rb-text);
+  color: var(--rb-primary);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--rb-transition);
-  letter-spacing: 0.3px;
+  font-variant-numeric: tabular-nums;
 }
 .rb-slot-btn:hover {
-  border-color: var(--rb-accent);
-  background: var(--rb-accent-bg);
+  border-color: var(--rb-primary);
+  background: var(--rb-primary-soft);
 }
 
 .rb-slot-wrapper.active .rb-slot-btn {
   flex: 1;
-  background: var(--rb-text-secondary);
-  color: #fff;
-  border-color: var(--rb-text-secondary);
+  background: var(--rb-primary-soft);
+  color: var(--rb-primary);
+  border-color: var(--rb-primary);
 }
 
 .rb-slot-confirm {
-  padding: 12px 20px;
+  padding: 11px 20px;
   border: none;
   border-radius: var(--rb-radius-xs);
-  background: var(--rb-accent);
+  background: var(--rb-primary);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--rb-transition);
   white-space: nowrap;
-  animation: rb-slideIn 0.2s ease;
+  animation: rb-slideIn 0.2s ease both;
 }
 .rb-slot-confirm:hover {
-  background: var(--rb-accent-soft);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  background: var(--rb-primary-dark);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
 @keyframes rb-slideIn {
@@ -335,10 +337,10 @@
 
 /* ── Form step ──────────────────────────────────────────────────── */
 .rb-form-panel {
-  padding: 36px 40px 40px;
+  padding: 36px 44px 44px;
   max-width: 520px;
   margin: 0 auto;
-  animation: rb-fadeIn 0.3s ease;
+  animation: rb-fadeIn 0.3s ease both;
 }
 
 .rb-back-btn {
@@ -355,14 +357,14 @@
   margin-bottom: 24px;
   transition: color var(--rb-transition);
 }
-.rb-back-btn:hover { color: var(--rb-text); }
+.rb-back-btn:hover { color: var(--rb-primary); }
 .rb-back-btn svg { width: 16px; height: 16px; }
 
 .rb-selected-summary {
-  background: var(--rb-accent-bg);
-  border: 1px solid var(--rb-border-light);
-  border-radius: var(--rb-radius);
-  padding: 18px 22px;
+  background: var(--rb-primary-soft);
+  border: 1px solid rgba(37, 99, 235, 0.12);
+  border-radius: var(--rb-radius-sm);
+  padding: 16px 20px;
   margin-bottom: 28px;
   display: flex;
   align-items: center;
@@ -370,11 +372,10 @@
 }
 
 .rb-selected-summary svg {
-  width: 22px;
-  height: 22px;
-  color: var(--rb-accent);
+  width: 20px;
+  height: 20px;
+  color: var(--rb-primary);
   flex-shrink: 0;
-  opacity: 0.6;
 }
 
 .rb-selected-summary .rb-sum-date {
@@ -398,18 +399,17 @@
 .rb-field {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
 }
 
 .rb-field label {
   font-size: 13px;
   font-weight: 600;
   color: var(--rb-text-secondary);
-  letter-spacing: 0.2px;
 }
 
 .rb-field input {
-  padding: 14px 16px;
+  padding: 0 16px;
   border: 1.5px solid var(--rb-border);
   border-radius: var(--rb-radius-xs);
   font-size: 15px;
@@ -420,22 +420,22 @@
   height: 48px;
 }
 .rb-field input:focus {
-  border-color: var(--rb-accent);
-  box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.08);
+  border-color: var(--rb-primary);
+  box-shadow: 0 0 0 3px var(--rb-primary-ring);
 }
 .rb-field input::placeholder {
-  color: #bbb;
+  color: var(--rb-text-muted);
   font-weight: 400;
 }
 
 .rb-submit-btn {
   padding: 0 28px;
-  height: 52px;
+  height: 50px;
   border: none;
-  border-radius: var(--rb-radius-sm);
-  background: var(--rb-accent);
+  border-radius: var(--rb-radius-xs);
+  background: var(--rb-primary);
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--rb-transition);
@@ -443,8 +443,8 @@
   letter-spacing: -0.2px;
 }
 .rb-submit-btn:hover {
-  background: var(--rb-accent-soft);
-  box-shadow: 0 4px 16px rgba(26, 26, 26, 0.2);
+  background: var(--rb-primary-dark);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
   transform: translateY(-1px);
 }
 .rb-submit-btn:active {
@@ -458,12 +458,12 @@
 }
 
 .rb-error {
-  color: #dc3545;
+  color: var(--rb-error);
   font-size: 13px;
   padding: 12px 16px;
-  background: #fff5f5;
+  background: var(--rb-error-bg);
   border-radius: var(--rb-radius-xs);
-  border: 1px solid #f8d7da;
+  border: 1px solid rgba(220, 38, 38, 0.15);
   font-weight: 500;
 }
 
@@ -471,22 +471,23 @@
 .rb-exito {
   padding: 72px 40px 64px;
   text-align: center;
-  animation: rb-fadeIn 0.4s ease;
+  animation: rb-fadeIn 0.4s ease both;
 }
 
 .rb-exito-icon {
-  width: 72px;
-  height: 72px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #d4edda, #c3e6cb);
-  color: #28a745;
+  background: var(--rb-success-bg);
+  color: var(--rb-success);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   animation: rb-scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.08);
 }
 
 @keyframes rb-scaleIn {
@@ -495,7 +496,7 @@
 }
 
 .rb-exito h2 {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   margin: 0 0 8px 0;
   color: var(--rb-text);
@@ -507,17 +508,20 @@
   font-size: 15px;
   margin: 0;
   line-height: 1.6;
+  max-width: 380px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .rb-exito-details {
-  background: var(--rb-accent-bg);
+  background: var(--rb-bg);
   border: 1px solid var(--rb-border-light);
-  border-radius: var(--rb-radius);
-  padding: 20px 28px;
-  margin-top: 28px;
+  border-radius: var(--rb-radius-sm);
+  padding: 18px 24px;
+  margin-top: 24px;
   display: inline-block;
   text-align: left;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--rb-text-secondary);
 }
 .rb-exito-details strong {
@@ -532,7 +536,7 @@
   padding: 100px 40px;
   text-align: center;
   color: var(--rb-text-muted);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.6;
 }
 
@@ -549,7 +553,7 @@
   width: 28px;
   height: 28px;
   border: 2.5px solid var(--rb-border);
-  border-top-color: var(--rb-accent);
+  border-top-color: var(--rb-primary);
   border-radius: 50%;
   animation: rb-spin 0.7s linear infinite;
   margin-bottom: 16px;
@@ -561,37 +565,46 @@
 
 /* ── Footer ─────────────────────────────────────────────────────── */
 .rb-footer {
-  padding: 20px;
+  padding: 24px 20px;
   text-align: center;
   font-size: 12px;
-  color: #aaa;
-  letter-spacing: 0.3px;
+  color: var(--rb-text-muted);
+  letter-spacing: 0.02em;
 }
 
 .rb-footer a {
-  color: #888;
+  color: var(--rb-text-secondary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   transition: color var(--rb-transition);
 }
 .rb-footer a:hover {
-  color: var(--rb-text);
+  color: var(--rb-primary);
 }
 
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .rb-page {
     padding: 0;
+    background: var(--rb-card);
   }
 
   .rb-container {
     border-radius: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     box-shadow: none;
+    border: none;
   }
 
   .rb-header {
-    padding: 28px 20px 24px;
+    padding: 24px 20px 20px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .rb-header-info {
+    align-items: center;
   }
 
   .rb-body {
@@ -601,18 +614,19 @@
   .rb-calendar-panel {
     border-right: none;
     border-bottom: 1px solid var(--rb-border-light);
-    padding: 24px 20px;
+    padding: 20px 16px 24px;
   }
 
   .rb-slots-panel {
     width: 100%;
     max-height: none;
-    padding: 24px 20px;
+    padding: 20px 16px;
+    background: var(--rb-card);
   }
 
   .rb-slots-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 8px;
   }
 
@@ -625,8 +639,13 @@
     flex-direction: row;
   }
 
+  .rb-slot-btn {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
   .rb-form-panel {
-    padding: 28px 20px 32px;
+    padding: 24px 20px 32px;
   }
 
   .rb-exito {
@@ -634,6 +653,25 @@
   }
 
   .rb-header-info h1 {
-    font-size: 20px;
+    font-size: 18px;
+  }
+
+  .rb-cal-nav h2 {
+    font-size: 16px;
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rb-container,
+  .rb-slots-list,
+  .rb-slot-confirm,
+  .rb-exito,
+  .rb-exito-icon,
+  .rb-form-panel {
+    animation: none;
+  }
+  .rb-submit-btn:hover {
+    transform: none;
   }
 }
