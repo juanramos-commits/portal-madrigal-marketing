@@ -930,26 +930,26 @@
 .vc-config {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .vc-config h3 {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  margin: 0;
+  margin: 0 0 2px 0;
   color: var(--text);
 }
 
 .vc-config-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .vc-config-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 /* Google Calendar info box */
@@ -958,7 +958,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  margin-top: var(--space-md);
+  margin-top: var(--space-xs);
 }
 
 .vc-gcal-header {
