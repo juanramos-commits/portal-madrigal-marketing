@@ -1185,6 +1185,10 @@
     height: 44px;
     padding: var(--space-sm) var(--space-lg);
   }
+
+  .vv-field-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Focus visible ───────────────────────────────────────────────── */
