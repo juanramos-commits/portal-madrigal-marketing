@@ -25,6 +25,7 @@ export function useWallet() {
   const [datosFiscales, setDatosFiscales] = useState(null)
   const [empresaFiscal, setEmpresaFiscal] = useState(null)
   const [closerAlDia, setCloserAlDia] = useState(true)
+  const [citasPendientes, setCitasPendientes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -113,11 +114,27 @@ export function useWallet() {
     if (!err) setSaldoDisponible(data || 0)
   }, [user?.id])
 
-  // ── Verificar closer al día ────────────────────────────────────────
+  // ── Verificar closer al día + cargar citas pendientes ──────────────
   const verificarCloserAlDia = useCallback(async () => {
     if (!user?.id) return
     const { data, error: err } = await supabase.rpc('ventas_verificar_closer_al_dia', { p_usuario_id: user.id })
     if (!err) setCloserAlDia(data !== false)
+
+    // Si no está al día, cargar las citas pendientes para mostrar al usuario
+    if (!err && data === false) {
+      const { data: citas } = await supabase
+        .from('ventas_citas')
+        .select('id, fecha_hora, lead:ventas_leads!ventas_citas_lead_id_fkey(id, nombre)')
+        .eq('closer_id', user.id)
+        .is('estado_reunion_id', null)
+        .neq('estado', 'cancelada')
+        .lt('fecha_hora', new Date().toISOString())
+        .order('fecha_hora', { ascending: false })
+        .limit(10)
+      setCitasPendientes(citas || [])
+    } else {
+      setCitasPendientes([])
+    }
   }, [user?.id])
 
   // ── Load comisiones ────────────────────────────────────────────────
@@ -746,7 +763,7 @@ export function useWallet() {
     wallet, saldoDisponible, comisiones, comisionesTotal, comisionesPagina,
     retiros, retirosTotal, retirosPagina,
     facturas, facturasTotal, facturasPagina,
-    datosFiscales, empresaFiscal, closerAlDia, loading, error,
+    datosFiscales, empresaFiscal, closerAlDia, citasPendientes, loading, error,
     esAdmin, esCloser, miembros,
 
     todosRetiros, todosRetirosTotal, todosRetirosFiltro,

@@ -2,7 +2,7 @@ import { Wallet, TrendingUp, ArrowDown } from 'lucide-react'
 import WalletBloqueado from './WalletBloqueado'
 import { formatMoneda } from '../../utils/formatters'
 
-export default function WalletResumen({ wallet, saldoDisponible, esCloser, closerAlDia, loading }) {
+export default function WalletResumen({ wallet, saldoDisponible, esCloser, closerAlDia, citasPendientes, loading }) {
   if (loading || !wallet) {
     return (
       <div className="wt-resumen">
@@ -62,7 +62,7 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
       </div>
 
       {/* Bloqueo closer */}
-      {esCloser && !closerAlDia && <WalletBloqueado />}
+      {esCloser && !closerAlDia && <WalletBloqueado citasPendientes={citasPendientes} />}
     </div>
   )
 }

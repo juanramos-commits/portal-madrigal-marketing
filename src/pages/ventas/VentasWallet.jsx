@@ -112,6 +112,7 @@ export default function VentasWallet() {
           saldoDisponible={w.saldoDisponible}
           esCloser={w.esCloser}
           closerAlDia={w.closerAlDia}
+          citasPendientes={w.citasPendientes}
           loading={w.loading}
           onSolicitarRetiro={() => setShowRetiroModal(true)}
         />

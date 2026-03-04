@@ -261,6 +261,48 @@
   font-size: var(--font-sm-md);
   color: var(--text);
   line-height: var(--leading-normal);
+  flex: 1;
+}
+
+.wt-bloqueado-citas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.wt-bloqueado-cita {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-xs) var(--space-1);
+  background: var(--bg-main);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  transition: background 150ms;
+}
+
+.wt-bloqueado-cita:hover {
+  background: var(--bg-hover);
+}
+
+.wt-bloqueado-cita svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.wt-bloqueado-cita-nombre {
+  font-weight: 500;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wt-bloqueado-cita-fecha {
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 /* ── Responsive visibility ────────────────────────────────────────── */
