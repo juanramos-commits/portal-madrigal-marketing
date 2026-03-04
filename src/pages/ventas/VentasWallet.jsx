@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useWallet } from '../../hooks/useWallet'
 import { useAuth } from '../../contexts/AuthContext'
 import WalletResumen from '../../components/ventas/WalletResumen'
@@ -31,6 +31,18 @@ export default function VentasWallet() {
   const [showRetiroModal, setShowRetiroModal] = useState(false)
 
   const tabs = tienePermiso('ventas.wallet.ver_todos') ? [...tabsBase, ...tabsAdmin] : tabsBase
+
+  const tabsRef = useRef(null)
+  const [tabsOverflow, setTabsOverflow] = useState(false)
+  const checkOverflow = useCallback(() => {
+    const el = tabsRef.current
+    if (el) setTabsOverflow(el.scrollWidth > el.clientWidth + 2)
+  }, [])
+  useEffect(() => {
+    checkOverflow()
+    window.addEventListener('resize', checkOverflow)
+    return () => window.removeEventListener('resize', checkOverflow)
+  }, [checkOverflow])
 
   const handleSolicitarRetiro = async (monto) => {
     await w.solicitarRetiro(monto)
@@ -70,18 +82,20 @@ export default function VentasWallet() {
         )}
       </div>
 
-      <div className="wt-tabs" role="tablist" aria-label="Secciones de wallet">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            className={`wt-tab${tab === t.key ? ' active' : ''}`}
-            onClick={() => setTab(t.key)}
-            role="tab"
-            aria-selected={tab === t.key}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className={`wt-tabs-wrap${tabsOverflow ? ' has-overflow' : ''}`}>
+        <div className="wt-tabs" role="tablist" aria-label="Secciones de wallet" ref={tabsRef}>
+          {tabs.map(t => (
+            <button
+              key={t.key}
+              className={`wt-tab${tab === t.key ? ' active' : ''}`}
+              onClick={() => setTab(t.key)}
+              role="tab"
+              aria-selected={tab === t.key}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {w.error && (

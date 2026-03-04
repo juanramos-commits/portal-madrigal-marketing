@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Search, X, Filter, Download } from 'lucide-react'
 import { useVentas } from '../../hooks/useVentas'
 import { useAuth } from '../../contexts/AuthContext'
@@ -21,6 +21,18 @@ export default function VentasVentas() {
 
   const filtrosActivos = Object.values(ventas.filtros).filter(v => v !== '' && v !== null && v !== undefined).length
 
+  const tabsRef = useRef(null)
+  const [tabsOverflow, setTabsOverflow] = useState(false)
+  const checkOverflow = useCallback(() => {
+    const el = tabsRef.current
+    if (el) setTabsOverflow(el.scrollWidth > el.clientWidth + 2)
+  }, [])
+  useEffect(() => {
+    checkOverflow()
+    window.addEventListener('resize', checkOverflow)
+    return () => window.removeEventListener('resize', checkOverflow)
+  }, [checkOverflow])
+
   return (
     <div className="vv-page">
       {/* Header */}
@@ -34,21 +46,23 @@ export default function VentasVentas() {
 
         {/* Tabs + Search */}
         <div className="vv-toolbar">
-          <div className="vv-tabs" role="tablist" aria-label="Filtrar por estado">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                role="tab"
-                aria-selected={ventas.filtroEstado === tab.key}
-                className={`vv-tab${ventas.filtroEstado === tab.key ? ' active' : ''}`}
-                onClick={() => ventas.setFiltroEstado(tab.key)}
-              >
-                {tab.label}
-                <span className="vv-tab-count">
-                  {ventas.contadores[tab.key] || 0}
-                </span>
-              </button>
-            ))}
+          <div className={`vv-tabs-wrap${tabsOverflow ? ' has-overflow' : ''}`}>
+            <div className="vv-tabs" role="tablist" aria-label="Filtrar por estado" ref={tabsRef}>
+              {tabs.map(tab => (
+                <button
+                  key={tab.key}
+                  role="tab"
+                  aria-selected={ventas.filtroEstado === tab.key}
+                  className={`vv-tab${ventas.filtroEstado === tab.key ? ' active' : ''}`}
+                  onClick={() => ventas.setFiltroEstado(tab.key)}
+                >
+                  {tab.label}
+                  <span className="vv-tab-count">
+                    {ventas.contadores[tab.key] || 0}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
           <div className="vv-search">
             <Search size={15} />

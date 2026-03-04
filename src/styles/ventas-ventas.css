@@ -139,6 +139,28 @@
 }
 
 /* ── Tabs ─────────────────────────────────────────────────────────── */
+.vv-tabs-wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.vv-tabs-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 32px;
+  background: linear-gradient(to right, transparent, var(--bg));
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.vv-tabs-wrap.has-overflow::after {
+  opacity: 1;
+}
+
 .vv-tabs {
   display: flex;
   gap: var(--space-xs);
