@@ -294,6 +294,10 @@
   transition: background var(--transition-fast);
 }
 
+.wt-table tbody tr:nth-child(even) {
+  background: var(--bg-subtle);
+}
+
 .wt-table tbody tr:hover {
   background: var(--bg-hover);
 }

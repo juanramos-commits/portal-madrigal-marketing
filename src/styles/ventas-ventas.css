@@ -304,6 +304,7 @@
 }
 
 .vv-table tbody tr { border: none; }
+.vv-table tbody tr:nth-child(even) { background: var(--bg-subtle); }
 
 .vv-table-row {
   cursor: pointer;
