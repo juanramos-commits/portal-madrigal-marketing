@@ -48,6 +48,11 @@ export default function VentasCalendario() {
   }
 
   const handleClickCita = (cita) => {
+    if (cita._isGoogleEvent) {
+      // Open Google Calendar event in new tab
+      if (cita.html_link) window.open(cita.html_link, '_blank')
+      return
+    }
     setCitaDetalle(cita)
   }
 
@@ -106,7 +111,7 @@ export default function VentasCalendario() {
         <CalendarioVista
           vista={cal.vista}
           fechaActual={cal.fechaActual}
-          citas={cal.citas}
+          citas={cal.eventosMerged}
           bloqueos={cal.bloqueos}
           onClickDia={handleClickDia}
           onClickCita={handleClickCita}

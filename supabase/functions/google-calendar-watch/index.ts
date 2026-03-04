@@ -181,7 +181,36 @@ Deno.serve(async (req) => {
         .eq('closer_id', userId)
         .maybeSingle()
 
-      if (!cita) continue // Not one of our citas
+      if (!cita) {
+        // External event (not created by app) → upsert into ventas_google_events
+        if (event.status === 'cancelled') {
+          // Mark as cancelled in cache
+          await supabase
+            .from('ventas_google_events')
+            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+            .eq('usuario_id', userId)
+            .eq('google_event_id', event.id)
+        } else if (event.start) {
+          const allDay = !event.start.dateTime
+          const startTime = event.start.dateTime || `${event.start.date}T00:00:00Z`
+          const endTime = event.end?.dateTime || `${event.end?.date}T00:00:00Z`
+
+          await supabase
+            .from('ventas_google_events')
+            .upsert({
+              usuario_id: userId,
+              google_event_id: event.id,
+              summary: event.summary || '(Sin título)',
+              start_time: startTime,
+              end_time: endTime,
+              all_day: allDay,
+              status: event.status || 'confirmed',
+              html_link: event.htmlLink || null,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'usuario_id,google_event_id' })
+        }
+        continue
+      }
 
       // Skip if cita is already in a final state
       if (cita.estado === 'cancelada' || cita.estado === 'completada') continue
@@ -274,7 +303,36 @@ Deno.serve(async (req) => {
           .eq('closer_id', userId)
           .maybeSingle()
 
-        if (!cita) continue
+        if (!cita) {
+          // External event → upsert into ventas_google_events
+          if (event.status === 'cancelled') {
+            await supabase
+              .from('ventas_google_events')
+              .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+              .eq('usuario_id', userId)
+              .eq('google_event_id', event.id)
+          } else if (event.start) {
+            const allDay = !event.start.dateTime
+            const startTime = event.start.dateTime || `${event.start.date}T00:00:00Z`
+            const endTime = event.end?.dateTime || `${event.end?.date}T00:00:00Z`
+
+            await supabase
+              .from('ventas_google_events')
+              .upsert({
+                usuario_id: userId,
+                google_event_id: event.id,
+                summary: event.summary || '(Sin título)',
+                start_time: startTime,
+                end_time: endTime,
+                all_day: allDay,
+                status: event.status || 'confirmed',
+                html_link: event.htmlLink || null,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: 'usuario_id,google_event_id' })
+          }
+          continue
+        }
+
         if (cita.estado === 'cancelada' || cita.estado === 'completada') continue
 
         if (event.status === 'cancelled') {

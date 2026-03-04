@@ -237,6 +237,123 @@ Deno.serve(async (req) => {
       })
     }
 
+    // ─── PULL: import ALL Google Calendar events into ventas_google_events ───
+    if (action === 'pull') {
+      if (!closer_id) {
+        return jsonResponse({ error: 'closer_id is required for pull' }, 400)
+      }
+
+      const { data: configData } = await supabase
+        .from('ventas_calendario_config')
+        .select('*')
+        .eq('usuario_id', closer_id)
+        .maybeSingle()
+
+      const token = configData?.google_calendar_token as TokenData | null
+      if (!token?.refresh_token) {
+        return jsonResponse({ skipped: true, reason: 'Google Calendar not connected' })
+      }
+
+      const calendarId = configData?.google_calendar_id || 'primary'
+      const accessToken = await getValidAccessToken(token, supabase, closer_id)
+      if (!accessToken) {
+        return jsonResponse({ error: 'Failed to refresh Google access token' }, 401)
+      }
+
+      // Time window: -7 days to +90 days
+      const timeMin = new Date(Date.now() - 7 * 86400000).toISOString()
+      const timeMax = new Date(Date.now() + 90 * 86400000).toISOString()
+
+      // Get app-created event IDs to exclude them
+      const { data: appCitas } = await supabase
+        .from('ventas_citas')
+        .select('google_event_id')
+        .eq('closer_id', closer_id)
+        .not('google_event_id', 'is', null)
+
+      const appEventIds = new Set((appCitas || []).map((c: Record<string, unknown>) => c.google_event_id))
+
+      // Fetch events from Google Calendar (paginated)
+      let pageToken: string | undefined
+      let totalUpserted = 0
+      let totalSkipped = 0
+      const allGoogleEventIds: string[] = []
+
+      do {
+        const params = new URLSearchParams({
+          timeMin,
+          timeMax,
+          maxResults: '250',
+          singleEvents: 'true',
+          orderBy: 'startTime',
+        })
+        if (pageToken) params.set('pageToken', pageToken)
+
+        const res = await fetch(
+          `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        )
+
+        const data = await res.json()
+        if (data.error) {
+          return jsonResponse({ error: 'Google API error', detail: data.error.message }, 500)
+        }
+
+        const events = data.items || []
+
+        for (const ev of events) {
+          // Skip app-created events
+          if (appEventIds.has(ev.id)) {
+            totalSkipped++
+            continue
+          }
+
+          allGoogleEventIds.push(ev.id)
+
+          // Determine start/end times (handle all-day vs timed events)
+          const allDay = !ev.start?.dateTime
+          const startTime = ev.start?.dateTime || `${ev.start?.date}T00:00:00Z`
+          const endTime = ev.end?.dateTime || `${ev.end?.date}T00:00:00Z`
+
+          await supabase
+            .from('ventas_google_events')
+            .upsert({
+              usuario_id: closer_id,
+              google_event_id: ev.id,
+              summary: ev.summary || '(Sin título)',
+              start_time: startTime,
+              end_time: endTime,
+              all_day: allDay,
+              status: ev.status || 'confirmed',
+              html_link: ev.htmlLink || null,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'usuario_id,google_event_id' })
+
+          totalUpserted++
+        }
+
+        pageToken = data.nextPageToken
+      } while (pageToken)
+
+      // Mark events deleted in Google as cancelled
+      if (allGoogleEventIds.length > 0) {
+        await supabase
+          .from('ventas_google_events')
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+          .eq('usuario_id', closer_id)
+          .not('google_event_id', 'in', `(${allGoogleEventIds.map(id => `"${id}"`).join(',')})`)
+          .gte('start_time', timeMin)
+          .lte('start_time', timeMax)
+          .neq('status', 'cancelled')
+      }
+
+      return jsonResponse({
+        success: true,
+        upserted: totalUpserted,
+        skipped_app_events: totalSkipped,
+      })
+    }
+
     if (!action || !cita_id || !closer_id) {
       return jsonResponse({ error: 'action, cita_id, and closer_id are required' }, 400)
     }

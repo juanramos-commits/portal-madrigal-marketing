@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
@@ -55,8 +55,10 @@ export function useCalendario() {
   const [vista, setVista] = useState('semana')
   const [fechaActual, setFechaActual] = useState(new Date())
   const [closerFiltro, setCloserFiltro] = useState(null)
+  const [googleEvents, setGoogleEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const pullDone = useRef(false)
 
   // Roles
   const esAdmin = usuario?.tipo === 'super_admin'
@@ -175,6 +177,58 @@ export function useCalendario() {
       // Non-critical: never block the main operation
     }
   }, [])
+
+  // Load Google Calendar external events
+  const cargarGoogleEvents = useCallback(async () => {
+    const { inicio, fin } = obtenerRangoFechas()
+    let query = supabase
+      .from('ventas_google_events')
+      .select('*')
+      .gte('start_time', inicio.toISOString())
+      .lte('start_time', fin.toISOString())
+      .neq('status', 'cancelled')
+      .order('start_time', { ascending: true })
+
+    // Filter by role
+    if (esCloserRol && !esDirectorRol) {
+      query = query.eq('usuario_id', user.id)
+    }
+    if (esDirectorRol && closerFiltro) {
+      query = query.eq('usuario_id', closerFiltro)
+    }
+
+    const { data } = await query
+    setGoogleEvents((data || []).map(e => ({ ...e, _isGoogleEvent: true })))
+  }, [obtenerRangoFechas, esCloserRol, esDirectorRol, user?.id, closerFiltro])
+
+  // Pull all Google Calendar events (best-effort, once per session)
+  const pullGoogleEvents = useCallback(async (closerId) => {
+    try {
+      await supabase.functions.invoke('google-calendar-sync', {
+        body: { action: 'pull', closer_id: closerId },
+      })
+    } catch {
+      // Non-critical
+    }
+  }, [])
+
+  // Merged events: citas + google events
+  const eventosMerged = useMemo(() => {
+    const citasNorm = citas.map(c => ({
+      ...c,
+      _isGoogleEvent: false,
+      _sortTime: new Date(c.fecha_hora).getTime(),
+    }))
+    const googleNorm = googleEvents.map(e => ({
+      ...e,
+      _isGoogleEvent: true,
+      _sortTime: new Date(e.start_time).getTime(),
+      // Map fields for compatibility
+      fecha_hora: e.start_time,
+      lead: { nombre: e.summary || '(Sin título)' },
+    }))
+    return [...citasNorm, ...googleNorm].sort((a, b) => a._sortTime - b._sortTime)
+  }, [citas, googleEvents])
 
   // Update cita estado
   const actualizarEstadoCita = useCallback(async (citaId, estadoReunionId) => {
@@ -494,6 +548,7 @@ export function useCalendario() {
     try {
       await Promise.all([
         cargarCitas(),
+        cargarGoogleEvents(),
         cargarReunionEstados(),
         esCloser ? cargarDisponibilidad() : Promise.resolve(),
         esCloser ? cargarBloqueos() : Promise.resolve(),
@@ -505,7 +560,7 @@ export function useCalendario() {
     } finally {
       setLoading(false)
     }
-  }, [cargarCitas, cargarReunionEstados, esCloser, esDirector, cargarDisponibilidad, cargarBloqueos, cargarConfig, cargarEnlaces])
+  }, [cargarCitas, cargarGoogleEvents, cargarReunionEstados, esCloser, esDirector, cargarDisponibilidad, cargarBloqueos, cargarConfig, cargarEnlaces])
 
   // Refresh on tab focus
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
@@ -528,6 +583,24 @@ export function useCalendario() {
     return () => { supabase.removeChannel(channel) }
   }, [user?.id, cargarCitas])
 
+  // Realtime: listen to google events changes
+  useEffect(() => {
+    if (!user?.id) return
+
+    const channel = supabase
+      .channel('calendario-google-events')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'ventas_google_events',
+      }, () => {
+        cargarGoogleEvents()
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [user?.id, cargarGoogleEvents])
+
   // Initial load
   useEffect(() => {
     if (user?.id && rolesComerciales.length > 0) {
@@ -535,15 +608,24 @@ export function useCalendario() {
     }
   }, [user?.id, rolesComerciales.length])
 
-  // Reload citas on navigation/filter change
+  // Auto-pull Google events once per session (if Google connected)
+  useEffect(() => {
+    if (!config?.google_calendar_token?.refresh_token || pullDone.current) return
+    pullDone.current = true
+    pullGoogleEvents(user?.id).then(() => cargarGoogleEvents())
+  }, [config, user?.id, pullGoogleEvents, cargarGoogleEvents])
+
+  // Reload citas + google events on navigation/filter change
   useEffect(() => {
     if (user?.id && rolesComerciales.length > 0) {
       cargarCitas()
+      cargarGoogleEvents()
     }
   }, [vista, fechaActual, closerFiltro])
 
   return {
-    citas, disponibilidad, bloqueos, config, enlaces, closers, setters,
+    citas, googleEvents, eventosMerged,
+    disponibilidad, bloqueos, config, enlaces, closers, setters,
     reunionEstados,
     vista, fechaActual, closerFiltro, loading, error,
     esCloser, esSetter, esDirector, esAdmin,
