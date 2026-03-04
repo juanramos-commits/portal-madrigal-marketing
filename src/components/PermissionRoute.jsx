@@ -67,7 +67,7 @@ export default function PermissionRoute({ permiso, children }) {
           Contacta con tu administrador si necesitas acceso
         </p>
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/')}
           className="btn primary"
         >
           Volver al Dashboard

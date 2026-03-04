@@ -57,9 +57,11 @@ function PageLoader() {
 
 // Redirige al primer dashboard accesible según permisos del usuario
 function SmartRedirect() {
-  const { usuario, tienePermiso, loading } = useAuth()
+  const { usuario, permisos, tienePermiso, loading } = useAuth()
   if (loading) return null
   if (usuario?.tipo === 'cliente') return <Navigate to="/mi-cuenta" replace />
+  // Esperar a que los permisos estén cargados antes de decidir
+  if (usuario && usuario.tipo !== 'super_admin' && permisos.length === 0) return null
   if (tienePermiso('ventas.ver_dashboard')) return <Navigate to="/ventas/dashboard" replace />
   if (tienePermiso('dashboard.ver')) return <Navigate to="/dashboard" replace />
   return <Navigate to="/mi-seguridad" replace />
