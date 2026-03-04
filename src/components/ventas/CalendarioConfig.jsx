@@ -95,6 +95,11 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
       const d = typeof raw === 'string' ? JSON.parse(raw) : raw
       if (d?.error) {
         console.error('[GCal] Reconcile API error:', d.error, d.detail)
+        if (d.token_expired) {
+          setSyncResult({ ok: false, msg: 'Token de Google expirado. Desconecta y vuelve a conectar.' })
+          setSyncing(false)
+          return
+        }
         throw new Error(d.error)
       }
 
@@ -115,10 +120,7 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
       if (onGcalStatusChange) onGcalStatusChange()
     } catch (e) {
       console.error('[GCal] Sync error:', e)
-      const msg = e?.message?.includes('token_expired') || e?.context?.body?.includes('token_expired')
-        ? 'Token de Google expirado. Desconecta y vuelve a conectar.'
-        : 'Error al sincronizar'
-      setSyncResult({ ok: false, msg })
+      setSyncResult({ ok: false, msg: 'Error al sincronizar' })
     } finally {
       setSyncing(false)
       setTimeout(() => setSyncResult(null), 5000)
