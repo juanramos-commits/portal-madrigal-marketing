@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
       const calendarId = configData?.google_calendar_id || 'primary'
       const accessToken = await getValidAccessToken(token, supabase, closer_id)
       if (!accessToken) {
-        return jsonResponse({ error: 'Failed to refresh Google access token' }, 401)
+        return jsonResponse({ error: 'Failed to refresh Google access token', token_expired: true })
       }
 
       // Get all citas with google_event_id for this closer
@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
       const calendarId = configData?.google_calendar_id || 'primary'
       const accessToken = await getValidAccessToken(token, supabase, closer_id)
       if (!accessToken) {
-        return jsonResponse({ error: 'Failed to refresh Google access token' }, 401)
+        return jsonResponse({ error: 'Failed to refresh Google access token', token_expired: true })
       }
 
       // Time window: -7 days to +90 days
@@ -376,7 +376,7 @@ Deno.serve(async (req) => {
     // Get valid access token
     const accessToken = await getValidAccessToken(token, supabase, closer_id)
     if (!accessToken) {
-      return jsonResponse({ error: 'Failed to refresh Google access token' }, 401)
+      return jsonResponse({ error: 'Failed to refresh Google access token', token_expired: true })
     }
 
     // Get cita data

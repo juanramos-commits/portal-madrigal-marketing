@@ -115,7 +115,10 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
       if (onGcalStatusChange) onGcalStatusChange()
     } catch (e) {
       console.error('[GCal] Sync error:', e)
-      setSyncResult({ ok: false, msg: 'Error al sincronizar' })
+      const msg = e?.message?.includes('token_expired') || e?.context?.body?.includes('token_expired')
+        ? 'Token de Google expirado. Desconecta y vuelve a conectar.'
+        : 'Error al sincronizar'
+      setSyncResult({ ok: false, msg })
     } finally {
       setSyncing(false)
       setTimeout(() => setSyncResult(null), 5000)
