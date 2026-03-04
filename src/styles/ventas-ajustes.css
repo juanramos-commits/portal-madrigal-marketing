@@ -4,9 +4,9 @@
 
 /* ═══ PAGE LAYOUT ═══ */
 .aj-page {
-  margin: -32px;
-  width: calc(100% + 64px);
-  height: calc(100% + 64px);
+  margin: calc(-1 * var(--space-xl));
+  width: calc(100% + var(--space-xl) * 2);
+  height: calc(100% + var(--space-xl) * 2);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -23,7 +23,7 @@
   width: 260px;
   min-width: 260px;
   border-right: 1px solid var(--border);
-  padding: 32px;
+  padding: var(--space-xl);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -42,12 +42,12 @@
 .aj-nav-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2xs);
 }
 
 .aj-nav-group-label {
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
@@ -58,12 +58,12 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 8px 10px;
+  padding: var(--space-sm) var(--space-2-5);
   border-radius: var(--radius-sm);
   border: none;
   background: none;
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
   cursor: pointer;
   transition: all var(--transition-fast);
   text-align: left;
@@ -78,14 +78,14 @@
 .aj-nav-item.active {
   background: var(--bg-input);
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 /* ═══ CONTENT ═══ */
 .aj-content {
   flex: 1;
   overflow-y: auto;
-  padding: 32px;
+  padding: var(--space-xl);
 }
 
 .aj-content-header {
@@ -93,8 +93,8 @@
 }
 
 .aj-content-header h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: var(--font-lg-xl);
+  font-weight: var(--weight-bold);
   color: var(--text);
   margin: 0;
 }
@@ -107,8 +107,8 @@
 }
 
 .aj-mobile-bar .aj-page-title {
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
   color: var(--text);
   margin: 0;
 }
@@ -116,12 +116,12 @@
 .aj-back-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   background: none;
   border: none;
   color: var(--text);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   padding: 0;
 }
@@ -145,15 +145,15 @@
 }
 
 .aj-seccion h3 {
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: var(--font-base);
+  font-weight: var(--weight-bold);
   color: var(--text);
   margin: 0 0 var(--space-md) 0;
 }
 
 .aj-seccion h4 {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   margin: var(--space-md) 0 var(--space-sm) 0;
 }
@@ -180,8 +180,8 @@
 }
 
 .aj-card-section-title {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: var(--font-base);
+  font-weight: var(--weight-bold);
   color: var(--text);
   margin-bottom: var(--space-md);
 }
@@ -214,8 +214,8 @@
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: var(--font-xl-2xl);
+  font-weight: var(--weight-bold);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -238,8 +238,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.68rem;
-  font-weight: 600;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   opacity: 0;
   transition: opacity var(--transition-fast);
 }
@@ -251,25 +251,25 @@
 .aj-perfil-avatar-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2xs);
 }
 
 .aj-perfil-nombre-preview {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
 }
 
 .aj-perfil-email-preview {
-  font-size: 0.78rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
 .aj-perfil-roles {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1-5);
   flex-wrap: wrap;
-  margin-top: 2px;
+  margin-top: var(--space-2xs);
 }
 
 .aj-actions {
@@ -280,8 +280,8 @@
 }
 
 .aj-guardado-msg {
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--success);
 }
 
@@ -302,7 +302,7 @@
 }
 
 .aj-desc {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   margin: 0 0 var(--space-md) 0;
 }
@@ -314,10 +314,10 @@
 
 .aj-field label {
   display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1-5);
 }
 
 .aj-field input[type="text"],
@@ -328,12 +328,12 @@
 .aj-field textarea,
 .aj-field select {
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-input);
   color: var(--text);
-  font-size: 0.875rem;
+  font-size: var(--font-base);
   font-family: inherit;
   outline: none;
   transition: border-color var(--transition-fast);
@@ -366,9 +366,9 @@
 }
 
 .aj-field-hint {
-  font-size: 0.75rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: var(--space-xs);
 }
 
 .aj-field-inline {
@@ -379,13 +379,13 @@
 
 /* ═══ BUTTONS ═══ */
 .aj-btn-primary {
-  padding: 10px 20px;
+  padding: var(--space-2-5) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--primary);
   color: var(--text-inverse);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: opacity var(--transition-fast);
   font-family: inherit;
@@ -395,13 +395,13 @@
 .aj-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .aj-btn-ghost {
-  padding: 10px 20px;
+  padding: var(--space-2-5) var(--space-5);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: none;
   color: var(--text);
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   font-family: inherit;
@@ -437,16 +437,16 @@
 
 /* ═══ ETAPAS (Pipelines) ═══ */
 .aj-etapa-orden {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
-  min-width: 24px;
+  min-width: var(--space-lg);
 }
 
 .aj-etapa-tipo-badge {
-  font-size: 0.688rem;
-  font-weight: 600;
-  padding: 2px 8px;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
+  padding: var(--space-2xs) var(--space-sm);
   border-radius: var(--radius-pill);
   background: var(--bg-input);
   color: var(--text-muted);
@@ -455,19 +455,19 @@
 }
 
 .aj-etapa-max {
-  font-size: 0.75rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
 /* ═══ PAQUETES ═══ */
 .aj-card-precio {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
   color: var(--text);
 }
 
 .aj-card-desc {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   line-height: 1.4;
 }
@@ -477,16 +477,16 @@
 }
 
 .aj-com-rol {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   min-width: 100px;
 }
 
 .aj-hint {
-  font-size: 0.75rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: var(--space-xs);
 }
 
 /* ═══ INTERNAL TABS (e.g. AjustesCalendario) ═══ */
@@ -494,7 +494,7 @@
   display: flex;
   gap: 0;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--space-5);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -502,12 +502,12 @@
 .aj-tabs::-webkit-scrollbar { display: none; }
 
 .aj-tab {
-  padding: 0.5rem 1rem;
+  padding: var(--space-sm) var(--space-md);
   border: none;
   background: none;
   color: var(--text-muted);
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   white-space: nowrap;
   border-bottom: 2px solid transparent;
@@ -541,12 +541,12 @@
 .aj-seccion .vc-bloqueos-header h3 {
   border-bottom: none;
   padding-bottom: 0;
-  font-size: 0.88rem;
+  font-size: var(--font-base);
 }
 
 /* ═══ PASSWORD STRENGTH METER ═══ */
 .aj-psm {
-  margin-top: 8px;
+  margin-top: var(--space-sm);
 }
 
 .aj-psm-track {
@@ -554,7 +554,7 @@
   background: var(--bg-input);
   border-radius: 2px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-sm);
 }
 
 .aj-psm-bar {
@@ -564,27 +564,27 @@
 }
 
 .aj-psm-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  margin-bottom: 8px;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  margin-bottom: var(--space-sm);
 }
 
 .aj-psm-reqs {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .aj-psm-req {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: var(--space-1-5);
+  font-size: var(--font-sm);
 }
 
 .aj-psm-req-icon {
-  font-size: 0.82rem;
-  width: 14px;
+  font-size: var(--font-sm-md);
+  width: var(--space-3-5);
   text-align: center;
 }
 
@@ -622,8 +622,8 @@
   grid-template-columns: 100px 1fr 1fr;
   gap: var(--space-md);
   margin-bottom: var(--space-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -639,13 +639,13 @@
 }
 
 .aj-btn-danger {
-  padding: 10px 20px;
+  padding: var(--space-2-5) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--error);
   color: var(--text-inverse);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: opacity var(--transition-fast);
 }
@@ -658,13 +658,13 @@
 }
 
 .aj-btn-sm {
-  padding: 6px 14px;
+  padding: var(--space-1-5) var(--space-3-5);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: none;
   color: var(--text);
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -676,7 +676,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  padding: var(--space-1-5);
   border-radius: var(--radius-sm);
   border: none;
   background: none;
@@ -691,7 +691,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  padding: var(--space-1-5);
   border-radius: var(--radius-sm);
   border: none;
   background: none;
@@ -725,20 +725,20 @@
 }
 
 .aj-card-title {
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-base);
   color: var(--text);
 }
 
 .aj-card-subtitle {
   display: block;
-  font-size: 0.78rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: var(--space-2xs);
 }
 
 .aj-card-meta {
-  font-size: 0.78rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   margin-bottom: var(--space-sm);
 }
@@ -746,7 +746,7 @@
 .aj-card-roles {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-1-5);
   margin-bottom: var(--space-sm);
 }
 
@@ -759,10 +759,10 @@
 /* ═══ STATUS BADGE ═══ */
 .aj-status-badge {
   display: inline-flex;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  padding: 3px var(--space-2-5);
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.03em;
   border: none;
@@ -788,10 +788,10 @@
 /* ═══ ROLE BADGES ═══ */
 .aj-role-badge {
   display: inline-flex;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  padding: 3px var(--space-2-5);
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
 }
 
 .aj-role-setter {
@@ -818,14 +818,14 @@
 .aj-etapas-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .aj-etapa-row {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 8px 12px;
+  padding: var(--space-sm) var(--space-3);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -835,7 +835,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: var(--space-xs);
   border: none;
   background: none;
   color: var(--text-muted);
@@ -846,30 +846,30 @@
 .aj-drag-handle:active { cursor: grabbing; }
 
 .aj-etapa-color {
-  width: 14px;
-  height: 14px;
+  width: var(--space-3-5);
+  height: var(--space-3-5);
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .aj-etapa-nombre {
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
   color: var(--text);
   flex: 1;
 }
 
 .aj-etapa-meta {
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   color: var(--text-muted);
 }
 
 .aj-etapa-actions {
   display: flex;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .aj-estado-grab {
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   color: var(--success);
   margin-right: var(--space-sm);
 }
@@ -886,25 +886,25 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
-  padding: 10px var(--space-md);
+  padding: var(--space-2-5) var(--space-md);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
 
 .aj-campo-nombre {
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
   color: var(--text);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 /* ═══ CHECKBOX LABEL ═══ */
 .aj-check-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
   color: var(--text);
   margin-bottom: var(--space-xs);
 }
@@ -930,7 +930,7 @@
 .aj-color-picker input[type="color"] {
   width: 36px;
   height: 36px;
-  padding: 2px;
+  padding: var(--space-2xs);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-input);
@@ -938,14 +938,14 @@
 }
 
 .aj-color-preview {
-  width: 20px;
-  height: 20px;
+  width: var(--space-5);
+  height: var(--space-5);
   border-radius: 50%;
   border: 1px solid var(--border);
 }
 
 .aj-color-picker span {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   font-family: monospace;
 }
@@ -953,20 +953,20 @@
 /* ═══ PIPELINE TABS ═══ */
 .aj-pipeline-tabs {
   display: flex;
-  gap: 4px;
+  gap: var(--space-xs);
   margin-bottom: var(--space-md);
   border-bottom: 1px solid var(--border);
   padding-bottom: var(--space-sm);
 }
 
 .aj-pipeline-tab {
-  padding: 6px 14px;
+  padding: var(--space-1-5) var(--space-3-5);
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   border: none;
   background: none;
   color: var(--text-muted);
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -974,7 +974,7 @@
 .aj-pipeline-tab:hover { color: var(--text); }
 .aj-pipeline-tab.active {
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   border-bottom: 2px solid var(--primary);
 }
 
@@ -989,7 +989,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  padding: 10px var(--space-md);
+  padding: var(--space-2-5) var(--space-md);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -997,7 +997,7 @@
 
 .aj-reparto-name {
   flex: 1;
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
   color: var(--text);
   min-width: 0;
   overflow: hidden;
@@ -1008,17 +1008,17 @@
 .aj-reparto-input {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .aj-reparto-input input {
   width: 60px;
-  padding: 6px 8px;
+  padding: var(--space-1-5) var(--space-sm);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-input);
   color: var(--text);
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
   text-align: center;
   outline: none;
 }
@@ -1026,22 +1026,22 @@
 .aj-reparto-input input:focus { border-color: var(--border-focus); }
 
 .aj-reparto-input span {
-  font-size: 0.82rem;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .aj-reparto-bar {
   width: 100px;
-  height: 6px;
+  height: var(--space-1-5);
   background: var(--bg-input);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 .aj-reparto-bar-fill {
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: var(--success);
   transition: width var(--transition-base);
 }
@@ -1051,21 +1051,21 @@
   align-items: center;
   justify-content: space-between;
   margin-top: var(--space-md);
-  padding: 10px var(--space-md);
+  padding: var(--space-2-5) var(--space-md);
   border-radius: var(--radius-sm);
   background: var(--bg-card);
   border: 1px solid var(--border);
 }
 
 .aj-reparto-total-label {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   color: var(--text);
 }
 
 .aj-reparto-total-value {
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-bold);
 }
 
 .aj-reparto-total-value.valid { color: var(--success); }
@@ -1078,12 +1078,12 @@
 
 .aj-comisiones-table input[type="number"] {
   width: 100%;
-  padding: 6px 8px;
+  padding: var(--space-1-5) var(--space-sm);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-input);
   color: var(--text);
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
   outline: none;
 }
 
@@ -1096,7 +1096,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 8px 12px;
+  padding: var(--space-sm) var(--space-3);
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1105,7 +1105,7 @@
 }
 
 .aj-webhook-url code {
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   color: var(--text-muted);
   flex: 1;
   overflow: hidden;
@@ -1114,10 +1114,10 @@
 }
 
 .aj-copiado {
-  font-size: 0.7rem;
+  font-size: var(--font-xs);
   color: var(--success);
-  font-weight: 600;
-  margin-left: 4px;
+  font-weight: var(--weight-semibold);
+  margin-left: var(--space-xs);
 }
 
 /* ═══ MAPEO ═══ */
@@ -1128,8 +1128,8 @@
   padding-bottom: var(--space-sm);
   border-bottom: 1px solid var(--border);
   margin-bottom: var(--space-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -1146,12 +1146,12 @@
 .aj-mapeo-row input,
 .aj-mapeo-row select {
   width: 100%;
-  padding: 8px 10px;
+  padding: var(--space-sm) var(--space-2-5);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-input);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: var(--font-sm-md);
   outline: none;
 }
 
@@ -1162,7 +1162,7 @@
 
 .aj-mapeo-arrow {
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
 }
 
 .aj-mt {
@@ -1180,12 +1180,12 @@
 .aj-log-filter-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .aj-log-filter-field label {
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -1193,12 +1193,12 @@
 
 .aj-log-filter-field select,
 .aj-log-filter-field input[type="date"] {
-  padding: 8px 10px;
+  padding: var(--space-sm) var(--space-2-5);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-input);
   color: var(--text);
-  font-size: 0.82rem;
+  font-size: var(--font-sm-md);
   outline: none;
   width: 100%;
 }
@@ -1217,24 +1217,24 @@
 .aj-log-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: var(--font-sm-md);
 }
 
 .aj-log-table th {
   text-align: left;
-  font-weight: 600;
-  font-size: 0.72rem;
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
-  padding: 8px 10px;
+  padding: var(--space-sm) var(--space-2-5);
   border-bottom: 1px solid var(--border);
   background: var(--bg-input);
   white-space: nowrap;
 }
 
 .aj-log-table td {
-  padding: 8px 10px;
+  padding: var(--space-sm) var(--space-2-5);
   border-bottom: 1px solid var(--border);
   color: var(--text);
   white-space: nowrap;
@@ -1246,10 +1246,10 @@
 
 .aj-log-tipo {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   background: var(--bg-input);
   color: var(--text-muted);
@@ -1276,10 +1276,10 @@
 /* ═══ MODULE BADGES ═══ */
 .aj-modulo-badge {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-full);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.3px;
   white-space: nowrap;
@@ -1302,7 +1302,7 @@
 }
 
 .aj-pag-info {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
@@ -1310,11 +1310,11 @@
 .aj-logs-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .aj-log-row {
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -1328,18 +1328,18 @@
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  font-size: 0.82rem;
+  font-size: var(--font-sm-md);
   flex-wrap: wrap;
 }
 
 .aj-log-fecha {
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: var(--font-sm);
 }
 
 .aj-log-resultado {
-  font-weight: 600;
-  font-size: 0.78rem;
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-sm);
 }
 
 .aj-text-success { color: var(--success); }
@@ -1350,7 +1350,7 @@
   padding: var(--space-sm) var(--space-md);
   background: var(--bg-input);
   border-radius: var(--radius-sm);
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   color: var(--text-muted);
   overflow-x: auto;
   white-space: pre;
@@ -1363,23 +1363,23 @@
   padding: var(--space-xl);
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
 }
 
 .aj-error {
-  padding: 10px var(--space-md);
+  padding: var(--space-2-5) var(--space-md);
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--error) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--error) 20%, transparent);
   color: var(--error);
-  font-size: 0.82rem;
+  font-size: var(--font-sm-md);
   margin-top: var(--space-sm);
 }
 
 .aj-success {
   color: var(--success);
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
 }
 
 /* ═══ PERFIL ═══ */
@@ -1415,8 +1415,8 @@
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: var(--font-2xl);
+  font-weight: var(--weight-bold);
 }
 
 .aj-avatar-upload {
@@ -1451,21 +1451,21 @@
 }
 
 .aj-perfil-name {
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
   color: var(--text);
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-xs);
 }
 
 .aj-perfil-email {
-  font-size: 0.82rem;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
   margin: 0 0 var(--space-sm);
 }
 
 .aj-perfil-roles {
   display: flex;
-  gap: 6px;
+  gap: var(--space-1-5);
   flex-wrap: wrap;
 }
 
@@ -1483,7 +1483,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   padding: var(--space-md) var(--space-sm);
   border-radius: var(--radius-md);
   border: 2px solid var(--border);
@@ -1523,14 +1523,14 @@
 }
 
 .aj-tema-opcion span {
-  font-size: 0.813rem;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
 }
 
 /* ═══ CUENTA BANCARIA ═══ */
 .aj-iban-display {
   font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 1rem;
+  font-size: var(--font-md);
   letter-spacing: 0.05em;
 }
 
@@ -1542,8 +1542,8 @@
 }
 
 .aj-password-section h4 {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   margin: 0 0 var(--space-md) 0;
 }
@@ -1559,9 +1559,9 @@
 /* ═══ MOBILE RESPONSIVE ═══ */
 @media (max-width: 768px) {
   .aj-page {
-    margin: -16px;
-    width: calc(100% + 32px);
-    height: calc(100% + 32px);
+    margin: calc(-1 * var(--space-md));
+    width: calc(100% + var(--space-md) * 2);
+    height: calc(100% + var(--space-md) * 2);
   }
 
   .aj-sidebar {
@@ -1577,7 +1577,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-    padding: 16px;
+    padding: var(--space-md);
     overflow-y: auto;
     flex: 1;
   }
@@ -1592,7 +1592,7 @@
   }
 
   .aj-content {
-    padding: 16px;
+    padding: var(--space-md);
     display: block;
   }
 
@@ -1603,12 +1603,12 @@
   .aj-mobile-group {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: var(--space-2xs);
   }
 
   .aj-mobile-group-label {
-    font-size: 0.65rem;
-    font-weight: 600;
+    font-size: var(--font-2xs);
+    font-weight: var(--weight-semibold);
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-muted);
@@ -1619,12 +1619,12 @@
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: 12px var(--space-md);
+    padding: var(--space-3) var(--space-md);
     border-radius: var(--radius-sm);
     border: none;
     background: var(--bg-card);
     color: var(--text);
-    font-size: 0.85rem;
+    font-size: var(--font-sm-md);
     cursor: pointer;
     text-align: left;
     width: 100%;
@@ -1637,7 +1637,7 @@
 
   .aj-mobile-item.active {
     background: var(--bg-input);
-    font-weight: 600;
+    font-weight: var(--weight-semibold);
   }
 
   /* Responsive adjustments */
@@ -1665,7 +1665,7 @@
   .aj-mapeo-header,
   .aj-mapeo-row {
     grid-template-columns: 1fr;
-    gap: 4px;
+    gap: var(--space-xs);
   }
 
   .aj-mapeo-arrow {
@@ -1697,8 +1697,8 @@
 
 /* ── Icon utility ────────────────────────────────────────────────── */
 .aj-icon-nav {
-  width: 16px;
-  height: 16px;
+  width: var(--space-md);
+  height: var(--space-md);
 }
 
 .aj-icon-back {
@@ -1707,20 +1707,20 @@
 }
 
 .aj-icon-chevron {
-  width: 14px;
-  height: 14px;
+  width: var(--space-3-5);
+  height: var(--space-3-5);
   margin-left: auto;
   opacity: 0.4;
 }
 
 .aj-icon-sm {
-  width: 14px;
-  height: 14px;
+  width: var(--space-3-5);
+  height: var(--space-3-5);
 }
 
 .aj-icon-theme {
-  width: 20px;
-  height: 20px;
+  width: var(--space-5);
+  height: var(--space-5);
 }
 
 /* ── Focus-visible ───────────────────────────────────────────────── */
@@ -1777,19 +1777,19 @@
 /* ═══ PERMISOS PANEL ═══ */
 .aj-perm-tabs {
   display: flex;
-  gap: 4px;
+  gap: var(--space-xs);
   margin-bottom: var(--space-lg);
   border-bottom: 1px solid var(--border);
   padding-bottom: 0;
 }
 
 .aj-perm-tab {
-  padding: 8px 20px;
+  padding: var(--space-sm) var(--space-5);
   border: none;
   background: none;
   color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   border-bottom: 2px solid transparent;
@@ -1799,7 +1799,7 @@
 .aj-perm-tab:hover { color: var(--text); }
 .aj-perm-tab.active {
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   border-bottom-color: var(--primary);
 }
 
@@ -1807,10 +1807,10 @@
 .aj-perm-matrix-header {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 4px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  padding: var(--space-sm) var(--space-3);
+  margin-bottom: var(--space-xs);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
@@ -1835,13 +1835,13 @@
 
 /* Group headers */
 .aj-perm-group {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-xs);
 }
 
 .aj-perm-group-header {
   display: flex;
   align-items: center;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   background: var(--bg-input);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -1854,19 +1854,19 @@
 }
 
 .aj-perm-count {
-  font-size: 0.7rem;
-  font-weight: 500;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
   color: var(--text-muted);
   background: var(--bg-card);
-  padding: 1px 8px;
-  border-radius: 999px;
+  padding: 1px var(--space-sm);
+  border-radius: var(--radius-full);
 }
 
 /* Permission rows */
 .aj-perm-row {
   display: flex;
   align-items: center;
-  padding: 8px 12px 8px 36px;
+  padding: var(--space-sm) var(--space-3) var(--space-sm) var(--space-xl);
   border-bottom: 1px solid var(--border);
   transition: background var(--transition-fast);
 }
@@ -1885,14 +1885,14 @@
 
 .aj-perm-name {
   display: block;
-  font-size: 0.85rem;
+  font-size: var(--font-sm-md);
   color: var(--text);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .aj-perm-desc {
   display: block;
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
   color: var(--text-muted);
   margin-top: 1px;
 }
@@ -1914,14 +1914,14 @@
 
 /* Toggle all button */
 .aj-perm-toggle-all {
-  width: 24px;
-  height: 24px;
+  width: var(--space-lg);
+  height: var(--space-lg);
   border-radius: var(--radius-sm);
   border: 1.5px solid var(--border);
   background: none;
   color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-bold);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1953,9 +1953,9 @@
 }
 
 .aj-perm-dirty {
-  font-size: 0.8rem;
+  font-size: var(--font-sm);
   color: var(--warning);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .aj-btn-ghost.aj-btn-danger {
@@ -1974,20 +1974,20 @@
 
 .aj-perm-user-select label {
   display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
-  margin-bottom: 6px;
+  margin-bottom: var(--space-1-5);
 }
 
 .aj-select {
   width: 100%;
-  padding: 10px 12px;
+  padding: var(--space-2-5) var(--space-3);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-input);
   color: var(--text);
-  font-size: 0.875rem;
+  font-size: var(--font-base);
   font-family: inherit;
   outline: none;
 }
@@ -2011,9 +2011,9 @@
 
 .aj-perm-user-email {
   display: block;
-  font-size: 0.78rem;
+  font-size: var(--font-sm);
   color: var(--text-muted);
-  margin-top: 2px;
+  margin-top: var(--space-2xs);
 }
 
 .aj-perm-user-meta {
@@ -2024,35 +2024,35 @@
 }
 
 .aj-perm-count-effective {
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text);
 }
 
 .aj-perm-override-count {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--warning);
   background: rgba(245, 158, 11, 0.15);
-  padding: 2px 10px;
-  border-radius: 999px;
+  padding: var(--space-2xs) var(--space-2-5);
+  border-radius: var(--radius-full);
 }
 
 /* Override header */
 .aj-perm-override-header .aj-perm-label-col {
-  font-size: 0.72rem;
+  font-size: var(--font-xs);
 }
 
 /* Inherited badge */
 .aj-perm-inherited {
   display: inline-flex;
-  width: 24px;
-  height: 24px;
+  width: var(--space-lg);
+  height: var(--space-lg);
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-bold);
 }
 
 .aj-perm-inherited.granted {
@@ -2068,7 +2068,7 @@
 /* Override buttons */
 .aj-perm-override-btns {
   display: flex;
-  gap: 4px;
+  gap: var(--space-xs);
   justify-content: center;
 }
 
@@ -2079,8 +2079,8 @@
   border: 1px solid var(--border);
   background: none;
   color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-bold);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -2115,7 +2115,7 @@
     width: 90px;
   }
   .aj-perm-row {
-    padding-left: 20px;
+    padding-left: var(--space-5);
   }
   .aj-perm-desc {
     display: none;
