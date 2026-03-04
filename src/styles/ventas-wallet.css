@@ -130,6 +130,10 @@
   transition: all var(--transition-base);
 }
 
+.wt-cards-grid > .wt-card:first-child {
+  border-top: 3px solid var(--primary);
+}
+
 .wt-card:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-hover);
