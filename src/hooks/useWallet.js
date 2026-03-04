@@ -323,7 +323,11 @@ export function useWallet() {
       const relevMap = Object.fromEntries(results.map(r => [r.comision_id, r.relevancia]))
       const sorted = (data || []).sort((a, b) => (relevMap[b.id] || 0) - (relevMap[a.id] || 0))
       setComisiones(sorted)
-      setComisionesTotal(sorted.length)
+      // RPC doesn't return total count — estimate: if full page, assume more exist
+      const estimatedTotal = results.length >= COMISIONES_PAGE_SIZE
+        ? (comisionesPagina + 2) * COMISIONES_PAGE_SIZE
+        : comisionesPagina * COMISIONES_PAGE_SIZE + sorted.length
+      setComisionesTotal(estimatedTotal)
     } catch (err) {
       if (requestId !== comisionesSearchRef.current) return
       console.warn('RPC ventas_buscar_comisiones no disponible:', err.message)
@@ -359,7 +363,10 @@ export function useWallet() {
       const relevMap = Object.fromEntries(results.map(r => [r.retiro_id, r.relevancia]))
       const sorted = (data || []).sort((a, b) => (relevMap[b.id] || 0) - (relevMap[a.id] || 0))
       setRetiros(sorted)
-      setRetirosTotal(sorted.length)
+      const estTotal = results.length >= RETIROS_PAGE_SIZE
+        ? (retirosPagina + 2) * RETIROS_PAGE_SIZE
+        : retirosPagina * RETIROS_PAGE_SIZE + sorted.length
+      setRetirosTotal(estTotal)
     } catch (err) {
       if (requestId !== retirosSearchRef.current) return
       console.warn('RPC ventas_buscar_retiros no disponible:', err.message)
@@ -395,7 +402,10 @@ export function useWallet() {
       const relevMap = Object.fromEntries(results.map(r => [r.factura_id, r.relevancia]))
       const sorted = (data || []).sort((a, b) => (relevMap[b.id] || 0) - (relevMap[a.id] || 0))
       setFacturas(sorted)
-      setFacturasTotal(sorted.length)
+      const estTotal = results.length >= FACTURAS_PAGE_SIZE
+        ? (facturasPagina + 2) * FACTURAS_PAGE_SIZE
+        : facturasPagina * FACTURAS_PAGE_SIZE + sorted.length
+      setFacturasTotal(estTotal)
     } catch (err) {
       if (requestId !== facturasSearchRef.current) return
       console.warn('RPC ventas_buscar_facturas no disponible:', err.message)

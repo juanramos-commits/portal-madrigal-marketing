@@ -616,7 +616,7 @@ export function useVentas() {
     if (!user?.id) return
 
     const channel = supabase
-      .channel('ventas-changes')
+      .channel(`ventas-changes-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',

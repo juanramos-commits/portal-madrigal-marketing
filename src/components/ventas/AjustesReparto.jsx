@@ -30,7 +30,8 @@ export default function AjustesReparto({
   }, [setters, repartoConfig])
 
   const total = config.reduce((sum, c) => sum + Number(c.porcentaje || 0), 0)
-  const esValido = total === 100
+  const totalRedondeado = Math.round(total * 100) / 100
+  const esValido = Math.abs(totalRedondeado - 100) < 0.01
 
   const handleChange = (idx, value) => {
     setConfig(prev => prev.map((c, i) => i === idx ? { ...c, porcentaje: Number(value) || 0 } : c))
@@ -86,7 +87,7 @@ export default function AjustesReparto({
           <div className="aj-reparto-total">
             <span className="aj-reparto-total-label">Total</span>
             <span className={`aj-reparto-total-value ${esValido ? 'valid' : 'invalid'}`}>
-              {total}% {esValido ? '' : '(debe ser 100%)'}
+              {totalRedondeado}% {esValido ? '' : '(debe ser 100%)'}
             </span>
           </div>
 

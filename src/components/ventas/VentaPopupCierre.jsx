@@ -118,6 +118,7 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
     if (!form.fecha_venta) e.fecha_venta = 'La fecha es obligatoria'
     if (!form.paquete_id) e.paquete_id = 'Selecciona un paquete'
     if (!form.importe || Number(form.importe) <= 0) e.importe = 'El importe debe ser mayor que 0'
+    else if (Number(form.importe) > 999999) e.importe = 'El importe parece demasiado alto. Verifica el valor.'
     if (!form.metodo_pago) e.metodo_pago = 'Selecciona el método de pago'
     setErrores(e)
     return Object.keys(e).length === 0
@@ -231,7 +232,8 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
           <input
             type="number"
             step="0.01"
-            min="0"
+            min="0.01"
+            max="999999"
             value={form.importe}
             onChange={e => handleChange('importe', e.target.value)}
             placeholder="0,00"

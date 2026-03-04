@@ -91,6 +91,9 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
     if (!form.direccion.trim()) e.direccion = 'Obligatorio'
     if (!form.pais.trim()) e.pais = 'Obligatorio'
 
+    const iva = Number(form.iva_porcentaje)
+    if (iva < 0 || iva > 100) e.iva_porcentaje = 'Debe estar entre 0 y 100'
+
     const errorBancario = validarDatosBancarios(form)
     if (errorBancario) Object.assign(e, errorBancario)
 
@@ -380,6 +383,7 @@ export default function WalletDatosFiscales({ datosFiscales, onGuardar }) {
             value={form.iva_porcentaje}
             onChange={e => handleChange('iva_porcentaje', e.target.value)}
           />
+          {errores.iva_porcentaje && <span className="wt-field-error">{errores.iva_porcentaje}</span>}
         </div>
 
         <div className="wt-field wt-field-toggle-wrap">

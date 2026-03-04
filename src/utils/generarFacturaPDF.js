@@ -173,10 +173,10 @@ export function generarCSVFacturas(facturas) {
   const csv = [headers, ...rows].map(row =>
     row.map(cell => {
       const str = String(cell ?? '')
-      return str.includes(',') || str.includes('"') || str.includes('\n')
+      return str.includes(';') || str.includes('"') || str.includes('\n')
         ? `"${str.replace(/"/g, '""')}"`
         : str
-    }).join(',')
+    }).join(';')
   ).join('\n')
 
   const bom = '\uFEFF'
