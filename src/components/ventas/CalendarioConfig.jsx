@@ -84,18 +84,37 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
     setSyncing(true)
     setSyncResult(null)
     try {
+      // 1. Reconcile app citas with Google
       const { data: raw, error: err } = await supabase.functions.invoke('google-calendar-sync', {
         body: { action: 'reconcile', closer_id: userId },
       })
-      if (err) throw err
+      if (err) {
+        console.error('[GCal] Reconcile invoke error:', err)
+        throw err
+      }
       const d = typeof raw === 'string' ? JSON.parse(raw) : raw
+      if (d?.error) {
+        console.error('[GCal] Reconcile API error:', d.error, d.detail)
+        throw new Error(d.error)
+      }
+
+      // 2. Pull all external Google events
+      const { data: pullRaw, error: pullErr } = await supabase.functions.invoke('google-calendar-sync', {
+        body: { action: 'pull', closer_id: userId },
+      })
+      if (pullErr) console.error('[GCal] Pull invoke error:', pullErr)
+      const pd = typeof pullRaw === 'string' ? JSON.parse(pullRaw) : pullRaw
+      if (pd?.error) console.error('[GCal] Pull API error:', pd.error, pd.detail)
+
       const parts = []
       if (d.updated > 0) parts.push(`${d.updated} actualizadas`)
       if (d.cancelled > 0) parts.push(`${d.cancelled} canceladas`)
+      if (pd?.upserted > 0) parts.push(`${pd.upserted} eventos Google importados`)
       if (parts.length === 0) parts.push('Todo sincronizado')
       setSyncResult({ ok: true, msg: `${d.total ?? 0} citas revisadas: ${parts.join(', ')}` })
-      if ((d.updated > 0 || d.cancelled > 0) && onGcalStatusChange) onGcalStatusChange()
-    } catch {
+      if (onGcalStatusChange) onGcalStatusChange()
+    } catch (e) {
+      console.error('[GCal] Sync error:', e)
       setSyncResult({ ok: false, msg: 'Error al sincronizar' })
     } finally {
       setSyncing(false)
