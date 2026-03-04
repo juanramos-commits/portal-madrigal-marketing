@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import Checkbox from '../ui/Checkbox'
 import Modal from '../ui/Modal'
 import Select from '../ui/Select'
+import ConfirmDialog from '../ui/ConfirmDialog'
 
 const ROL_LABELS = { setter: 'Setter', closer: 'Closer', director_ventas: 'Director' }
 const ALL_ROLES = ['setter', 'closer', 'director_ventas']
@@ -63,6 +64,7 @@ export default function AjustesEquipo({
 
   const handleEditSave = async () => {
     if (!showEdit) return
+    if (selectedRoles.length === 0) { setError('Selecciona al menos un rol'); return }
     setSaving(true); setError(null)
     try {
       await onEditarRoles(showEdit.usuario_id, selectedRoles)
@@ -71,12 +73,27 @@ export default function AjustesEquipo({
     finally { setSaving(false) }
   }
 
+  const [confirmToggle, setConfirmToggle] = useState(null)
   const handleToggleActivo = async (miembro) => {
+    if (miembro.activo) {
+      setConfirmToggle(miembro)
+      return
+    }
     try {
-      await onDesactivar(miembro.usuario_id, !miembro.activo)
+      await onDesactivar(miembro.usuario_id, true)
     } catch (e) {
       setError(e.message || 'Error al cambiar estado')
     }
+  }
+
+  const confirmarDesactivar = async () => {
+    if (!confirmToggle) return
+    try {
+      await onDesactivar(confirmToggle.usuario_id, false)
+    } catch (e) {
+      setError(e.message || 'Error al desactivar')
+    }
+    setConfirmToggle(null)
   }
 
   return (
@@ -179,6 +196,16 @@ export default function AjustesEquipo({
         </div>
         {error && <div className="aj-error">{error}</div>}
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmToggle}
+        title="Desactivar miembro"
+        message={<>¿Desactivar a <strong>{confirmToggle?.usuario?.nombre || confirmToggle?.usuario?.email}</strong>? Sus leads asignados no se reasignarán automáticamente.</>}
+        variant="danger"
+        confirmText="Desactivar"
+        onConfirm={confirmarDesactivar}
+        onCancel={() => setConfirmToggle(null)}
+      />
     </div>
   )
 }

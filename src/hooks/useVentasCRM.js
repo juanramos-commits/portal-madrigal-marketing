@@ -603,8 +603,11 @@ export function useVentasCRM() {
   const [etapaVentaDestino, setEtapaVentaDestino] = useState(null)
 
   // ── Move lead (drag & drop) ────────────────────────────────────────
+  const movingLeadsRef = useRef(new Set())
   const moverLead = useCallback(async (leadId, etapaOrigenId, etapaDestinoId) => {
     if (etapaOrigenId === etapaDestinoId) return
+    if (movingLeadsRef.current.has(leadId)) return
+    movingLeadsRef.current.add(leadId)
     if (!tienePermiso('ventas.crm.mover_leads')) throw new Error('No tienes permiso para mover leads')
 
     const etapaDestino = etapas.find(e => e.id === etapaDestinoId)
@@ -729,6 +732,8 @@ export function useVentasCRM() {
         [etapaDestinoId]: Math.max(0, (prev[etapaDestinoId] || 0) - 1),
       }))
       throw new Error('Error al mover el lead')
+    } finally {
+      movingLeadsRef.current.delete(leadId)
     }
   }, [leads, etapas, pipelineActivo, user?.id])
 

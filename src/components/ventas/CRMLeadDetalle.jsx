@@ -869,12 +869,14 @@ export default function CRMLeadDetalle() {
                 <span key={etq.id} className="crm-tag" style={{ borderColor: etq.color || 'var(--border)' }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: etq.color || 'var(--text-muted)' }} />
                   {etq.nombre}
-                  <button className="crm-tag-remove" onClick={() => removeTag(etq.id)} aria-label={`Quitar etiqueta ${etq.nombre}`}>
-                    &times;
-                  </button>
+                  {puedeEditar && (
+                    <button className="crm-tag-remove" onClick={() => removeTag(etq.id)} aria-label={`Quitar etiqueta ${etq.nombre}`}>
+                      &times;
+                    </button>
+                  )}
                 </span>
               ))}
-              {availableTags.length > 0 && (
+              {puedeEditar && availableTags.length > 0 && (
                 <div style={{ position: 'relative' }} ref={tagPickerRef}>
                   <button className="crm-tag-add" onClick={() => setShowTagPicker(!showTagPicker)}>
                     + Añadir

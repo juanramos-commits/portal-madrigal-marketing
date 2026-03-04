@@ -34,6 +34,7 @@ export default function WalletAdminRetiros({
   const [modalError, setModalError] = useState(null)
 
   const handleAprobar = async (retiroId) => {
+    if (submitting) return
     setSubmitting(true)
     setModalError(null)
     try {
@@ -48,6 +49,7 @@ export default function WalletAdminRetiros({
 
   const handleRechazar = async (retiroId) => {
     if (!motivo.trim()) { setModalError('El motivo es obligatorio'); return }
+    if (submitting) return
     setSubmitting(true)
     setModalError(null)
     try {

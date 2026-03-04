@@ -189,12 +189,22 @@ export function useWallet() {
     if (data) {
       setDatosFiscales(data)
     } else {
-      const { data: created } = await supabase
+      const { data: created, error: insertErr } = await supabase
         .from('ventas_datos_fiscales')
-        .insert({ usuario_id: user.id })
+        .upsert({ usuario_id: user.id }, { onConflict: 'usuario_id' })
         .select()
         .single()
-      setDatosFiscales(created || { usuario_id: user.id, tipo_cuenta: 'iban', serie_factura: 'F', siguiente_numero_factura: 1, iva_porcentaje: 0, iva_incluido: false })
+      if (insertErr) {
+        // Race condition: another call already created the row — re-fetch
+        const { data: refetched } = await supabase
+          .from('ventas_datos_fiscales')
+          .select('*')
+          .eq('usuario_id', user.id)
+          .maybeSingle()
+        setDatosFiscales(refetched || { usuario_id: user.id, tipo_cuenta: 'iban', serie_factura: 'F', siguiente_numero_factura: 1, iva_porcentaje: 0, iva_incluido: false })
+      } else {
+        setDatosFiscales(created || { usuario_id: user.id, tipo_cuenta: 'iban', serie_factura: 'F', siguiente_numero_factura: 1, iva_porcentaje: 0, iva_incluido: false })
+      }
     }
   }, [user?.id])
 

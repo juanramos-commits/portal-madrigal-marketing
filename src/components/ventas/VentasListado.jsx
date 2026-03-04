@@ -6,6 +6,11 @@ import ModalCambioEstado from './ModalCambioEstado'
 
 function formatDate(d) {
   if (!d) return '-'
+  // Handle date-only strings (YYYY-MM-DD) without timezone shift
+  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    const [y, m, day] = d.split('-')
+    return `${day}/${m}/${y.slice(2)}`
+  }
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
@@ -209,6 +214,7 @@ export default memo(function VentasListado({
                   className={`vv-table-row${isExpanded ? ' expanded' : ''}`}
                   onClick={() => toggleExpand(venta.id)}
                   tabIndex={0}
+                  role="row"
                   aria-expanded={isExpanded}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(venta.id) } }}
                 >

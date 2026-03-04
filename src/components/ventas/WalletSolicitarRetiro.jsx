@@ -72,6 +72,7 @@ export default function WalletSolicitarRetiro({
   }
 
   const handleConfirm = async () => {
+    if (submitting) return
     setSubmitting(true)
     setError(null)
     try {
