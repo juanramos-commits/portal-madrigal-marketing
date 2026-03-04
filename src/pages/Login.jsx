@@ -85,7 +85,7 @@ export default function Login() {
     if (data?.user) {
       await registrarIntento(email, true)
       setIntentosFallidos(0)
-      navigate('/dashboard')
+      navigate('/')
     } else {
       setLoading(false)
     }
