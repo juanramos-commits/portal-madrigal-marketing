@@ -155,10 +155,10 @@
 }
 
 .vc-mes-dia-nombre {
-  padding: 8px;
+  padding: var(--space-sm);
   text-align: center;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -171,7 +171,7 @@
 
 .vc-mes-celda {
   min-height: 90px;
-  padding: 4px;
+  padding: var(--space-xs);
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   cursor: pointer;
@@ -187,31 +187,31 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-size: 12px;
-  font-weight: 500;
+  width: var(--space-lg);
+  height: var(--space-lg);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   color: var(--text);
-  margin-bottom: 2px;
+  margin-bottom: var(--space-2xs);
 }
 
 .vc-hoy-numero {
   background: var(--primary);
   color: var(--text-inverse);
   border-radius: 50%;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .vc-mes-citas {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2xs);
 }
 
 .vc-mes-mas {
-  font-size: 10px;
+  font-size: var(--font-2xs);
   color: var(--text-muted);
-  padding: 1px 4px;
+  padding: 1px var(--space-xs);
 }
 
 /* Dots for mobile month view */
@@ -219,7 +219,7 @@
   display: flex;
   gap: 3px;
   flex-wrap: wrap;
-  padding: 2px 0;
+  padding: var(--space-2xs) 0;
 }
 
 .vc-cita-dot {
@@ -241,8 +241,8 @@
 .vc-cita-bloque {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 1px 4px;
+  gap: var(--space-xs);
+  padding: 1px var(--space-xs);
   border-radius: 3px;
   background: rgba(255,255,255,0.04);
   border: none;
@@ -256,14 +256,14 @@
 .vc-cita-bloque:hover { background: rgba(255,255,255,0.08); }
 
 .vc-cita-hora {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .vc-cita-nombre {
-  font-size: 10px;
+  font-size: var(--font-2xs);
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -296,28 +296,28 @@
 }
 
 .vc-semana-hora-col {
-  padding: 8px;
+  padding: var(--space-sm);
 }
 
 .vc-semana-dia-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 6px 4px;
-  gap: 2px;
+  padding: var(--space-1-5) var(--space-xs);
+  gap: var(--space-2xs);
 }
 .vc-semana-dia-header.vc-hoy { background: var(--bg-active); }
 
 .vc-semana-dia-nombre {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
 }
 
 .vc-semana-dia-num {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--font-base);
+  font-weight: var(--weight-medium);
   color: var(--text);
   width: 28px;
   height: 28px;
@@ -330,7 +330,7 @@
   background: var(--primary);
   color: var(--text-inverse);
   border-radius: 50%;
-  font-weight: 700;
+  font-weight: var(--weight-bold);
 }
 
 .vc-semana-body {
@@ -353,8 +353,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  padding: 2px 6px 0;
-  font-size: 10px;
+  padding: var(--space-2xs) var(--space-1-5) 0;
+  font-size: var(--font-2xs);
   color: var(--text-muted);
   border-right: 1px solid var(--border);
   box-sizing: border-box;
@@ -374,13 +374,13 @@
 /* Events positioned absolutely within day column */
 .vc-semana-event {
   position: absolute;
-  left: 2px;
-  right: 2px;
+  left: var(--space-2xs);
+  right: var(--space-2xs);
   border: none;
   border-left: 3px solid var(--status-onboarding-text);
   border-radius: 3px;
   background: rgba(255,255,255,0.06);
-  padding: 2px 4px;
+  padding: var(--space-2xs) var(--space-xs);
   cursor: pointer;
   text-align: left;
   overflow: hidden;
@@ -398,14 +398,14 @@
 .vc-semana-event.vc-google-event:hover { background: rgba(66, 133, 244, 0.22); }
 
 .vc-semana-event-time {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   line-height: 1.2;
 }
 
 .vc-semana-event-name {
-  font-size: 10px;
+  font-size: var(--font-2xs);
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -420,7 +420,7 @@
 
 .vc-dia-titulo {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   color: var(--text);
   text-transform: capitalize;
 }
@@ -446,8 +446,8 @@
 }
 
 .vc-dia-hora-label {
-  padding: 8px 6px;
-  font-size: 12px;
+  padding: var(--space-sm) var(--space-1-5);
+  font-size: var(--font-sm);
   color: var(--text-muted);
   text-align: right;
   border-right: 1px solid var(--border);
@@ -455,17 +455,17 @@
 
 .vc-dia-contenido {
   position: relative;
-  padding: 4px 8px;
+  padding: var(--space-xs) var(--space-sm);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .vc-dia-cita {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 8px 12px;
+  padding: var(--space-sm) var(--space-3);
   background: rgba(255,255,255,0.04);
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -474,20 +474,20 @@
 .vc-dia-cita:hover { background: rgba(255,255,255,0.08); }
 
 .vc-dia-cita-hora {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   color: var(--text);
   flex-shrink: 0;
 }
 
 .vc-dia-cita-nombre {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text);
   flex: 1;
 }
 
 .vc-dia-cita-closer {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
@@ -528,20 +528,20 @@
 /* ── Badges ───────────────────────────────────────────────────────── */
 .vc-badge {
   display: inline-flex;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: var(--space-2xs) var(--space-2-5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   letter-spacing: 0.3px;
   white-space: nowrap;
 }
 
 .vc-badge-sm {
   display: inline-flex;
-  padding: 1px 6px;
-  border-radius: 8px;
-  font-size: 10px;
-  font-weight: 600;
+  padding: 1px var(--space-1-5);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-semibold);
 }
 
 /* ── Responsive visibility ────────────────────────────────────────── */
@@ -565,8 +565,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
-  padding: 4px 0;
+  font-size: var(--font-sm-md);
+  padding: var(--space-xs) 0;
   gap: var(--space-sm);
 }
 
@@ -584,14 +584,14 @@
 .vc-link-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   background: transparent;
   border: none;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: var(--space-2xs) var(--space-1-5);
+  border-radius: var(--radius-xs);
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 .vc-link-btn:hover { background: var(--bg-hover); color: var(--text); }
@@ -599,13 +599,13 @@
 .vc-meet-link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   color: var(--success);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   text-decoration: none;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: var(--space-xs) var(--space-2-5);
+  border-radius: var(--radius-xs-sm);
   background: rgba(46,229,157,0.1);
   transition: background var(--transition-fast);
 }
@@ -615,13 +615,13 @@
 .vc-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
   margin-bottom: var(--space-md);
 }
 
 .vc-field label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -633,9 +633,9 @@
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  padding: var(--space-sm) var(--space-3);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--font-base);
   font-family: inherit;
   transition: border-color var(--transition-fast);
   resize: vertical;
@@ -657,27 +657,27 @@
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  padding: var(--space-sm) var(--space-3);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--font-base);
 }
 .vc-field-inline input:focus { outline: none; border-color: var(--border-focus); }
 
 .vc-field-hint {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   opacity: 0.7;
 }
 
 /* ── Buttons ──────────────────────────────────────────────────────── */
 .vc-btn-primary {
-  padding: 8px 20px;
+  padding: var(--space-sm) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--primary);
   color: var(--text-inverse);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -685,13 +685,13 @@
 .vc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .vc-btn-ghost {
-  padding: 8px 16px;
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -699,13 +699,13 @@
 .vc-btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .vc-btn-danger {
-  padding: 8px 20px;
+  padding: var(--space-sm) var(--space-5);
   border-radius: var(--radius-sm);
   border: none;
   background: var(--error);
   color: white;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -715,14 +715,14 @@
 .vc-btn-sm {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 6px;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-2-5);
+  border-radius: var(--radius-xs-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
@@ -730,12 +730,12 @@
 .vc-btn-sm:hover { background: rgba(255,255,255,0.06); color: var(--text); }
 
 .vc-btn-xs {
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-xs);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-xs);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -745,8 +745,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  border-radius: 6px;
+  padding: var(--space-xs);
+  border-radius: var(--radius-xs-sm);
   border: 1px solid rgba(255,107,107,0.3);
   background: transparent;
   color: var(--error);
@@ -758,13 +758,13 @@
 .vc-btn-copy {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 6px;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-2-5);
+  border-radius: var(--radius-xs-sm);
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--font-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
@@ -773,7 +773,7 @@
 
 .vc-actions-cell {
   display: flex;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 /* ── Tables ───────────────────────────────────────────────────────── */
@@ -786,14 +786,14 @@
 .vc-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
 }
 
 .vc-table thead th {
-  padding: 10px 14px;
+  padding: var(--space-2-5) var(--space-3-5);
   text-align: left;
-  font-weight: 600;
-  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  font-size: var(--font-xs);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-muted);
@@ -805,7 +805,7 @@
 .vc-table tbody tr { border: none; transition: background var(--transition-fast); }
 .vc-table tbody tr:hover { background: rgba(255,255,255,0.03); }
 .vc-table tbody td {
-  padding: 10px 14px;
+  padding: var(--space-2-5) var(--space-3-5);
   border-bottom: 1px solid var(--border);
   color: var(--text);
   vertical-align: middle;
@@ -842,8 +842,8 @@
 }
 
 .vc-disp-dia-nombre {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
 }
 
@@ -857,12 +857,12 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
 }
 
 .vc-disp-de, .vc-disp-a {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--font-sm);
   flex-shrink: 0;
 }
 
@@ -870,9 +870,9 @@
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 6px 10px;
+  padding: var(--space-1-5) var(--space-2-5);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
 }
 .vc-disp-franja input[type="time"]:focus { outline: none; border-color: var(--border-focus); }
 
@@ -880,8 +880,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  border-radius: 4px;
+  padding: var(--space-xs);
+  border-radius: var(--radius-xs);
   border: none;
   background: transparent;
   color: var(--text-muted);
@@ -893,12 +893,12 @@
 .vc-disp-add {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--font-sm);
   cursor: pointer;
   transition: color var(--transition-fast);
   align-self: flex-start;
@@ -906,7 +906,7 @@
 .vc-disp-add:hover { color: var(--text); }
 
 .vc-disp-off {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
   opacity: 0.6;
 }
@@ -921,7 +921,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  font-size: 14px;
+  font-size: var(--font-base);
   color: var(--text);
   flex-wrap: wrap;
 }
@@ -946,8 +946,8 @@
 }
 
 .vc-bloqueos-header h3 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
   margin: 0;
   color: var(--text);
 }
@@ -972,17 +972,17 @@
 .vc-bloqueo-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-2xs);
 }
 
 .vc-bloqueo-fechas {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-medium);
   color: var(--text);
 }
 
 .vc-bloqueo-motivo {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
@@ -995,8 +995,8 @@
 
 .vc-config h3 {
   font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 2px 0;
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-2xs) 0;
   color: var(--text);
 }
 
@@ -1027,8 +1027,8 @@
   gap: var(--space-sm);
   padding: var(--space-md);
   border-bottom: 1px solid var(--border);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--font-base);
+  font-weight: var(--weight-semibold);
   color: var(--text);
 }
 .vc-gcal-header svg { color: var(--text-muted); }
@@ -1041,12 +1041,12 @@
 }
 
 .vc-gcal-status {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text);
 }
 
 .vc-gcal-desc {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
   margin: 0;
   line-height: 1.5;
@@ -1071,10 +1071,10 @@
 
 .vc-gcal-badge {
   display: inline-flex;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 3px var(--space-2-5);
+  border-radius: var(--radius-md);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-semibold);
   background: rgba(255,169,77,0.15);
   color: var(--warning);
   align-self: flex-start;
@@ -1083,14 +1083,14 @@
 .vc-btn-google {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
+  gap: var(--space-sm);
+  padding: var(--space-2-5) var(--space-5);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--bg-card);
   color: var(--text);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -1107,7 +1107,7 @@
   background: color-mix(in srgb, var(--error) 8%, transparent);
 }
 
-.vc-text-success { color: var(--success); font-weight: 600; }
+.vc-text-success { color: var(--success); font-weight: var(--weight-semibold); }
 
 /* ── Enlaces de agenda ────────────────────────────────────────────── */
 .vc-enlaces {
@@ -1123,8 +1123,8 @@
 }
 
 .vc-enlaces-header h3 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
   margin: 0;
   color: var(--text);
 }
@@ -1149,7 +1149,7 @@
 .vc-enlace-card-meta {
   display: flex;
   gap: var(--space-sm);
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
   flex-wrap: wrap;
 }
@@ -1162,8 +1162,8 @@
 
 /* ── Admin panel ──────────────────────────────────────────────────── */
 .vc-admin-panel h3 {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
   margin: 0 0 var(--space-md);
   color: var(--text);
 }
@@ -1190,7 +1190,7 @@
 
 .vc-admin-card-nombre {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   color: var(--text);
 }
 
@@ -1206,29 +1206,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--text-muted);
 }
 
 .vc-admin-card-config {
-  font-size: 12px;
+  font-size: var(--font-sm);
   opacity: 0.7;
 }
 
 .vc-admin-minimo-input {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .vc-admin-minimo-input input {
   width: 50px;
   background: var(--bg-input);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  padding: var(--space-2xs) var(--space-1-5);
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   text-align: center;
 }
 .vc-admin-minimo-input input:focus { outline: none; border-color: var(--border-focus); }
@@ -1241,16 +1241,16 @@
 /* ── State / messages ─────────────────────────────────────────────── */
 .vc-loading {
   text-align: center;
-  padding: 48px 24px;
+  padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--font-base);
 }
 
 .vc-empty {
   text-align: center;
-  padding: 48px 24px;
+  padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: var(--font-base);
 }
 
 .vc-calendar-wrap {
@@ -1270,7 +1270,7 @@
   text-align: center;
   padding: var(--space-md) var(--space-lg);
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
 }
 
 .vc-error-msg {
@@ -1279,14 +1279,14 @@
   border-radius: var(--radius-sm);
   padding: var(--space-sm) var(--space-md);
   color: var(--error);
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   margin-top: var(--space-sm);
 }
 
 .vc-success-msg {
-  font-size: 13px;
+  font-size: var(--font-sm-md);
   color: var(--success);
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .vc-text-success { color: var(--success); }
@@ -1328,18 +1328,18 @@
   }
 
   .vc-nav-titulo {
-    font-size: 14px;
+    font-size: var(--font-base);
   }
 
   .vc-mes-celda {
     min-height: 52px;
-    padding: 2px;
+    padding: var(--space-2xs);
   }
 
   .vc-mes-numero {
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
+    width: var(--space-5);
+    height: var(--space-5);
+    font-size: var(--font-xs);
   }
 
   /* Weekly view: scroll on mobile */
@@ -1367,13 +1367,13 @@
 
 /* ── Icon utility ────────────────────────────────────────────────── */
 .vc-icon-nav {
-  width: 16px;
-  height: 16px;
+  width: var(--space-md);
+  height: var(--space-md);
 }
 
 .vc-icon-sm {
-  width: 14px;
-  height: 14px;
+  width: var(--space-3-5);
+  height: var(--space-3-5);
 }
 
 .vc-icon-md {
@@ -1383,31 +1383,31 @@
 
 /* ── Cell utility ────────────────────────────────────────────────── */
 .vc-cell-bold {
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 
 .vc-cell-slug {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
 .vc-cell-muted {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--text-muted);
 }
 
 .vc-closer-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .vc-tag {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-xs);
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
   background: var(--bg-card-hover, rgba(255,255,255,0.06));
   color: var(--text-secondary);
   border: 1px solid var(--border);
@@ -1416,22 +1416,22 @@
 .vc-closer-checkboxes {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px 0;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
 }
 
 .vc-checkbox-label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: var(--space-sm);
+  font-size: var(--font-sm-md);
   cursor: pointer;
   color: var(--text-primary);
 }
 
 .vc-checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: var(--space-md);
+  height: var(--space-md);
   accent-color: var(--primary);
   cursor: pointer;
 }
