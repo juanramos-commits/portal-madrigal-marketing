@@ -130,15 +130,13 @@ export default memo(function VentasListado({
               </div>
               <div className="vv-card-lead">{venta.lead?.nombre || '-'}</div>
               <div className="vv-card-paquete">{venta.paquete?.nombre || '-'}</div>
-              <div className="vv-card-meta">
-                <span>{metodoLabels[venta.metodo_pago] || '-'}</span>
-                {venta.es_pago_unico && <span>Pago único</span>}
+              <div className="vv-card-info">
+                <span className="vv-card-chip">{formatDate(venta.fecha_venta)}</span>
+                <span className="vv-card-chip">{metodoLabels[venta.metodo_pago] || '-'}</span>
+                {venta.es_pago_unico && <span className="vv-card-chip">Pago único</span>}
+                {venta.setter?.nombre && <span className="vv-card-chip"><span className="vv-card-chip-label">S:</span> {venta.setter.nombre}</span>}
+                {venta.closer?.nombre && <span className="vv-card-chip"><span className="vv-card-chip-label">C:</span> {venta.closer.nombre}</span>}
               </div>
-              <div className="vv-card-asignados">
-                <span>Setter: {venta.setter?.nombre || '-'}</span>
-                <span>Closer: {venta.closer?.nombre || '-'}</span>
-              </div>
-              <div className="vv-card-fecha">{formatDate(venta.fecha_venta)}</div>
             </div>
 
             {/* Expanded detail */}
