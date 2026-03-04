@@ -165,6 +165,17 @@ export function useCalendario() {
     setCitas(data || [])
   }, [obtenerRangoFechas, esCloserRol, esDirectorRol, esSetter, user?.id, closerFiltro])
 
+  // Google Calendar sync (non-blocking, best-effort)
+  const sincronizarGoogleCalendar = useCallback(async (action, citaId, closerId) => {
+    try {
+      await supabase.functions.invoke('google-calendar-sync', {
+        body: { action, cita_id: citaId, closer_id: closerId },
+      })
+    } catch {
+      // Non-critical: never block the main operation
+    }
+  }, [])
+
   // Update cita estado
   const actualizarEstadoCita = useCallback(async (citaId, estadoReunionId) => {
     const { error: err } = await supabase
@@ -172,10 +183,12 @@ export function useCalendario() {
       .update({ estado_reunion_id: estadoReunionId, updated_at: new Date().toISOString() })
       .eq('id', citaId)
     if (err) throw err
+    const cita = citas.find(c => c.id === citaId)
     setCitas(prev => prev.map(c => c.id === citaId ? { ...c, estado_reunion_id: estadoReunionId, estado_reunion: reunionEstados.find(e => e.id === estadoReunionId) || c.estado_reunion } : c))
     cargarCitas()
     logActividad('calendario', 'editar', 'Estado cita actualizado', { entidad: 'cita', entidad_id: citaId })
-  }, [reunionEstados, cargarCitas])
+    if (cita?.closer_id) sincronizarGoogleCalendar('update', citaId, cita.closer_id)
+  }, [reunionEstados, cargarCitas, citas, sincronizarGoogleCalendar])
 
   // Update cita notas
   const actualizarNotasCita = useCallback(async (citaId, notas) => {
@@ -198,6 +211,7 @@ export function useCalendario() {
 
   // Cancel cita (admin)
   const cancelarCita = useCallback(async (citaId) => {
+    const cita = citas.find(c => c.id === citaId)
     const { error: err } = await supabase
       .from('ventas_citas')
       .update({ estado: 'cancelada', cancelada_por: 'admin', updated_at: new Date().toISOString() })
@@ -206,10 +220,13 @@ export function useCalendario() {
     setCitas(prev => prev.map(c => c.id === citaId ? { ...c, estado: 'cancelada', cancelada_por: 'admin' } : c))
     cargarCitas()
     logActividad('calendario', 'eliminar', 'Cita cancelada', { entidad: 'cita', entidad_id: citaId })
-  }, [cargarCitas])
+    if (cita?.closer_id) sincronizarGoogleCalendar('delete', citaId, cita.closer_id)
+  }, [cargarCitas, citas, sincronizarGoogleCalendar])
 
   // Reasignar closer (admin)
   const reasignarCloser = useCallback(async (citaId, nuevoCloserId) => {
+    const cita = citas.find(c => c.id === citaId)
+    const oldCloserId = cita?.closer_id
     const { error: err } = await supabase
       .from('ventas_citas')
       .update({ closer_id: nuevoCloserId, updated_at: new Date().toISOString() })
@@ -217,7 +234,10 @@ export function useCalendario() {
     if (err) throw err
     await cargarCitas()
     logActividad('calendario', 'asignar', 'Closer reasignado en cita', { entidad: 'cita', entidad_id: citaId })
-  }, [cargarCitas])
+    // Delete from old closer's calendar, create in new closer's calendar
+    if (oldCloserId) sincronizarGoogleCalendar('delete', citaId, oldCloserId)
+    sincronizarGoogleCalendar('create', citaId, nuevoCloserId)
+  }, [cargarCitas, citas, sincronizarGoogleCalendar])
 
   // Load disponibilidad
   const cargarDisponibilidad = useCallback(async (uid) => {

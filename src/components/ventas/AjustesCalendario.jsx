@@ -364,7 +364,7 @@ export default function AjustesCalendario() {
             {closerGestionadoNombre && (
               <p className="aj-desc">Configuracion de <strong>{closerGestionadoNombre}</strong></p>
             )}
-            <CalendarioConfig config={config} onGuardar={guardarConfig} />
+            <CalendarioConfig config={config} onGuardar={guardarConfig} targetUserId={targetUserId} onGcalStatusChange={cargarConfig} />
           </div>
         )
       )}
