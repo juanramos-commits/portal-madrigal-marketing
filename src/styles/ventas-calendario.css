@@ -1313,6 +1313,20 @@
     flex-wrap: wrap;
   }
 
+  .vc-nav-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .vc-nav-hoy {
+    height: 44px;
+    padding: 0 var(--space-md);
+  }
+
+  .vc-vista-selector {
+    height: 44px;
+  }
+
   .vc-nav-titulo {
     font-size: 14px;
   }

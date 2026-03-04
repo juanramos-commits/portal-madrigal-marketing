@@ -1260,6 +1260,16 @@
     grid-template-columns: 1fr;
     gap: var(--space-md);
   }
+
+  .wt-pagination {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .wt-pagination-btns button {
+    height: 44px;
+    padding: var(--space-sm) var(--space-lg);
+  }
 }
 
 /* ── Focus-visible ───────────────────────────────────────────────── */
