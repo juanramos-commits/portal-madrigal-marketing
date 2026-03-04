@@ -209,6 +209,7 @@ export default function VentasAjustes() {
             comisionesConfig={ajustes.comisionesConfig}
             equipo={ajustes.equipo}
             onCargar={ajustes.cargarComisionesConfig}
+            onCargarEquipo={ajustes.cargarEquipo}
             onGuardar={ajustes.guardarComisionesConfig}
             onAsignarBonus={ajustes.asignarBonusManual}
           />

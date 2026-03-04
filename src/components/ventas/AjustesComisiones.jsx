@@ -5,9 +5,10 @@ const ROL_LABELS = { setter: 'Setter', closer: 'Closer', director_ventas: 'Direc
 
 export default function AjustesComisiones({
   comisionesConfig, equipo,
-  onCargar, onGuardar, onAsignarBonus,
+  onCargar, onCargarEquipo, onGuardar, onAsignarBonus,
 }) {
   const [configs, setConfigs] = useState([])
+  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [guardado, setGuardado] = useState(false)
   const [error, setError] = useState(null)
@@ -20,7 +21,9 @@ export default function AjustesComisiones({
   const [bonusOk, setBonusOk] = useState(false)
   const [bonusError, setBonusError] = useState(null)
 
-  useEffect(() => { onCargar() }, [])
+  useEffect(() => {
+    Promise.all([onCargar(), onCargarEquipo?.()]).finally(() => setLoading(false))
+  }, [])
 
   useEffect(() => {
     setConfigs(comisionesConfig.map(c => ({ ...c })))
@@ -70,39 +73,47 @@ export default function AjustesComisiones({
     <div className="aj-seccion">
       <h3>Configuración de comisiones</h3>
 
-      <div className="aj-comisiones-table">
-        <div className="aj-com-header">
-          <span>Rol</span>
-          <span>Comisión fija (€)</span>
-          <span>Bonus pago único (€)</span>
-        </div>
-        {configs.map((c, i) => (
-          <div key={c.id} className="aj-com-row">
-            <span className="aj-com-rol">{ROL_LABELS[c.rol] || c.rol}</span>
-            <input
-              type="number" min="0" step="0.01"
-              value={c.comision_fija}
-              onChange={e => handleChange(i, 'comision_fija', e.target.value)}
-            />
-            <input
-              type="number" min="0" step="0.01"
-              value={c.bonus_pago_unico}
-              onChange={e => handleChange(i, 'bonus_pago_unico', e.target.value)}
-            />
+      {loading ? (
+        <div className="aj-empty">Cargando configuración...</div>
+      ) : configs.length === 0 ? (
+        <div className="aj-empty">No hay configuración de comisiones. Contacta con soporte.</div>
+      ) : (
+        <>
+          <div className="aj-comisiones-table">
+            <div className="aj-com-header">
+              <span>Rol</span>
+              <span>Comisión fija (€)</span>
+              <span>Bonus pago único (€)</span>
+            </div>
+            {configs.map((c, i) => (
+              <div key={c.id} className="aj-com-row">
+                <span className="aj-com-rol">{ROL_LABELS[c.rol] || c.rol}</span>
+                <input
+                  type="number" min="0" step="0.01"
+                  value={c.comision_fija}
+                  onChange={e => handleChange(i, 'comision_fija', e.target.value)}
+                />
+                <input
+                  type="number" min="0" step="0.01"
+                  value={c.bonus_pago_unico}
+                  onChange={e => handleChange(i, 'bonus_pago_unico', e.target.value)}
+                />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {error && <div className="aj-error">{error}</div>}
+          {error && <div className="aj-error">{error}</div>}
 
-      <div className="aj-actions">
-        <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
-          {saving ? 'Guardando...' : 'Guardar comisiones'}
-        </button>
-        {guardado && <span className="aj-success">Comisiones guardadas</span>}
-      </div>
+          <div className="aj-actions">
+            <button className="aj-btn-primary" onClick={handleGuardar} disabled={saving}>
+              {saving ? 'Guardando...' : 'Guardar comisiones'}
+            </button>
+            {guardado && <span className="aj-success">Comisiones guardadas</span>}
+          </div>
 
-      <p className="aj-hint">El bonus se aplica solo en ventas con pago único. Las comisiones se generan al aprobar la venta y son retirables 48h después.</p>
+          <p className="aj-hint">El bonus se aplica solo en ventas con pago único. Las comisiones se generan al aprobar la venta y son retirables 48h después.</p>
+        </>
+      )}
 
       <div className="aj-separator" />
 
