@@ -65,7 +65,7 @@
 
 /* ── Pipeline Tabs ──────────────────────────────────────────────────────── */
 .crm-pipeline-tabs {
-  display: flex;
+  display: inline-flex;
   gap: var(--space-xs);
   background: var(--bg-card);
   border: 1px solid var(--border);
