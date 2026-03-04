@@ -4,9 +4,14 @@ export default function Modal({ open, onClose, title, size = 'md', footer, child
   const overlayRef = useRef(null)
   const modalRef = useRef(null)
   const previousFocus = useRef(null)
+  const wasOpen = useRef(false)
+  const onCloseRef = useRef(onClose)
+  const closableRef = useRef(closable)
+  onCloseRef.current = onClose
+  closableRef.current = closable
 
   const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Escape' && closable) onClose?.()
+    if (e.key === 'Escape' && closableRef.current) onCloseRef.current?.()
 
     // Focus trap
     if (e.key === 'Tab' && modalRef.current) {
@@ -22,10 +27,10 @@ export default function Modal({ open, onClose, title, size = 'md', footer, child
         if (document.activeElement === last) { e.preventDefault(); first.focus() }
       }
     }
-  }, [closable, onClose])
+  }, [])
 
   useEffect(() => {
-    if (open) {
+    if (open && !wasOpen.current) {
       previousFocus.current = document.activeElement
       document.body.style.overflow = 'hidden'
       document.addEventListener('keydown', handleKeyDown)
@@ -35,10 +40,17 @@ export default function Modal({ open, onClose, title, size = 'md', footer, child
         else modalRef.current?.focus()
       }, 50)
     }
-    return () => {
+    if (!open && wasOpen.current) {
       document.body.style.overflow = ''
       document.removeEventListener('keydown', handleKeyDown)
       if (previousFocus.current) previousFocus.current.focus()
+    }
+    wasOpen.current = open
+    return () => {
+      if (open) {
+        document.body.style.overflow = ''
+        document.removeEventListener('keydown', handleKeyDown)
+      }
     }
   }, [open, handleKeyDown])
 
