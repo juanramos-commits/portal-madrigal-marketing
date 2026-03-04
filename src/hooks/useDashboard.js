@@ -39,7 +39,7 @@ export function useDashboard() {
   const miembrosEquipo = useMemo(() => {
     const seen = new Map()
     for (const r of layoutHook.rolesComerciales || []) {
-      if (!r.activo || seen.has(r.usuario_id)) continue
+      if (!r.activo || seen.has(r.usuario_id) || !['closer', 'setter'].includes(r.rol)) continue
       seen.set(r.usuario_id, {
         id: r.usuario_id,
         nombre: r.usuario?.nombre || r.usuario?.email || r.usuario_id,
