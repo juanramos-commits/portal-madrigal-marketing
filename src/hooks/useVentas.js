@@ -350,6 +350,7 @@ export function useVentas() {
 
   // ── Export CSV (paginated to get ALL results) ─────────────────────
   const exportarCSV = useCallback(async () => {
+    if (!tienePermiso('ventas.ventas.exportar')) throw new Error('No tienes permiso para exportar ventas')
     setExportando(true)
     setError(null)
     try {
@@ -451,6 +452,7 @@ export function useVentas() {
 
   // ── Register sale (from pop-up) ────────────────────────────────────
   const registrarVenta = useCallback(async (datos) => {
+    if (!tienePermiso('ventas.ventas.crear')) throw new Error('No tienes permiso para registrar ventas')
     const { data: venta, error: err } = await supabase
       .from('ventas_ventas')
       .insert({
@@ -502,7 +504,7 @@ export function useVentas() {
 
     refrescar()
     return venta
-  }, [user?.id, refrescar])
+  }, [user?.id, refrescar, tienePermiso])
 
   // ── Move lead to venta stage in both pipelines ─────────────────────
   const moverLeadAVenta = useCallback(async (leadId, pipelineId, etapaVentaId) => {
@@ -552,45 +554,50 @@ export function useVentas() {
 
   // ── Approve sale ───────────────────────────────────────────────────
   const aprobarVenta = useCallback(async (ventaId) => {
+    if (!tienePermiso('ventas.ventas.aprobar')) throw new Error('No tienes permiso para aprobar ventas')
     const { error: err } = await supabase.rpc('ventas_aprobar_venta', { p_venta_id: ventaId })
     if (err) throw err
     logActividad('ventas', 'aprobar', 'Venta aprobada', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
-  }, [refrescar])
+  }, [refrescar, tienePermiso])
 
   // ── Reject sale ────────────────────────────────────────────────────
   const rechazarVenta = useCallback(async (ventaId) => {
+    if (!tienePermiso('ventas.ventas.rechazar')) throw new Error('No tienes permiso para rechazar ventas')
     const { error: err } = await supabase.rpc('ventas_rechazar_venta', { p_venta_id: ventaId })
     if (err) throw err
     logActividad('ventas', 'rechazar', 'Venta rechazada', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
-  }, [refrescar])
+  }, [refrescar, tienePermiso])
 
   // ── Mark refund ────────────────────────────────────────────────────
   const marcarDevolucion = useCallback(async (ventaId) => {
+    if (!tienePermiso('ventas.ventas.devolucion')) throw new Error('No tienes permiso para registrar devoluciones')
     const { error: err } = await supabase.rpc('ventas_marcar_devolucion', { p_venta_id: ventaId })
     if (err) throw err
     logActividad('ventas', 'devolucion', 'Devolución registrada', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
-  }, [refrescar])
+  }, [refrescar, tienePermiso])
 
   // ── Revert rejection (rechazada → pendiente) ─────────────────────
   const revertirRechazo = useCallback(async (ventaId) => {
+    if (!tienePermiso('ventas.ventas.revertir')) throw new Error('No tienes permiso para revertir ventas')
     const { data, error: err } = await supabase.rpc('ventas_revertir_rechazo', { p_venta_id: ventaId })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error)
     logActividad('ventas', 'editar', 'Rechazo revertido', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
-  }, [refrescar])
+  }, [refrescar, tienePermiso])
 
   // ── Revert refund (devolución → aprobada) ─────────────────────────
   const revertirDevolucion = useCallback(async (ventaId) => {
+    if (!tienePermiso('ventas.ventas.revertir')) throw new Error('No tienes permiso para revertir ventas')
     const { data, error: err } = await supabase.rpc('ventas_revertir_devolucion', { p_venta_id: ventaId })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error)
     logActividad('ventas', 'editar', 'Devolución revertida', { entidad: 'venta', entidad_id: ventaId })
     refrescar()
-  }, [refrescar])
+  }, [refrescar, tienePermiso])
 
   // ── General state change handler ──────────────────────────────────
   const cambiarEstado = useCallback(async (ventaId, nuevoEstado, venta) => {

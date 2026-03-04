@@ -610,6 +610,7 @@ export function useWallet() {
 
   // ── Solicitar retiro ───────────────────────────────────────────────
   const solicitarRetiro = useCallback(async (monto) => {
+    if (!tienePermiso('ventas.wallet.solicitar_retiro')) throw new Error('No tienes permiso para solicitar retiros')
     const { data, error: err } = await supabase.rpc('ventas_solicitar_retiro', {
       p_usuario_id: user.id,
       p_monto: monto,
@@ -619,20 +620,22 @@ export function useWallet() {
     logActividad('wallet', 'crear', 'Retiro solicitado: ' + monto + '\u20AC', { entidad: 'retiro' })
     refrescar()
     return data
-  }, [user?.id, refrescar])
+  }, [user?.id, refrescar, tienePermiso])
 
   // ── Admin: aprobar retiro ──────────────────────────────────────────
   const aprobarRetiro = useCallback(async (retiroId) => {
+    if (!tienePermiso('ventas.wallet.aprobar_retiros')) throw new Error('No tienes permiso para aprobar retiros')
     const { data, error: err } = await supabase.rpc('ventas_aprobar_retiro', { p_retiro_id: retiroId })
     if (err) throw err
     if (data && !data.ok) throw new Error(data.error || 'Error al aprobar retiro')
     logActividad('wallet', 'aprobar', 'Retiro aprobado', { entidad: 'retiro', entidad_id: retiroId })
     refrescar()
     return data
-  }, [refrescar])
+  }, [refrescar, tienePermiso])
 
   // ── Admin: rechazar retiro ─────────────────────────────────────────
   const rechazarRetiro = useCallback(async (retiroId, motivo) => {
+    if (!tienePermiso('ventas.wallet.aprobar_retiros')) throw new Error('No tienes permiso para rechazar retiros')
     const { data, error: err } = await supabase.rpc('ventas_rechazar_retiro', {
       p_retiro_id: retiroId,
       p_motivo: motivo || null,
@@ -642,7 +645,7 @@ export function useWallet() {
     logActividad('wallet', 'rechazar', 'Retiro rechazado', { entidad: 'retiro', entidad_id: retiroId })
     refrescar()
     return data
-  }, [refrescar])
+  }, [refrescar, tienePermiso])
 
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
