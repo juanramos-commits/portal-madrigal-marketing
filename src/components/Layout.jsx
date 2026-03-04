@@ -296,7 +296,7 @@ export default function Layout() {
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [
       { name: 'Dashboard', href: '/dashboard', icon: Icons.Dashboard, permiso: 'dashboard.ver' },
-      { name: 'Notificaciones', href: '/notificaciones', icon: Icons.Bell, permiso: null },
+      { name: 'Notificaciones', href: '/notificaciones', icon: Icons.Bell, permiso: 'dashboard.ver' },
       { name: 'Tareas', href: '/tareas', icon: Icons.Tasks, permiso: 'tareas.ver_propias' },
       { name: 'Clientes', href: '/clientes', icon: Icons.Users, permiso: 'clientes.ver_lista' },
       { name: 'CRM', href: '/crm', icon: Icons.UserCheck, permiso: 'crm.ver' },
@@ -312,7 +312,7 @@ export default function Layout() {
       { name: 'Registro de Actividad', href: '/audit-log', icon: Icons.ScrollText, permiso: 'sistema.logs' },
       { name: 'Alertas de Seguridad', href: '/alertas-seguridad', icon: Icons.ShieldAlert, permiso: 'sistema.logs' },
       { name: 'Seguridad', href: '/seguridad-dashboard', icon: Icons.BarChart, permiso: 'sistema.configuracion' },
-      { name: 'Mi Seguridad', href: '/mi-seguridad', icon: Icons.Lock, permiso: null },
+      { name: 'Mi Seguridad', href: '/mi-seguridad', icon: Icons.Lock, permiso: 'dashboard.ver' },
     ]}
   ]
 
