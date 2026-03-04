@@ -1270,6 +1270,11 @@
     height: 44px;
     padding: var(--space-sm) var(--space-lg);
   }
+
+  .wt-field input,
+  .wt-field select {
+    height: 44px;
+  }
 }
 
 /* ── Focus-visible ───────────────────────────────────────────────── */

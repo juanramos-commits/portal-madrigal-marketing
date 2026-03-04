@@ -1805,6 +1805,11 @@
     height: 44px;
     padding: 0 var(--space-lg);
   }
+
+  .crm-field input,
+  .crm-field select {
+    height: 44px;
+  }
 }
 
 @media (min-width: 1024px) {
