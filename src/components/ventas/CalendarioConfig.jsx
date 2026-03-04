@@ -84,16 +84,17 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
     setSyncing(true)
     setSyncResult(null)
     try {
-      const { data, error: err } = await supabase.functions.invoke('google-calendar-sync', {
+      const { data: raw, error: err } = await supabase.functions.invoke('google-calendar-sync', {
         body: { action: 'reconcile', closer_id: userId },
       })
       if (err) throw err
+      const d = typeof raw === 'string' ? JSON.parse(raw) : raw
       const parts = []
-      if (data.updated > 0) parts.push(`${data.updated} actualizadas`)
-      if (data.cancelled > 0) parts.push(`${data.cancelled} canceladas`)
+      if (d.updated > 0) parts.push(`${d.updated} actualizadas`)
+      if (d.cancelled > 0) parts.push(`${d.cancelled} canceladas`)
       if (parts.length === 0) parts.push('Todo sincronizado')
-      setSyncResult({ ok: true, msg: `${data.total} citas revisadas: ${parts.join(', ')}` })
-      if ((data.updated > 0 || data.cancelled > 0) && onGcalStatusChange) onGcalStatusChange()
+      setSyncResult({ ok: true, msg: `${d.total ?? 0} citas revisadas: ${parts.join(', ')}` })
+      if ((d.updated > 0 || d.cancelled > 0) && onGcalStatusChange) onGcalStatusChange()
     } catch {
       setSyncResult({ ok: false, msg: 'Error al sincronizar' })
     } finally {
@@ -172,7 +173,7 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
               </p>
               <div className="vc-gcal-actions">
                 <button
-                  className="vc-btn-sm vc-btn-primary"
+                  className="vc-btn-sm vc-btn-sync"
                   onClick={handleGcalReconcile}
                   disabled={syncing}
                 >

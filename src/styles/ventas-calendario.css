@@ -998,12 +998,13 @@
   align-items: center;
   flex-wrap: wrap;
 }
-.vc-gcal-actions .vc-btn-sm {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.vc-btn-sync {
+  background: var(--primary) !important;
+  color: var(--text-inverse) !important;
+  border-color: var(--primary) !important;
 }
-.vc-gcal-actions .vc-btn-sm .vc-icon-md {
+.vc-btn-sync:hover:not(:disabled) { opacity: 0.9; }
+.vc-btn-sync .vc-icon-md {
   width: 14px;
   height: 14px;
 }

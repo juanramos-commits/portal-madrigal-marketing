@@ -361,9 +361,6 @@ export default function AjustesCalendario() {
           <div className="aj-empty">Selecciona un closer para gestionar su calendario</div>
         ) : (
           <div className="aj-cal-section">
-            {closerGestionadoNombre && (
-              <p className="aj-desc">Configuracion de <strong>{closerGestionadoNombre}</strong></p>
-            )}
             <CalendarioConfig config={config} onGuardar={guardarConfig} targetUserId={targetUserId} onGcalStatusChange={cargarConfig} />
           </div>
         )
