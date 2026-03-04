@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Select from '../ui/Select'
 import Modal from '../ui/Modal'
 import ConfirmDialog from '../ui/ConfirmDialog'
@@ -76,8 +76,10 @@ export default function AjustesWebhooks({
       if (editando) { await onEditar(editando.id, { nombre: form.nombre, fuente: form.fuente || null }) }
       else { await onCrear({ nombre: form.nombre, fuente: form.fuente || null }) }
       setShowForm(false)
-    } catch (e) { setError(e.message || 'Error al guardar') }
-    finally { setSaving(false) }
+    } catch (e) {
+      console.error('[Webhooks] Error al guardar:', e)
+      setError(e?.message || String(e) || 'Error al guardar')
+    } finally { setSaving(false) }
   }
 
   const handleEliminar = async () => {
@@ -93,13 +95,15 @@ export default function AjustesWebhooks({
   // Mapeo
   const abrirMapeo = (w) => {
     const existing = w.mapeo_campos || {}
-    const entries = Object.entries(existing).map(([webhook, crm]) => ({ webhook, crm }))
-    if (entries.length === 0) entries.push({ webhook: '', crm: '' })
+    mapeoKeyCounter.current = 0
+    const entries = Object.entries(existing).map(([webhook, crm]) => ({ webhook, crm, _key: `exist-${++mapeoKeyCounter.current}` }))
+    if (entries.length === 0) entries.push({ webhook: '', crm: '', _key: `new-${++mapeoKeyCounter.current}` })
     setMapeo(entries)
     setShowMapeo(w)
   }
 
-  const addMapeoRow = () => setMapeo(prev => [...prev, { webhook: '', crm: '' }])
+  const mapeoKeyCounter = useRef(0)
+  const addMapeoRow = () => setMapeo(prev => [...prev, { webhook: '', crm: '', _key: `new-${++mapeoKeyCounter.current}` }])
   const removeMapeoRow = (idx) => setMapeo(prev => prev.filter((_, i) => i !== idx))
   const updateMapeo = (idx, field, value) => {
     setMapeo(prev => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r))
@@ -204,7 +208,7 @@ export default function AjustesWebhooks({
           <span />
         </div>
         {mapeo.map((r, i) => (
-          <div key={i} className="aj-mapeo-row">
+          <div key={r._key} className="aj-mapeo-row">
             <input type="text" value={r.webhook} onChange={e => updateMapeo(i, 'webhook', e.target.value)} placeholder="name" />
             <span className="aj-mapeo-arrow">→</span>
             <Select value={r.crm} onChange={e => updateMapeo(i, 'crm', e.target.value)}>

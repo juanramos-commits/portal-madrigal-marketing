@@ -39,7 +39,7 @@ export default function BibliotecaFormRecurso({ recurso, secciones, seccionIdIni
     } else if (seccionIdInicial) {
       setSeccionId(seccionIdInicial)
     }
-  }, [recurso, seccionIdInicial])
+  }, [recurso?.id, seccionIdInicial])
 
   const toggleRol = (rol) => {
     setVisiblePara(prev => {

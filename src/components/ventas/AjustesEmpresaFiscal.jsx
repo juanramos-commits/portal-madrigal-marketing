@@ -30,7 +30,7 @@ export default function AjustesEmpresaFiscal({
         concepto_factura: empresaFiscal.concepto_factura || '',
       })
     }
-  }, [empresaFiscal])
+  }, [empresaFiscal?.id])
 
   const handleChange = (key, value) => {
     setForm(prev => ({ ...prev, [key]: value }))

@@ -12,7 +12,7 @@ export default function BibliotecaFormSeccion({ seccion, onGuardar, onCerrar }) 
       setNombre(seccion.nombre || '')
       setDescripcion(seccion.descripcion || '')
     }
-  }, [seccion])
+  }, [seccion?.id])
 
   const handleGuardar = async () => {
     if (!nombre.trim()) {

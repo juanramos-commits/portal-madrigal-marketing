@@ -62,7 +62,7 @@ export default function CalendarioCitaDetalle({
       setEstadoId(cita.estado_reunion_id || '')
       setCloserId(cita.closer_id || '')
     }
-  }, [cita])
+  }, [cita?.id])
 
   if (!cita) return null
 
