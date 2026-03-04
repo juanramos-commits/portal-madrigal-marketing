@@ -338,33 +338,79 @@
   overflow-y: auto;
 }
 
-.vc-semana-fila {
+.vc-semana-grid {
   display: grid;
   grid-template-columns: 50px repeat(7, 1fr);
-  min-height: 48px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  position: relative;
+}
+
+.vc-semana-hora-labels {
+  display: flex;
+  flex-direction: column;
 }
 
 .vc-semana-hora-label {
-  padding: 4px 6px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 2px 6px 0;
   font-size: 10px;
   color: var(--text-muted);
-  text-align: right;
   border-right: 1px solid var(--border);
+  box-sizing: border-box;
 }
 
-.vc-semana-celda {
+.vc-semana-dia-col {
   position: relative;
   border-right: 1px solid rgba(255,255,255,0.04);
-  padding: 2px;
-  min-height: 48px;
 }
-.vc-semana-celda:last-child { border-right: none; }
-.vc-semana-celda.vc-bloqueado {
-  background: repeating-linear-gradient(
-    -45deg, transparent, transparent 4px,
-    rgba(255,255,255,0.03) 4px, rgba(255,255,255,0.03) 8px
-  );
+.vc-semana-dia-col:last-child { border-right: none; }
+
+.vc-semana-celda-bg {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  box-sizing: border-box;
+}
+
+/* Events positioned absolutely within day column */
+.vc-semana-event {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  border: none;
+  border-left: 3px solid var(--status-onboarding-text);
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  padding: 2px 4px;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  transition: background var(--transition-fast);
+}
+.vc-semana-event:hover { background: rgba(255,255,255,0.12); }
+.vc-semana-event.vc-google-event {
+  background: rgba(66, 133, 244, 0.12);
+  border-left-color: #4285f4;
+}
+.vc-semana-event.vc-google-event:hover { background: rgba(66, 133, 244, 0.22); }
+
+.vc-semana-event-time {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.vc-semana-event-name {
+  font-size: 10px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 /* ── VISTA DIARIA ─────────────────────────────────────────────────── */
@@ -1262,9 +1308,9 @@
     font-size: 11px;
   }
 
-  /* Weekly view: show 3 days on mobile with scroll */
+  /* Weekly view: scroll on mobile */
   .vc-semana-header,
-  .vc-semana-fila {
+  .vc-semana-grid {
     grid-template-columns: 40px repeat(7, minmax(80px, 1fr));
   }
 

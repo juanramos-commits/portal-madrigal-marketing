@@ -3,6 +3,7 @@ import { useCalendario } from '../../hooks/useCalendario'
 import { useAuth } from '../../contexts/AuthContext'
 import CalendarioVista, { MESES } from '../../components/ventas/CalendarioVista'
 import CalendarioCitaDetalle from '../../components/ventas/CalendarioCitaDetalle'
+import Modal from '../../components/ui/Modal'
 import Select from '../../components/ui/Select'
 import '../../styles/ventas-calendario.css'
 
@@ -41,6 +42,7 @@ export default function VentasCalendario() {
   const cal = useCalendario()
   const { tienePermiso } = useAuth()
   const [citaDetalle, setCitaDetalle] = useState(null)
+  const [googleDetalle, setGoogleDetalle] = useState(null)
 
   const handleClickDia = (fecha) => {
     cal.setFechaActual(fecha)
@@ -49,8 +51,7 @@ export default function VentasCalendario() {
 
   const handleClickCita = (cita) => {
     if (cita._isGoogleEvent) {
-      // Open Google Calendar event in new tab
-      if (cita.html_link) window.open(cita.html_link, '_blank')
+      setGoogleDetalle(cita)
       return
     }
     setCitaDetalle(cita)
@@ -137,6 +138,39 @@ export default function VentasCalendario() {
           onReasignarCloser={cal.reasignarCloser}
         />
       )}
+
+      {/* Google event detail modal */}
+      <Modal open={!!googleDetalle} onClose={() => setGoogleDetalle(null)} title="Evento de Google Calendar">
+        {googleDetalle && (
+          <div className="vc-detalle-section">
+            <div className="vc-detalle-row">
+              <span className="vc-detalle-label">Evento</span>
+              <span>{googleDetalle.summary || '(Sin título)'}</span>
+            </div>
+            <div className="vc-detalle-row">
+              <span className="vc-detalle-label">Inicio</span>
+              <span>{new Date(googleDetalle.start_time).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <div className="vc-detalle-row">
+              <span className="vc-detalle-label">Fin</span>
+              <span>{new Date(googleDetalle.end_time).toLocaleString('es-ES', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            {googleDetalle.all_day && (
+              <div className="vc-detalle-row">
+                <span className="vc-detalle-label">Tipo</span>
+                <span>Todo el día</span>
+              </div>
+            )}
+            {googleDetalle.html_link && (
+              <div style={{ marginTop: 'var(--space-md)' }}>
+                <a href={googleDetalle.html_link} target="_blank" rel="noopener noreferrer" className="vc-btn-sm">
+                  Abrir en Google Calendar
+                </a>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

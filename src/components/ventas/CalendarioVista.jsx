@@ -123,9 +123,23 @@ function VistaMensual({ fechaActual, citas, bloqueos, onClickDia, onClickCita, e
   )
 }
 
+// ─── Helper: get event duration in minutes ─────────────────────────
+function getDuracionMinutos(c) {
+  if (c._isGoogleEvent) {
+    const start = new Date(c.start_time || c.fecha_hora).getTime()
+    const end = new Date(c.end_time).getTime()
+    return Math.max(15, (end - start) / 60000)
+  }
+  return c.duracion_minutos || 60
+}
+
 // ─── VISTA SEMANAL ──────────────────────────────────────────────────
+const HORA_INICIO = 7
+const HORA_FIN = 22
+const HORA_HEIGHT = 48 // px per hour slot
+
 function VistaSemanal({ fechaActual, citas, bloqueos, onClickCita, esDirector, esBloqueado }) {
-  const horas = useMemo(() => generarHoras(7, 22), [])
+  const horas = useMemo(() => generarHoras(HORA_INICIO, HORA_FIN), [])
   const lunes = useMemo(() => obtenerLunesSemana(fechaActual), [fechaActual])
 
   const diasSemana = useMemo(() => {
@@ -136,7 +150,8 @@ function VistaSemanal({ fechaActual, citas, bloqueos, onClickCita, esDirector, e
     })
   }, [lunes])
 
-  const citasPorDiaHora = useMemo(() => {
+  // Group events by day
+  const citasPorDia = useMemo(() => {
     const map = {}
     for (const c of citas) {
       const d = new Date(c.fecha_hora)
@@ -149,6 +164,7 @@ function VistaSemanal({ fechaActual, citas, bloqueos, onClickCita, esDirector, e
 
   const ahora = new Date()
   const ahoraMinutos = ahora.getHours() * 60 + ahora.getMinutes()
+  const totalHoras = HORA_FIN - HORA_INICIO
 
   return (
     <div className="vc-semana">
@@ -162,33 +178,64 @@ function VistaSemanal({ fechaActual, citas, bloqueos, onClickCita, esDirector, e
         ))}
       </div>
       <div className="vc-semana-body">
-        {horas.map(hora => {
-          const h = parseInt(hora)
-          return (
-            <div key={hora} className="vc-semana-fila">
-              <div className="vc-semana-hora-label">{hora}</div>
-              {diasSemana.map((d, di) => {
-                const dayKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
-                const citasEnHora = (citasPorDiaHora[dayKey] || []).filter(c => {
-                  const ch = new Date(c.fecha_hora).getHours()
-                  return ch === h
-                })
-                const bloqueado = esBloqueado?.(new Date(d.getFullYear(), d.getMonth(), d.getDate(), h))
-                const mostrarLinea = esHoy(d) && h === Math.floor(ahoraMinutos / 60)
-                return (
-                  <div key={di} className={`vc-semana-celda${bloqueado ? ' vc-bloqueado' : ''}`}>
-                    {mostrarLinea && (
-                      <div className="vc-linea-ahora" style={{ top: `${((ahoraMinutos % 60) / 60) * 100}%` }} />
-                    )}
-                    {citasEnHora.map(c => (
-                      <CalendarioCita key={c.id} cita={c} onClick={onClickCita} mostrarCloser={esDirector} />
-                    ))}
-                  </div>
-                )
-              })}
-            </div>
-          )
-        })}
+        {/* Hour grid lines */}
+        <div className="vc-semana-grid" style={{ height: totalHoras * HORA_HEIGHT }}>
+          <div className="vc-semana-hora-labels">
+            {horas.map(hora => (
+              <div key={hora} className="vc-semana-hora-label" style={{ height: HORA_HEIGHT }}>
+                {hora}
+              </div>
+            ))}
+          </div>
+          {diasSemana.map((d, di) => {
+            const dayKey = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+            const citasDia = citasPorDia[dayKey] || []
+            const mostrarLinea = esHoy(d)
+
+            return (
+              <div key={di} className="vc-semana-dia-col">
+                {/* Hour grid lines */}
+                {horas.map((hora, hi) => (
+                  <div key={hora} className="vc-semana-celda-bg" style={{ height: HORA_HEIGHT }} />
+                ))}
+                {/* Current time line */}
+                {mostrarLinea && ahoraMinutos >= HORA_INICIO * 60 && ahoraMinutos < HORA_FIN * 60 && (
+                  <div
+                    className="vc-linea-ahora"
+                    style={{ top: ((ahoraMinutos - HORA_INICIO * 60) / (totalHoras * 60)) * 100 + '%' }}
+                  />
+                )}
+                {/* Events positioned absolutely */}
+                {citasDia.map(c => {
+                  const startDate = new Date(c.fecha_hora)
+                  const startMin = startDate.getHours() * 60 + startDate.getMinutes()
+                  const durMin = getDuracionMinutos(c)
+                  const topPx = ((startMin - HORA_INICIO * 60) / 60) * HORA_HEIGHT
+                  const heightPx = Math.max(14, (durMin / 60) * HORA_HEIGHT)
+
+                  return (
+                    <button
+                      key={c._isGoogleEvent ? `g-${c.id}` : c.id}
+                      className={`vc-semana-event${c._isGoogleEvent ? ' vc-google-event' : ''}`}
+                      style={{
+                        top: topPx,
+                        height: heightPx,
+                        borderLeftColor: c._isGoogleEvent ? '#4285f4' : (c.estado_reunion?.color || 'var(--status-onboarding-text)'),
+                      }}
+                      onClick={e => { e.stopPropagation(); onClickCita(c) }}
+                      aria-label={`${c.lead?.nombre || 'Sin nombre'}`}
+                    >
+                      <span className="vc-semana-event-time">
+                        {startDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                      </span>
+                      <span className="vc-semana-event-name">{c.lead?.nombre || 'Sin nombre'}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
