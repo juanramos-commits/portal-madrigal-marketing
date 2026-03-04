@@ -159,8 +159,8 @@ export default memo(function VentasListado({
                 <span className="vv-card-chip">{formatDate(venta.fecha_venta)}</span>
                 <span className="vv-card-chip">{metodoLabels[venta.metodo_pago] || '-'}</span>
                 {venta.es_pago_unico && <span className="vv-card-chip">Pago único</span>}
-                {venta.setter?.nombre && <span className="vv-card-chip"><span className="vv-card-chip-label">S:</span> {venta.setter.nombre}</span>}
-                {venta.closer?.nombre && <span className="vv-card-chip"><span className="vv-card-chip-label">C:</span> {venta.closer.nombre}</span>}
+                {venta.setter?.nombre && <span className="vv-card-chip vv-card-chip--role"><span className="vv-card-chip-label">S:</span> {venta.setter.nombre}</span>}
+                {venta.closer?.nombre && <span className="vv-card-chip vv-card-chip--role"><span className="vv-card-chip-label">C:</span> {venta.closer.nombre}</span>}
               </div>
             </div>
 

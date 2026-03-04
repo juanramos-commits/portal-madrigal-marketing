@@ -422,6 +422,16 @@
   color: var(--text-tertiary);
 }
 
+.vv-card-chip--role {
+  background: var(--primary-muted);
+  color: var(--primary);
+}
+
+.vv-card-chip--role .vv-card-chip-label {
+  color: var(--primary);
+  opacity: 0.6;
+}
+
 /* Legacy classes kept for compatibility */
 .vv-card-meta {
   display: flex;
