@@ -11,6 +11,10 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
   const [errores, setErrores] = useState({})
   const [errorGeneral, setErrorGeneral] = useState(null)
 
+  // Setter info from last cita (overrides lead assignment)
+  const [setterInfo, setSetterInfo] = useState(null) // { id, nombre, email, origen }
+  const [loadingCita, setLoadingCita] = useState(true)
+
   const [form, setForm] = useState({
     fecha_venta: new Date().toISOString().split('T')[0],
     paquete_id: '',
@@ -40,6 +44,59 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
     }
     cargar()
   }, [])
+
+  // Load last cita to determine setter for commission
+  useEffect(() => {
+    const cargarUltimaCita = async () => {
+      setLoadingCita(true)
+      try {
+        const { data: cita } = await supabase
+          .from('ventas_citas')
+          .select('setter_origen_id, origen_agendacion')
+          .eq('lead_id', lead.id)
+          .neq('estado', 'cancelada')
+          .order('fecha_hora', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (cita) {
+          // Load setter name if exists
+          let setter = null
+          if (cita.setter_origen_id) {
+            const { data: s } = await supabase
+              .from('usuarios')
+              .select('id, nombre, email')
+              .eq('id', cita.setter_origen_id)
+              .single()
+            setter = s
+          }
+          setSetterInfo({
+            id: cita.setter_origen_id || null,
+            nombre: setter?.nombre || setter?.email || null,
+            origen: cita.origen_agendacion,
+          })
+        } else {
+          // No cita — fallback to lead assignment
+          setSetterInfo({
+            id: lead.setter?.id || lead.setter_asignado_id || null,
+            nombre: lead.setter?.nombre || lead.setter?.email || null,
+            origen: 'lead',
+          })
+        }
+      } catch (err) {
+        console.error('[VentaPopup] Error loading ultima cita:', err)
+        // Fallback to lead assignment
+        setSetterInfo({
+          id: lead.setter?.id || lead.setter_asignado_id || null,
+          nombre: lead.setter?.nombre || lead.setter?.email || null,
+          origen: 'lead',
+        })
+      } finally {
+        setLoadingCita(false)
+      }
+    }
+    cargarUltimaCita()
+  }, [lead.id])
 
   const handlePaqueteChange = (paqueteId) => {
     const paquete = paquetes.find(p => p.id === paqueteId)
@@ -80,7 +137,7 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
         lead_id: lead.id,
         lead_nombre: lead.nombre,
         closer_id: lead.closer?.id || lead.closer_asignado_id || null,
-        setter_id: lead.setter?.id || lead.setter_asignado_id || null,
+        setter_id: setterInfo?.id || null,
         paquete_id: form.paquete_id,
         paquete_nombre: paquete?.nombre,
         fecha_venta: form.fecha_venta,
@@ -121,9 +178,9 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
         {/* Setter / Closer info */}
         <div className="vv-field-row">
           <div className="vv-field">
-            <label>Setter</label>
+            <label>Setter {setterInfo?.origen === 'enlace_setter' ? '(via enlace)' : setterInfo?.origen === 'enlace_campana' ? '(via campaña)' : ''}</label>
             <div className="vv-field-readonly">
-              {lead.setter?.nombre || lead.setter?.email || 'Sin asignar'}
+              {loadingCita ? 'Cargando...' : setterInfo?.nombre || 'Sin setter — no genera comision'}
             </div>
           </div>
           <div className="vv-field">

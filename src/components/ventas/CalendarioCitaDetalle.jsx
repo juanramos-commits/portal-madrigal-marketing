@@ -168,7 +168,11 @@ export default function CalendarioCitaDetalle({
 
         <div className="vc-detalle-row">
           <span className="vc-detalle-label">Setter origen</span>
-          <span>{cita.setter_origen?.nombre || cita.setter_origen?.email || 'Sin setter asignado'}</span>
+          <span>
+            {cita.setter_origen?.nombre || cita.setter_origen?.email || 'Sin setter'}
+            {cita.origen_agendacion === 'enlace_setter' && <span className="vc-badge" style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6', marginLeft: 6 }}>Via enlace</span>}
+            {cita.origen_agendacion === 'enlace_campana' && <span className="vc-badge" style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', marginLeft: 6 }}>Campaña</span>}
+          </span>
         </div>
 
         {cita.enlace?.fuente && (

@@ -893,7 +893,11 @@ export default function CRMLeadDetalle() {
                 <div key={cita.id} className="crm-cita">
                   <div>
                     <div className="crm-cita-fecha">{formatDateTime(cita.fecha_hora)}</div>
-                    <div className="crm-cita-closer">{cita.closer?.nombre || 'Sin closer'}</div>
+                    <div className="crm-cita-closer">
+                      {cita.closer?.nombre || 'Sin closer'}
+                      {cita.origen_agendacion === 'enlace_setter' && <span className="vc-badge" style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6', marginLeft: 6, fontSize: 'var(--font-xs)' }}>Via enlace</span>}
+                      {cita.origen_agendacion === 'enlace_campana' && <span className="vc-badge" style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', marginLeft: 6, fontSize: 'var(--font-xs)' }}>Campaña</span>}
+                    </div>
                     {cita.notas_closer && <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>{cita.notas_closer}</div>}
                   </div>
                   <div style={{ display: 'flex', gap: 'var(--space-1-5)', alignItems: 'center' }}>
