@@ -91,6 +91,21 @@
   border-color: var(--border-hover);
 }
 
+.wt-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius-full);
+  background: var(--warning);
+  color: var(--text-inverse);
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+
 /* ── Resumen cards ────────────────────────────────────────────────── */
 .wt-resumen {
   display: flex;

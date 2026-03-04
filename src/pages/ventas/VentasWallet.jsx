@@ -84,17 +84,21 @@ export default function VentasWallet() {
 
       <div className={`wt-tabs-wrap${tabsOverflow ? ' has-overflow' : ''}`}>
         <div className="wt-tabs" role="tablist" aria-label="Secciones de wallet" ref={tabsRef}>
-          {tabs.map(t => (
-            <button
-              key={t.key}
-              className={`wt-tab${tab === t.key ? ' active' : ''}`}
-              onClick={() => setTab(t.key)}
-              role="tab"
-              aria-selected={tab === t.key}
-            >
-              {t.label}
-            </button>
-          ))}
+          {tabs.map(t => {
+            const count = t.key === 'admin_retiros' ? w.contadoresRetiros?.pendiente : null
+            return (
+              <button
+                key={t.key}
+                className={`wt-tab${tab === t.key ? ' active' : ''}`}
+                onClick={() => setTab(t.key)}
+                role="tab"
+                aria-selected={tab === t.key}
+              >
+                {t.label}
+                {count > 0 && <span className="wt-tab-badge">{count}</span>}
+              </button>
+            )
+          })}
         </div>
       </div>
 
