@@ -992,6 +992,22 @@
   line-height: 1.5;
 }
 
+.vc-gcal-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.vc-gcal-actions .vc-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.vc-gcal-actions .vc-btn-sm .vc-icon-md {
+  width: 14px;
+  height: 14px;
+}
+
 .vc-gcal-badge {
   display: inline-flex;
   padding: 3px 10px;

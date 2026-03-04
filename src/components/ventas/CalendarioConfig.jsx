@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import Select from '../ui/Select'
+import { supabase } from '../../lib/supabase'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 
@@ -25,6 +26,8 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
   const [guardado, setGuardado] = useState(false)
   const [error, setError] = useState(null)
   const [gcalLoading, setGcalLoading] = useState(false)
+  const [syncResult, setSyncResult] = useState(null)
+  const [syncing, setSyncing] = useState(false)
 
   const gcalConnected = !!config?.google_calendar_token?.refresh_token
   const gcalCalendarId = config?.google_calendar_id
@@ -73,6 +76,30 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
     if (!userId || !SUPABASE_URL) return
     const redirectUrl = window.location.origin + window.location.pathname
     window.location.href = `${SUPABASE_URL}/functions/v1/google-calendar-auth?action=connect&user_id=${userId}&redirect_url=${encodeURIComponent(redirectUrl)}`
+  }
+
+  const handleGcalReconcile = async () => {
+    const userId = targetUserId || config?.usuario_id
+    if (!userId) return
+    setSyncing(true)
+    setSyncResult(null)
+    try {
+      const { data, error: err } = await supabase.functions.invoke('google-calendar-sync', {
+        body: { action: 'reconcile', closer_id: userId },
+      })
+      if (err) throw err
+      const parts = []
+      if (data.updated > 0) parts.push(`${data.updated} actualizadas`)
+      if (data.cancelled > 0) parts.push(`${data.cancelled} canceladas`)
+      if (parts.length === 0) parts.push('Todo sincronizado')
+      setSyncResult({ ok: true, msg: `${data.total} citas revisadas: ${parts.join(', ')}` })
+      if ((data.updated > 0 || data.cancelled > 0) && onGcalStatusChange) onGcalStatusChange()
+    } catch {
+      setSyncResult({ ok: false, msg: 'Error al sincronizar' })
+    } finally {
+      setSyncing(false)
+      setTimeout(() => setSyncResult(null), 5000)
+    }
   }
 
   const handleGcalDisconnect = async () => {
@@ -143,13 +170,26 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
               <p className="vc-gcal-desc">
                 Las citas se sincronizan bidireccionalmente con Google Calendar. Los cambios en Google Calendar (mover o cancelar eventos) se reflejaran automaticamente en el portal. Se creara un enlace de Google Meet para cada cita.
               </p>
-              <button
-                className="vc-btn-sm vc-btn-danger-outline"
-                onClick={handleGcalDisconnect}
-                disabled={gcalLoading}
-              >
-                {gcalLoading ? 'Desconectando...' : 'Desconectar'}
-              </button>
+              <div className="vc-gcal-actions">
+                <button
+                  className="vc-btn-sm vc-btn-primary"
+                  onClick={handleGcalReconcile}
+                  disabled={syncing}
+                >
+                  <SyncIcon />
+                  {syncing ? 'Sincronizando...' : 'Sincronizar ahora'}
+                </button>
+                <button
+                  className="vc-btn-sm vc-btn-danger-outline"
+                  onClick={handleGcalDisconnect}
+                  disabled={gcalLoading}
+                >
+                  {gcalLoading ? 'Desconectando...' : 'Desconectar'}
+                </button>
+              </div>
+              {syncResult && (
+                <p className={syncResult.ok ? 'vc-success-msg' : 'vc-error-msg'}>{syncResult.msg}</p>
+              )}
             </>
           ) : (
             <>

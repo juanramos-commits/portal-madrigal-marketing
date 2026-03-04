@@ -125,6 +125,118 @@ Deno.serve(async (req) => {
   try {
     const { action, cita_id, closer_id } = await req.json()
 
+    // ─── RECONCILE: sync all existing events from Google back to app ───
+    if (action === 'reconcile') {
+      if (!closer_id) {
+        return jsonResponse({ error: 'closer_id is required for reconcile' }, 400)
+      }
+
+      const { data: configData } = await supabase
+        .from('ventas_calendario_config')
+        .select('*')
+        .eq('usuario_id', closer_id)
+        .maybeSingle()
+
+      const token = configData?.google_calendar_token as TokenData | null
+      if (!token?.refresh_token) {
+        return jsonResponse({ skipped: true, reason: 'Google Calendar not connected' })
+      }
+
+      const calendarId = configData?.google_calendar_id || 'primary'
+      const accessToken = await getValidAccessToken(token, supabase, closer_id)
+      if (!accessToken) {
+        return jsonResponse({ error: 'Failed to refresh Google access token' }, 401)
+      }
+
+      // Get all citas with google_event_id for this closer
+      const { data: citas } = await supabase
+        .from('ventas_citas')
+        .select('id, google_event_id, fecha_hora, estado')
+        .eq('closer_id', closer_id)
+        .not('google_event_id', 'is', null)
+        .not('estado', 'in', '("cancelada","completada")')
+
+      if (!citas || citas.length === 0) {
+        return jsonResponse({ success: true, reconciled: 0, message: 'No citas with Google events' })
+      }
+
+      let updated = 0
+      let cancelled = 0
+      const errors: string[] = []
+
+      for (const cita of citas) {
+        try {
+          const res = await fetch(
+            `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(cita.google_event_id)}`,
+            {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            },
+          )
+
+          if (res.status === 404 || res.status === 410) {
+            // Event deleted in Google
+            await supabase
+              .from('ventas_citas')
+              .update({
+                estado: 'cancelada',
+                cancelada_por: 'google_calendar',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', cita.id)
+            cancelled++
+            continue
+          }
+
+          const event = await res.json()
+          if (event.error) {
+            errors.push(`${cita.id}: ${event.error.message}`)
+            continue
+          }
+
+          // Check if cancelled in Google
+          if (event.status === 'cancelled') {
+            await supabase
+              .from('ventas_citas')
+              .update({
+                estado: 'cancelada',
+                cancelada_por: 'google_calendar',
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', cita.id)
+            cancelled++
+            continue
+          }
+
+          // Check if date changed
+          if (event.start?.dateTime) {
+            const googleDate = new Date(event.start.dateTime)
+            const citaDate = new Date(cita.fecha_hora)
+
+            if (Math.abs(googleDate.getTime() - citaDate.getTime()) > 60000) {
+              await supabase
+                .from('ventas_citas')
+                .update({
+                  fecha_hora: googleDate.toISOString(),
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('id', cita.id)
+              updated++
+            }
+          }
+        } catch (e) {
+          errors.push(`${cita.id}: ${e instanceof Error ? e.message : 'unknown error'}`)
+        }
+      }
+
+      return jsonResponse({
+        success: true,
+        total: citas.length,
+        updated,
+        cancelled,
+        errors: errors.length > 0 ? errors : undefined,
+      })
+    }
+
     if (!action || !cita_id || !closer_id) {
       return jsonResponse({ error: 'action, cita_id, and closer_id are required' }, 400)
     }
