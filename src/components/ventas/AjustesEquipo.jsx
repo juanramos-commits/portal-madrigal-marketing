@@ -18,7 +18,7 @@ export default function AjustesEquipo({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
 
-  useEffect(() => { onCargar() }, [])
+  useEffect(() => { if (equipo.length === 0) onCargar() }, [equipo.length])
 
   const cargarUsuarios = async () => {
     const existingIds = equipo.map(m => m.usuario_id)

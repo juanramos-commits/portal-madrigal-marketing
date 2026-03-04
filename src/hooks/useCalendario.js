@@ -42,7 +42,7 @@ function obtenerRangoDia(fecha) {
 }
 
 export function useCalendario() {
-  const { user, usuario, tienePermiso } = useAuth()
+  const { user, usuario, tienePermiso, rolesComerciales } = useAuth()
 
   const [citas, setCitas] = useState([])
   const [disponibilidad, setDisponibilidad] = useState([])
@@ -59,7 +59,6 @@ export function useCalendario() {
   const [error, setError] = useState(null)
 
   // Roles
-  const [rolesComerciales, setRolesComerciales] = useState([])
   const esAdmin = usuario?.tipo === 'super_admin'
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
   // Roles para filtrado de datos en queries (basado en rol comercial real)
@@ -69,19 +68,6 @@ export function useCalendario() {
   // Permisos para visibilidad de features/tabs
   const esCloser = esCloserRol || tienePermiso('ventas.calendario.disponibilidad')
   const esDirector = tienePermiso('ventas.calendario.reasignar')
-
-  // Load roles
-  useEffect(() => {
-    if (!user?.id) return
-    const cargar = async () => {
-      const { data } = await supabase
-        .from('ventas_roles_comerciales')
-        .select('*, usuario:usuarios(id, nombre, email)')
-        .eq('activo', true)
-      setRolesComerciales(data || [])
-    }
-    cargar()
-  }, [user?.id])
 
   // Derive closers and setters from roles
   useEffect(() => {

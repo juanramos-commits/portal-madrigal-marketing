@@ -11,7 +11,9 @@ export default function AjustesReparto({
   const [guardado, setGuardado] = useState(false)
   const [error, setError] = useState(null)
 
-  useEffect(() => { onCargarReparto() }, [])
+  useEffect(() => {
+    if (setters.length > 0) onCargarReparto()
+  }, [setters.length])
 
   useEffect(() => {
     if (setters.length > 0) {

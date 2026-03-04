@@ -11,6 +11,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [usuario, setUsuario] = useState(null)
   const [permisos, setPermisos] = useState([])
+  const [rolesComerciales, setRolesComerciales] = useState([])
   const [loading, setLoading] = useState(true)
   const isSigningIn = useRef(false)
 
@@ -100,6 +101,7 @@ export function AuthProvider({ children }) {
         setUser(null)
         setUsuario(null)
         setPermisos([])
+        setRolesComerciales([])
         setLoading(false)
       }
     })
@@ -123,6 +125,7 @@ export function AuthProvider({ children }) {
         setUser(null)
         setUsuario(null)
         setPermisos([])
+        setRolesComerciales([])
         setLoading(false)
         return
       }
@@ -136,6 +139,7 @@ export function AuthProvider({ children }) {
         setUser(null)
         setUsuario(null)
         setPermisos([])
+        setRolesComerciales([])
       }
       setLoading(false)
     })
@@ -150,6 +154,21 @@ export function AuthProvider({ children }) {
     if (usuario?.tipo === 'super_admin') return true
     return permisos.includes(permiso)
   }, [usuario, permisos])
+
+  // Cargar roles comerciales una sola vez después de auth
+  const refrescarRolesComerciales = useCallback(async () => {
+    if (!user?.id) return
+    const { data } = await supabase
+      .from('ventas_roles_comerciales')
+      .select('*, usuario:usuarios(id, nombre, email, avatar_url)')
+      .eq('activo', true)
+    setRolesComerciales(data || [])
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id || !usuario) return
+    refrescarRolesComerciales()
+  }, [user?.id, usuario, refrescarRolesComerciales])
 
   const signInWithEmail = async (email, password) => {
     isSigningIn.current = true
@@ -200,6 +219,7 @@ export function AuthProvider({ children }) {
     setUser(null)
     setUsuario(null)
     setPermisos([])
+    setRolesComerciales([])
     return supabase.auth.signOut()
   }
 
@@ -208,11 +228,13 @@ export function AuthProvider({ children }) {
       user,
       usuario,
       permisos,
+      rolesComerciales,
       loading,
       tienePermiso,
       signInWithEmail,
       signOut,
-      refrescarUsuario: () => user?.email && cargarUsuario(user.email)
+      refrescarUsuario: () => user?.email && cargarUsuario(user.email),
+      refrescarRolesComerciales,
     }}>
       {children}
     </AuthContext.Provider>

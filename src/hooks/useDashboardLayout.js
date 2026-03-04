@@ -14,26 +14,12 @@ function getUserRole(usuario, rolesComerciales, userId) {
 }
 
 export function useDashboardLayout() {
-  const { user, usuario, tienePermiso } = useAuth()
+  const { user, usuario, tienePermiso, rolesComerciales } = useAuth()
   const [layout, setLayout] = useState([])
-  const [rolesComerciales, setRolesComerciales] = useState([])
   const [editMode, setEditMode] = useState(false)
   const [loading, setLoading] = useState(true)
   const [rol, setRol] = useState(null)
   const initialLoadDone = useRef(false)
-
-  useEffect(() => {
-    if (!user?.id) return
-    ;(async () => {
-      try {
-        const { data } = await supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true)
-        setRolesComerciales(data || [])
-      } catch (e) {
-        import.meta.env.DEV && console.error('Error loading roles comerciales:', e)
-        setRolesComerciales([])
-      }
-    })()
-  }, [user?.id])
 
   // Reset initialLoadDone when user changes (logout → new login)
   const prevUserId = useRef(null)

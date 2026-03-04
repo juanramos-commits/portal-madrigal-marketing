@@ -4,13 +4,12 @@ import { useAuth } from '../contexts/AuthContext'
 import { logActividad } from '../lib/logActividad'
 
 export function useAjustes() {
-  const { user, usuario } = useAuth()
+  const { user, usuario, rolesComerciales, refrescarRolesComerciales } = useAuth()
 
   const [loading, setLoading] = useState(false)
   const [seccionActiva, setSeccionActiva] = useState('perfil')
 
   // Roles
-  const [rolesComerciales, setRolesComerciales] = useState([])
   const esAdmin = usuario?.tipo === 'super_admin'
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
   const esCloser = misRoles.some(r => r.rol === 'closer')
@@ -62,19 +61,6 @@ export function useAjustes() {
   // Actividad
   const [actividad, setActividad] = useState([])
   const [actividadTotal, setActividadTotal] = useState(0)
-
-  // Load roles
-  useEffect(() => {
-    if (!user?.id) return
-    const cargar = async () => {
-      const { data } = await supabase
-        .from('ventas_roles_comerciales')
-        .select('*, usuario:usuarios(id, nombre, email)')
-        .eq('activo', true)
-      setRolesComerciales(data || [])
-    }
-    cargar()
-  }, [user?.id])
 
   // ═══ PERFIL ═══
   const cargarPerfil = useCallback(async () => {
@@ -428,6 +414,7 @@ export function useAjustes() {
 
   // ═══ EQUIPO ═══
   const cargarEquipo = useCallback(async () => {
+    // Fetch full data (including inactive) for equipo management
     const { data } = await supabase
       .from('ventas_roles_comerciales')
       .select('*, usuario:usuarios(id, nombre, email, avatar_url)')
@@ -459,9 +446,9 @@ export function useAjustes() {
       .from('ventas_roles_comerciales')
       .insert(inserts)
     if (error) throw error
-    await cargarEquipo()
+    await Promise.all([cargarEquipo(), refrescarRolesComerciales()])
     logActividad('ajustes', 'crear', `Rol asignado: ${roles.join(', ')}`, { entidad: 'equipo' })
-  }, [cargarEquipo])
+  }, [cargarEquipo, refrescarRolesComerciales])
 
   const editarRoles = useCallback(async (usuarioId, rolesNuevos) => {
     // Delete existing roles for user
@@ -478,9 +465,9 @@ export function useAjustes() {
       }))
       await supabase.from('ventas_roles_comerciales').insert(inserts)
     }
-    await cargarEquipo()
+    await Promise.all([cargarEquipo(), refrescarRolesComerciales()])
     logActividad('ajustes', 'editar', `Roles editados: ${rolesNuevos.join(', ')}`, { entidad: 'equipo' })
-  }, [cargarEquipo])
+  }, [cargarEquipo, refrescarRolesComerciales])
 
   const desactivarMiembro = useCallback(async (usuarioId, activar) => {
     const { error } = await supabase
@@ -488,9 +475,9 @@ export function useAjustes() {
       .update({ activo: activar })
       .eq('usuario_id', usuarioId)
     if (error) throw error
-    await cargarEquipo()
+    await Promise.all([cargarEquipo(), refrescarRolesComerciales()])
     logActividad('ajustes', 'editar', `Miembro ${activar ? 'activado' : 'desactivado'}`, { entidad: 'equipo' })
-  }, [cargarEquipo])
+  }, [cargarEquipo, refrescarRolesComerciales])
 
   // ═══ WEBHOOKS ═══
   const cargarWebhooks = useCallback(async () => {

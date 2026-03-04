@@ -7,7 +7,7 @@ import { logActividad } from '../lib/logActividad'
 const ROLES_VISIBLES = ['setter', 'closer', 'director_ventas', 'super_admin']
 
 export function useBiblioteca() {
-  const { user, usuario, tienePermiso } = useAuth()
+  const { user, usuario, tienePermiso, rolesComerciales } = useAuth()
 
   const [secciones, setSecciones] = useState([])
   const [recursos, setRecursos] = useState([])
@@ -21,7 +21,6 @@ export function useBiblioteca() {
   const debounceRef = useRef(null)
 
   // Roles
-  const [rolesComerciales, setRolesComerciales] = useState([])
   const esAdmin = usuario?.tipo === 'super_admin'
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
   const esCloser = misRoles.some(r => r.rol === 'closer')
@@ -40,20 +39,7 @@ export function useBiblioteca() {
     return keys
   }, [esSetter, esCloser, esDirector, esAdmin])
 
-  // Load roles
-  const [rolesLoaded, setRolesLoaded] = useState(false)
-  useEffect(() => {
-    if (!user?.id) return
-    const cargar = async () => {
-      const { data } = await supabase
-        .from('ventas_roles_comerciales')
-        .select('*')
-        .eq('activo', true)
-      setRolesComerciales(data || [])
-      setRolesLoaded(true)
-    }
-    cargar()
-  }, [user?.id])
+  const rolesLoaded = rolesComerciales.length > 0 || esAdmin
 
   // Debounce search
   useEffect(() => {

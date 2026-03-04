@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useVentasPermisos, ROLES_COMERCIALES, ROL_LABELS } from '../../hooks/useVentasPermisos'
+import { useAuth } from '../../contexts/AuthContext'
 
 // Agrupar permisos por submódulo para la UI
 const MODULO_LABELS = {
@@ -424,11 +425,14 @@ function VistaUsuarios({ permisos, matrizRoles, equipo, saving, onCargarOverride
 // ========================================
 export default function AjustesPermisos() {
   const hook = useVentasPermisos()
+  const { user, rolesComerciales } = useAuth()
   const [vista, setVista] = useState('roles') // 'roles' | 'usuarios'
 
   useEffect(() => {
-    hook.cargarMatrizRoles()
-  }, [])
+    if (user?.id && rolesComerciales.length > 0) {
+      hook.cargarMatrizRoles()
+    }
+  }, [user?.id, rolesComerciales.length])
 
   if (hook.loading) {
     return (

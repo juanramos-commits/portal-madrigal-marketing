@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 
 const ROLES_COMERCIALES = ['setter', 'closer', 'director_ventas']
 const ROL_LABELS = { setter: 'Setter', closer: 'Closer', director_ventas: 'Director' }
@@ -7,6 +8,7 @@ const ROL_LABELS = { setter: 'Setter', closer: 'Closer', director_ventas: 'Direc
 export { ROLES_COMERCIALES, ROL_LABELS }
 
 export function useVentasPermisos() {
+  const { rolesComerciales } = useAuth()
   const [permisos, setPermisos] = useState([])
   const [matrizRoles, setMatrizRoles] = useState({}) // { setter: [permisoId, ...], closer: [...], director_ventas: [...] }
   const [overrides, setOverrides] = useState([]) // [{ permiso_id, permitido }]
@@ -29,14 +31,9 @@ export function useVentasPermisos() {
   const cargarMatrizRoles = useCallback(async () => {
     setLoading(true)
     try {
-      const [permisosData, matrizData, equipoData] = await Promise.all([
+      const [, matrizData] = await Promise.all([
         cargarPermisos(),
         supabase.from('ventas_roles_permisos').select('rol_comercial, permiso_id'),
-        supabase
-          .from('ventas_roles_comerciales')
-          .select('*, usuario:usuarios(id, nombre, email, avatar_url)')
-          .eq('activo', true)
-          .order('created_at', { ascending: false }),
       ])
 
       const matriz = {}
@@ -50,19 +47,21 @@ export function useVentasPermisos() {
       }
       setMatrizRoles(matriz)
 
-      // Agrupar equipo por usuario
+      // Derivar equipo de rolesComerciales del contexto
       const map = {}
-      for (const r of (equipoData.data || [])) {
+      for (const r of rolesComerciales) {
         if (!map[r.usuario_id]) {
           map[r.usuario_id] = { usuario_id: r.usuario_id, usuario: r.usuario, roles: [] }
         }
         map[r.usuario_id].roles.push(r.rol)
       }
       setEquipo(Object.values(map))
+    } catch (err) {
+      console.error('Error cargando permisos:', err)
     } finally {
       setLoading(false)
     }
-  }, [cargarPermisos])
+  }, [cargarPermisos, rolesComerciales])
 
   // Guardar permisos de un rol completo (reemplaza todos)
   const guardarPermisosRol = useCallback(async (rol, permisoIds) => {
