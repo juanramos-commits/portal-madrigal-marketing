@@ -1165,6 +1165,7 @@
 .wt-admin-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--space-md);
   display: flex;
@@ -1172,6 +1173,10 @@
   gap: var(--space-xs);
   margin-bottom: var(--space-sm);
 }
+
+.wt-admin-card--pendiente { border-left-color: var(--warning); }
+.wt-admin-card--aprobado { border-left-color: var(--success); }
+.wt-admin-card--rechazado { border-left-color: var(--error); }
 
 .wt-admin-card-top {
   display: flex;
