@@ -73,6 +73,7 @@
 @media (max-width: 768px) {
   .ui-modal-overlay { align-items: flex-end; padding: 0; }
   .ui-modal { border-radius: var(--radius-xl) var(--radius-xl) 0 0; max-height: 92vh; max-width: 100%; animation: uiSlideUpMobile 250ms ease-out; }
+  .ui-modal-close { min-width: 44px; min-height: 44px; justify-content: center; }
 }
 
 /* ═══ CONFIRM DIALOG ═══ */
