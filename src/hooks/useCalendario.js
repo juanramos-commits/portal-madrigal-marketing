@@ -62,8 +62,12 @@ export function useCalendario() {
   const [rolesComerciales, setRolesComerciales] = useState([])
   const esAdmin = usuario?.tipo === 'super_admin'
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
-  const esCloser = misRoles.some(r => r.rol === 'closer') || tienePermiso('ventas.calendario.disponibilidad')
+  // Roles para filtrado de datos en queries (basado en rol comercial real)
+  const esCloserRol = misRoles.some(r => r.rol === 'closer')
   const esSetter = misRoles.some(r => r.rol === 'setter')
+  const esDirectorRol = misRoles.some(r => r.rol === 'director_ventas') || esAdmin
+  // Permisos para visibilidad de features/tabs
+  const esCloser = esCloserRol || tienePermiso('ventas.calendario.disponibilidad')
   const esDirector = tienePermiso('ventas.calendario.reasignar')
 
   // Load roles
@@ -158,22 +162,22 @@ export function useCalendario() {
       .lte('fecha_hora', fin.toISOString())
       .order('fecha_hora', { ascending: true })
 
-    // Filter by role
-    if (esCloser && !esDirector) {
+    // Filter by role (usar roles comerciales reales, no permisos)
+    if (esCloserRol && !esDirectorRol) {
       query = query.eq('closer_id', user.id)
-    } else if (esSetter && !esDirector && !esCloser) {
+    } else if (esSetter && !esDirectorRol && !esCloserRol) {
       query = query.eq('setter_origen_id', user.id)
     }
 
     // Admin filter by closer
-    if (esDirector && closerFiltro) {
+    if (esDirectorRol && closerFiltro) {
       query = query.eq('closer_id', closerFiltro)
     }
 
     const { data, error: err } = await query
     if (err) { setError('Error al cargar citas'); return }
     setCitas(data || [])
-  }, [obtenerRangoFechas, esCloser, esDirector, esSetter, user?.id, closerFiltro])
+  }, [obtenerRangoFechas, esCloserRol, esDirectorRol, esSetter, user?.id, closerFiltro])
 
   // Update cita estado
   const actualizarEstadoCita = useCallback(async (citaId, estadoReunionId) => {
@@ -484,17 +488,17 @@ export function useCalendario() {
       await Promise.all([
         cargarCitas(),
         cargarReunionEstados(),
-        esCloser ? cargarDisponibilidad() : Promise.resolve(),
-        esCloser ? cargarBloqueos() : Promise.resolve(),
-        esCloser ? cargarConfig() : Promise.resolve(),
-        esDirector ? cargarEnlaces() : Promise.resolve(),
+        esCloserRol ? cargarDisponibilidad() : Promise.resolve(),
+        esCloserRol ? cargarBloqueos() : Promise.resolve(),
+        esCloserRol ? cargarConfig() : Promise.resolve(),
+        esDirectorRol ? cargarEnlaces() : Promise.resolve(),
       ])
     } catch (_) {
       setError('Error al cargar datos del calendario')
     } finally {
       setLoading(false)
     }
-  }, [cargarCitas, cargarReunionEstados, esCloser, esDirector, cargarDisponibilidad, cargarBloqueos, cargarConfig, cargarEnlaces])
+  }, [cargarCitas, cargarReunionEstados, esCloserRol, esDirectorRol, cargarDisponibilidad, cargarBloqueos, cargarConfig, cargarEnlaces])
 
   // Refresh on tab focus
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
