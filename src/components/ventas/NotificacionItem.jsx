@@ -78,7 +78,7 @@ export default function NotificacionItem({ notificacion, onMarcarLeida, onElimin
 
   const config = TIPO_CONFIG[notificacion.tipo]
   const Icon = config?.icon || Bell
-  const colorClass = config?.color || ''
+  const colorClass = config?.color || 'ntf-color-info'
 
   return (
     <div
