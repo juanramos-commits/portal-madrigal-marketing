@@ -9,7 +9,7 @@ import { logActividad } from '../lib/logActividad'
 const PAGE_SIZE = 25
 
 export function useVentas() {
-  const { user, usuario } = useAuth()
+  const { user, usuario, tienePermiso } = useAuth()
 
   const [ventas, setVentas] = useState([])
   const [paquetes, setPaquetes] = useState([])
@@ -40,7 +40,7 @@ export function useVentas() {
   const esDirector = misRoles.some(r => r.rol === 'director_ventas' || r.rol === 'super_admin')
   const esCloser = misRoles.some(r => r.rol === 'closer')
   const esSetter = misRoles.some(r => r.rol === 'setter')
-  const esAdminODirector = esAdmin || esDirector
+  const esAdminODirector = tienePermiso('ventas.crm.ver_todos')
 
   // ── Load roles ─────────────────────────────────────────────────────
   const [rolesLoaded, setRolesLoaded] = useState(false)

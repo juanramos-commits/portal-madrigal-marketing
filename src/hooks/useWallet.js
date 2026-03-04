@@ -9,7 +9,7 @@ const RETIROS_PAGE_SIZE = 25
 const FACTURAS_PAGE_SIZE = 25
 
 export function useWallet() {
-  const { user, usuario } = useAuth()
+  const { user, usuario, tienePermiso } = useAuth()
 
   const [wallet, setWallet] = useState(null)
   const [saldoDisponible, setSaldoDisponible] = useState(0)
@@ -67,7 +67,7 @@ export function useWallet() {
 
   // Roles
   const [rolesComerciales, setRolesComerciales] = useState([])
-  const esAdmin = usuario?.tipo === 'super_admin'
+  const esAdmin = tienePermiso('ventas.wallet.ver_todos')
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
   const esCloser = misRoles.some(r => r.rol === 'closer')
 

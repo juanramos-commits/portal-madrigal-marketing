@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Kanban, List, Filter, Plus, RefreshCw } from 'lucide-react'
 import { useVentasCRM } from '../../hooks/useVentasCRM'
 import { useVentas } from '../../hooks/useVentas'
+import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import CRMKanban from '../../components/ventas/CRMKanban'
 import CRMTabla from '../../components/ventas/CRMTabla'
@@ -15,6 +16,7 @@ import '../../styles/ventas-ventas.css'
 export default function VentasCRM() {
   const crm = useVentasCRM()
   const ventasHook = useVentas()
+  const { tienePermiso } = useAuth()
   const { showToast } = useToast()
   const [showFilters, setShowFilters] = useState(false)
   const [showNewLead, setShowNewLead] = useState(false)
@@ -118,7 +120,7 @@ export default function VentasCRM() {
           </button>
 
           {/* Nuevo Lead */}
-          {crm.esAdminODirector && (
+          {tienePermiso('ventas.crm.crear_leads') && (
             <button className="crm-new-btn" onClick={() => setShowNewLead(true)} aria-label="Nuevo Lead">
               <Plus /> <span className="crm-toolbar-label">Nuevo Lead</span>
             </button>
@@ -136,7 +138,7 @@ export default function VentasCRM() {
           loadingMore={crm.loadingMore}
           onLoadMore={crm.cargarMasLeads}
           onMoverLead={crm.moverLead}
-          showAssignee={crm.esAdminODirector}
+          showAssignee={tienePermiso('ventas.crm.ver_todos')}
           loading={crm.loading}
           onError={(msg) => showToast(msg, 'error', 3000)}
         />

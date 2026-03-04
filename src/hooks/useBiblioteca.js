@@ -7,7 +7,7 @@ import { logActividad } from '../lib/logActividad'
 const ROLES_VISIBLES = ['setter', 'closer', 'director_ventas', 'super_admin']
 
 export function useBiblioteca() {
-  const { user, usuario } = useAuth()
+  const { user, usuario, tienePermiso } = useAuth()
 
   const [secciones, setSecciones] = useState([])
   const [recursos, setRecursos] = useState([])
@@ -27,7 +27,7 @@ export function useBiblioteca() {
   const esCloser = misRoles.some(r => r.rol === 'closer')
   const esSetter = misRoles.some(r => r.rol === 'setter')
   const esDirector = misRoles.some(r => r.rol === 'director_ventas') || esAdmin
-  const puedeGestionar = esDirector || esAdmin
+  const puedeGestionar = tienePermiso('ventas.biblioteca.gestionar_secciones')
 
   // My role keys for visibility filtering (memoized to avoid breaking useMemo deps)
   const misRolesKeys = useMemo(() => {

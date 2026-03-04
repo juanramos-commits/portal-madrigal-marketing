@@ -95,10 +95,11 @@ export default function CRMLeadDetalle() {
   const registroTimeoutRef = useRef(null)
   const loadDetailRef = useRef(0)
 
-  const esAdmin = usuario?.tipo === 'super_admin'
+  const { tienePermiso } = useAuth()
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
-  const esDirector = misRoles.some(r => r.rol === 'director_ventas' || r.rol === 'super_admin')
-  const esAdminODirector = esAdmin || esDirector
+  const esAdminODirector = tienePermiso('ventas.crm.ver_todos')
+  const puedeAsignar = tienePermiso('ventas.crm.asignar')
+  const puedeEliminar = tienePermiso('ventas.crm.eliminar_leads')
   const esMiLeadSetter = lead?.setter_asignado_id === user?.id
   const esMiLeadCloser = lead?.closer_asignado_id === user?.id
 
@@ -602,7 +603,7 @@ export default function CRMLeadDetalle() {
                   </div>
                 ))}
 
-                {esAdminODirector && (
+                {puedeAsignar && (
                   <>
                     <div className="crm-dropdown-sep" />
                     <div className="crm-dropdown-label">Asignaciones</div>
@@ -658,6 +659,10 @@ export default function CRMLeadDetalle() {
                         ))}
                       </div>
                     )}
+                  </>
+                )}
+                {puedeEliminar && (
+                  <>
                     <div className="crm-dropdown-sep" />
                     <button className="crm-dropdown-item danger" onClick={() => { setShowMenu(false); setShowConfirmDelete(true) }}>
                       <Trash2 size={14} />
@@ -820,7 +825,7 @@ export default function CRMLeadDetalle() {
             <div className="crm-field-grid">
               <div className="crm-field">
                 <label>Setter asignado</label>
-                {esAdminODirector ? (
+                {puedeAsignar ? (
                   <Select value={lead.setter_asignado_id || ''} onChange={e => asignarSetter(e.target.value)}>
                     <option value="">Sin setter</option>
                     {setters.map(s => <option key={s.usuario_id} value={s.usuario_id}>{s.usuario?.nombre}</option>)}
@@ -831,7 +836,7 @@ export default function CRMLeadDetalle() {
               </div>
               <div className="crm-field">
                 <label>Closer asignado</label>
-                {esAdminODirector ? (
+                {puedeAsignar ? (
                   <Select value={lead.closer_asignado_id || ''} onChange={e => asignarCloser(e.target.value)}>
                     <option value="">Sin closer</option>
                     {closers.map(c => <option key={c.usuario_id} value={c.usuario_id}>{c.usuario?.nombre}</option>)}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useCalendario } from '../../hooks/useCalendario'
+import { useAuth } from '../../contexts/AuthContext'
 import CalendarioVista, { MESES } from '../../components/ventas/CalendarioVista'
 import CalendarioCitaDetalle from '../../components/ventas/CalendarioCitaDetalle'
 import CalendarioDisponibilidad from '../../components/ventas/CalendarioDisponibilidad'
@@ -22,17 +23,22 @@ const ChevronRight = () => (
   </svg>
 )
 
-function getTabsForRole(esCloser, esSetter, esDirector) {
+function getTabsForPermissions(tienePermiso) {
   const tabs = [{ key: 'calendario', label: 'Calendario' }]
 
-  if (esCloser) {
+  if (tienePermiso('ventas.calendario.disponibilidad')) {
     tabs.push({ key: 'disponibilidad', label: 'Mi disponibilidad' })
+  }
+  if (tienePermiso('ventas.calendario.bloqueos')) {
     tabs.push({ key: 'bloqueos', label: 'Mis bloqueos' })
+  }
+  if (tienePermiso('ventas.calendario.disponibilidad')) {
     tabs.push({ key: 'config', label: 'Configuración' })
   }
-
-  if (esDirector) {
+  if (tienePermiso('ventas.calendario.reasignar')) {
     tabs.push({ key: 'equipo', label: 'Gestión de equipo' })
+  }
+  if (tienePermiso('ventas.calendario.enlaces')) {
     tabs.push({ key: 'enlaces', label: 'Enlaces de agenda' })
   }
 
@@ -60,10 +66,11 @@ function formatTituloNav(vista, fecha) {
 
 export default function VentasCalendario() {
   const cal = useCalendario()
+  const { tienePermiso } = useAuth()
   const [tab, setTab] = useState('calendario')
   const [citaDetalle, setCitaDetalle] = useState(null)
 
-  const tabs = getTabsForRole(cal.esCloser, cal.esSetter, cal.esDirector)
+  const tabs = getTabsForPermissions(tienePermiso)
 
   const handleClickDia = (fecha) => {
     cal.setFechaActual(fecha)
@@ -127,7 +134,7 @@ export default function VentasCalendario() {
             </div>
 
             {/* Closer filter (admin only) */}
-            {cal.esDirector && cal.closers.length > 0 && (
+            {tienePermiso('ventas.calendario.reasignar') && cal.closers.length > 0 && (
               <Select
                 value={cal.closerFiltro || ''}
                 onChange={e => cal.setCloserFiltro(e.target.value || null)}
@@ -162,7 +169,7 @@ export default function VentasCalendario() {
         )
       )}
 
-      {tab === 'disponibilidad' && cal.esCloser && (
+      {tab === 'disponibilidad' && tienePermiso('ventas.calendario.disponibilidad') && (
         <CalendarioDisponibilidad
           disponibilidad={cal.disponibilidad}
           onGuardar={cal.guardarDisponibilidad}
@@ -170,7 +177,7 @@ export default function VentasCalendario() {
         />
       )}
 
-      {tab === 'bloqueos' && cal.esCloser && (
+      {tab === 'bloqueos' && tienePermiso('ventas.calendario.bloqueos') && (
         <CalendarioBloqueos
           bloqueos={cal.bloqueos}
           onCrear={cal.crearBloqueo}
@@ -178,14 +185,14 @@ export default function VentasCalendario() {
         />
       )}
 
-      {tab === 'config' && cal.esCloser && (
+      {tab === 'config' && tienePermiso('ventas.calendario.disponibilidad') && (
         <CalendarioConfig
           config={cal.config}
           onGuardar={cal.guardarConfig}
         />
       )}
 
-      {tab === 'equipo' && cal.esDirector && (
+      {tab === 'equipo' && tienePermiso('ventas.calendario.reasignar') && (
         <CalendarioAdminPanel
           cargarClosersConConfig={cal.cargarClosersConConfig}
           onActualizarMinimoHoras={cal.actualizarMinimoHoras}
@@ -193,7 +200,7 @@ export default function VentasCalendario() {
         />
       )}
 
-      {tab === 'enlaces' && cal.esDirector && (
+      {tab === 'enlaces' && tienePermiso('ventas.calendario.enlaces') && (
         <CalendarioEnlaces
           enlaces={cal.enlaces}
           setters={cal.setters}

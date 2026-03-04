@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search, X, Filter, Download } from 'lucide-react'
 import { useVentas } from '../../hooks/useVentas'
+import { useAuth } from '../../contexts/AuthContext'
 import VentasListado from '../../components/ventas/VentasListado'
 import VentasFiltros from '../../components/ventas/VentasFiltros'
 import '../../styles/ventas-ventas.css'
@@ -15,6 +16,7 @@ const tabs = [
 
 export default function VentasVentas() {
   const ventas = useVentas()
+  const { tienePermiso } = useAuth()
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
 
   const filtrosActivos = Object.values(ventas.filtros).filter(v => v !== '' && v !== null && v !== undefined).length
@@ -79,15 +81,17 @@ export default function VentasVentas() {
               <span className="vv-filter-badge">{filtrosActivos}</span>
             )}
           </button>
-          <button
-            className="vv-export-btn"
-            onClick={ventas.exportarCSV}
-            disabled={ventas.exportando || ventas.totalVentas === 0}
-            aria-label="Exportar a CSV"
-          >
-            <Download size={16} />
-            <span className="vv-toolbar-label">Exportar CSV</span>
-          </button>
+          {tienePermiso('ventas.ventas.exportar') && (
+            <button
+              className="vv-export-btn"
+              onClick={ventas.exportarCSV}
+              disabled={ventas.exportando || ventas.totalVentas === 0}
+              aria-label="Exportar a CSV"
+            >
+              <Download size={16} />
+              <span className="vv-toolbar-label">Exportar CSV</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -119,7 +123,7 @@ export default function VentasVentas() {
         pageSize={ventas.pageSize}
         onPageChange={ventas.setPaginaActual}
         loading={ventas.loading}
-        esAdmin={ventas.esAdmin}
+        esAdmin={tienePermiso('ventas.ventas.aprobar')}
         onCambiarEstado={ventas.cambiarEstado}
         cargarComisiones={ventas.cargarComisiones}
       />

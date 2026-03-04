@@ -42,7 +42,7 @@ function obtenerRangoDia(fecha) {
 }
 
 export function useCalendario() {
-  const { user, usuario } = useAuth()
+  const { user, usuario, tienePermiso } = useAuth()
 
   const [citas, setCitas] = useState([])
   const [disponibilidad, setDisponibilidad] = useState([])
@@ -62,9 +62,9 @@ export function useCalendario() {
   const [rolesComerciales, setRolesComerciales] = useState([])
   const esAdmin = usuario?.tipo === 'super_admin'
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
-  const esCloser = misRoles.some(r => r.rol === 'closer')
+  const esCloser = misRoles.some(r => r.rol === 'closer') || tienePermiso('ventas.calendario.disponibilidad')
   const esSetter = misRoles.some(r => r.rol === 'setter')
-  const esDirector = misRoles.some(r => r.rol === 'director_ventas') || esAdmin
+  const esDirector = tienePermiso('ventas.calendario.reasignar')
 
   // Load roles
   useEffect(() => {

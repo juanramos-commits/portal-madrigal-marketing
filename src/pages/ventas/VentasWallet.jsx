@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useWallet } from '../../hooks/useWallet'
+import { useAuth } from '../../contexts/AuthContext'
 import WalletResumen from '../../components/ventas/WalletResumen'
 import WalletComisiones from '../../components/ventas/WalletComisiones'
 import WalletRetiros from '../../components/ventas/WalletRetiros'
@@ -25,10 +26,11 @@ const tabsAdmin = [
 
 export default function VentasWallet() {
   const w = useWallet()
+  const { tienePermiso } = useAuth()
   const [tab, setTab] = useState('resumen')
   const [showRetiroModal, setShowRetiroModal] = useState(false)
 
-  const tabs = w.esAdmin ? [...tabsBase, ...tabsAdmin] : tabsBase
+  const tabs = tienePermiso('ventas.wallet.ver_todos') ? [...tabsBase, ...tabsAdmin] : tabsBase
 
   const handleSolicitarRetiro = async (monto) => {
     await w.solicitarRetiro(monto)
@@ -57,13 +59,15 @@ export default function VentasWallet() {
     <div className="wt-page">
       <div className="wt-header">
         <h1>Wallet</h1>
-        <button
-          className="wt-btn-retiro"
-          onClick={() => setShowRetiroModal(true)}
-          disabled={!(w.saldoDisponible > 0 && (!w.esCloser || w.closerAlDia))}
-        >
-          Solicitar retiro
-        </button>
+        {tienePermiso('ventas.wallet.solicitar_retiro') && (
+          <button
+            className="wt-btn-retiro"
+            onClick={() => setShowRetiroModal(true)}
+            disabled={!(w.saldoDisponible > 0 && (!w.esCloser || w.closerAlDia))}
+          >
+            Solicitar retiro
+          </button>
+        )}
       </div>
 
       <div className="wt-tabs" role="tablist" aria-label="Secciones de wallet">
@@ -106,8 +110,8 @@ export default function VentasWallet() {
           onFiltroHastaChange={v => { w.setComisionesFiltroHasta(v); w.setComisionesPagina(0) }}
           usuarioId={w.comisionesUsuarioId}
           onUsuarioIdChange={v => { w.setComisionesUsuarioId(v); w.setComisionesPagina(0) }}
-          miembros={w.esAdmin ? w.miembros : []}
-          esAdmin={w.esAdmin}
+          miembros={tienePermiso('ventas.wallet.ver_todos') ? w.miembros : []}
+          esAdmin={tienePermiso('ventas.wallet.ver_todos')}
           pagina={w.comisionesPagina}
           onPageChange={w.setComisionesPagina}
           loading={w.loading}
@@ -152,7 +156,7 @@ export default function VentasWallet() {
         />
       )}
 
-      {tab === 'admin_retiros' && w.esAdmin && (
+      {tab === 'admin_retiros' && tienePermiso('ventas.wallet.aprobar_retiros') && (
         <WalletAdminRetiros
           retiros={w.todosRetiros}
           filtro={w.todosRetirosFiltro}
@@ -166,7 +170,7 @@ export default function VentasWallet() {
         />
       )}
 
-      {tab === 'admin_facturas' && w.esAdmin && (
+      {tab === 'admin_facturas' && tienePermiso('ventas.wallet.ver_todos') && (
         <WalletAdminFacturas
           facturas={w.todasFacturas}
           filtroUsuario={w.todasFacturasFiltroUsuario}

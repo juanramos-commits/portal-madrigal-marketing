@@ -21,7 +21,7 @@ function mapLeadItems(data) {
 }
 
 export function useVentasCRM() {
-  const { user, usuario } = useAuth()
+  const { user, usuario, tienePermiso } = useAuth()
 
   const [pipelines, setPipelines] = useState([])
   const [pipelineActivo, setPipelineActivoState] = useState(null)
@@ -61,7 +61,7 @@ export function useVentasCRM() {
   const esSetter = misRoles.some(r => r.rol === 'setter')
   const esCloser = misRoles.some(r => r.rol === 'closer')
   const esDirector = misRoles.some(r => r.rol === 'director_ventas')
-  const esAdminODirector = esAdmin || esDirector || misRoles.some(r => r.rol === 'super_admin')
+  const esAdminODirector = tienePermiso('ventas.crm.ver_todos')
 
   // ── Build query (explicit pipeline params — no stale closures) ────────
   const buildLeadQuery = useCallback((pipelineId, pipelineNombre, etapaId = null) => {
@@ -247,14 +247,12 @@ export function useVentasCRM() {
       setClosers(closersList)
 
       const userRoles = (rolesData || []).filter(r => r.usuario_id === user?.id && r.activo)
-      const userEsAdmin = usuario?.tipo === 'super_admin'
-      const userEsDirector = userRoles.some(r => r.rol === 'director_ventas' || r.rol === 'super_admin')
       const userEsSetter = userRoles.some(r => r.rol === 'setter')
       const userEsCloser = userRoles.some(r => r.rol === 'closer')
 
       let defaultPipeline = null
       if (pipelinesData && pipelinesData.length > 0) {
-        if (userEsAdmin || userEsDirector) {
+        if (tienePermiso('ventas.crm.ver_todos')) {
           defaultPipeline = pipelinesData[0]
         } else if (userEsSetter && !userEsCloser) {
           defaultPipeline = pipelinesData.find(p => p.nombre.toLowerCase().includes('setter')) || pipelinesData[0]
@@ -1071,7 +1069,7 @@ export function useVentasCRM() {
 
   // ── Pipelines visible to user ──────────────────────────────────────
   const pipelinesVisibles = pipelines.filter(p => {
-    if (esAdminODirector) return true
+    if (tienePermiso('ventas.crm.ver_todos')) return true
     const nombre = p.nombre.toLowerCase()
     if (esSetter && nombre.includes('setter')) return true
     if (esCloser && nombre.includes('closer')) return true

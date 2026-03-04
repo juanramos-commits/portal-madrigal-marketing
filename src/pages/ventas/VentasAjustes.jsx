@@ -1,3 +1,4 @@
+import { useAuth } from '../../contexts/AuthContext'
 import { useAjustes } from '../../hooks/useAjustes'
 import AjustesPerfil from '../../components/ventas/AjustesPerfil'
 import AjustesCalendario from '../../components/ventas/AjustesCalendario'
@@ -97,49 +98,44 @@ const SECCIONES = [
   {
     grupo: 'PERSONAL',
     items: [
-      { id: 'perfil', label: 'Perfil', icon: UserIcon, minRole: null },
-      { id: 'calendario', label: 'Calendario', icon: CalendarIcon, minRole: null },
+      { id: 'perfil', label: 'Perfil', icon: UserIcon, permiso: 'ventas.ajustes.perfil' },
+      { id: 'calendario', label: 'Calendario', icon: CalendarIcon, permiso: 'ventas.ajustes.calendario' },
     ],
   },
   {
     grupo: 'DIRECTOR',
     items: [
-      { id: 'pipelines', label: 'Pipelines y etapas', icon: GitBranchIcon, minRole: 'director' },
-      { id: 'reparto', label: 'Reparto de leads', icon: SlidersIcon, minRole: 'director' },
+      { id: 'pipelines', label: 'Pipelines y etapas', icon: GitBranchIcon, permiso: 'ventas.ajustes.pipelines' },
+      { id: 'reparto', label: 'Reparto de leads', icon: SlidersIcon, permiso: 'ventas.ajustes.reparto' },
     ],
   },
   {
     grupo: 'ADMINISTRACION',
     items: [
-      { id: 'paquetes', label: 'Paquetes', icon: PackageIcon, minRole: 'admin' },
-      { id: 'categorias', label: 'Categorias', icon: TagIcon, minRole: 'admin' },
-      { id: 'comisiones', label: 'Comisiones', icon: DollarIcon, minRole: 'admin' },
-      { id: 'empresa_fiscal', label: 'Empresa fiscal', icon: BuildingIcon, minRole: 'admin' },
-      { id: 'equipo', label: 'Equipo comercial', icon: UsersIcon, minRole: 'admin' },
-      { id: 'webhooks', label: 'Webhooks', icon: WebhookIcon, minRole: 'admin' },
-      { id: 'reunion_estados', label: 'Estados de reunion', icon: VideoIcon, minRole: 'admin' },
-      { id: 'campos_obligatorios', label: 'Campos obligatorios', icon: CheckSquareIcon, minRole: 'admin' },
-      { id: 'log', label: 'Log de actividad', icon: ActivityIcon, minRole: 'admin' },
-      { id: 'permisos', label: 'Permisos', icon: ShieldIcon, minRole: 'admin' },
+      { id: 'paquetes', label: 'Paquetes', icon: PackageIcon, permiso: 'ventas.ajustes.paquetes' },
+      { id: 'categorias', label: 'Categorias', icon: TagIcon, permiso: 'ventas.ajustes.categorias' },
+      { id: 'comisiones', label: 'Comisiones', icon: DollarIcon, permiso: 'ventas.ajustes.comisiones' },
+      { id: 'empresa_fiscal', label: 'Empresa fiscal', icon: BuildingIcon, permiso: 'ventas.ajustes.empresa_fiscal' },
+      { id: 'equipo', label: 'Equipo comercial', icon: UsersIcon, permiso: 'ventas.ajustes.equipo' },
+      { id: 'webhooks', label: 'Webhooks', icon: WebhookIcon, permiso: 'ventas.ajustes.webhooks' },
+      { id: 'reunion_estados', label: 'Estados de reunion', icon: VideoIcon, permiso: 'ventas.ajustes.reunion_estados' },
+      { id: 'campos_obligatorios', label: 'Campos obligatorios', icon: CheckSquareIcon, permiso: 'ventas.ajustes.campos_obligatorios' },
+      { id: 'log', label: 'Log de actividad', icon: ActivityIcon, permiso: 'ventas.ajustes.log' },
+      { id: 'permisos', label: 'Permisos', icon: ShieldIcon, permiso: 'ventas.ajustes.permisos' },
     ],
   },
 ]
 
 export default function VentasAjustes() {
   const ajustes = useAjustes()
+  const { tienePermiso } = useAuth()
   const {
     seccionActiva, setSeccionActiva,
-    esAdmin, esDirector,
   } = ajustes
 
   const seccionesVisibles = SECCIONES.map(grupo => ({
     ...grupo,
-    items: grupo.items.filter(item => {
-      if (!item.minRole) return true
-      if (item.minRole === 'director') return esDirector
-      if (item.minRole === 'admin') return esAdmin
-      return false
-    }),
+    items: grupo.items.filter(item => tienePermiso(item.permiso)),
   })).filter(g => g.items.length > 0)
 
   const seccionActivaValida = seccionesVisibles
