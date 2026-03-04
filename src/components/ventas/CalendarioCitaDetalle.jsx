@@ -59,6 +59,7 @@ export default function CalendarioCitaDetalle({
   useEffect(() => {
     if (cita) {
       setNotas(cita.notas_closer || '')
+      setEnlaceGrabacion(cita.lead?.enlace_grabacion || '')
       setEstadoId(cita.estado_reunion_id || '')
       setCloserId(cita.closer_id || '')
     }
@@ -141,6 +142,7 @@ export default function CalendarioCitaDetalle({
   }
 
   const showSuccess = (msg) => {
+    setError(null)
     setSuccessMsg(msg)
     setTimeout(() => setSuccessMsg(null), 2000)
   }

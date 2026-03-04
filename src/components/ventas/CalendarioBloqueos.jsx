@@ -32,6 +32,7 @@ export default function CalendarioBloqueos({
   const [motivo, setMotivo] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [deleting, setDeleting] = useState(null)
 
   const handleCrear = async () => {
     if (!fechaInicio || !fechaFin) { setError('Las fechas son obligatorias'); return }
@@ -53,10 +54,14 @@ export default function CalendarioBloqueos({
   }
 
   const handleEliminar = async (id) => {
+    if (deleting) return
+    setDeleting(id)
     try {
       await onEliminar(id)
     } catch (err) {
       setError('Error al eliminar el bloqueo')
+    } finally {
+      setDeleting(null)
     }
   }
 
@@ -81,7 +86,7 @@ export default function CalendarioBloqueos({
                 </span>
                 {b.motivo && <span className="vc-bloqueo-motivo">{b.motivo}</span>}
               </div>
-              <button className="vc-btn-icon-danger" onClick={() => handleEliminar(b.id)} aria-label="Eliminar bloqueo">
+              <button className="vc-btn-icon-danger" onClick={() => handleEliminar(b.id)} disabled={deleting === b.id} aria-label="Eliminar bloqueo">
                 <TrashIcon />
               </button>
             </div>
