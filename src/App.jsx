@@ -125,7 +125,7 @@ function App() {
           </Route>
 
           {/* Ruta por defecto */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
       </BrowserRouter>
