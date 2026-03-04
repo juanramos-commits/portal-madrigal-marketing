@@ -47,14 +47,16 @@ export default function CRMAgendarCita({ lead, closers = [], onSuccess, onCancel
 
       if (citaErr) throw citaErr
 
-      // Log activity
-      await supabase.from('ventas_actividad').insert({
-        lead_id: lead.id,
-        usuario_id: closerId,
-        tipo: 'cita_agendada',
-        descripcion: `Cita agendada para ${fecha} ${hora}`,
-        datos: { cita_id: cita.id },
-      }).catch(() => {})
+      // Log activity (non-critical)
+      try {
+        await supabase.from('ventas_actividad').insert({
+          lead_id: lead.id,
+          usuario_id: closerId,
+          tipo: 'cita_agendada',
+          descripcion: `Cita agendada para ${fecha} ${hora}`,
+          datos: { cita_id: cita.id },
+        })
+      } catch { /* non-critical */ }
 
       logActividad('crm', 'crear', 'Cita agendada desde CRM', { entidad: 'cita', entidad_id: cita.id })
 

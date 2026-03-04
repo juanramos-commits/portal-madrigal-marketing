@@ -199,9 +199,11 @@ export default function ReservarCita() {
 
     // Trigger Google Calendar sync (fire-and-forget)
     if (data?.cita_id && data?.closer_id) {
-      supabase.functions.invoke('google-calendar-sync', {
-        body: { action: 'create', cita_id: data.cita_id, closer_id: data.closer_id },
-      }).catch(() => {})
+      try {
+        supabase.functions.invoke('google-calendar-sync', {
+          body: { action: 'create', cita_id: data.cita_id, closer_id: data.closer_id },
+        })
+      } catch { /* non-critical */ }
     }
 
     setStep('success')
