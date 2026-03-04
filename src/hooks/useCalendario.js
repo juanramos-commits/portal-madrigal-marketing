@@ -571,7 +571,7 @@ export function useCalendario() {
     if (!user?.id) return
 
     const channel = supabase
-      .channel('calendario-citas')
+      .channel(`calendario-citas-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -589,7 +589,7 @@ export function useCalendario() {
     if (!user?.id) return
 
     const channel = supabase
-      .channel('calendario-google-events')
+      .channel(`calendario-google-events-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',

@@ -647,7 +647,12 @@ export function useWallet() {
     }
   }, [user?.id, authLoading, rolesComerciales.length, esAdmin])
 
-  // ── Reload comisiones on filter change ─────────────────────────────
+  // ── Reset pagination when filters change ───────────────────────────
+  useEffect(() => {
+    setComisionesPagina(0)
+  }, [comisionesFiltroTipo, comisionesFiltroDesde, comisionesFiltroHasta, comisionesUsuarioId])
+
+  // ── Reload comisiones on filter/page change ───────────────────────
   useEffect(() => {
     if (!user?.id) return
     if (comisionesBusqueda.trim()) buscarComisiones(comisionesBusqueda)
