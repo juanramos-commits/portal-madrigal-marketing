@@ -35,6 +35,8 @@ const VentasWallet = lazy(() => import('./pages/ventas/VentasWallet'))
 const VentasVentas = lazy(() => import('./pages/ventas/VentasVentas'))
 const VentasCalendario = lazy(() => import('./pages/ventas/Calendario'))
 const VentasAjustes = lazy(() => import('./pages/ventas/VentasAjustes'))
+const VentasEnlaces = lazy(() => import('./pages/ventas/VentasEnlaces'))
+const ReservarCita = lazy(() => import('./pages/ReservarCita'))
 
 // Páginas generales
 const Notificaciones = lazy(() => import('./pages/Notificaciones'))
@@ -80,6 +82,7 @@ function App() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/activar-cuenta" element={<ActivarCuenta />} />
           <Route path="/privacidad" element={<PoliticaPrivacidad />} />
+          <Route path="/reservar/:slug" element={<ReservarCita />} />
 
           {/* Rutas protegidas */}
           <Route
@@ -104,6 +107,7 @@ function App() {
             <Route path="ventas/wallet" element={<PermissionRoute permiso="ventas.wallet.ver"><VentasWallet /></PermissionRoute>} />
             <Route path="ventas/calendario" element={<PermissionRoute permiso="ventas.calendario.ver"><VentasCalendario /></PermissionRoute>} />
             <Route path="ventas/ajustes" element={<PermissionRoute permiso="ventas.ajustes.ver"><VentasAjustes /></PermissionRoute>} />
+            <Route path="ventas/enlaces" element={<PermissionRoute permiso="ventas.calendario.enlaces"><VentasEnlaces /></PermissionRoute>} />
 
             {/* Generales */}
             <Route path="notificaciones" element={<Notificaciones />} />

@@ -155,6 +155,11 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
     </svg>
+  ),
+  Link2: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 7h3a5 5 0 0 1 0 10h-3m-6 0H6A5 5 0 0 1 6 7h3"/><line x1="8" y1="12" x2="16" y2="12"/>
+    </svg>
   )
 }
 
@@ -292,6 +297,7 @@ export default function Layout() {
       { name: 'Biblioteca', href: '/ventas/biblioteca', icon: Icons.BookOpen, permiso: 'ventas.biblioteca.ver' },
       { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet, permiso: 'ventas.wallet.ver' },
       { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar, permiso: 'ventas.calendario.ver' },
+      { name: 'Enlaces', href: '/ventas/enlaces', icon: Icons.Link2, permiso: 'ventas.calendario.enlaces' },
       { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ajustes.ver' },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [

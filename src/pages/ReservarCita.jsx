@@ -1,0 +1,381 @@
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useParams } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import '../styles/reservar-cita.css'
+
+const DIAS_SEMANA = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+
+const ClockIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+  </svg>
+)
+
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+  </svg>
+)
+
+const ArrowLeft = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+  </svg>
+)
+
+function formatFecha(date) {
+  const d = new Date(date)
+  return `${DIAS_SEMANA[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]} ${d.getFullYear()}`
+}
+
+function formatHora(date) {
+  const d = new Date(date)
+  return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' })
+}
+
+export default function ReservarCita() {
+  const { slug } = useParams()
+
+  // State
+  const [enlace, setEnlace] = useState(null)
+  const [slots, setSlots] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState(null)
+  const [selectedSlot, setSelectedSlot] = useState(null)
+  const [step, setStep] = useState('calendar') // calendar | form | success
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '' })
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState(null)
+  const [resultData, setResultData] = useState(null)
+
+  // Load enlace info + slots
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+
+      const [infoRes, slotsRes] = await Promise.all([
+        supabase.rpc('obtener_info_enlace_publico', { p_slug: slug }),
+        supabase.rpc('obtener_slots_disponibles', { p_slug: slug }),
+      ])
+
+      setEnlace(infoRes.data)
+      setSlots(slotsRes.data || [])
+      setLoading(false)
+    }
+    load()
+  }, [slug])
+
+  // Group slots by date string, deduplicate by time (keep first closer = least busy)
+  const slotsByDate = useMemo(() => {
+    const map = {}
+    for (const s of slots) {
+      const d = new Date(s.fecha_hora)
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      if (!map[dateKey]) map[dateKey] = []
+      // Deduplicate: only keep first closer per time
+      const timeStr = d.toISOString()
+      if (!map[dateKey].find(x => x.fecha_hora === timeStr)) {
+        map[dateKey].push({ ...s, fecha_hora: timeStr })
+      }
+    }
+    // Sort slots within each day
+    for (const key of Object.keys(map)) {
+      map[key].sort((a, b) => new Date(a.fecha_hora) - new Date(b.fecha_hora))
+    }
+    return map
+  }, [slots])
+
+  const datesWithSlots = useMemo(() => new Set(Object.keys(slotsByDate)), [slotsByDate])
+
+  // Calendar grid generation
+  const calendarDays = useMemo(() => {
+    const year = currentMonth.getFullYear()
+    const month = currentMonth.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+
+    // Start on Monday
+    let startDow = firstDay.getDay()
+    if (startDow === 0) startDow = 7
+    const startOffset = startDow - 1
+
+    const days = []
+    // Padding before
+    for (let i = 0; i < startOffset; i++) {
+      days.push({ date: null, otherMonth: true })
+    }
+    // Days of month
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const date = new Date(year, month, d)
+      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+      const today = new Date()
+      const isToday = date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate()
+      days.push({
+        date,
+        dateKey,
+        day: d,
+        hasSlots: datesWithSlots.has(dateKey),
+        isToday,
+        otherMonth: false,
+      })
+    }
+    return days
+  }, [currentMonth, datesWithSlots])
+
+  const selectedDateKey = selectedDate
+    ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`
+    : null
+
+  const slotsForDay = selectedDateKey ? (slotsByDate[selectedDateKey] || []) : []
+
+  const handleSelectSlot = useCallback((slot) => {
+    setSelectedSlot(prev => prev?.fecha_hora === slot.fecha_hora ? null : slot)
+  }, [])
+
+  const handleConfirmSlot = useCallback(() => {
+    if (selectedSlot) {
+      setStep('form')
+      setError(null)
+    }
+  }, [selectedSlot])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!form.nombre.trim() || !form.email.trim() || !form.telefono.trim()) {
+      setError('Todos los campos son obligatorios')
+      return
+    }
+    setEnviando(true)
+    setError(null)
+
+    const { data, error: rpcError } = await supabase.rpc('crear_reserva_publica', {
+      p_slug: slug,
+      p_fecha_hora: selectedSlot.fecha_hora,
+      p_closer_id: selectedSlot.closer_id,
+      p_nombre: form.nombre.trim(),
+      p_email: form.email.trim(),
+      p_telefono: form.telefono.trim(),
+    })
+
+    if (rpcError) {
+      setError(rpcError.message || 'Error al crear la reserva')
+      setEnviando(false)
+      return
+    }
+
+    setResultData(data)
+
+    // Trigger Google Calendar sync (fire-and-forget)
+    supabase.functions.invoke('google-calendar-sync', {
+      body: { action: 'create', cita_id: data.cita_id, closer_id: data.closer_id },
+    }).catch(() => {})
+
+    setStep('success')
+    setEnviando(false)
+  }
+
+  const prevMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))
+  const nextMonth = () => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))
+
+  // ── Render ──
+
+  if (loading) {
+    return (
+      <div className="rb-page">
+        <div className="rb-container">
+          <div className="rb-loading">
+            <div className="rb-spinner" />
+            <p>Cargando disponibilidad...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!enlace || !enlace.activo) {
+    return (
+      <div className="rb-page">
+        <div className="rb-container">
+          <div className="rb-not-found">Este enlace de reserva no esta disponible.</div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rb-page">
+      <div className="rb-container">
+        {/* Header */}
+        <div className="rb-header">
+          <img src="/logo.png" alt="Madrigal Marketing" className="rb-logo" />
+          <div className="rb-header-info">
+            <h1>{enlace.nombre}</h1>
+            <div className="rb-header-meta">
+              <ClockIcon />
+              <span>{enlace.duracion} min</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Step: Calendar + Slots */}
+        {step === 'calendar' && (
+          <div className="rb-body">
+            <div className="rb-calendar-panel">
+              {/* Month navigation */}
+              <div className="rb-cal-nav">
+                <button onClick={prevMonth} aria-label="Mes anterior">&larr;</button>
+                <h2>{MESES[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h2>
+                <button onClick={nextMonth} aria-label="Mes siguiente">&rarr;</button>
+              </div>
+
+              {/* Weekday headers */}
+              <div className="rb-cal-weekdays">
+                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => (
+                  <div key={d} className="rb-cal-weekday">{d}</div>
+                ))}
+              </div>
+
+              {/* Days grid */}
+              <div className="rb-cal-days">
+                {calendarDays.map((day, i) => {
+                  if (day.otherMonth) return <div key={i} className="rb-cal-day other-month" />
+
+                  const isSelected = selectedDate && selectedDate.getTime() === day.date.getTime()
+                  const classes = [
+                    'rb-cal-day',
+                    day.hasSlots && 'has-slots',
+                    isSelected && 'selected',
+                    day.isToday && 'today',
+                  ].filter(Boolean).join(' ')
+
+                  return (
+                    <button
+                      key={i}
+                      className={classes}
+                      onClick={() => day.hasSlots && setSelectedDate(day.date)}
+                      disabled={!day.hasSlots}
+                      aria-label={`${day.day} de ${MESES[currentMonth.getMonth()]}`}
+                    >
+                      {day.day}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Slots panel */}
+            <div className="rb-slots-panel">
+              {!selectedDate ? (
+                <p className="rb-no-date">Selecciona un dia para ver los horarios disponibles</p>
+              ) : (
+                <>
+                  <p className="rb-slots-title">{formatFecha(selectedDate)}</p>
+                  <div className="rb-slots-list">
+                    {slotsForDay.length === 0 ? (
+                      <p className="rb-no-date">No hay horarios disponibles</p>
+                    ) : (
+                      slotsForDay.map(slot => {
+                        const isActive = selectedSlot?.fecha_hora === slot.fecha_hora
+                        return (
+                          <div key={slot.fecha_hora} className={`rb-slot-wrapper${isActive ? ' active' : ''}`}>
+                            <button
+                              className="rb-slot-btn"
+                              onClick={() => handleSelectSlot(slot)}
+                            >
+                              {formatHora(slot.fecha_hora)}
+                            </button>
+                            {isActive && (
+                              <button className="rb-slot-confirm" onClick={handleConfirmSlot}>
+                                Confirmar
+                              </button>
+                            )}
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Step: Form */}
+        {step === 'form' && selectedSlot && (
+          <div className="rb-form-panel">
+            <button className="rb-back-btn" onClick={() => setStep('calendar')}>
+              <ArrowLeft /> Volver al calendario
+            </button>
+
+            <div className="rb-selected-summary">
+              <CalendarIcon />
+              <div>
+                <div className="rb-sum-date">{formatFecha(selectedSlot.fecha_hora)}</div>
+                <div className="rb-sum-time">{formatHora(selectedSlot.fecha_hora)} · {enlace.duracion} min</div>
+              </div>
+            </div>
+
+            <form className="rb-form" onSubmit={handleSubmit}>
+              <div className="rb-field">
+                <label htmlFor="rb-nombre">Nombre *</label>
+                <input
+                  id="rb-nombre"
+                  type="text"
+                  value={form.nombre}
+                  onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                  placeholder="Tu nombre completo"
+                  required
+                />
+              </div>
+              <div className="rb-field">
+                <label htmlFor="rb-email">Email *</label>
+                <input
+                  id="rb-email"
+                  type="email"
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+              <div className="rb-field">
+                <label htmlFor="rb-telefono">Telefono *</label>
+                <input
+                  id="rb-telefono"
+                  type="tel"
+                  value={form.telefono}
+                  onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
+                  placeholder="+34 600 000 000"
+                  required
+                />
+              </div>
+
+              {error && <div className="rb-error">{error}</div>}
+
+              <button type="submit" className="rb-submit-btn" disabled={enviando}>
+                {enviando ? 'Confirmando...' : 'Agendar cita'}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Step: Success */}
+        {step === 'success' && (
+          <div className="rb-exito">
+            <div className="rb-exito-icon">✓</div>
+            <h2>Cita confirmada</h2>
+            <p>Tu cita ha sido agendada correctamente.</p>
+            {resultData && (
+              <div className="rb-exito-details">
+                <div><strong>{formatFecha(resultData.fecha_hora)}</strong></div>
+                <div>{formatHora(resultData.fecha_hora)} · {resultData.duracion} min</div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

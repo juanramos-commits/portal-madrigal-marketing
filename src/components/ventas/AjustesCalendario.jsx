@@ -5,7 +5,6 @@ import CalendarioDisponibilidad from './CalendarioDisponibilidad'
 import CalendarioConfig from './CalendarioConfig'
 import CalendarioBloqueos from './CalendarioBloqueos'
 import CalendarioAdminPanel from './CalendarioAdminPanel'
-import CalendarioEnlaces from './CalendarioEnlaces'
 import Select from '../ui/Select'
 
 function parseTime(str) {
@@ -30,23 +29,14 @@ function obtenerRangoSemana(fecha) {
 export default function AjustesCalendario() {
   const { user, usuario, tienePermiso, rolesComerciales } = useAuth()
 
-  const esAdmin = usuario?.tipo === 'super_admin'
   const puedeGestionarEquipo = tienePermiso('ventas.calendario.reasignar')
-  const puedeGestionarEnlaces = tienePermiso('ventas.calendario.enlaces')
-  const puedeSeleccionarCloser = puedeGestionarEquipo || puedeGestionarEnlaces
+  const puedeSeleccionarCloser = puedeGestionarEquipo
 
-  // Derive closers and setters from rolesComerciales
+  // Derive closers from rolesComerciales
   const closers = useMemo(() => {
     const seen = new Set()
     return rolesComerciales
       .filter(r => r.rol === 'closer' && r.activo && !seen.has(r.usuario_id) && (seen.add(r.usuario_id), true))
-      .map(r => ({ id: r.usuario_id, nombre: r.usuario?.nombre, email: r.usuario?.email }))
-  }, [rolesComerciales])
-
-  const setters = useMemo(() => {
-    const seen = new Set()
-    return rolesComerciales
-      .filter(r => r.rol === 'setter' && r.activo && !seen.has(r.usuario_id) && (seen.add(r.usuario_id), true))
       .map(r => ({ id: r.usuario_id, nombre: r.usuario?.nombre, email: r.usuario?.email }))
   }, [rolesComerciales])
 
@@ -83,9 +73,8 @@ export default function AjustesCalendario() {
   const tabs = useMemo(() => {
     const t = [...baseTabs]
     if (puedeGestionarEquipo) t.push({ key: 'equipo', label: 'Gestion de equipo' })
-    if (puedeGestionarEnlaces) t.push({ key: 'enlaces', label: 'Enlaces de agenda' })
     return t
-  }, [puedeGestionarEquipo, puedeGestionarEnlaces])
+  }, [puedeGestionarEquipo])
 
   const [activeTab, setActiveTab] = useState('config')
 
@@ -249,62 +238,6 @@ export default function AjustesCalendario() {
     setActiveTab('config')
   }
 
-  // ====== Enlaces de agenda ======
-  const [enlaces, setEnlaces] = useState([])
-
-  const cargarEnlaces = useCallback(async () => {
-    const { data } = await supabase
-      .from('ventas_enlaces_agenda')
-      .select('*, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email), creado_por:usuarios!ventas_enlaces_agenda_creado_por_id_fkey(id, nombre)')
-      .order('created_at', { ascending: false })
-    setEnlaces(data || [])
-  }, [])
-
-  const crearEnlace = useCallback(async (enlace) => {
-    const { data, error } = await supabase
-      .from('ventas_enlaces_agenda')
-      .insert({
-        nombre: enlace.nombre,
-        slug: enlace.slug,
-        setter_id: enlace.setter_id || null,
-        fuente: enlace.fuente || null,
-        activo: true,
-        creado_por_id: user?.id,
-      })
-      .select('*, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email)')
-      .single()
-    if (error) throw error
-    setEnlaces(prev => [data, ...prev])
-    return data
-  }, [user?.id])
-
-  const actualizarEnlace = useCallback(async (enlaceId, campos) => {
-    const { data, error } = await supabase
-      .from('ventas_enlaces_agenda')
-      .update({ ...campos, updated_at: new Date().toISOString() })
-      .eq('id', enlaceId)
-      .select('*, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email)')
-      .single()
-    if (error) throw error
-    setEnlaces(prev => prev.map(e => e.id === enlaceId ? data : e))
-  }, [])
-
-  const eliminarEnlace = useCallback(async (enlaceId) => {
-    const { error } = await supabase
-      .from('ventas_enlaces_agenda')
-      .delete()
-      .eq('id', enlaceId)
-    if (error) throw error
-    setEnlaces(prev => prev.filter(e => e.id !== enlaceId))
-  }, [])
-
-  // Load enlaces when tab becomes active
-  useEffect(() => {
-    if (activeTab === 'enlaces' && puedeGestionarEnlaces) {
-      cargarEnlaces()
-    }
-  }, [activeTab, puedeGestionarEnlaces, cargarEnlaces])
-
   // No closer selected and not a closer — show message
   const noCalendario = !targetUserId && !puedeSeleccionarCloser
 
@@ -414,17 +347,6 @@ export default function AjustesCalendario() {
         </div>
       )}
 
-      {activeTab === 'enlaces' && puedeGestionarEnlaces && (
-        <div className="aj-cal-section">
-          <CalendarioEnlaces
-            enlaces={enlaces}
-            setters={setters}
-            onCrear={crearEnlace}
-            onActualizar={actualizarEnlace}
-            onEliminar={eliminarEnlace}
-          />
-        </div>
-      )}
     </div>
   )
 }

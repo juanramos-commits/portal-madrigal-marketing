@@ -35,6 +35,7 @@ function slugify(text) {
 export default function CalendarioEnlaces({
   enlaces,
   setters,
+  closers = [],
   onCrear,
   onActualizar,
   onEliminar,
@@ -45,6 +46,7 @@ export default function CalendarioEnlaces({
   const [slug, setSlug] = useState('')
   const [setterId, setSetterId] = useState('')
   const [fuente, setFuente] = useState('')
+  const [selectedClosers, setSelectedClosers] = useState([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [copiado, setCopiado] = useState(null)
@@ -55,6 +57,7 @@ export default function CalendarioEnlaces({
     setSlug('')
     setSetterId('')
     setFuente('')
+    setSelectedClosers([])
     setError(null)
     setShowModal(true)
   }
@@ -65,6 +68,7 @@ export default function CalendarioEnlaces({
     setSlug(enlace.slug || '')
     setSetterId(enlace.setter_id || '')
     setFuente(enlace.fuente || '')
+    setSelectedClosers(enlace.closer_ids || [])
     setError(null)
     setShowModal(true)
   }
@@ -74,17 +78,24 @@ export default function CalendarioEnlaces({
     if (!editando) setSlug(slugify(val))
   }
 
+  const toggleCloser = (closerId) => {
+    setSelectedClosers(prev =>
+      prev.includes(closerId) ? prev.filter(id => id !== closerId) : [...prev, closerId]
+    )
+  }
+
   const handleGuardar = async () => {
     if (!nombre.trim()) { setError('El nombre es obligatorio'); return }
     if (!slug.trim()) { setError('El slug es obligatorio'); return }
+    if (selectedClosers.length === 0) { setError('Selecciona al menos un closer'); return }
 
     setSaving(true)
     setError(null)
     try {
       if (editando) {
-        await onActualizar(editando.id, { nombre, slug, setter_id: setterId || null, fuente: fuente || null })
+        await onActualizar(editando.id, { nombre, slug, setter_id: setterId || null, fuente: fuente || null, closer_ids: selectedClosers })
       } else {
-        await onCrear({ nombre, slug, setter_id: setterId || null, fuente: fuente || null })
+        await onCrear({ nombre, slug, setter_id: setterId || null, fuente: fuente || null, closer_ids: selectedClosers })
       }
       setShowModal(false)
     } catch (e) {
@@ -137,6 +148,7 @@ export default function CalendarioEnlaces({
                   <tr>
                     <th>Nombre</th>
                     <th>Slug</th>
+                    <th>Closers</th>
                     <th>Setter</th>
                     <th>Fuente</th>
                     <th>Estado</th>
@@ -149,7 +161,16 @@ export default function CalendarioEnlaces({
                     <tr key={e.id}>
                       <td className="vc-cell-bold">{e.nombre}</td>
                       <td className="vc-cell-slug">{e.slug}</td>
-                      <td>{e.setter?.nombre || e.setter?.email || 'Sin setter'}</td>
+                      <td>
+                        <div className="vc-closer-tags">
+                          {(e.closer_ids || []).map(cid => {
+                            const c = closers.find(x => x.id === cid)
+                            return c ? <span key={cid} className="vc-tag">{c.nombre || c.email}</span> : null
+                          })}
+                          {(!e.closer_ids || e.closer_ids.length === 0) && <span className="vc-cell-muted">Sin closers</span>}
+                        </div>
+                      </td>
+                      <td>{e.setter?.nombre || e.setter?.email || '-'}</td>
                       <td>{e.fuente || '-'}</td>
                       <td>
                         <Toggle checked={e.activo} onChange={() => handleToggleActivo(e)} />
@@ -222,10 +243,27 @@ export default function CalendarioEnlaces({
           <input type="text" value={slug} onChange={e => setSlug(e.target.value)} placeholder="enlace-setter-mireia" aria-label="Slug del enlace" />
           <span className="vc-field-hint">{BASE_URL}{slug || '...'}</span>
         </div>
+        {closers.length > 0 && (
+          <div className="vc-field">
+            <label>Closers asignados *</label>
+            <div className="vc-closer-checkboxes">
+              {closers.map(c => (
+                <label key={c.id} className="vc-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={selectedClosers.includes(c.id)}
+                    onChange={() => toggleCloser(c.id)}
+                  />
+                  <span>{c.nombre || c.email}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="vc-field">
           <label>Setter vinculado</label>
           <Select value={setterId} onChange={e => setSetterId(e.target.value)}>
-            <option value="">Ninguno</option>
+            <option value="">Ninguno (ej: email marketing, campaña)</option>
             {setters?.map(s => (
               <option key={s.id} value={s.id}>{s.nombre || s.email}</option>
             ))}
