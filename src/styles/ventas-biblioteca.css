@@ -925,6 +925,25 @@
   .bib-admin-seccion-tab {
     white-space: nowrap;
   }
+
+  .bib-btn-icon {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .bib-expand-btn {
+    min-height: 44px;
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .bib-recurso-acciones {
+    gap: var(--space-xs);
+  }
+
+  .bib-seccion-header:active {
+    background: var(--bg-hover);
+  }
 }
 
 /* ── Reduced motion ── */
