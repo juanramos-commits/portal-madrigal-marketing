@@ -1,6 +1,7 @@
 import { logger } from '../lib/logger'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import Modal from '../components/ui/Modal'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
@@ -69,6 +70,7 @@ const MODULOS = {
 
 export default function Roles() {
   const { tienePermiso } = useAuth()
+  const { showToast } = useToast()
   const [roles, setRoles] = useState([])
   const [permisos, setPermisos] = useState([])
   const [usuariosPorRol, setUsuariosPorRol] = useState({})
@@ -187,8 +189,10 @@ export default function Roles() {
 
       setModalEditar(null)
       cargarDatos()
+      showToast('Rol guardado correctamente', 'success')
     } catch (error) {
       logger.error('Error guardando rol:', error)
+      showToast('Error al guardar el rol', 'error')
     } finally {
       setEditLoading(false)
     }
@@ -196,11 +200,15 @@ export default function Roles() {
 
   const eliminarRol = async (rolId) => {
     try {
-      await supabase.from('roles').delete().eq('id', rolId)
+      const { error } = await supabase.from('roles').delete().eq('id', rolId)
+      if (error) throw error
       setConfirmEliminar(null)
       cargarDatos()
+      showToast('Rol eliminado', 'success')
     } catch (error) {
       logger.error('Error eliminando rol:', error)
+      showToast('Error al eliminar el rol. Puede que tenga usuarios asignados.', 'error')
+      setConfirmEliminar(null)
     }
   }
 

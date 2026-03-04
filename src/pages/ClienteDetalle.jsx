@@ -2,6 +2,7 @@ import { logger } from '../lib/logger'
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
 import Select from '../components/ui/Select'
 
@@ -58,6 +59,7 @@ const TABS = [
 export default function ClienteDetalle() {
   const { id } = useParams()
   const { tienePermiso } = useAuth()
+  const { showToast } = useToast()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [tabActiva, setTabActiva] = useState('general')
@@ -115,8 +117,10 @@ export default function ClienteDetalle() {
         setCliente(prev => ({ ...prev, [campo]: valor }))
       }
       setEditando(prev => ({ ...prev, [campo]: false }))
+      showToast('Campo guardado', 'success')
     } catch (error) {
       logger.error('Error guardando:', error)
+      showToast('Error al guardar el campo', 'error')
     } finally {
       setSaving(false)
     }

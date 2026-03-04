@@ -108,6 +108,25 @@ export default function CalendarioDisponibilidad({
   const cumpleMinimo = !minimoHoras || horasSemanales >= minimoHoras
 
   const handleGuardar = async () => {
+    // Validar que hora_fin > hora_inicio y que no hay solapamientos
+    for (let dia = 0; dia < 7; dia++) {
+      const del_dia = franjasPorDia[dia].filter(f => f.activo)
+      for (const f of del_dia) {
+        if (f.hora_fin <= f.hora_inicio) {
+          setError(`${DIAS[dia]}: la hora de fin debe ser posterior a la de inicio`)
+          return
+        }
+      }
+      // Comprobar solapamientos
+      const sorted = [...del_dia].sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio))
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i].hora_inicio < sorted[i - 1].hora_fin) {
+          setError(`${DIAS[dia]}: hay franjas horarias solapadas`)
+          return
+        }
+      }
+    }
+
     setSaving(true)
     setError(null)
     try {

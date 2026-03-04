@@ -3,7 +3,7 @@ import Select from '../ui/Select'
 import Modal from '../ui/Modal'
 import ConfirmDialog from '../ui/ConfirmDialog'
 
-const SUPABASE_URL = 'https://ootncgtcvwnrskqtamak.supabase.co'
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const CRM_FIELDS = [
   { value: 'nombre', label: 'Nombre' },
   { value: 'email', label: 'Email' },
@@ -84,12 +84,17 @@ export default function AjustesWebhooks({
 
   const handleEliminar = async () => {
     if (!confirmDelete) return
-    try { await onEliminar(confirmDelete.id) } catch (err) { console.warn('Error al eliminar webhook:', err) }
-    setConfirmDelete(null)
+    try {
+      await onEliminar(confirmDelete.id)
+      setConfirmDelete(null)
+    } catch (err) {
+      setError(err?.message || 'Error al eliminar webhook')
+      setConfirmDelete(null)
+    }
   }
 
   const handleToggleActivo = async (w) => {
-    try { await onEditar(w.id, { activo: !w.activo }) } catch (err) { console.warn('Error al cambiar estado webhook:', err) }
+    try { await onEditar(w.id, { activo: !w.activo }) } catch (err) { setError(err?.message || 'Error al cambiar estado del webhook') }
   }
 
   // Mapeo
@@ -118,7 +123,7 @@ export default function AjustesWebhooks({
     try {
       await onGuardarMapeo(showMapeo.id, obj)
       setShowMapeo(null)
-    } catch (err) { console.warn('Error al guardar mapeo:', err) }
+    } catch (err) { setError(err?.message || 'Error al guardar mapeo') }
     finally { setSavingMapeo(false) }
   }
 
@@ -126,9 +131,15 @@ export default function AjustesWebhooks({
   const abrirLogs = async (w) => {
     setShowLogs(w)
     setLogsLoading(true)
-    const data = await onCargarLogs(w.id)
-    setLogs(data)
-    setLogsLoading(false)
+    try {
+      const data = await onCargarLogs(w.id)
+      setLogs(data || [])
+    } catch {
+      setLogs([])
+      setError('Error al cargar logs')
+    } finally {
+      setLogsLoading(false)
+    }
   }
 
   return (

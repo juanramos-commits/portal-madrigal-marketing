@@ -6,10 +6,15 @@ import WalletTableSkeleton from './WalletTableSkeleton'
 export default function WalletFacturas({ facturas, total, pagina, onPageChange, pageSize, loading, datosFiscales, busqueda, onBusquedaChange }) {
   const totalPages = Math.ceil(total / pageSize)
   const handleDescargar = (factura) => {
-    generarFacturaPDF({
-      ...factura,
-      iban: formatDatosBancarios(datosFiscales),
-    })
+    try {
+      generarFacturaPDF({
+        ...factura,
+        iban: formatDatosBancarios(datosFiscales),
+      })
+    } catch (err) {
+      console.error('Error generando PDF:', err)
+      alert('Error al generar la factura PDF. Verifica tus datos fiscales.')
+    }
   }
 
   return (

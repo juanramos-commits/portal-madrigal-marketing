@@ -59,6 +59,7 @@ export default function AjustesComisiones({
         concepto: bonusConcepto || 'Bonus manual',
       })
       setBonusOk(true)
+      setBonusUsuario('')
       setBonusMonto('')
       setBonusConcepto('')
       setTimeout(() => setBonusOk(false), 3000)

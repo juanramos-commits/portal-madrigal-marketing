@@ -68,7 +68,8 @@ export function useVentasPermisos() {
     setSaving(true)
     try {
       // Eliminar existentes
-      await supabase.from('ventas_roles_permisos').delete().eq('rol_comercial', rol)
+      const { error: delError } = await supabase.from('ventas_roles_permisos').delete().eq('rol_comercial', rol)
+      if (delError) throw delError
       // Insertar nuevos
       if (permisoIds.length > 0) {
         const inserts = permisoIds.map(pid => ({ rol_comercial: rol, permiso_id: pid }))
@@ -85,7 +86,8 @@ export function useVentasPermisos() {
     setSaving(true)
     try {
       // Eliminar todos los permisos de rol
-      await supabase.from('ventas_roles_permisos').delete().in('rol_comercial', ROLES_COMERCIALES)
+      const { error: delError } = await supabase.from('ventas_roles_permisos').delete().in('rol_comercial', ROLES_COMERCIALES)
+      if (delError) throw delError
       // Insertar todos los nuevos
       const inserts = []
       for (const rol of ROLES_COMERCIALES) {
@@ -118,7 +120,8 @@ export function useVentasPermisos() {
     setSaving(true)
     try {
       // Eliminar existentes
-      await supabase.from('ventas_usuarios_permisos').delete().eq('usuario_id', usuarioId)
+      const { error: delError } = await supabase.from('ventas_usuarios_permisos').delete().eq('usuario_id', usuarioId)
+      if (delError) throw delError
       // Insertar nuevos
       if (nuevosOverrides.length > 0) {
         const inserts = nuevosOverrides.map(o => ({
@@ -139,7 +142,8 @@ export function useVentasPermisos() {
   const resetearOverrides = useCallback(async (usuarioId) => {
     setSaving(true)
     try {
-      await supabase.from('ventas_usuarios_permisos').delete().eq('usuario_id', usuarioId)
+      const { error } = await supabase.from('ventas_usuarios_permisos').delete().eq('usuario_id', usuarioId)
+      if (error) throw error
       setOverrides([])
     } finally {
       setSaving(false)

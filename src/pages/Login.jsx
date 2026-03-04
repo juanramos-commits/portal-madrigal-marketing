@@ -40,7 +40,7 @@ export default function Login() {
     try {
       const { data: bloqueada } = await supabase.rpc('cuenta_bloqueada', { p_email: email })
       if (bloqueada) {
-        setError('Cuenta temporalmente bloqueada. Intenta de nuevo en 30 minutos.')
+        setError('Cuenta temporalmente bloqueada. Intenta de nuevo en 15 minutos.')
         setLoading(false)
         return
       }
@@ -74,7 +74,7 @@ export default function Login() {
       }
 
       if (authError.message === 'CUENTA_DESACTIVADA') {
-        setError('Credenciales incorrectas. Verifica tu email y contraseña.')
+        setError('Tu cuenta ha sido desactivada. Contacta al administrador.')
       } else {
         setError('Credenciales incorrectas. Verifica tu email y contraseña.')
       }

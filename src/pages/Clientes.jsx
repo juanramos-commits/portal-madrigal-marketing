@@ -81,6 +81,11 @@ export default function Clientes() {
 
   const crearCliente = async () => {
     if (!nuevoCliente.nombre_comercial.trim()) return
+    const email = nuevoCliente.email_portal.trim()
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showToast('El email no tiene un formato válido', 'error')
+      return
+    }
     setGuardando(true)
     try {
       const { data, error } = await supabase
@@ -88,7 +93,7 @@ export default function Clientes() {
         .insert({
           nombre_comercial: nuevoCliente.nombre_comercial.trim(),
           telefono: nuevoCliente.telefono.trim(),
-          email_portal: nuevoCliente.email_portal.trim(),
+          email_portal: email,
           password_portal: nuevoCliente.password_portal,
           tiene_whatsapp: nuevoCliente.tiene_whatsapp,
           estado: 'onboarding'
@@ -100,6 +105,7 @@ export default function Clientes() {
 
       setModalNuevoCliente(false)
       setNuevoCliente({ nombre_comercial: '', telefono: '', email_portal: '', password_portal: '', tiene_whatsapp: true })
+      showToast('Cliente creado correctamente', 'success')
       navigate(`/clientes/${data.id}`)
     } catch (error) {
       logger.error('Error creando cliente:', error)

@@ -129,7 +129,8 @@ export default function AjustesCalendario() {
 
   const guardarDisponibilidad = async (franjas) => {
     if (!targetUserId) return
-    await supabase.from('ventas_calendario_disponibilidad').delete().eq('usuario_id', targetUserId)
+    const { error: delError } = await supabase.from('ventas_calendario_disponibilidad').delete().eq('usuario_id', targetUserId)
+    if (delError) throw delError
     if (franjas.length > 0) {
       const rows = franjas.map(f => ({
         usuario_id: targetUserId,

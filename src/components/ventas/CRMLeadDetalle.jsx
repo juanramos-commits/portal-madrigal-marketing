@@ -233,16 +233,20 @@ export default function CRMLeadDetalle() {
   // ── Update lead field with debounce ────────────────────────────────
   const updateField = (field, value) => {
     if (!puedeEditar) return
+    const prevValue = lead?.[field]
     setLead(prev => ({ ...prev, [field]: value }))
     pendingFieldUpdatesRef.current[field] = value
 
     if (debounceRefs.current[field]) clearTimeout(debounceRefs.current[field])
     debounceRefs.current[field] = setTimeout(async () => {
+      const savedValue = pendingFieldUpdatesRef.current[field]
       delete pendingFieldUpdatesRef.current[field]
       try {
-        await supabase.from('ventas_leads').update({ [field]: value }).eq('id', id)
+        const { error } = await supabase.from('ventas_leads').update({ [field]: savedValue ?? value }).eq('id', id)
+        if (error) throw error
       } catch {
-        showToast('Error al guardar', 'error')
+        setLead(prev => ({ ...prev, [field]: prevValue }))
+        showToast('Error al guardar. El cambio se ha revertido.', 'error')
       }
     }, 800)
   }
@@ -349,10 +353,11 @@ export default function CRMLeadDetalle() {
       const etapaNueva = allEtapas.find(e => e.id === nuevaEtapaId)?.nombre || 'Sin etapa'
       const pipelineNombre = ps?.pipeline?.nombre || ''
 
-      await supabase.from('ventas_lead_pipeline')
+      const { error: etapaErr } = await supabase.from('ventas_lead_pipeline')
         .update({ etapa_id: nuevaEtapaId, fecha_entrada: new Date().toISOString() })
         .eq('lead_id', id)
         .eq('pipeline_id', pipelineId)
+      if (etapaErr) throw etapaErr
 
       await supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'cambio_etapa',
@@ -375,7 +380,8 @@ export default function CRMLeadDetalle() {
       const prevNombre = lead.setter?.nombre || 'Ninguno'
       const nuevoSetter = setters.find(s => s.usuario_id === setterId)
       const nuevoNombre = nuevoSetter?.usuario?.nombre || 'Ninguno'
-      await supabase.from('ventas_leads').update({ setter_asignado_id: setterId || null }).eq('id', id)
+      const { error: setterErr } = await supabase.from('ventas_leads').update({ setter_asignado_id: setterId || null }).eq('id', id)
+      if (setterErr) throw setterErr
       await supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'asignacion',
         descripcion: `Setter: ${prevNombre} → ${nuevoNombre}`,
@@ -394,7 +400,8 @@ export default function CRMLeadDetalle() {
       const prevNombre = lead.closer?.nombre || 'Ninguno'
       const nuevoCloser = closers.find(c => c.usuario_id === closerId)
       const nuevoNombre = nuevoCloser?.usuario?.nombre || 'Ninguno'
-      await supabase.from('ventas_leads').update({ closer_asignado_id: closerId || null }).eq('id', id)
+      const { error: closerErr } = await supabase.from('ventas_leads').update({ closer_asignado_id: closerId || null }).eq('id', id)
+      if (closerErr) throw closerErr
       await supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'asignacion',
         descripcion: `Closer: ${prevNombre} → ${nuevoNombre}`,
@@ -411,10 +418,12 @@ export default function CRMLeadDetalle() {
   // ── Delete lead ────────────────────────────────────────────────────
   const eliminar = async () => {
     try {
-      await supabase.from('ventas_leads').delete().eq('id', id)
+      const { error } = await supabase.from('ventas_leads').delete().eq('id', id)
+      if (error) throw error
+      showToast('Lead eliminado', 'success')
       navigate('/ventas/crm', { replace: true })
     } catch {
-      showToast('Error al eliminar', 'error')
+      showToast('Error al eliminar el lead', 'error')
     }
   }
 

@@ -228,7 +228,7 @@ export default function ReservarCita() {
     return (
       <div className="rb-page">
         <div className="rb-container">
-          <div className="rb-not-found">Error al cargar. Por favor, recarga la pagina.</div>
+          <div className="rb-not-found">Error al cargar. Por favor, recarga la página.</div>
         </div>
       </div>
     )
@@ -238,7 +238,7 @@ export default function ReservarCita() {
     return (
       <div className="rb-page">
         <div className="rb-container">
-          <div className="rb-not-found">Este enlace de reserva no esta disponible.</div>
+          <div className="rb-not-found">Este enlace de reserva no está disponible.</div>
         </div>
       </div>
     )
@@ -406,7 +406,7 @@ export default function ReservarCita() {
           <div className="rb-exito">
             <div className="rb-exito-icon">✓</div>
             <h2>Cita confirmada</h2>
-            <p>Tu cita ha sido agendada correctamente.</p>
+            <p>Tu cita ha sido agendada correctamente. Te enviaremos un recordatorio por email.</p>
             {resultData && (
               <div className="rb-exito-details">
                 <div><strong>{formatFecha(resultData.fecha_hora)}</strong></div>
@@ -415,6 +415,11 @@ export default function ReservarCita() {
             )}
           </div>
         )}
+      </div>
+
+      {/* Footer */}
+      <div className="rb-footer">
+        Powered by <a href="https://madrigalmarketing.es" target="_blank" rel="noopener noreferrer">Madrigal Marketing</a>
       </div>
     </div>
   )

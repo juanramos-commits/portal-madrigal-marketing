@@ -26,6 +26,14 @@ export default function CRMNuevoLead({ categorias = [], onCrear, onCerrar }) {
       setError('El nombre es obligatorio')
       return
     }
+    if (!form.telefono.trim() && !form.email.trim()) {
+      setError('Introduce al menos un teléfono o email')
+      return
+    }
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setError('El formato del email no es válido')
+      return
+    }
     setSaving(true)
     setError(null)
     try {

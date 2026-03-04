@@ -65,7 +65,7 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
       setGuardado(true)
       setTimeout(() => setGuardado(false), 3000)
     } catch (e) {
-      setError(e.message || 'Error al guardar configuracion')
+      setError(e.message || 'Error al guardar configuración')
     } finally {
       setSaving(false)
     }
@@ -143,11 +143,11 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
 
   return (
     <div className="vc-config">
-      <h3>Configuracion de agenda</h3>
+      <h3>Configuración de agenda</h3>
 
       <div className="vc-config-grid">
         <div className="vc-field">
-          <label>Duracion del slot</label>
+          <label>Duración del slot</label>
           <Select value={duracion} onChange={e => { setDuracion(e.target.value); setGuardado(false) }}>
             <option value={30}>30 minutos</option>
             <option value={45}>45 minutos</option>
@@ -174,14 +174,14 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
         <button className="vc-btn-primary" onClick={handleGuardar} disabled={saving}>
           {saving ? 'Guardando...' : 'Guardar'}
         </button>
-        {guardado && <span className="vc-success-msg">Configuracion guardada</span>}
+        {guardado && <span className="vc-success-msg">Configuración guardada</span>}
       </div>
 
       {/* Google Calendar */}
       <div className="vc-gcal-info">
         <div className="vc-gcal-header">
           <SyncIcon />
-          <span>Sincronizacion con Google Calendar</span>
+          <span>Sincronización con Google Calendar</span>
         </div>
         <div className="vc-gcal-body">
           {gcalConnected ? (
@@ -193,7 +193,7 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
                 <p className="vc-gcal-desc">Calendario: {gcalCalendarId}</p>
               )}
               <p className="vc-gcal-desc">
-                Las citas se sincronizan bidireccionalmente con Google Calendar. Los cambios en Google Calendar (mover o cancelar eventos) se reflejaran automaticamente en el portal. Se creara un enlace de Google Meet para cada cita.
+                Las citas se sincronizan bidireccionalmente con Google Calendar. Los cambios en Google Calendar (mover o cancelar eventos) se reflejarán automáticamente en el portal. Se creará un enlace de Google Meet para cada cita.
               </p>
               <div className="vc-gcal-actions">
                 <button
@@ -222,7 +222,7 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
                 Estado: <span className="vc-text-muted">No conectado</span>
               </div>
               <p className="vc-gcal-desc">
-                Conecta tu cuenta de Google para sincronizar citas automaticamente y generar enlaces de Google Meet.
+                Conecta tu cuenta de Google para sincronizar citas automáticamente y generar enlaces de Google Meet.
               </p>
               <button className="vc-btn-google" onClick={handleGcalConnect}>
                 <GoogleIcon />

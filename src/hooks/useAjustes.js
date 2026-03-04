@@ -471,10 +471,11 @@ export function useAjustes() {
 
   const editarRoles = useCallback(async (usuarioId, rolesNuevos) => {
     // Delete existing roles for user
-    await supabase
+    const { error: delError } = await supabase
       .from('ventas_roles_comerciales')
       .delete()
       .eq('usuario_id', usuarioId)
+    if (delError) throw delError
     // Insert new
     if (rolesNuevos.length > 0) {
       const inserts = rolesNuevos.map(rol => ({
@@ -482,7 +483,8 @@ export function useAjustes() {
         rol,
         activo: true,
       }))
-      await supabase.from('ventas_roles_comerciales').insert(inserts)
+      const { error } = await supabase.from('ventas_roles_comerciales').insert(inserts)
+      if (error) throw error
     }
     await Promise.all([cargarEquipo(), refrescarRolesComerciales()])
     logActividad('ajustes', 'editar', `Roles editados: ${rolesNuevos.join(', ')}`, { entidad: 'equipo' })
@@ -658,7 +660,7 @@ export function useAjustes() {
 
   const guardarReparto = useCallback(async (configs) => {
     // Delete existing
-    const { error: delError } = await supabase.from('ventas_reparto_config').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    const { error: delError } = await supabase.from('ventas_reparto_config').delete().gte('id', '00000000-0000-0000-0000-000000000000')
     if (delError) throw delError
     // Insert new
     if (configs.length > 0) {

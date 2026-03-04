@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Loader2 } from 'lucide-react'
 
 const TRANSICIONES = {
   pendiente: ['aprobada', 'rechazada'],
@@ -28,6 +28,7 @@ function getOpcionesDisponibles(venta, permisos) {
 
 export default function VentaCambioEstado({ venta, onCambio, puedeAprobar, puedeRechazar, puedeDevolucion, puedeRevertir }) {
   const [abierto, setAbierto] = useState(false)
+  const [cambiando, setCambiando] = useState(false)
   const [pos, setPos] = useState(null)
   const ref = useRef(null)
   const btnRef = useRef(null)
@@ -52,6 +53,7 @@ export default function VentaCambioEstado({ venta, onCambio, puedeAprobar, puede
 
   const toggleOpen = (e) => {
     e.stopPropagation()
+    if (cambiando) return
     if (!abierto && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
       const dropdownHeight = opciones.length * 36 + 8 // approx height
@@ -65,6 +67,20 @@ export default function VentaCambioEstado({ venta, onCambio, puedeAprobar, puede
     setAbierto(!abierto)
   }
 
+  const handleCambio = async (e, opcion) => {
+    e.stopPropagation()
+    setAbierto(false)
+    setCambiando(true)
+    try {
+      await onCambio(venta.id, opcion, venta)
+    } catch {
+      // Error handling is done by the parent (useVentas throws),
+      // but we ensure the UI recovers from loading state
+    } finally {
+      setCambiando(false)
+    }
+  }
+
   if (opciones.length === 0) {
     return <span className={`vv-badge vv-badge-${estadoActual}`}>{estadoLabels[estadoActual]}</span>
   }
@@ -75,11 +91,12 @@ export default function VentaCambioEstado({ venta, onCambio, puedeAprobar, puede
         ref={btnRef}
         className={`vv-badge vv-badge-${estadoActual} vv-estado-editable`}
         onClick={toggleOpen}
+        disabled={cambiando}
         aria-expanded={abierto}
         aria-haspopup="menu"
       >
-        {estadoLabels[estadoActual]}
-        <ChevronDown size={12} />
+        {cambiando ? <Loader2 size={12} className="vv-spin" /> : estadoLabels[estadoActual]}
+        {!cambiando && <ChevronDown size={12} />}
       </button>
       {abierto && pos && (
         <div className="vv-estado-dropdown" role="menu" style={{ position: 'fixed', top: pos.top, left: pos.left }}>
@@ -88,11 +105,7 @@ export default function VentaCambioEstado({ venta, onCambio, puedeAprobar, puede
               key={opcion}
               role="menuitem"
               className={`vv-estado-option vv-estado-opt-${opcion}`}
-              onClick={(e) => {
-                e.stopPropagation()
-                setAbierto(false)
-                onCambio(venta.id, opcion, venta)
-              }}
+              onClick={(e) => handleCambio(e, opcion)}
             >
               Cambiar a {estadoLabels[opcion]}
             </button>

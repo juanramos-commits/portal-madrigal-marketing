@@ -52,32 +52,40 @@ export default function VentasCRM() {
     <div className="crm-page">
       {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="crm-header">
+        {/* Row 1: Title + New Lead button */}
         <div className="crm-header-top">
           <div className="crm-title-row">
             <h1>CRM</h1>
             <span className="crm-lead-count">{crm.totalLeads} leads</span>
           </div>
+          {tienePermiso('ventas.crm.crear_leads') && (
+            <button className="crm-new-btn" onClick={() => setShowNewLead(true)} aria-label="Nuevo Lead">
+              <Plus /> <span className="crm-toolbar-label">Nuevo Lead</span>
+            </button>
+          )}
         </div>
 
-        <div className="crm-header-row">
-          {/* Pipeline tabs */}
-          {crm.pipelines.length > 1 && (
-            <div className="crm-pipeline-tabs" role="tablist" aria-label="Pipelines">
-              {crm.pipelines.map(p => (
-                <button
-                  key={p.id}
-                  role="tab"
-                  aria-selected={crm.pipelineActivo?.id === p.id}
-                  className={`crm-pipeline-tab${crm.pipelineActivo?.id === p.id ? ' active' : ''}`}
-                  onClick={() => crm.setPipelineActivo(p)}
-                >
-                  {p.nombre.split(' (')[0]}
-                </button>
-              ))}
-            </div>
-          )}
+        {/* Row 2: Pipeline tabs (scrollable) */}
+        {crm.pipelines.length > 1 && (
+          <div className="crm-pipeline-tabs" role="tablist" aria-label="Pipelines">
+            {crm.pipelines.map(p => (
+              <button
+                key={p.id}
+                role="tab"
+                aria-selected={crm.pipelineActivo?.id === p.id}
+                className={`crm-pipeline-tab${crm.pipelineActivo?.id === p.id ? ' active' : ''}`}
+                onClick={() => crm.setPipelineActivo(p)}
+              >
+                {p.nombre.split(' (')[0]}
+              </button>
+            ))}
+          </div>
+        )}
 
-          {/* View toggle */}
+        {/* Row 3: Search + view toggle + filters + refresh */}
+        <div className="crm-header-row">
+          <CRMBuscador value={crm.busqueda} onChange={crm.setBusqueda} resultCount={crm.searchResultCount} />
+
           <div className="crm-view-toggle" role="group" aria-label="Vista">
             <button
               className={`crm-view-btn${crm.vista === 'kanban' ? ' active' : ''}`}
@@ -99,17 +107,12 @@ export default function VentasCRM() {
             </button>
           </div>
 
-          {/* Search */}
-          <CRMBuscador value={crm.busqueda} onChange={crm.setBusqueda} resultCount={crm.searchResultCount} />
-
-          {/* Filter button */}
           <button className="crm-filter-btn" onClick={() => setShowFilters(true)} aria-label="Filtros" aria-expanded={showFilters}>
             <Filter />
             <span className="crm-toolbar-label">Filtros</span>
             {filtroCount > 0 && <span className="crm-filter-badge">{filtroCount}</span>}
           </button>
 
-          {/* Refresh */}
           <button
             className="crm-filter-btn"
             onClick={crm.refrescar}
@@ -118,13 +121,6 @@ export default function VentasCRM() {
           >
             <RefreshCw />
           </button>
-
-          {/* Nuevo Lead */}
-          {tienePermiso('ventas.crm.crear_leads') && (
-            <button className="crm-new-btn" onClick={() => setShowNewLead(true)} aria-label="Nuevo Lead">
-              <Plus /> <span className="crm-toolbar-label">Nuevo Lead</span>
-            </button>
-          )}
         </div>
       </div>
 

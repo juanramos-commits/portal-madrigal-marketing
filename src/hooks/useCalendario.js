@@ -310,10 +310,11 @@ export function useCalendario() {
   const guardarDisponibilidad = useCallback(async (franjas) => {
     if (!user?.id) return
     // Delete existing
-    await supabase
+    const { error: delError } = await supabase
       .from('ventas_calendario_disponibilidad')
       .delete()
       .eq('usuario_id', user.id)
+    if (delError) throw delError
 
     if (franjas.length > 0) {
       const rows = franjas.map(f => ({

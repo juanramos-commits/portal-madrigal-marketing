@@ -344,49 +344,66 @@ export function useVentas() {
     return data || []
   }, [])
 
-  // ── Export CSV ─────────────────────────────────────────────────────
+  // ── Export CSV (paginated to get ALL results) ─────────────────────
   const exportarCSV = useCallback(async () => {
     setExportando(true)
+    setError(null)
     try {
-      // Build query without pagination to get ALL results
-      let query = supabase
-        .from('ventas_ventas')
-        .select(`
-          *, lead:ventas_leads(nombre, email, telefono, nombre_negocio),
-          paquete:ventas_paquetes(nombre),
-          setter:usuarios!ventas_ventas_setter_id_fkey(nombre),
-          closer:usuarios!ventas_ventas_closer_id_fkey(nombre)
-        `)
-        .order('fecha_venta', { ascending: false })
+      const PAGE = 1000
+      let allData = []
+      let page = 0
+      let hasMore = true
 
-      // RBAC
-      if (!esAdminODirector) {
-        if (esCloser && !esSetter) query = query.eq('closer_id', user.id)
-        else if (esSetter && !esCloser) query = query.eq('setter_id', user.id)
-        else if (esSetter && esCloser) query = query.or(`closer_id.eq.${user.id},setter_id.eq.${user.id}`)
+      while (hasMore) {
+        let query = supabase
+          .from('ventas_ventas')
+          .select(`
+            *, lead:ventas_leads(nombre, email, telefono, nombre_negocio),
+            paquete:ventas_paquetes(nombre),
+            setter:usuarios!ventas_ventas_setter_id_fkey(nombre),
+            closer:usuarios!ventas_ventas_closer_id_fkey(nombre)
+          `)
+          .order('fecha_venta', { ascending: false })
+          .range(page * PAGE, (page + 1) * PAGE - 1)
+
+        // RBAC
+        if (!esAdminODirector) {
+          if (esCloser && !esSetter) query = query.eq('closer_id', user.id)
+          else if (esSetter && !esCloser) query = query.eq('setter_id', user.id)
+          else if (esSetter && esCloser) query = query.or(`closer_id.eq.${user.id},setter_id.eq.${user.id}`)
+        }
+
+        // Status filter
+        if (filtroEstado === 'devolucion') query = query.eq('es_devolucion', true)
+        else if (filtroEstado !== 'todas') query = query.eq('estado', filtroEstado).eq('es_devolucion', false)
+
+        // Advanced filters
+        if (filtros.setter_id) query = query.eq('setter_id', filtros.setter_id)
+        if (filtros.closer_id) query = query.eq('closer_id', filtros.closer_id)
+        if (filtros.paquete_id) query = query.eq('paquete_id', filtros.paquete_id)
+        if (filtros.metodo_pago) query = query.eq('metodo_pago', filtros.metodo_pago)
+        if (filtros.es_pago_unico !== '') query = query.eq('es_pago_unico', filtros.es_pago_unico === 'true')
+        if (filtros.importe_min) query = query.gte('importe', parseFloat(filtros.importe_min))
+        if (filtros.importe_max) query = query.lte('importe', parseFloat(filtros.importe_max))
+        if (filtros.fecha_desde) query = query.gte('fecha_venta', filtros.fecha_desde)
+        if (filtros.fecha_hasta) query = query.lte('fecha_venta', filtros.fecha_hasta)
+
+        const { data, error: err } = await query
+        if (err) throw err
+
+        allData = allData.concat(data || [])
+        hasMore = (data || []).length === PAGE
+        page++
       }
 
-      // Status filter
-      if (filtroEstado === 'devolucion') query = query.eq('es_devolucion', true)
-      else if (filtroEstado !== 'todas') query = query.eq('estado', filtroEstado).eq('es_devolucion', false)
-
-      // Advanced filters
-      if (filtros.setter_id) query = query.eq('setter_id', filtros.setter_id)
-      if (filtros.closer_id) query = query.eq('closer_id', filtros.closer_id)
-      if (filtros.paquete_id) query = query.eq('paquete_id', filtros.paquete_id)
-      if (filtros.metodo_pago) query = query.eq('metodo_pago', filtros.metodo_pago)
-      if (filtros.es_pago_unico !== '') query = query.eq('es_pago_unico', filtros.es_pago_unico === 'true')
-      if (filtros.importe_min) query = query.gte('importe', parseFloat(filtros.importe_min))
-      if (filtros.importe_max) query = query.lte('importe', parseFloat(filtros.importe_max))
-      if (filtros.fecha_desde) query = query.gte('fecha_venta', filtros.fecha_desde)
-      if (filtros.fecha_hasta) query = query.lte('fecha_venta', filtros.fecha_hasta)
-
-      const { data, error: err } = await query
-      if (err) throw err
+      if (allData.length === 0) {
+        setError('No hay ventas para exportar con los filtros actuales')
+        return
+      }
 
       const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-ES') : '-'
 
-      const csvData = (data || []).map(v => ({
+      const csvData = allData.map(v => ({
         'Lead': v.lead?.nombre || '-',
         'Email': v.lead?.email || '-',
         'Teléfono': v.lead?.telefono || '-',

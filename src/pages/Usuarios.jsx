@@ -188,38 +188,53 @@ export default function Usuarios() {
   const togglePermisoUsuario = async (permisoId) => {
     const estado = getPermisoEstado(permisoId)
     const tieneDelRol = permisosRol.includes(permisoId)
+    const prevPermisos = [...permisosUsuario]
 
     try {
       if (estado === 'heredado' || estado === 'sin_acceso') {
         const nuevoValor = !tieneDelRol
-        await supabase.from('usuarios_permisos').upsert({
+        const { error } = await supabase.from('usuarios_permisos').upsert({
           usuario_id: modalPermisos.id,
           permiso_id: permisoId,
           permitido: nuevoValor,
           asignado_por: currentUser?.id
         })
+        if (error) throw error
         setPermisosUsuario(prev => [...prev.filter(p => p.permiso_id !== permisoId), { permiso_id: permisoId, permitido: nuevoValor }])
       } else if (estado === 'permitido') {
         if (tieneDelRol) {
-          await supabase.from('usuarios_permisos').delete().eq('usuario_id', modalPermisos.id).eq('permiso_id', permisoId)
+          const { error } = await supabase.from('usuarios_permisos').delete().eq('usuario_id', modalPermisos.id).eq('permiso_id', permisoId)
+          if (error) throw error
           setPermisosUsuario(prev => prev.filter(p => p.permiso_id !== permisoId))
         } else {
-          await supabase.from('usuarios_permisos').upsert({ usuario_id: modalPermisos.id, permiso_id: permisoId, permitido: false, asignado_por: currentUser?.id })
+          const { error } = await supabase.from('usuarios_permisos').upsert({ usuario_id: modalPermisos.id, permiso_id: permisoId, permitido: false, asignado_por: currentUser?.id })
+          if (error) throw error
           setPermisosUsuario(prev => [...prev.filter(p => p.permiso_id !== permisoId), { permiso_id: permisoId, permitido: false }])
         }
       } else if (estado === 'denegado') {
-        await supabase.from('usuarios_permisos').delete().eq('usuario_id', modalPermisos.id).eq('permiso_id', permisoId)
+        const { error } = await supabase.from('usuarios_permisos').delete().eq('usuario_id', modalPermisos.id).eq('permiso_id', permisoId)
+        if (error) throw error
         setPermisosUsuario(prev => prev.filter(p => p.permiso_id !== permisoId))
       }
     } catch (error) {
-      logger.error('Error:', error)
+      logger.error('Error al cambiar permiso:', error)
+      setPermisosUsuario(prevPermisos)
+      showToast('Error al cambiar permiso', 'error')
     }
   }
 
   const toggleActivo = async (id, activo) => {
-    await supabase.from('usuarios').update({ activo: !activo }).eq('id', id)
-    setUsuarios(prev => prev.map(u => u.id === id ? { ...u, activo: !activo } : u))
-    setModalConfirmar(null)
+    try {
+      const { error } = await supabase.from('usuarios').update({ activo: !activo }).eq('id', id)
+      if (error) throw error
+      setUsuarios(prev => prev.map(u => u.id === id ? { ...u, activo: !activo } : u))
+      setModalConfirmar(null)
+      showToast(activo ? 'Usuario desactivado' : 'Usuario activado', 'success')
+    } catch (error) {
+      logger.error('Error al cambiar estado:', error)
+      showToast('Error al cambiar estado del usuario', 'error')
+      setModalConfirmar(null)
+    }
   }
 
   const eliminarUsuario = async (id) => {

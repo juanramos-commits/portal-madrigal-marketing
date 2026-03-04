@@ -56,7 +56,7 @@ export default function CalendarioBloqueos({
     try {
       await onEliminar(id)
     } catch (err) {
-      console.warn('Error al eliminar bloqueo:', err)
+      setError('Error al eliminar el bloqueo')
     }
   }
 

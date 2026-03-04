@@ -70,6 +70,7 @@ export default function CalendarioCitaDetalle({
   const estadoActual = reunionEstados?.find(e => e.id === cita.estado_reunion_id)
 
   const guardarEstado = async (id) => {
+    const prevEstadoId = estadoId
     setEstadoId(id)
     setSaving(true)
     setError(null)
@@ -77,6 +78,7 @@ export default function CalendarioCitaDetalle({
       await onActualizarEstado(cita.id, id)
       showSuccess('Estado actualizado')
     } catch (e) {
+      setEstadoId(prevEstadoId)
       setError(e.message || 'Error al actualizar estado')
     } finally {
       setSaving(false)
@@ -123,6 +125,7 @@ export default function CalendarioCitaDetalle({
   }
 
   const handleReasignar = async (nuevoId) => {
+    const prevCloserId = closerId
     setCloserId(nuevoId)
     setSaving(true)
     setError(null)
@@ -130,6 +133,7 @@ export default function CalendarioCitaDetalle({
       await onReasignarCloser(cita.id, nuevoId)
       showSuccess('Closer reasignado')
     } catch (e) {
+      setCloserId(prevCloserId)
       setError(e.message || 'Error al reasignar')
     } finally {
       setSaving(false)
