@@ -155,6 +155,23 @@ export function AuthProvider({ children }) {
     return permisos.includes(permiso)
   }, [usuario, permisos])
 
+  // Refrescar permisos sin logout (tras cambios de admin)
+  const refrescarPermisos = useCallback(async () => {
+    if (!usuario?.id) return
+    if (usuario.tipo === 'super_admin') {
+      const { data: todosPermisos } = await supabase.from('permisos').select('codigo')
+      setPermisos(todosPermisos?.map(p => p.codigo) || [])
+    } else {
+      const [{ data: permisosData }, { data: ventasPermisos }] = await Promise.all([
+        supabase.rpc('obtener_permisos_usuario', { p_usuario_id: usuario.id }),
+        supabase.rpc('obtener_permisos_ventas_usuario', { p_usuario_id: usuario.id }),
+      ])
+      const base = permisosData?.map(p => p.codigo) || []
+      const ventas = ventasPermisos?.map(p => p.codigo) || []
+      setPermisos([...new Set([...base, ...ventas])])
+    }
+  }, [usuario?.id, usuario?.tipo])
+
   // Cargar roles comerciales una sola vez después de auth
   const refrescarRolesComerciales = useCallback(async () => {
     if (!user?.id) return
@@ -234,6 +251,7 @@ export function AuthProvider({ children }) {
       signInWithEmail,
       signOut,
       refrescarUsuario: () => user?.email && cargarUsuario(user.email),
+      refrescarPermisos,
       refrescarRolesComerciales,
     }}>
       {children}

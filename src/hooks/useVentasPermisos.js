@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { logActividad } from '../lib/logActividad'
 
 const ROLES_COMERCIALES = ['setter', 'closer', 'director_ventas']
 const ROL_LABELS = { setter: 'Setter', closer: 'Closer', director_ventas: 'Director' }
@@ -53,11 +54,12 @@ export function useVentasPermisos() {
         if (!map[r.usuario_id]) {
           map[r.usuario_id] = { usuario_id: r.usuario_id, usuario: r.usuario, roles: [] }
         }
-        map[r.usuario_id].roles.push(r.rol)
+        if (r.activo) map[r.usuario_id].roles.push(r.rol)
       }
-      setEquipo(Object.values(map))
+      setEquipo(Object.values(map).filter(m => m.roles.length > 0))
     } catch (err) {
       console.error('Error cargando permisos:', err)
+      throw err
     } finally {
       setLoading(false)
     }
@@ -76,6 +78,7 @@ export function useVentasPermisos() {
         const { error } = await supabase.from('ventas_roles_permisos').insert(inserts)
         if (error) throw error
       }
+      logActividad('ajustes', 'editar', `Permisos del rol ${ROL_LABELS[rol] || rol} actualizados`, { entidad: 'permisos' })
     } finally {
       setSaving(false)
     }
@@ -100,6 +103,7 @@ export function useVentasPermisos() {
         if (error) throw error
       }
       setMatrizRoles(nuevaMatriz)
+      logActividad('ajustes', 'editar', 'Matriz de permisos por rol actualizada', { entidad: 'permisos' })
     } finally {
       setSaving(false)
     }
@@ -107,10 +111,11 @@ export function useVentasPermisos() {
 
   // Cargar overrides de un usuario
   const cargarOverridesUsuario = useCallback(async (usuarioId) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_usuarios_permisos')
       .select('permiso_id, permitido')
       .eq('usuario_id', usuarioId)
+    if (error) throw error
     setOverrides(data || [])
     return data || []
   }, [])
@@ -133,6 +138,7 @@ export function useVentasPermisos() {
         if (error) throw error
       }
       setOverrides(nuevosOverrides)
+      logActividad('ajustes', 'editar', `Overrides de permisos guardados (${nuevosOverrides.length} reglas)`, { entidad: 'permisos' })
     } finally {
       setSaving(false)
     }
@@ -145,6 +151,7 @@ export function useVentasPermisos() {
       const { error } = await supabase.from('ventas_usuarios_permisos').delete().eq('usuario_id', usuarioId)
       if (error) throw error
       setOverrides([])
+      logActividad('ajustes', 'editar', 'Overrides de permisos reseteados', { entidad: 'permisos' })
     } finally {
       setSaving(false)
     }

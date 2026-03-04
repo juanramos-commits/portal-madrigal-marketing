@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useVentasPermisos, ROLES_COMERCIALES, ROL_LABELS } from '../../hooks/useVentasPermisos'
 import { useAuth } from '../../contexts/AuthContext'
+import ConfirmDialog from '../ui/ConfirmDialog'
 
 // Agrupar permisos por submódulo para la UI
 const MODULO_LABELS = {
@@ -33,6 +34,8 @@ function VistaRoles({ permisos, matrizRoles, saving, onGuardar }) {
   const [matriz, setMatriz] = useState({})
   const [expandidos, setExpandidos] = useState({})
   const [dirty, setDirty] = useState(false)
+  const [error, setError] = useState(null)
+  const [guardado, setGuardado] = useState(false)
 
   useEffect(() => {
     setMatriz(JSON.parse(JSON.stringify(matrizRoles)))
@@ -68,6 +71,7 @@ function VistaRoles({ permisos, matrizRoles, saving, onGuardar }) {
       return next
     })
     setDirty(true)
+    setGuardado(false)
   }
 
   const toggleModuloRol = (rol, modulo) => {
@@ -87,11 +91,19 @@ function VistaRoles({ permisos, matrizRoles, saving, onGuardar }) {
       return next
     })
     setDirty(true)
+    setGuardado(false)
   }
 
   const handleGuardar = async () => {
-    await onGuardar(matriz)
-    setDirty(false)
+    setError(null)
+    try {
+      await onGuardar(matriz)
+      setDirty(false)
+      setGuardado(true)
+      setTimeout(() => setGuardado(false), 3000)
+    } catch (e) {
+      setError(e.message || 'Error al guardar permisos')
+    }
   }
 
   return (
@@ -169,6 +181,7 @@ function VistaRoles({ permisos, matrizRoles, saving, onGuardar }) {
       })}
 
       {/* Botón guardar */}
+      {error && <div className="aj-error">{error}</div>}
       <div className="aj-perm-actions">
         <button
           className="aj-btn-primary"
@@ -178,6 +191,7 @@ function VistaRoles({ permisos, matrizRoles, saving, onGuardar }) {
           {saving ? 'Guardando...' : 'Guardar cambios'}
         </button>
         {dirty && <span className="aj-perm-dirty">Hay cambios sin guardar</span>}
+        {guardado && <span className="aj-perm-saved">Permisos guardados</span>}
       </div>
     </div>
   )
@@ -192,6 +206,9 @@ function VistaUsuarios({ permisos, matrizRoles, equipo, saving, onCargarOverride
   const [expandidos, setExpandidos] = useState({})
   const [dirty, setDirty] = useState(false)
   const [loadingUser, setLoadingUser] = useState(false)
+  const [error, setError] = useState(null)
+  const [guardado, setGuardado] = useState(false)
+  const [confirmReset, setConfirmReset] = useState(false)
 
   const usuarioSeleccionado = equipo.find(m => m.usuario_id === usuarioId)
 
@@ -214,12 +231,20 @@ function VistaUsuarios({ permisos, matrizRoles, equipo, saving, onCargarOverride
 
   const handleSelectUser = async (uid) => {
     setUsuarioId(uid)
+    setError(null)
+    setGuardado(false)
     if (!uid) { setOverridesLocal([]); setDirty(false); return }
     setLoadingUser(true)
-    const data = await onCargarOverrides(uid)
-    setOverridesLocal(data || [])
-    setDirty(false)
-    setLoadingUser(false)
+    try {
+      const data = await onCargarOverrides(uid)
+      setOverridesLocal(data || [])
+      setDirty(false)
+    } catch (e) {
+      setError(e.message || 'Error al cargar permisos del usuario')
+      setOverridesLocal([])
+    } finally {
+      setLoadingUser(false)
+    }
   }
 
   // Calcular permisos heredados del rol
@@ -253,17 +278,33 @@ function VistaUsuarios({ permisos, matrizRoles, equipo, saving, onCargarOverride
       return [...prev, { permiso_id: permisoId, permitido: valor }]
     })
     setDirty(true)
+    setGuardado(false)
   }
 
   const handleGuardar = async () => {
-    await onGuardarOverrides(usuarioId, overridesLocal)
-    setDirty(false)
+    setError(null)
+    try {
+      await onGuardarOverrides(usuarioId, overridesLocal)
+      setDirty(false)
+      setGuardado(true)
+      setTimeout(() => setGuardado(false), 3000)
+    } catch (e) {
+      setError(e.message || 'Error al guardar overrides')
+    }
   }
 
   const handleResetear = async () => {
-    await onResetearOverrides(usuarioId)
-    setOverridesLocal([])
-    setDirty(false)
+    setError(null)
+    setConfirmReset(false)
+    try {
+      await onResetearOverrides(usuarioId)
+      setOverridesLocal([])
+      setDirty(false)
+      setGuardado(true)
+      setTimeout(() => setGuardado(false), 3000)
+    } catch (e) {
+      setError(e.message || 'Error al resetear overrides')
+    }
   }
 
   // Contar permisos efectivos
@@ -304,6 +345,8 @@ function VistaUsuarios({ permisos, matrizRoles, equipo, saving, onCargarOverride
           <div className="spinner" />
         </div>
       )}
+
+      {error && <div className="aj-error">{error}</div>}
 
       {usuarioSeleccionado && !loadingUser && (
         <>
@@ -356,7 +399,6 @@ function VistaUsuarios({ permisos, matrizRoles, equipo, saving, onCargarOverride
                 {isOpen && grupo.permisos.map(p => {
                   const heredado = permisosHeredados.has(p.id)
                   const override = getOverride(p.id)
-                  const efectivo = override ? override.permitido : heredado
 
                   return (
                     <div key={p.id} className={`aj-perm-row ${override ? 'aj-perm-row-override' : ''}`}>
@@ -406,14 +448,25 @@ function VistaUsuarios({ permisos, matrizRoles, equipo, saving, onCargarOverride
             {overridesLocal.length > 0 && (
               <button
                 className="aj-btn-ghost aj-btn-danger"
-                onClick={handleResetear}
+                onClick={() => setConfirmReset(true)}
                 disabled={saving}
               >
                 Resetear overrides
               </button>
             )}
             {dirty && <span className="aj-perm-dirty">Hay cambios sin guardar</span>}
+            {guardado && <span className="aj-perm-saved">Guardado</span>}
           </div>
+
+          <ConfirmDialog
+            open={confirmReset}
+            title="Resetear overrides"
+            message={<>¿Eliminar todos los overrides de <strong>{usuarioSeleccionado.usuario?.nombre}</strong>? El usuario volverá a heredar los permisos de sus roles.</>}
+            variant="danger"
+            confirmText="Resetear"
+            onConfirm={handleResetear}
+            onCancel={() => setConfirmReset(false)}
+          />
         </>
       )}
     </div>
@@ -425,7 +478,7 @@ function VistaUsuarios({ permisos, matrizRoles, equipo, saving, onCargarOverride
 // ========================================
 export default function AjustesPermisos() {
   const hook = useVentasPermisos()
-  const { user, rolesComerciales } = useAuth()
+  const { user, rolesComerciales, refrescarPermisos } = useAuth()
   const [vista, setVista] = useState('roles') // 'roles' | 'usuarios'
 
   useEffect(() => {
@@ -433,6 +486,21 @@ export default function AjustesPermisos() {
       hook.cargarMatrizRoles()
     }
   }, [user?.id, rolesComerciales.length])
+
+  const handleGuardarRoles = async (matriz) => {
+    await hook.guardarMatrizCompleta(matriz)
+    refrescarPermisos?.()
+  }
+
+  const handleGuardarOverrides = async (usuarioId, overrides) => {
+    await hook.guardarOverridesUsuario(usuarioId, overrides)
+    refrescarPermisos?.()
+  }
+
+  const handleResetearOverrides = async (usuarioId) => {
+    await hook.resetearOverrides(usuarioId)
+    refrescarPermisos?.()
+  }
 
   if (hook.loading) {
     return (
@@ -471,7 +539,7 @@ export default function AjustesPermisos() {
           permisos={hook.permisos}
           matrizRoles={hook.matrizRoles}
           saving={hook.saving}
-          onGuardar={hook.guardarMatrizCompleta}
+          onGuardar={handleGuardarRoles}
         />
       ) : (
         <VistaUsuarios
@@ -480,8 +548,8 @@ export default function AjustesPermisos() {
           equipo={hook.equipo}
           saving={hook.saving}
           onCargarOverrides={hook.cargarOverridesUsuario}
-          onGuardarOverrides={hook.guardarOverridesUsuario}
-          onResetearOverrides={hook.resetearOverrides}
+          onGuardarOverrides={handleGuardarOverrides}
+          onResetearOverrides={handleResetearOverrides}
         />
       )}
     </div>
