@@ -1209,6 +1209,11 @@
   .vv-field-row {
     grid-template-columns: 1fr;
   }
+
+  .vv-field input,
+  .vv-field select {
+    height: 44px;
+  }
 }
 
 /* ── Focus visible ───────────────────────────────────────────────── */
