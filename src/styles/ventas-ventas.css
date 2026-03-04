@@ -304,7 +304,7 @@
 }
 
 .vv-expanded-row td {
-  padding: 0;
+  padding: 2px 0;
   border-bottom: 1px solid var(--border);
   background: var(--bg-subtle);
 }

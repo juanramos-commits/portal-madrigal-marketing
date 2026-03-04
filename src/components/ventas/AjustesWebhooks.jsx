@@ -240,7 +240,7 @@ export default function AjustesWebhooks({
                     {l.resultado === 'exito' ? 'Éxito' : 'Error'}
                   </span>
                   {l.lead_nombre && <span>{l.lead_nombre}</span>}
-                  {l.error_mensaje && <span className="aj-text-error">{l.error_mensaje}</span>}
+                  {l.mensaje_error && <span className="aj-text-error">{l.mensaje_error}</span>}
                 </div>
                 {expandedLog === l.id && l.payload && (
                   <pre className="aj-log-payload">{JSON.stringify(l.payload, null, 2)}</pre>

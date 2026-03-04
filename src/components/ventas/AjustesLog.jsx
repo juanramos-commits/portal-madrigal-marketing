@@ -81,27 +81,36 @@ export default function AjustesLog({
       <h3>Log de actividad</h3>
 
       <div className="aj-log-filtros">
-        <Select value={filtroUsuario} onChange={e => { setFiltroUsuario(e.target.value); setPagina(0) }}>
-          <option value="">Todos los usuarios</option>
-          {usuarios.map(u => (
-            <option key={u.id} value={u.id}>{u.nombre || u.email}</option>
-          ))}
-        </Select>
-        <Select value={filtroModulo} onChange={e => { setFiltroModulo(e.target.value); setPagina(0) }}>
-          {MODULOS.map(m => (
-            <option key={m.value} value={m.value}>{m.label}</option>
-          ))}
-        </Select>
-        <Select value={filtroAccion} onChange={e => { setFiltroAccion(e.target.value); setPagina(0) }}>
-          {ACCIONES.map(a => (
-            <option key={a.value} value={a.value}>{a.label}</option>
-          ))}
-        </Select>
-        <div className="aj-log-date-field">
+        <div className="aj-log-filter-field">
+          <label>Usuario</label>
+          <Select value={filtroUsuario} onChange={e => { setFiltroUsuario(e.target.value); setPagina(0) }}>
+            <option value="">Todos</option>
+            {usuarios.map(u => (
+              <option key={u.id} value={u.id}>{u.nombre || u.email}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="aj-log-filter-field">
+          <label>Modulo</label>
+          <Select value={filtroModulo} onChange={e => { setFiltroModulo(e.target.value); setPagina(0) }}>
+            {MODULOS.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="aj-log-filter-field">
+          <label>Accion</label>
+          <Select value={filtroAccion} onChange={e => { setFiltroAccion(e.target.value); setPagina(0) }}>
+            {ACCIONES.map(a => (
+              <option key={a.value} value={a.value}>{a.label}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="aj-log-filter-field">
           <label>Desde</label>
           <input type="date" value={filtroDesde} onChange={e => { setFiltroDesde(e.target.value); setPagina(0) }} />
         </div>
-        <div className="aj-log-date-field">
+        <div className="aj-log-filter-field">
           <label>Hasta</label>
           <input type="date" value={filtroHasta} onChange={e => { setFiltroHasta(e.target.value); setPagina(0) }} />
         </div>
@@ -130,7 +139,7 @@ export default function AjustesLog({
                     <td>{new Date(a.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</td>
                     <td>{a.usuario?.nombre || a.usuario?.email || '-'}</td>
                     <td><span className={`aj-modulo-badge aj-modulo-${a.modulo}`}>{MODULO_LABELS[a.modulo] || a.modulo}</span></td>
-                    <td><span className="aj-log-tipo">{a.accion}</span></td>
+                    <td><span className={`aj-log-tipo aj-log-tipo-${a.accion}`}>{a.accion}</span></td>
                     <td className="aj-log-desc">{a.descripcion || '-'}</td>
                   </tr>
                 ))}

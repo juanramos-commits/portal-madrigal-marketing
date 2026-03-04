@@ -98,7 +98,6 @@
   font-weight: var(--weight-semibold);
   color: var(--text);
   white-space: nowrap;
-  margin-left: var(--space-xs);
 }
 
 .vc-controles-right {
