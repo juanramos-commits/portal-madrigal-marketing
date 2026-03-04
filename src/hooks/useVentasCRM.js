@@ -391,7 +391,7 @@ export function useVentasCRM() {
         hasMoreRef.current[etapaId] = false
       }
     } catch {
-      // Silently fail for load more
+      setError('Error al cargar más leads. Inténtalo de nuevo.')
     } finally {
       loadingMoreRef.current[etapaId] = false
       setLoadingMore(prev => ({ ...prev, [etapaId]: false }))

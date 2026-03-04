@@ -29,6 +29,7 @@ export function useVentas() {
 
   const busquedaTimeoutRef = useRef(null)
   const searchRequestRef = useRef(0)
+  const loadRequestRef = useRef(0)
   const realtimeDebounceRef = useRef(null)
   const [searchResultCount, setSearchResultCount] = useState(null)
   const [exportando, setExportando] = useState(false)
@@ -135,6 +136,7 @@ export function useVentas() {
 
   // ── Load ventas ────────────────────────────────────────────────────
   const cargarVentas = useCallback(async () => {
+    const requestId = ++loadRequestRef.current
     try {
       setLoading(true)
       setError(null)
@@ -148,13 +150,15 @@ export function useVentas() {
 
       const { data, count, error: err } = await query
       if (err) throw err
+      if (requestId !== loadRequestRef.current) return
 
       setVentas(data || [])
       setTotalVentas(count || 0)
     } catch (err) {
+      if (requestId !== loadRequestRef.current) return
       setError('Error al cargar ventas')
     } finally {
-      setLoading(false)
+      if (requestId === loadRequestRef.current) setLoading(false)
     }
   }, [buildQuery, paginaActual])
 

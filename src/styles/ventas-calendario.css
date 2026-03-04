@@ -1253,6 +1253,26 @@
   font-size: 14px;
 }
 
+.vc-calendar-wrap {
+  position: relative;
+}
+
+.vc-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-main, #fff);
+  opacity: 0.5;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.vc-empty-state {
+  text-align: center;
+  padding: var(--space-md) var(--space-lg);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
 .vc-error-msg {
   background: rgba(255,107,107,0.1);
   border: 1px solid rgba(255,107,107,0.2);

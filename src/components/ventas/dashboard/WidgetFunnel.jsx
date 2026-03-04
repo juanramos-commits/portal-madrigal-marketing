@@ -19,10 +19,10 @@ export default memo(function WidgetFunnel({ widgetDef, data }) {
 
   const isCloser = widgetDef?.dataKey === 'funnel_closers'
   const niveles = isCloser ? NIVELES_CLOSERS : NIVELES_SETTERS
-  const firstVal = Number(data[niveles[0]?.key]) || 1
+  const firstVal = Number(data[niveles[0]?.key]) || 0
   const allZero = niveles.every(n => (Number(data[n.key]) || 0) === 0)
 
-  if (allZero) return <div className="db-widget-empty">Sin datos para este periodo</div>
+  if (allZero || firstVal === 0) return <div className="db-widget-empty">Sin datos para este periodo</div>
 
   const lastKey = niveles[niveles.length - 1].key
   const tasaGlobal = firstVal > 0 ? ((Number(data[lastKey]) || 0) / firstVal * 100).toFixed(1) : '0.0'

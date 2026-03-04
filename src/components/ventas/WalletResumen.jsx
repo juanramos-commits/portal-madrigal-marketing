@@ -2,10 +2,25 @@ import { Wallet, TrendingUp, ArrowDown } from 'lucide-react'
 import WalletBloqueado from './WalletBloqueado'
 import { formatMoneda } from '../../utils/formatters'
 
-export default function WalletResumen({ wallet, saldoDisponible, esCloser, closerAlDia }) {
-  const saldo = wallet?.saldo || 0
-  const totalGanado = wallet?.total_ganado || 0
-  const totalRetirado = wallet?.total_retirado || 0
+export default function WalletResumen({ wallet, saldoDisponible, esCloser, closerAlDia, loading }) {
+  if (loading || !wallet) {
+    return (
+      <div className="wt-resumen">
+        <div className="wt-cards-grid">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="wt-card wt-card-skeleton">
+              <div className="wt-skeleton-line wt-skeleton-sm" />
+              <div className="wt-skeleton-line wt-skeleton-lg" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  const saldo = wallet.saldo || 0
+  const totalGanado = wallet.total_ganado || 0
+  const totalRetirado = wallet.total_retirado || 0
   const saldoNegativo = saldo < 0
   const disponibleDiferente = Math.abs(saldoDisponible - saldo) > 0.01
 

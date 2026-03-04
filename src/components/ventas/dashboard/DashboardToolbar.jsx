@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Settings, RotateCcw, Save, Plus, X } from 'lucide-react'
 import DashboardFiltroFecha from '../DashboardFiltroFecha'
 import AddWidgetModal from './AddWidgetModal'
+import ConfirmDialog from '../../ui/ConfirmDialog'
 
 export default function DashboardToolbar({
   periodo, onPeriodoChange, fechaInicio, fechaFin, onFechaPersonalizada,
@@ -13,17 +14,12 @@ export default function DashboardToolbar({
   puedePersonalizar, puedeVerEquipo,
 }) {
   const [showAdd, setShowAdd] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
   const showUserFilter = puedeVerEquipo && miembrosEquipo?.length > 0
 
   const handleAdd = (type) => {
     onAddWidget(type)
     setShowAdd(false)
-  }
-
-  const handleReset = () => {
-    if (window.confirm('¿Restablecer el layout por defecto? Se perderán los cambios actuales.')) {
-      onReset()
-    }
   }
 
   return (
@@ -57,7 +53,7 @@ export default function DashboardToolbar({
               <Plus size={14} />
               <span>Añadir</span>
             </button>
-            <button type="button" className="db-toolbar-btn" onClick={handleReset} disabled={isSaving} aria-busy={isSaving} aria-label="Resetear layout">
+            <button type="button" className="db-toolbar-btn" onClick={() => setShowResetConfirm(true)} disabled={isSaving} aria-busy={isSaving} aria-label="Resetear layout">
               <RotateCcw size={14} />
               <span>Resetear</span>
             </button>
@@ -84,6 +80,15 @@ export default function DashboardToolbar({
         rol={rol}
         layout={layout}
         puedeVerEquipo={puedeVerEquipo}
+      />
+      <ConfirmDialog
+        open={showResetConfirm}
+        title="Restablecer layout"
+        message="¿Restablecer el layout por defecto? Se perderán los cambios actuales."
+        variant="danger"
+        confirmText="Restablecer"
+        onConfirm={() => { setShowResetConfirm(false); onReset() }}
+        onCancel={() => setShowResetConfirm(false)}
       />
     </div>
   )

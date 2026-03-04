@@ -9,7 +9,7 @@ const RETIROS_PAGE_SIZE = 25
 const FACTURAS_PAGE_SIZE = 25
 
 export function useWallet() {
-  const { user, usuario, tienePermiso } = useAuth()
+  const { user, usuario, tienePermiso, loading: authLoading } = useAuth()
 
   const [wallet, setWallet] = useState(null)
   const [saldoDisponible, setSaldoDisponible] = useState(0)
@@ -611,11 +611,21 @@ export function useWallet() {
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
 
   // ── Initial load ───────────────────────────────────────────────────
+  const initialLoadDone = useRef(false)
   useEffect(() => {
-    if (user?.id && rolesComerciales.length > 0) {
+    if (!user?.id || authLoading || initialLoadDone.current) return
+    if (rolesComerciales.length > 0 || esAdmin) {
+      initialLoadDone.current = true
       refrescar()
     }
-  }, [user?.id, rolesComerciales.length])
+  }, [user?.id, rolesComerciales.length, esAdmin, authLoading])
+
+  // Fallback: stop infinite loading if no roles
+  useEffect(() => {
+    if (user?.id && !authLoading && rolesComerciales.length === 0 && !esAdmin && !initialLoadDone.current) {
+      setLoading(false)
+    }
+  }, [user?.id, authLoading, rolesComerciales.length, esAdmin])
 
   // ── Reload comisiones on filter change ─────────────────────────────
   useEffect(() => {

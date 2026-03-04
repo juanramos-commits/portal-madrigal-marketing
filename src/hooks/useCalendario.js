@@ -42,7 +42,7 @@ function obtenerRangoDia(fecha) {
 }
 
 export function useCalendario() {
-  const { user, usuario, tienePermiso, rolesComerciales } = useAuth()
+  const { user, usuario, tienePermiso, rolesComerciales, loading: authLoading } = useAuth()
 
   const [citas, setCitas] = useState([])
   const [disponibilidad, setDisponibilidad] = useState([])
@@ -602,12 +602,22 @@ export function useCalendario() {
     return () => { supabase.removeChannel(channel) }
   }, [user?.id, cargarGoogleEvents])
 
-  // Initial load
+  // Initial load — load once auth is ready (even with 0 roles, to avoid infinite spinner)
+  const initialLoadDone = useRef(false)
   useEffect(() => {
-    if (user?.id && rolesComerciales.length > 0) {
+    if (!user?.id || authLoading || initialLoadDone.current) return
+    if (rolesComerciales.length > 0 || esAdmin) {
+      initialLoadDone.current = true
       refrescar()
     }
-  }, [user?.id, rolesComerciales.length])
+  }, [user?.id, rolesComerciales.length, esAdmin, authLoading])
+
+  // Fallback: if auth done and no roles, stop loading
+  useEffect(() => {
+    if (user?.id && !authLoading && rolesComerciales.length === 0 && !esAdmin && !initialLoadDone.current) {
+      setLoading(false)
+    }
+  }, [user?.id, authLoading, rolesComerciales.length, esAdmin])
 
   // Auto-pull Google events once per session (if Google connected)
   useEffect(() => {
@@ -618,11 +628,11 @@ export function useCalendario() {
 
   // Reload citas + google events on navigation/filter change
   useEffect(() => {
-    if (user?.id && rolesComerciales.length > 0) {
-      cargarCitas()
-      cargarGoogleEvents()
+    if (user?.id && (rolesComerciales.length > 0 || esAdmin)) {
+      setLoading(true)
+      Promise.all([cargarCitas(), cargarGoogleEvents()]).finally(() => setLoading(false))
     }
-  }, [vista, fechaActual, closerFiltro])
+  }, [vista, fechaActual, closerFiltro]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     citas, googleEvents, eventosMerged,

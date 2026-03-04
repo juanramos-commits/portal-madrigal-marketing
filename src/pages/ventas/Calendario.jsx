@@ -109,16 +109,22 @@ export default function VentasCalendario() {
       {cal.loading && cal.citas.length === 0 ? (
         <div className="vc-loading">Cargando calendario...</div>
       ) : (
-        <CalendarioVista
-          vista={cal.vista}
-          fechaActual={cal.fechaActual}
-          citas={cal.eventosMerged}
-          bloqueos={cal.bloqueos}
-          onClickDia={handleClickDia}
-          onClickCita={handleClickCita}
-          esDirector={cal.esDirector}
-          esBloqueado={cal.esBloqueado}
-        />
+        <div className="vc-calendar-wrap">
+          {cal.loading && <div className="vc-loading-overlay" />}
+          <CalendarioVista
+            vista={cal.vista}
+            fechaActual={cal.fechaActual}
+            citas={cal.eventosMerged}
+            bloqueos={cal.bloqueos}
+            onClickDia={handleClickDia}
+            onClickCita={handleClickCita}
+            esDirector={cal.esDirector}
+            esBloqueado={cal.esBloqueado}
+          />
+          {!cal.loading && cal.eventosMerged.length === 0 && (
+            <div className="vc-empty-state">No hay citas en este período</div>
+          )}
+        </div>
       )}
 
       {/* Cita detail modal */}

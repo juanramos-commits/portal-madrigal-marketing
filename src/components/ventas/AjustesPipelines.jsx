@@ -90,8 +90,9 @@ export default function AjustesPipelines({
   useEffect(() => { onCargarPipelines() }, [])
 
   useEffect(() => {
-    if (pipelines.length > 0 && !pipelineActivo) {
-      setPipelineActivo(pipelines[0].id)
+    if (pipelines.length > 0) {
+      const stillExists = pipelines.find(p => p.id === pipelineActivo)
+      if (!stillExists) setPipelineActivo(pipelines[0].id)
     }
   }, [pipelines])
 

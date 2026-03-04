@@ -24,6 +24,7 @@ export default function CalendarioAdminPanel({
   const [loading, setLoading] = useState(true)
   const [minimosEditados, setMinimosEditados] = useState({})
   const [savingMinimo, setSavingMinimo] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     const cargar = async () => {
@@ -47,7 +48,7 @@ export default function CalendarioAdminPanel({
       setClosersData(prev => prev.map(c => c.id === closerId ? { ...c, minimo_horas_semana: valor } : c))
       setMinimosEditados(prev => { const n = { ...prev }; delete n[closerId]; return n })
     } catch (err) {
-      console.warn('Error al guardar mínimo de horas:', err)
+      setError(err?.message || 'Error al guardar mínimo de horas')
     } finally {
       setSavingMinimo(null)
     }
@@ -64,6 +65,7 @@ export default function CalendarioAdminPanel({
   return (
     <div className="vc-admin-panel">
       <h3>Gestión de equipo</h3>
+      {error && <div className="vc-error">{error}</div>}
       <div className="vc-admin-grid">
         {closersData.map(c => {
           const minimo = c.minimo_horas_semana

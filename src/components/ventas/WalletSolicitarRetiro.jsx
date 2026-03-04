@@ -34,11 +34,11 @@ export default function WalletSolicitarRetiro({
   if (ivaIncluido) {
     total = montoNum
     ivaMonto = Math.round(montoNum * ivaPct / (100 + ivaPct) * 100) / 100
-    baseImponible = total - ivaMonto
+    baseImponible = Math.round((total - ivaMonto) * 100) / 100
   } else {
     baseImponible = montoNum
     ivaMonto = Math.round(montoNum * ivaPct / 100 * 100) / 100
-    total = baseImponible + ivaMonto
+    total = Math.round((baseImponible + ivaMonto) * 100) / 100
   }
 
   const serieFactura = datosFiscales?.serie_factura || 'F'
