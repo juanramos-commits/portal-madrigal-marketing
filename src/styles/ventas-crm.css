@@ -474,6 +474,7 @@
 .crm-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--column-color, var(--border));
   border-radius: var(--radius-md);
   padding: var(--space-md);
   cursor: pointer;
