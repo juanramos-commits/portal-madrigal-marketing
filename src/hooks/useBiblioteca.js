@@ -189,6 +189,7 @@ export function useBiblioteca() {
 
   // CRUD: Create sección
   const crearSeccion = useCallback(async (datos) => {
+    if (!puedeGestionar) throw new Error('No tienes permiso para gestionar secciones')
     const maxOrden = secciones.reduce((max, s) => Math.max(max, s.orden || 0), 0)
     const { data, error: err } = await supabase
       .from('ventas_biblioteca_secciones')
@@ -208,6 +209,7 @@ export function useBiblioteca() {
 
   // CRUD: Update sección
   const actualizarSeccion = useCallback(async (seccionId, datos) => {
+    if (!puedeGestionar) throw new Error('No tienes permiso para gestionar secciones')
     const { data, error: err } = await supabase
       .from('ventas_biblioteca_secciones')
       .update({ ...datos, updated_at: new Date().toISOString() })
@@ -222,6 +224,7 @@ export function useBiblioteca() {
 
   // CRUD: Delete sección (soft delete)
   const eliminarSeccion = useCallback(async (seccionId) => {
+    if (!puedeGestionar) throw new Error('No tienes permiso para gestionar secciones')
     const { error: err } = await supabase
       .from('ventas_biblioteca_secciones')
       .update({ activo: false, updated_at: new Date().toISOString() })
@@ -239,6 +242,7 @@ export function useBiblioteca() {
 
   // CRUD: Create recurso
   const crearRecurso = useCallback(async (datos) => {
+    if (!puedeGestionarRecursos) throw new Error('No tienes permiso para gestionar recursos')
     const recursosEnSeccion = recursos.filter(r => r.seccion_id === datos.seccion_id)
     const maxOrden = recursosEnSeccion.reduce((max, r) => Math.max(max, r.orden || 0), 0)
     const { data, error: err } = await supabase
@@ -263,6 +267,7 @@ export function useBiblioteca() {
 
   // CRUD: Update recurso
   const actualizarRecurso = useCallback(async (recursoId, datos) => {
+    if (!puedeGestionarRecursos) throw new Error('No tienes permiso para gestionar recursos')
     const { data, error: err } = await supabase
       .from('ventas_biblioteca_recursos')
       .update({ ...datos, updated_at: new Date().toISOString() })
@@ -277,6 +282,7 @@ export function useBiblioteca() {
 
   // CRUD: Delete recurso (soft delete)
   const eliminarRecurso = useCallback(async (recursoId) => {
+    if (!puedeGestionarRecursos) throw new Error('No tienes permiso para gestionar recursos')
     const { error: err } = await supabase
       .from('ventas_biblioteca_recursos')
       .update({ activo: false, updated_at: new Date().toISOString() })
@@ -288,6 +294,7 @@ export function useBiblioteca() {
 
   // Reorder secciones
   const reordenarSecciones = useCallback(async (nuevasIds) => {
+    if (!puedeGestionar) throw new Error('No tienes permiso para gestionar secciones')
     // Optimistic update
     const nuevasSecciones = nuevasIds.map((id, i) => {
       const s = secciones.find(x => x.id === id)
@@ -312,6 +319,7 @@ export function useBiblioteca() {
 
   // Reorder recursos within a section
   const reordenarRecursos = useCallback(async (seccionId, nuevasIds) => {
+    if (!puedeGestionarRecursos) throw new Error('No tienes permiso para gestionar recursos')
     // Optimistic update
     const otrosRecursos = recursos.filter(r => r.seccion_id !== seccionId)
     const nuevosRecursos = nuevasIds.map((id, i) => {
