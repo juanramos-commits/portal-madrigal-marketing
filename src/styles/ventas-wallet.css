@@ -1149,7 +1149,12 @@
   }
 
   .wt-cards-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+  }
+
+  .wt-cards-grid > .wt-card:first-child {
+    grid-column: 1 / -1;
   }
 
   .wt-df-grid {
