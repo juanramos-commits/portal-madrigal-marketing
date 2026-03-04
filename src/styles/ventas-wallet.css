@@ -1241,6 +1241,17 @@
     align-items: stretch;
   }
 
+  .wt-filtros-row .ui-select,
+  .wt-filtros-row .wt-action-btn,
+  .wt-filtros-row input[type="date"] {
+    width: 100%;
+    height: 44px;
+  }
+
+  .wt-filtros-row .wt-action-btn {
+    justify-content: center;
+  }
+
   .wt-search {
     max-width: 100%;
   }
