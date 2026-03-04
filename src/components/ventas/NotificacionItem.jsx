@@ -1,13 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import {
-  UserPlus, CalendarCheck, CalendarX, CircleCheckBig, CircleX,
+  UserPlus, CalendarCheck, CalendarX, CalendarClock, CircleCheckBig, CircleX,
   DollarSign, Clock, Bell, X,
 } from 'lucide-react'
 
 const TIPO_CONFIG = {
-  lead_asignado:    { icon: UserPlus,       color: 'ntf-color-info' },
-  cita_agendada:    { icon: CalendarCheck,   color: 'ntf-color-info' },
-  cita_cancelada:   { icon: CalendarX,       color: 'ntf-color-error' },
+  lead_asignado:        { icon: UserPlus,       color: 'ntf-color-info' },
+  cita_agendada:        { icon: CalendarCheck,   color: 'ntf-color-info' },
+  cita_cancelada:       { icon: CalendarX,       color: 'ntf-color-error' },
+  cita_estado_cambiado: { icon: CalendarClock,   color: 'ntf-color-warning' },
   venta_aprobada:   { icon: CircleCheckBig,  color: 'ntf-color-success' },
   venta_rechazada:  { icon: CircleX,         color: 'ntf-color-error' },
   comision_añadida: { icon: DollarSign,      color: 'ntf-color-success' },
@@ -21,6 +22,7 @@ const RUTAS = {
   lead_asignado: (datos) => datos?.lead_id ? `/ventas/crm/lead/${datos.lead_id}` : '/ventas/crm',
   cita_agendada: () => '/ventas/calendario',
   cita_cancelada: () => '/ventas/calendario',
+  cita_estado_cambiado: () => '/ventas/calendario',
   venta_aprobada: () => '/ventas/ventas',
   venta_rechazada: () => '/ventas/ventas',
   venta_pendiente: () => '/ventas/ventas',
