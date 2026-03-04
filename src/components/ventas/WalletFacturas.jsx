@@ -1,4 +1,4 @@
-import { Download, Search, X } from 'lucide-react'
+import { Download, Search, X, FileText } from 'lucide-react'
 import { generarFacturaPDF } from '../../utils/generarFacturaPDF'
 import { formatMoneda, formatFecha, formatDatosBancarios } from '../../utils/formatters'
 import WalletTableSkeleton from './WalletTableSkeleton'
@@ -40,7 +40,7 @@ export default function WalletFacturas({ facturas, total, pagina, onPageChange, 
       {loading && facturas.length === 0 ? (
         <WalletTableSkeleton rows={5} cols={7} />
       ) : facturas.length === 0 ? (
-        <div className="wt-empty">{busqueda ? 'Sin resultados' : 'No hay facturas registradas'}</div>
+        <div className="wt-empty"><FileText size={32} className="wt-empty-icon" /><span>{busqueda ? 'Sin resultados' : 'No hay facturas registradas'}</span>{!busqueda && <span className="wt-empty-hint">Las facturas se generan automáticamente al aprobar retiros</span>}</div>
       ) : (
       <>
       {/* Desktop */}

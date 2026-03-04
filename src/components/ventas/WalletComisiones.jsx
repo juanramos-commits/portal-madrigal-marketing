@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { ExternalLink, Search, X, FileSpreadsheet } from 'lucide-react'
+import { ExternalLink, Search, X, FileSpreadsheet, Coins } from 'lucide-react'
 import Select from '../ui/Select'
 import { formatMoneda, formatFecha } from '../../utils/formatters'
 import WalletTableSkeleton from './WalletTableSkeleton'
@@ -83,7 +83,7 @@ export default function WalletComisiones({
       {loading && comisiones.length === 0 ? (
         <WalletTableSkeleton rows={5} cols={7} />
       ) : comisiones.length === 0 ? (
-        <div className="wt-empty">No hay comisiones registradas</div>
+        <div className="wt-empty"><Coins size={32} className="wt-empty-icon" /><span>No hay comisiones registradas</span><span className="wt-empty-hint">Las comisiones aparecerán cuando se aprueben ventas</span></div>
       ) : (
         <>
           {/* Desktop table */}

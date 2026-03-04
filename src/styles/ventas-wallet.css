@@ -944,6 +944,20 @@
   padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
   font-size: var(--font-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.wt-empty-icon {
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-xs);
+}
+
+.wt-empty-hint {
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
 }
 
 /* ── Skeleton shimmer ─────────────────────────────────────────────── */
@@ -980,6 +994,30 @@
   background-size: 200% 100%;
   animation: wt-shimmer 1.5s ease infinite;
 }
+
+.wt-card-skeleton {
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+}
+
+.wt-skeleton-line {
+  border-radius: var(--radius-xs);
+  background: linear-gradient(
+    90deg,
+    var(--bg-skeleton) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-skeleton) 75%
+  );
+  background-size: 200% 100%;
+  animation: wt-shimmer 1.5s ease infinite;
+}
+
+.wt-skeleton-sm { height: 12px; width: 60%; }
+.wt-skeleton-lg { height: 24px; width: 40%; }
 
 /* ── Pagination ───────────────────────────────────────────────────── */
 .wt-pagination {

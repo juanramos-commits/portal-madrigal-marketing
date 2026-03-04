@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, memo, Fragment } from 'react'
-import { Check, Minus } from 'lucide-react'
+import { Check, Minus, ShoppingBag } from 'lucide-react'
 import VentaDetalle from './VentaDetalle'
 import VentaCambioEstado from './VentaCambioEstado'
 import ModalCambioEstado from './ModalCambioEstado'
@@ -113,7 +113,7 @@ export default memo(function VentasListado({
   const renderCards = () => (
     <div className="vv-cards">
       {ventas.length === 0 ? (
-        <div className="vv-empty">No se encontraron ventas</div>
+        <div className="vv-empty"><ShoppingBag size={32} className="vv-empty-icon" /><span>No se encontraron ventas</span><span className="vv-empty-hint">Prueba con otros filtros o términos de búsqueda</span></div>
       ) : ventas.map(venta => {
         const estado = getEstadoDisplay(venta)
         const isExpanded = expandedId === venta.id

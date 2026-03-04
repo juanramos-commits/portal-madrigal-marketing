@@ -1,4 +1,4 @@
-import { Search, X } from 'lucide-react'
+import { Search, X, ArrowDownToLine } from 'lucide-react'
 import { formatMoneda, formatFecha } from '../../utils/formatters'
 import WalletTableSkeleton from './WalletTableSkeleton'
 
@@ -34,7 +34,7 @@ export default function WalletRetiros({ retiros, total, pagina, onPageChange, pa
       {loading && retiros.length === 0 ? (
         <WalletTableSkeleton rows={5} cols={5} />
       ) : retiros.length === 0 ? (
-        <div className="wt-empty">{busqueda ? 'Sin resultados' : 'No hay retiros registrados'}</div>
+        <div className="wt-empty"><ArrowDownToLine size={32} className="wt-empty-icon" /><span>{busqueda ? 'Sin resultados' : 'No hay retiros registrados'}</span>{!busqueda && <span className="wt-empty-hint">Solicita un retiro desde la pestaña Resumen</span>}</div>
       ) : (
       <>
       {/* Desktop table */}
