@@ -86,26 +86,46 @@ export default memo(function VentasListado({
   // ── Loading skeleton ─────────────────────────────────────────────
   if (loading && ventas.length === 0) {
     return (
-      <div className="vv-table-wrap">
-        <table className="vv-table">
-          <thead>
-            <tr>
-              <th>Lead</th><th>Fecha</th><th>Paquete</th><th>Importe</th>
-              <th>Método</th><th>Pago ún.</th><th>Setter</th><th>Closer</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {[1, 2, 3, 4, 5].map(i => (
-              <tr key={i}>
-                {Array(9).fill(0).map((_, j) => (
-                  <td key={j}><span className="vv-skeleton vv-skeleton-cell" /></td>
+      <>
+        {/* Desktop skeleton */}
+        <div className="vv-desktop-only">
+          <div className="vv-table-wrap">
+            <table className="vv-table">
+              <thead>
+                <tr>
+                  <th>Lead</th><th>Fecha</th><th>Paquete</th><th>Importe</th>
+                  <th>Método</th><th>Pago ún.</th><th>Setter</th><th>Closer</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1, 2, 3, 4, 5].map(i => (
+                  <tr key={i}>
+                    {Array(9).fill(0).map((_, j) => (
+                      <td key={j}><span className="vv-skeleton vv-skeleton-cell" /></td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {/* Mobile skeleton */}
+        <div className="vv-mobile-only">
+          <div className="vv-cards">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="vv-card">
+                <div className="vv-card-main">
+                  <div className="vv-skeleton-row"><span className="vv-skeleton" style={{ width: '60px', height: '22px' }} /><span className="vv-skeleton" style={{ width: '80px', height: '22px' }} /></div>
+                  <span className="vv-skeleton" style={{ width: '70%', height: '16px' }} />
+                  <span className="vv-skeleton" style={{ width: '50%', height: '14px' }} />
+                  <div className="vv-skeleton-row"><span className="vv-skeleton" style={{ width: '60px', height: '24px', borderRadius: '999px' }} /><span className="vv-skeleton" style={{ width: '80px', height: '24px', borderRadius: '999px' }} /><span className="vv-skeleton" style={{ width: '70px', height: '24px', borderRadius: '999px' }} /></div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </div>
+      </>
     )
   }
 
