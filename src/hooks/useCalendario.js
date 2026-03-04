@@ -481,6 +481,7 @@ export function useCalendario() {
   }, [bloqueos])
 
   // Refresh
+  // Usar permisos (esCloser/esDirector) para cargar datos, ya que los tabs se muestran por permisos
   const refrescar = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -488,17 +489,17 @@ export function useCalendario() {
       await Promise.all([
         cargarCitas(),
         cargarReunionEstados(),
-        esCloserRol ? cargarDisponibilidad() : Promise.resolve(),
-        esCloserRol ? cargarBloqueos() : Promise.resolve(),
-        esCloserRol ? cargarConfig() : Promise.resolve(),
-        esDirectorRol ? cargarEnlaces() : Promise.resolve(),
+        esCloser ? cargarDisponibilidad() : Promise.resolve(),
+        esCloser ? cargarBloqueos() : Promise.resolve(),
+        esCloser ? cargarConfig() : Promise.resolve(),
+        esDirector ? cargarEnlaces() : Promise.resolve(),
       ])
     } catch (_) {
       setError('Error al cargar datos del calendario')
     } finally {
       setLoading(false)
     }
-  }, [cargarCitas, cargarReunionEstados, esCloserRol, esDirectorRol, cargarDisponibilidad, cargarBloqueos, cargarConfig, cargarEnlaces])
+  }, [cargarCitas, cargarReunionEstados, esCloser, esDirector, cargarDisponibilidad, cargarBloqueos, cargarConfig, cargarEnlaces])
 
   // Refresh on tab focus
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })

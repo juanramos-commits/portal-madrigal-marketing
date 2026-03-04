@@ -40,7 +40,7 @@ export function useVentas() {
   const esDirector = misRoles.some(r => r.rol === 'director_ventas' || r.rol === 'super_admin')
   const esCloser = misRoles.some(r => r.rol === 'closer')
   const esSetter = misRoles.some(r => r.rol === 'setter')
-  const esAdminODirector = tienePermiso('ventas.crm.ver_todos')
+  const esAdminODirector = tienePermiso('ventas.ventas.ver_todos')
 
   // ── Load roles ─────────────────────────────────────────────────────
   const [rolesLoaded, setRolesLoaded] = useState(false)
