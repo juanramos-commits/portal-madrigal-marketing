@@ -10,9 +10,10 @@ export default function DashboardToolbar({
   onSave, onReset, onAddWidget,
   isSaving,
   rol, layout,
+  puedePersonalizar, puedeVerEquipo,
 }) {
   const [showAdd, setShowAdd] = useState(false)
-  const showUserFilter = (rol === 'admin' || rol === 'director_ventas') && miembrosEquipo?.length > 0
+  const showUserFilter = puedeVerEquipo && miembrosEquipo?.length > 0
 
   const handleAdd = (type) => {
     onAddWidget(type)
@@ -69,12 +70,12 @@ export default function DashboardToolbar({
               <span>Cancelar</span>
             </button>
           </div>
-        ) : (
+        ) : puedePersonalizar ? (
           <button type="button" className="db-toolbar-btn db-toolbar-btn--edit" onClick={() => setEditMode(true)} aria-label="Editar dashboard">
             <Settings size={14} />
             <span>Editar</span>
           </button>
-        )}
+        ) : null}
 
       <AddWidgetModal
         open={showAdd}
@@ -82,6 +83,7 @@ export default function DashboardToolbar({
         onAdd={handleAdd}
         rol={rol}
         layout={layout}
+        puedeVerEquipo={puedeVerEquipo}
       />
     </div>
   )

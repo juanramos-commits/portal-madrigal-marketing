@@ -123,7 +123,10 @@ export default function VentasVentas() {
         pageSize={ventas.pageSize}
         onPageChange={ventas.setPaginaActual}
         loading={ventas.loading}
-        esAdmin={tienePermiso('ventas.ventas.aprobar')}
+        puedeAprobar={tienePermiso('ventas.ventas.aprobar')}
+        puedeRechazar={tienePermiso('ventas.ventas.rechazar')}
+        puedeDevolucion={tienePermiso('ventas.ventas.devolucion')}
+        puedeRevertir={tienePermiso('ventas.ventas.revertir')}
         onCambiarEstado={ventas.cambiarEstado}
         cargarComisiones={ventas.cargarComisiones}
       />

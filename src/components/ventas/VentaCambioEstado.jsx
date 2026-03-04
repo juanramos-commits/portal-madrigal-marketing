@@ -14,17 +14,24 @@ const estadoLabels = {
   devolucion: 'Devolución',
 }
 
-function getOpcionesDisponibles(venta) {
-  if (venta.es_devolucion) return ['aprobada']
-  return TRANSICIONES[venta.estado] || []
+function getOpcionesDisponibles(venta, permisos) {
+  if (venta.es_devolucion) return permisos.puedeRevertir ? ['aprobada'] : []
+  const all = TRANSICIONES[venta.estado] || []
+  return all.filter(op => {
+    if (op === 'aprobada') return permisos.puedeAprobar
+    if (op === 'rechazada') return permisos.puedeRechazar
+    if (op === 'devolucion') return permisos.puedeDevolucion
+    if (op === 'pendiente') return permisos.puedeRevertir
+    return false
+  })
 }
 
-export default function VentaCambioEstado({ venta, onCambio }) {
+export default function VentaCambioEstado({ venta, onCambio, puedeAprobar, puedeRechazar, puedeDevolucion, puedeRevertir }) {
   const [abierto, setAbierto] = useState(false)
   const [pos, setPos] = useState(null)
   const ref = useRef(null)
   const btnRef = useRef(null)
-  const opciones = getOpcionesDisponibles(venta)
+  const opciones = getOpcionesDisponibles(venta, { puedeAprobar, puedeRechazar, puedeDevolucion, puedeRevertir })
   const estadoActual = venta.es_devolucion ? 'devolucion' : venta.estado
 
   useEffect(() => {

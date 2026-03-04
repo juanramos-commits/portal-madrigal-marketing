@@ -23,6 +23,7 @@ export default function CRMKanban({
   showAssignee,
   loading,
   onError,
+  canMove = true,
 }) {
   const [activeLead, setActiveLead] = useState(null)
   const [activeEtapa, setActiveEtapa] = useState(null)
@@ -48,10 +49,12 @@ export default function CRMKanban({
     }
   }, [onMoverLead, onError])
 
-  const sensors = useSensors(
+  const activeSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
   )
+  const noSensors = useSensors()
+  const sensors = canMove ? activeSensors : noSensors
 
   const findLeadEtapa = useCallback((leadId) => {
     for (const etapa of etapas) {
@@ -149,7 +152,7 @@ export default function CRMKanban({
             loadingMore={loadingMore[etapa.id]}
             onLoadMore={onLoadMore}
             showAssignee={showAssignee}
-            onMoverMobile={isMobile ? handleMoverMobile : undefined}
+            onMoverMobile={isMobile && canMove ? handleMoverMobile : undefined}
           />
         ))}
       </div>

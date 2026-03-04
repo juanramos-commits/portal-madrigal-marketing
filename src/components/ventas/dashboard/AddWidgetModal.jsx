@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import Modal from '../../ui/Modal'
 import { WIDGET_CATALOG, WIDGET_CATEGORIES, getWidgetsForRole } from '../../../config/widgetCatalog'
 
-export default function AddWidgetModal({ open, onClose, onAdd, rol, layout }) {
+export default function AddWidgetModal({ open, onClose, onAdd, rol, layout, puedeVerEquipo }) {
   const [tab, setTab] = useState('kpis')
 
   const handleTabKeyDown = useCallback((e) => {
@@ -25,8 +25,12 @@ export default function AddWidgetModal({ open, onClose, onAdd, rol, layout }) {
 
   const availableWidgets = useMemo(() => {
     const forRole = getWidgetsForRole(rol || 'admin')
-    return Object.values(forRole).filter(w => !usedTypes.has(w.type))
-  }, [rol, usedTypes])
+    return Object.values(forRole).filter(w => {
+      if (usedTypes.has(w.type)) return false
+      if (w.category === 'team' && !puedeVerEquipo) return false
+      return true
+    })
+  }, [rol, usedTypes, puedeVerEquipo])
 
   const filtered = availableWidgets.filter(w => w.category === tab)
 

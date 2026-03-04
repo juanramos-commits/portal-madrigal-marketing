@@ -605,6 +605,7 @@ export function useVentasCRM() {
   // ── Move lead (drag & drop) ────────────────────────────────────────
   const moverLead = useCallback(async (leadId, etapaOrigenId, etapaDestinoId) => {
     if (etapaOrigenId === etapaDestinoId) return
+    if (!tienePermiso('ventas.crm.mover_leads')) throw new Error('No tienes permiso para mover leads')
 
     const etapaDestino = etapas.find(e => e.id === etapaDestinoId)
     const etapaOrigen = etapas.find(e => e.id === etapaOrigenId)
@@ -616,6 +617,7 @@ export function useVentasCRM() {
 
     // Intercept venta stage — open popup instead of moving
     if (etapaDestino.tipo === 'venta') {
+      if (!tienePermiso('ventas.ventas.crear')) throw new Error('No tienes permiso para registrar ventas')
       setLeadParaVenta(leadData)
       setEtapaVentaDestino(etapaDestinoId)
       return

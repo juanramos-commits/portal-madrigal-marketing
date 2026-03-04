@@ -14,7 +14,7 @@ function getUserRole(usuario, rolesComerciales, userId) {
 }
 
 export function useDashboardLayout() {
-  const { user, usuario } = useAuth()
+  const { user, usuario, tienePermiso } = useAuth()
   const [layout, setLayout] = useState([])
   const [rolesComerciales, setRolesComerciales] = useState([])
   const [editMode, setEditMode] = useState(false)
@@ -64,9 +64,12 @@ export function useDashboardLayout() {
           .maybeSingle()
 
         if (data?.layout && Array.isArray(data.layout) && data.layout.length > 0) {
+          const puedeVerEquipo = tienePermiso('ventas.dashboard.ver_equipo')
           const filtered = data.layout.filter(item => {
             const def = WIDGET_CATALOG[item.type]
-            return def && def.roles.includes(rol)
+            if (!def) return false
+            if (def.category === 'team' && !puedeVerEquipo) return false
+            return def.roles.includes(rol)
           })
           setLayout(filtered.length > 0 ? filtered : (DEFAULT_LAYOUTS[rol] || []))
         } else {

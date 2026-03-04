@@ -100,6 +100,7 @@ export default function CRMLeadDetalle() {
   const esAdminODirector = tienePermiso('ventas.crm.ver_todos')
   const puedeAsignar = tienePermiso('ventas.crm.asignar')
   const puedeEliminar = tienePermiso('ventas.crm.eliminar_leads')
+  const puedeEditar = tienePermiso('ventas.crm.editar_leads')
   const esMiLeadSetter = lead?.setter_asignado_id === user?.id
   const esMiLeadCloser = lead?.closer_asignado_id === user?.id
 
@@ -231,6 +232,7 @@ export default function CRMLeadDetalle() {
 
   // ── Update lead field with debounce ────────────────────────────────
   const updateField = (field, value) => {
+    if (!puedeEditar) return
     setLead(prev => ({ ...prev, [field]: value }))
     pendingFieldUpdatesRef.current[field] = value
 
@@ -543,6 +545,7 @@ export default function CRMLeadDetalle() {
             onBlur={registrarCambiosCamposDebounced}
             placeholder="Nombre del lead"
             aria-label="Nombre del lead"
+            readOnly={!puedeEditar}
           />
           <div className="crm-detail-badges">
             {lead.pipeline_states?.map(ps => ps.etapa && (
@@ -688,37 +691,37 @@ export default function CRMLeadDetalle() {
                 <label>Email</label>
                 <div className="crm-input-wrap">
                   <Mail className="crm-input-icon" />
-                  <input type="email" value={lead.email || ''} onChange={e => updateField('email', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="email@ejemplo.com" />
+                  <input type="email" value={lead.email || ''} onChange={e => updateField('email', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="email@ejemplo.com" readOnly={!puedeEditar} />
                 </div>
               </div>
               <div className="crm-field">
                 <label>Teléfono</label>
                 <div className="crm-input-wrap">
                   <Phone className="crm-input-icon" />
-                  <input type="tel" value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="+34 600 000 000" />
+                  <input type="tel" value={lead.telefono || ''} onChange={e => updateField('telefono', e.target.value)} onBlur={registrarCambiosCamposDebounced} placeholder="+34 600 000 000" readOnly={!puedeEditar} />
                 </div>
               </div>
               <div className="crm-field">
                 <label>Nombre del negocio</label>
                 <div className="crm-input-wrap">
                   <Globe className="crm-input-icon" />
-                  <input value={lead.nombre_negocio || ''} onChange={e => updateField('nombre_negocio', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
+                  <input value={lead.nombre_negocio || ''} onChange={e => updateField('nombre_negocio', e.target.value)} onBlur={registrarCambiosCamposDebounced} readOnly={!puedeEditar} />
                 </div>
               </div>
               <div className="crm-field">
                 <label>Categoría</label>
-                <Select value={lead.categoria_id || ''} onChange={e => { updateField('categoria_id', e.target.value || null); registrarCambiosCamposDebounced() }}>
+                <Select value={lead.categoria_id || ''} onChange={e => { updateField('categoria_id', e.target.value || null); registrarCambiosCamposDebounced() }} disabled={!puedeEditar}>
                   <option value="">Sin categoría</option>
                   {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                 </Select>
               </div>
               <div className="crm-field">
                 <label>Fuente</label>
-                <input value={lead.fuente || ''} onChange={e => updateField('fuente', e.target.value)} onBlur={registrarCambiosCamposDebounced} />
+                <input value={lead.fuente || ''} onChange={e => updateField('fuente', e.target.value)} onBlur={registrarCambiosCamposDebounced} readOnly={!puedeEditar} />
               </div>
               <div className="crm-field" style={{ gridColumn: '1 / -1' }}>
                 <label>Contactos adicionales</label>
-                <textarea value={lead.contactos_adicionales || ''} onChange={e => updateField('contactos_adicionales', e.target.value)} onBlur={registrarCambiosCamposDebounced} rows={2} />
+                <textarea value={lead.contactos_adicionales || ''} onChange={e => updateField('contactos_adicionales', e.target.value)} onBlur={registrarCambiosCamposDebounced} rows={2} readOnly={!puedeEditar} />
               </div>
             </div>
           </div>
@@ -759,30 +762,31 @@ export default function CRMLeadDetalle() {
                 onBlur={registrarCambiosCamposDebounced}
                 rows={3}
                 placeholder="Notas sobre el lead..."
+                readOnly={!puedeEditar}
               />
             </div>
             <div className="crm-field" style={{ marginBottom: 'var(--space-md)' }}>
               <label>Resumen Setter</label>
               <textarea
                 value={lead.resumen_setter || ''}
-                onChange={(esAdminODirector || esMiLeadSetter) ? e => updateField('resumen_setter', e.target.value) : undefined}
-                onBlur={(esAdminODirector || esMiLeadSetter) ? registrarCambiosCamposDebounced : undefined}
+                onChange={(puedeEditar || esMiLeadSetter) ? e => updateField('resumen_setter', e.target.value) : undefined}
+                onBlur={(puedeEditar || esMiLeadSetter) ? registrarCambiosCamposDebounced : undefined}
                 rows={3}
                 placeholder="Resumen del setter..."
-                readOnly={!esAdminODirector && !esMiLeadSetter}
-                style={!esAdminODirector && !esMiLeadSetter ? { opacity: 0.6 } : undefined}
+                readOnly={!puedeEditar && !esMiLeadSetter}
+                style={!puedeEditar && !esMiLeadSetter ? { opacity: 0.6 } : undefined}
               />
             </div>
             <div className="crm-field">
               <label>Resumen Closer</label>
               <textarea
                 value={lead.resumen_closer || ''}
-                onChange={(esAdminODirector || esMiLeadCloser) ? e => updateField('resumen_closer', e.target.value) : undefined}
-                onBlur={(esAdminODirector || esMiLeadCloser) ? registrarCambiosCamposDebounced : undefined}
+                onChange={(puedeEditar || esMiLeadCloser) ? e => updateField('resumen_closer', e.target.value) : undefined}
+                onBlur={(puedeEditar || esMiLeadCloser) ? registrarCambiosCamposDebounced : undefined}
                 rows={3}
                 placeholder="Resumen del closer..."
-                readOnly={!esAdminODirector && !esMiLeadCloser}
-                style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
+                readOnly={!puedeEditar && !esMiLeadCloser}
+                style={!puedeEditar && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
               />
             </div>
           </div>
@@ -796,11 +800,11 @@ export default function CRMLeadDetalle() {
                   <ExternalLink className="crm-input-icon" />
                   <input
                     value={lead.enlace_grabacion || ''}
-                    onChange={(esAdminODirector || esMiLeadCloser) ? e => updateField('enlace_grabacion', e.target.value) : undefined}
-                    onBlur={(esAdminODirector || esMiLeadCloser) ? registrarCambiosCamposDebounced : undefined}
+                    onChange={(puedeEditar || esMiLeadCloser) ? e => updateField('enlace_grabacion', e.target.value) : undefined}
+                    onBlur={(puedeEditar || esMiLeadCloser) ? registrarCambiosCamposDebounced : undefined}
                     placeholder="https://..."
-                    readOnly={!esAdminODirector && !esMiLeadCloser}
-                    style={!esAdminODirector && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
+                    readOnly={!puedeEditar && !esMiLeadCloser}
+                    style={!puedeEditar && !esMiLeadCloser ? { opacity: 0.6 } : undefined}
                   />
                 </div>
               </div>

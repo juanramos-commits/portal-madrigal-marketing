@@ -141,6 +141,7 @@ export default function VentasCRM() {
           showAssignee={tienePermiso('ventas.crm.ver_todos')}
           loading={crm.loading}
           onError={(msg) => showToast(msg, 'error', 3000)}
+          canMove={tienePermiso('ventas.crm.mover_leads')}
         />
       ) : (
         <CRMTabla

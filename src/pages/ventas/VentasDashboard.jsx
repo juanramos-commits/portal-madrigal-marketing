@@ -44,7 +44,7 @@ function renderWidget(widgetDef, data, config) {
 }
 
 export default function VentasDashboard() {
-  const { usuario } = useAuth()
+  const { usuario, tienePermiso } = useAuth()
   const db = useDashboard()
   const [gridWidth, setGridWidth] = useState(0)
   const observerRef = useRef(null)
@@ -130,6 +130,8 @@ export default function VentasDashboard() {
         onAddWidget={db.addWidget}
         rol={db.rol}
         layout={db.layout}
+        puedePersonalizar={tienePermiso('ventas.dashboard.personalizar')}
+        puedeVerEquipo={tienePermiso('ventas.dashboard.ver_equipo')}
       />
 
       {db.error && !db.dataLoading && (

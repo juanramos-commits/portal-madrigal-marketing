@@ -28,6 +28,7 @@ export function useBiblioteca() {
   const esSetter = misRoles.some(r => r.rol === 'setter')
   const esDirector = misRoles.some(r => r.rol === 'director_ventas') || esAdmin
   const puedeGestionar = tienePermiso('ventas.biblioteca.gestionar_secciones')
+  const puedeGestionarRecursos = tienePermiso('ventas.biblioteca.gestionar_recursos')
 
   // My role keys for visibility filtering (memoized to avoid breaking useMemo deps)
   const misRolesKeys = useMemo(() => {
@@ -372,7 +373,7 @@ export function useBiblioteca() {
     busqueda, setBusqueda, busquedaDebounced,
     modoGestion, setModoGestion,
     seccionesAbiertas, toggleSeccion, expandirTodas, colapsarTodas,
-    puedeGestionar, esAdmin, esDirector, esCloser, esSetter,
+    puedeGestionar, puedeGestionarRecursos, esAdmin, esDirector, esCloser, esSetter,
     misRolesKeys,
 
     recursosFiltrados,

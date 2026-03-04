@@ -45,7 +45,7 @@ export default function VentasBiblioteca() {
       <div className="bib-header">
         <h1>Biblioteca</h1>
         <div className="bib-header-actions">
-          {bib.puedeGestionar && (
+          {(bib.puedeGestionar || bib.puedeGestionarRecursos) && (
             <button
               className={`bib-btn-gestion${bib.modoGestion ? ' bib-btn-gestion-active' : ''}`}
               onClick={() => bib.setModoGestion(!bib.modoGestion)}
@@ -94,22 +94,26 @@ export default function VentasBiblioteca() {
       ) : bib.modoGestion ? (
         /* Admin mode */
         <div className="bib-admin-panel">
-          <BibliotecaAdminSecciones
-            secciones={bib.secciones}
-            recursos={bib.recursos}
-            onNueva={handleNuevaSeccion}
-            onEditar={handleEditarSeccion}
-            onEliminar={bib.eliminarSeccion}
-            onReordenar={bib.reordenarSecciones}
-          />
-          <BibliotecaAdminRecursos
-            secciones={bib.secciones}
-            recursos={bib.recursos}
-            onNuevo={handleNuevoRecurso}
-            onEditar={handleEditarRecurso}
-            onEliminar={bib.eliminarRecurso}
-            onReordenar={bib.reordenarRecursos}
-          />
+          {bib.puedeGestionar && (
+            <BibliotecaAdminSecciones
+              secciones={bib.secciones}
+              recursos={bib.recursos}
+              onNueva={handleNuevaSeccion}
+              onEditar={handleEditarSeccion}
+              onEliminar={bib.eliminarSeccion}
+              onReordenar={bib.reordenarSecciones}
+            />
+          )}
+          {bib.puedeGestionarRecursos && (
+            <BibliotecaAdminRecursos
+              secciones={bib.secciones}
+              recursos={bib.recursos}
+              onNuevo={handleNuevoRecurso}
+              onEditar={handleEditarRecurso}
+              onEliminar={bib.eliminarRecurso}
+              onReordenar={bib.reordenarRecursos}
+            />
+          )}
         </div>
       ) : (
         /* Read mode */

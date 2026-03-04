@@ -35,10 +35,14 @@ export default memo(function VentasListado({
   pageSize,
   onPageChange,
   loading,
-  esAdmin,
+  puedeAprobar,
+  puedeRechazar,
+  puedeDevolucion,
+  puedeRevertir,
   onCambiarEstado,
   cargarComisiones,
 }) {
+  const puedeGestionarEstados = puedeAprobar || puedeRechazar || puedeDevolucion || puedeRevertir
   const [expandedId, setExpandedId] = useState(null)
   const [comisionesMap, setComisionesMap] = useState({})
   const [loadingComisiones, setLoadingComisiones] = useState({})
@@ -117,8 +121,8 @@ export default memo(function VentasListado({
           <div key={venta.id} className="vv-card">
             <div className="vv-card-main" role="button" tabIndex={0} onClick={() => toggleExpand(venta.id)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(venta.id) } }} aria-expanded={isExpanded}>
               <div className="vv-card-top">
-                {esAdmin ? (
-                  <VentaCambioEstado venta={venta} onCambio={handleCambioEstado} />
+                {puedeGestionarEstados ? (
+                  <VentaCambioEstado venta={venta} onCambio={handleCambioEstado} puedeAprobar={puedeAprobar} puedeRechazar={puedeRechazar} puedeDevolucion={puedeDevolucion} puedeRevertir={puedeRevertir} />
                 ) : (
                   <span className={`vv-badge ${estado.className}`}>{estado.label}</span>
                 )}
@@ -203,8 +207,8 @@ export default memo(function VentasListado({
                   <td>{venta.setter?.nombre || '-'}</td>
                   <td>{venta.closer?.nombre || '-'}</td>
                   <td onClick={e => e.stopPropagation()}>
-                    {esAdmin ? (
-                      <VentaCambioEstado venta={venta} onCambio={handleCambioEstado} />
+                    {puedeGestionarEstados ? (
+                      <VentaCambioEstado venta={venta} onCambio={handleCambioEstado} puedeAprobar={puedeAprobar} puedeRechazar={puedeRechazar} puedeDevolucion={puedeDevolucion} puedeRevertir={puedeRevertir} />
                     ) : (
                       <span className={`vv-badge ${estado.className}`}>{estado.label}</span>
                     )}
