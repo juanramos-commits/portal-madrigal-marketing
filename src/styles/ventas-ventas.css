@@ -343,10 +343,19 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  transition: border-color var(--transition-fast);
+  transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.vv-card:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .vv-card:active {
+  transform: none;
+  box-shadow: none;
   border-color: var(--border-hover);
 }
 
@@ -1243,8 +1252,14 @@
   .vv-export-btn,
   .vv-estado-option,
   .vv-detalle-link,
-  .vv-pagination-btns button {
+  .vv-pagination-btns button,
+  .vv-card {
     transition: none;
+  }
+
+  .vv-card:hover {
+    transform: none;
+    box-shadow: none;
   }
 }
 
