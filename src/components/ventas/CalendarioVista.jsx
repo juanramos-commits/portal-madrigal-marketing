@@ -127,7 +127,8 @@ function VistaMensual({ fechaActual, citas, bloqueos, onClickDia, onClickCita, e
 function getDuracionMinutos(c) {
   if (c._isGoogleEvent) {
     const start = new Date(c.start_time || c.fecha_hora).getTime()
-    const end = new Date(c.end_time).getTime()
+    const end = c.end_time ? new Date(c.end_time).getTime() : NaN
+    if (isNaN(start) || isNaN(end)) return 60
     return Math.max(15, (end - start) / 60000)
   }
   return c.duracion_minutos || 60

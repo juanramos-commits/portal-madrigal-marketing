@@ -109,6 +109,7 @@ export default function BibliotecaAdminRecursos({
 
     const oldIndex = recursosSeccion.findIndex(r => r.id === active.id)
     const newIndex = recursosSeccion.findIndex(r => r.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
     const nuevasIds = arrayMove(recursosSeccion.map(r => r.id), oldIndex, newIndex)
     onReordenar(seccionActiva, nuevasIds)
   }
