@@ -87,6 +87,8 @@ export default function CRMLeadDetalle() {
   const [showAssignDropdown, setShowAssignDropdown] = useState(null)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [showTagPicker, setShowTagPicker] = useState(false)
+  const [reunionEstados, setReunionEstados] = useState([])
+  const [savingEstadoCita, setSavingEstadoCita] = useState(null)
 
   const { showToast } = useToast()
   const debounceRefs = useRef({})
@@ -121,6 +123,7 @@ export default function CRMLeadDetalle() {
         { data: etqs },
         { data: roles },
         { data: etapasAll },
+        { data: reunionEstadosData },
       ] = await Promise.all([
         supabase.from('ventas_leads').select(`
           *,
@@ -141,6 +144,7 @@ export default function CRMLeadDetalle() {
         supabase.from('ventas_etiquetas').select('*').eq('activo', true),
         supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
         supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
+        supabase.from('ventas_reunion_estados').select('*').order('orden'),
       ])
 
       if (requestId !== loadDetailRef.current) return
@@ -156,6 +160,7 @@ export default function CRMLeadDetalle() {
       setEtiquetasDisponibles(etqs || [])
       setRolesComerciales(roles || [])
       setAllEtapas(etapasAll || [])
+      setReunionEstados(reunionEstadosData || [])
       setSetters((roles || []).filter(r => r.rol === 'setter' && r.activo))
       setClosers((roles || []).filter(r => r.rol === 'closer' && r.activo))
 
@@ -225,6 +230,8 @@ export default function CRMLeadDetalle() {
       setActividad(prev => [...prev, ...(data || [])])
       setActividadOffset(prev => prev + 20)
       setHasMoreActividad((data || []).length >= 20)
+    } catch {
+      setError('Error al cargar más actividad')
     } finally {
       setLoadingMoreActividad(false)
     }
@@ -443,6 +450,31 @@ export default function CRMLeadDetalle() {
     } catch (err) {
       showToast('Error al añadir etiqueta', 'error')
       console.error('Error addTag:', err)
+    }
+  }
+
+  const cambiarEstadoReunion = async (citaId, estadoReunionId) => {
+    setSavingEstadoCita(citaId)
+    try {
+      const { error } = await supabase
+        .from('ventas_citas')
+        .update({ estado_reunion_id: estadoReunionId || null, updated_at: new Date().toISOString() })
+        .eq('id', citaId)
+      if (error) throw error
+      // Update local state
+      setLead(prev => ({
+        ...prev,
+        citas: (prev.citas || []).map(c =>
+          c.id === citaId
+            ? { ...c, estado_reunion_id: estadoReunionId || null, estado_reunion: reunionEstados.find(e => e.id === estadoReunionId) || null }
+            : c
+        ),
+      }))
+      showToast('Estado de reunión actualizado', 'success')
+    } catch {
+      showToast('Error al actualizar estado de reunión', 'error')
+    } finally {
+      setSavingEstadoCita(null)
     }
   }
 
@@ -896,29 +928,59 @@ export default function CRMLeadDetalle() {
             </div>
           </div>
 
-          {/* ── Citas ─────────────────────────────────────────────── */}
-          {lead.citas?.length > 0 && (
-            <div className="crm-section">
-              <div className="crm-section-title"><Calendar /> Citas ({lead.citas.length})</div>
-              {lead.citas.map(cita => (
+          {/* ── Reuniones / Citas ─────────────────────────────────── */}
+          <div className="crm-section">
+            <div className="crm-section-title"><Calendar /> Reuniones ({lead.citas?.length || 0})</div>
+            {(!lead.citas || lead.citas.length === 0) && (
+              <div className="crm-empty">Sin reuniones agendadas</div>
+            )}
+            {(lead.citas || []).map(cita => {
+              const citaPasada = new Date(cita.fecha_hora) < new Date()
+              const puedeMarcar = (puedeEditar || esMiLeadCloser) && cita.estado !== 'cancelada'
+              return (
                 <div key={cita.id} className="crm-cita">
-                  <div>
-                    <div className="crm-cita-fecha">{formatDateTime(cita.fecha_hora)}</div>
+                  <div style={{ flex: 1 }}>
+                    <div className="crm-cita-fecha">
+                      {formatDateTime(cita.fecha_hora)}
+                      {citaPasada && !cita.estado_reunion && cita.estado !== 'cancelada' && (
+                        <span className="vc-badge" style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', marginLeft: 6, fontSize: 'var(--font-xs)' }}>Pendiente de marcar</span>
+                      )}
+                    </div>
                     <div className="crm-cita-closer">
                       {cita.closer?.nombre || 'Sin closer'}
                       {cita.origen_agendacion === 'enlace_setter' && <span className="vc-badge" style={{ background: 'rgba(59,130,246,0.15)', color: '#3B82F6', marginLeft: 6, fontSize: 'var(--font-xs)' }}>Via enlace</span>}
                       {cita.origen_agendacion === 'enlace_campana' && <span className="vc-badge" style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', marginLeft: 6, fontSize: 'var(--font-xs)' }}>Campaña</span>}
                     </div>
                     {cita.notas_closer && <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)', marginTop: 'var(--space-xs)' }}>{cita.notas_closer}</div>}
+                    {puedeMarcar && citaPasada && (
+                      <div style={{ marginTop: 'var(--space-1)' }}>
+                        <select
+                          className="crm-estado-reunion-select"
+                          value={cita.estado_reunion_id || ''}
+                          onChange={(e) => cambiarEstadoReunion(cita.id, e.target.value)}
+                          disabled={savingEstadoCita === cita.id}
+                          style={{ fontSize: 'var(--font-sm)', padding: '4px 8px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--bg-main)' }}
+                        >
+                          <option value="">Marcar resultado...</option>
+                          {reunionEstados.filter(e => e.nombre !== 'Cancelada').map(e => (
+                            <option key={e.id} value={e.id}>{e.nombre}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: 'var(--space-1-5)', alignItems: 'center' }}>
                     {cita.estado_reunion ? (
                       <span className="crm-cita-estado" style={{ background: `${cita.estado_reunion.color}20`, color: cita.estado_reunion.color }}>
                         {cita.estado_reunion.nombre}
                       </span>
+                    ) : cita.estado === 'cancelada' ? (
+                      <span className="crm-cita-estado" style={{ background: 'rgba(239,68,68,0.1)', color: '#EF4444' }}>
+                        Cancelada
+                      </span>
                     ) : (
                       <span className="crm-cita-estado" style={{ background: 'var(--bg-hover)', color: 'var(--text-muted)' }}>
-                        {cita.estado}
+                        {citaPasada ? 'Sin marcar' : 'Agendada'}
                       </span>
                     )}
                     {cita.google_meet_url && isSafeUrl(cita.google_meet_url) && (
@@ -926,9 +988,9 @@ export default function CRMLeadDetalle() {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              )
+            })}
+          </div>
 
           {/* ── Actividad ─────────────────────────────────────────── */}
           <div className="crm-section">

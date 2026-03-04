@@ -234,6 +234,9 @@ export function useVentasCRM() {
         supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
       ])
 
+      // Procesar citas pasadas → mover leads a "Cita Realizada" (fire-and-forget)
+      supabase.rpc('ventas_procesar_citas_pasadas').catch(() => {})
+
       if (requestId !== loadRequestRef.current) return
 
       setPipelines(pipelinesData || [])
