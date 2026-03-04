@@ -680,6 +680,50 @@
 .vv-text-success { color: var(--success); }
 .vv-text-danger { color: var(--error); }
 
+/* ── Commissions cards (mobile) ──────────────────────────────────── */
+.vv-comisiones-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.vv-comision-card {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2-5) var(--space-3);
+}
+
+.vv-comision-card--neg {
+  opacity: 0.7;
+}
+
+.vv-comision-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.vv-comision-card-user {
+  font-size: var(--font-sm-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+
+.vv-comision-card-top .vv-text-success,
+.vv-comision-card-top .vv-text-danger {
+  font-size: var(--font-base);
+  font-weight: var(--weight-bold);
+}
+
+.vv-comision-card-meta {
+  display: flex;
+  gap: var(--space-sm);
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+
 /* ── Modal utility classes (used inside shared Modal) ────────────── */
 .vv-modal-hint {
   font-size: var(--font-sm-md);

@@ -108,30 +108,55 @@ export default memo(function VentaDetalle({ venta, comisiones, loadingComisiones
             {loadingComisiones ? (
               <div className="vv-detalle-loading">Cargando comisiones...</div>
             ) : comisiones && comisiones.length > 0 ? (
-              <table className="vv-comisiones-table">
-                <thead>
-                  <tr>
-                    <th>Usuario</th>
-                    <th>Rol</th>
-                    <th>Importe</th>
-                    <th>Tipo</th>
-                    <th>Disponible desde</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comisiones.map(c => (
-                    <tr key={c.id} className={c.monto < 0 ? 'vv-comision-negativa' : ''}>
-                      <td>{c.usuario?.nombre || c.usuario?.email || '-'}</td>
-                      <td>{c.rol}</td>
-                      <td className={c.monto < 0 ? 'vv-text-danger' : 'vv-text-success'}>
-                        {c.monto >= 0 ? '+' : ''}{formatImporte(c.monto)}
-                      </td>
-                      <td>{c.es_bonus ? 'Bonus' : 'Fija'}</td>
-                      <td>{formatDateTime(c.disponible_desde)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <>
+                {/* Desktop: table */}
+                <div className="vv-desktop-only">
+                  <table className="vv-comisiones-table">
+                    <thead>
+                      <tr>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>Importe</th>
+                        <th>Tipo</th>
+                        <th>Disponible desde</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comisiones.map(c => (
+                        <tr key={c.id} className={c.monto < 0 ? 'vv-comision-negativa' : ''}>
+                          <td>{c.usuario?.nombre || c.usuario?.email || '-'}</td>
+                          <td>{c.rol}</td>
+                          <td className={c.monto < 0 ? 'vv-text-danger' : 'vv-text-success'}>
+                            {c.monto >= 0 ? '+' : ''}{formatImporte(c.monto)}
+                          </td>
+                          <td>{c.es_bonus ? 'Bonus' : 'Fija'}</td>
+                          <td>{formatDateTime(c.disponible_desde)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Mobile: cards */}
+                <div className="vv-mobile-only">
+                  <div className="vv-comisiones-cards">
+                    {comisiones.map(c => (
+                      <div key={c.id} className={`vv-comision-card${c.monto < 0 ? ' vv-comision-card--neg' : ''}`}>
+                        <div className="vv-comision-card-top">
+                          <span className="vv-comision-card-user">{c.usuario?.nombre || c.usuario?.email || '-'}</span>
+                          <span className={c.monto < 0 ? 'vv-text-danger' : 'vv-text-success'}>
+                            {c.monto >= 0 ? '+' : ''}{formatImporte(c.monto)}
+                          </span>
+                        </div>
+                        <div className="vv-comision-card-meta">
+                          <span>{c.rol}</span>
+                          <span>{c.es_bonus ? 'Bonus' : 'Fija'}</span>
+                          {c.disponible_desde && <span>{formatDate(c.disponible_desde)}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             ) : (
               <p className="vv-detalle-empty">Sin comisiones registradas</p>
             )}
