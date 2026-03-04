@@ -493,6 +493,38 @@
   margin-top: 4px;
 }
 
+/* ═══ INTERNAL TABS (e.g. AjustesCalendario) ═══ */
+.aj-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.aj-tabs::-webkit-scrollbar { display: none; }
+
+.aj-tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+}
+.aj-tab:hover {
+  color: var(--text);
+}
+.aj-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
 .aj-cal-section {
   margin-bottom: 0;
 }

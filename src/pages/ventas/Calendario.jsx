@@ -3,11 +3,6 @@ import { useCalendario } from '../../hooks/useCalendario'
 import { useAuth } from '../../contexts/AuthContext'
 import CalendarioVista, { MESES } from '../../components/ventas/CalendarioVista'
 import CalendarioCitaDetalle from '../../components/ventas/CalendarioCitaDetalle'
-import CalendarioDisponibilidad from '../../components/ventas/CalendarioDisponibilidad'
-import CalendarioBloqueos from '../../components/ventas/CalendarioBloqueos'
-import CalendarioConfig from '../../components/ventas/CalendarioConfig'
-import CalendarioEnlaces from '../../components/ventas/CalendarioEnlaces'
-import CalendarioAdminPanel from '../../components/ventas/CalendarioAdminPanel'
 import Select from '../../components/ui/Select'
 import '../../styles/ventas-calendario.css'
 
@@ -22,28 +17,6 @@ const ChevronRight = () => (
     <polyline points="9 18 15 12 9 6"/>
   </svg>
 )
-
-function getTabsForPermissions(tienePermiso) {
-  const tabs = [{ key: 'calendario', label: 'Calendario' }]
-
-  if (tienePermiso('ventas.calendario.disponibilidad')) {
-    tabs.push({ key: 'disponibilidad', label: 'Mi disponibilidad' })
-  }
-  if (tienePermiso('ventas.calendario.bloqueos')) {
-    tabs.push({ key: 'bloqueos', label: 'Mis bloqueos' })
-  }
-  if (tienePermiso('ventas.calendario.disponibilidad')) {
-    tabs.push({ key: 'config', label: 'Configuración' })
-  }
-  if (tienePermiso('ventas.calendario.reasignar')) {
-    tabs.push({ key: 'equipo', label: 'Gestión de equipo' })
-  }
-  if (tienePermiso('ventas.calendario.enlaces')) {
-    tabs.push({ key: 'enlaces', label: 'Enlaces de agenda' })
-  }
-
-  return tabs
-}
 
 function formatTituloNav(vista, fecha) {
   if (vista === 'mes') {
@@ -67,10 +40,7 @@ function formatTituloNav(vista, fecha) {
 export default function VentasCalendario() {
   const cal = useCalendario()
   const { tienePermiso } = useAuth()
-  const [tab, setTab] = useState('calendario')
   const [citaDetalle, setCitaDetalle] = useState(null)
-
-  const tabs = getTabsForPermissions(tienePermiso)
 
   const handleClickDia = (fecha) => {
     cal.setFechaActual(fecha)
@@ -81,11 +51,6 @@ export default function VentasCalendario() {
     setCitaDetalle(cita)
   }
 
-  const handleVerCalendarioCloser = (closerId) => {
-    cal.setCloserFiltro(closerId)
-    setTab('calendario')
-  }
-
   return (
     <div className="vc-page">
       {/* Header */}
@@ -93,120 +58,60 @@ export default function VentasCalendario() {
         <h1>Calendario</h1>
       </div>
 
-      {/* Tabs */}
-      <div className="vc-tabs" role="tablist" aria-label="Secciones del calendario">
-        {tabs.map(t => (
-          <button
-            key={t.key}
-            className={`vc-tab${tab === t.key ? ' active' : ''}`}
-            onClick={() => setTab(t.key)}
-            role="tab"
-            aria-selected={tab === t.key}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Calendar controls - only on calendar tab */}
-      {tab === 'calendario' && (
-        <div className="vc-controles">
-          <div className="vc-nav">
-            <button className="vc-nav-btn" onClick={cal.irAnterior} aria-label="Periodo anterior"><ChevronLeft /></button>
-            <button className="vc-nav-hoy" onClick={cal.irHoy}>Hoy</button>
-            <button className="vc-nav-btn" onClick={cal.irSiguiente} aria-label="Periodo siguiente"><ChevronRight /></button>
-            <span className="vc-nav-titulo">{formatTituloNav(cal.vista, cal.fechaActual)}</span>
-          </div>
-
-          <div className="vc-controles-right">
-            {/* Vista selector */}
-            <div className="vc-vista-selector" role="group" aria-label="Tipo de vista">
-              {[{ key: 'semana', label: 'Semana' }, { key: 'mes', label: 'Mes' }, { key: 'dia', label: 'Día' }].map(v => (
-                <button
-                  key={v.key}
-                  className={`vc-vista-btn${cal.vista === v.key ? ' active' : ''}`}
-                  onClick={() => cal.setVista(v.key)}
-                  aria-pressed={cal.vista === v.key}
-                >
-                  {v.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Closer filter (admin only) */}
-            {tienePermiso('ventas.calendario.reasignar') && cal.closers.length > 0 && (
-              <Select
-                value={cal.closerFiltro || ''}
-                onChange={e => cal.setCloserFiltro(e.target.value || null)}
-              >
-                <option value="">Todos los closers</option>
-                {cal.closers.map(c => (
-                  <option key={c.id} value={c.id}>{c.nombre || c.email}</option>
-                ))}
-              </Select>
-            )}
-          </div>
+      {/* Calendar controls */}
+      <div className="vc-controles">
+        <div className="vc-nav">
+          <button className="vc-nav-btn" onClick={cal.irAnterior} aria-label="Periodo anterior"><ChevronLeft /></button>
+          <button className="vc-nav-hoy" onClick={cal.irHoy}>Hoy</button>
+          <button className="vc-nav-btn" onClick={cal.irSiguiente} aria-label="Periodo siguiente"><ChevronRight /></button>
+          <span className="vc-nav-titulo">{formatTituloNav(cal.vista, cal.fechaActual)}</span>
         </div>
-      )}
+
+        <div className="vc-controles-right">
+          {/* Vista selector */}
+          <div className="vc-vista-selector" role="group" aria-label="Tipo de vista">
+            {[{ key: 'semana', label: 'Semana' }, { key: 'mes', label: 'Mes' }, { key: 'dia', label: 'Dia' }].map(v => (
+              <button
+                key={v.key}
+                className={`vc-vista-btn${cal.vista === v.key ? ' active' : ''}`}
+                onClick={() => cal.setVista(v.key)}
+                aria-pressed={cal.vista === v.key}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Closer filter (admin only) */}
+          {tienePermiso('ventas.calendario.reasignar') && cal.closers.length > 0 && (
+            <Select
+              value={cal.closerFiltro || ''}
+              onChange={e => cal.setCloserFiltro(e.target.value || null)}
+            >
+              <option value="">Todos los closers</option>
+              {cal.closers.map(c => (
+                <option key={c.id} value={c.id}>{c.nombre || c.email}</option>
+              ))}
+            </Select>
+          )}
+        </div>
+      </div>
 
       {cal.error && <div className="vc-error-msg" role="alert">{cal.error}</div>}
 
-      {/* Main content */}
-      {tab === 'calendario' && (
-        cal.loading && cal.citas.length === 0 ? (
-          <div className="vc-loading">Cargando calendario...</div>
-        ) : (
-          <CalendarioVista
-            vista={cal.vista}
-            fechaActual={cal.fechaActual}
-            citas={cal.citas}
-            bloqueos={cal.bloqueos}
-            onClickDia={handleClickDia}
-            onClickCita={handleClickCita}
-            esDirector={cal.esDirector}
-            esBloqueado={cal.esBloqueado}
-          />
-        )
-      )}
-
-      {tab === 'disponibilidad' && tienePermiso('ventas.calendario.disponibilidad') && (
-        <CalendarioDisponibilidad
-          disponibilidad={cal.disponibilidad}
-          onGuardar={cal.guardarDisponibilidad}
-          minimoHoras={cal.config?.minimo_horas_semana}
-        />
-      )}
-
-      {tab === 'bloqueos' && tienePermiso('ventas.calendario.bloqueos') && (
-        <CalendarioBloqueos
+      {/* Calendar view */}
+      {cal.loading && cal.citas.length === 0 ? (
+        <div className="vc-loading">Cargando calendario...</div>
+      ) : (
+        <CalendarioVista
+          vista={cal.vista}
+          fechaActual={cal.fechaActual}
+          citas={cal.citas}
           bloqueos={cal.bloqueos}
-          onCrear={cal.crearBloqueo}
-          onEliminar={cal.eliminarBloqueo}
-        />
-      )}
-
-      {tab === 'config' && tienePermiso('ventas.calendario.disponibilidad') && (
-        <CalendarioConfig
-          config={cal.config}
-          onGuardar={cal.guardarConfig}
-        />
-      )}
-
-      {tab === 'equipo' && tienePermiso('ventas.calendario.reasignar') && (
-        <CalendarioAdminPanel
-          cargarClosersConConfig={cal.cargarClosersConConfig}
-          onActualizarMinimoHoras={cal.actualizarMinimoHoras}
-          onVerCalendario={handleVerCalendarioCloser}
-        />
-      )}
-
-      {tab === 'enlaces' && tienePermiso('ventas.calendario.enlaces') && (
-        <CalendarioEnlaces
-          enlaces={cal.enlaces}
-          setters={cal.setters}
-          onCrear={cal.crearEnlace}
-          onActualizar={cal.actualizarEnlace}
-          onEliminar={cal.eliminarEnlace}
+          onClickDia={handleClickDia}
+          onClickCita={handleClickCita}
+          esDirector={cal.esDirector}
+          esBloqueado={cal.esBloqueado}
         />
       )}
 
