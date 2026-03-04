@@ -285,14 +285,14 @@ export default function Layout() {
 
   const defaultNavigation = [
     { id: 'ventas', name: 'Ventas', href: '/ventas', icon: Icons.ShoppingCart, permiso: null, type: 'submenu', children: [
-      { name: 'Dashboard', href: '/ventas/dashboard', icon: Icons.TrendingUp, permiso: 'ventas.ver_dashboard' },
-      { name: 'Notificaciones', href: '/ventas/notificaciones', icon: Icons.Bell, permiso: 'ventas.ver_notificaciones' },
-      { name: 'CRM', href: '/ventas/crm', icon: Icons.UserCheck, permiso: 'ventas.ver_crm' },
-      { name: 'Ventas', href: '/ventas/ventas', icon: Icons.DollarSign, permiso: 'ventas.ver_ventas' },
-      { name: 'Biblioteca', href: '/ventas/biblioteca', icon: Icons.BookOpen, permiso: 'ventas.ver_biblioteca' },
-      { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet, permiso: 'ventas.ver_wallet' },
-      { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar, permiso: 'ventas.ver_calendario' },
-      { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ver_ajustes' },
+      { name: 'Dashboard', href: '/ventas/dashboard', icon: Icons.TrendingUp, permiso: 'ventas.dashboard.ver' },
+      { name: 'Notificaciones', href: '/ventas/notificaciones', icon: Icons.Bell, permiso: 'ventas.notificaciones.ver' },
+      { name: 'CRM', href: '/ventas/crm', icon: Icons.UserCheck, permiso: 'ventas.crm.ver' },
+      { name: 'Ventas', href: '/ventas/ventas', icon: Icons.DollarSign, permiso: 'ventas.ventas.ver' },
+      { name: 'Biblioteca', href: '/ventas/biblioteca', icon: Icons.BookOpen, permiso: 'ventas.biblioteca.ver' },
+      { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet, permiso: 'ventas.wallet.ver' },
+      { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar, permiso: 'ventas.calendario.ver' },
+      { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ajustes.ver' },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [
       { name: 'Dashboard', href: '/dashboard', icon: Icons.Dashboard, permiso: 'dashboard.ver' },

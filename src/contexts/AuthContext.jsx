@@ -38,8 +38,14 @@ export function AuthProvider({ children }) {
         const { data: todosPermisos } = await supabase.from('permisos').select('codigo')
         setPermisos(todosPermisos?.map(p => p.codigo) || [])
       } else {
-        const { data: permisosData } = await supabase.rpc('obtener_permisos_usuario', { p_usuario_id: usuarioData.id })
-        setPermisos(permisosData?.map(p => p.codigo) || [])
+        // Cargar permisos base del rol + permisos ventas comerciales en paralelo
+        const [{ data: permisosData }, { data: ventasPermisos }] = await Promise.all([
+          supabase.rpc('obtener_permisos_usuario', { p_usuario_id: usuarioData.id }),
+          supabase.rpc('obtener_permisos_ventas_usuario', { p_usuario_id: usuarioData.id }),
+        ])
+        const base = permisosData?.map(p => p.codigo) || []
+        const ventas = ventasPermisos?.map(p => p.codigo) || []
+        setPermisos([...new Set([...base, ...ventas])])
       }
 
       // Actualizar ultimo acceso solo en login fresco (evita PATCH 400 por JWT en refresh)

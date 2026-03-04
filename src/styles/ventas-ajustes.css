@@ -1747,6 +1747,358 @@
   }
 }
 
+/* ═══ PERMISOS PANEL ═══ */
+.aj-perm-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.aj-perm-tab {
+  padding: 8px 20px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+}
+
+.aj-perm-tab:hover { color: var(--text); }
+.aj-perm-tab.active {
+  color: var(--text);
+  font-weight: 700;
+  border-bottom-color: var(--primary);
+}
+
+/* Matrix header */
+.aj-perm-matrix-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.aj-perm-label-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.aj-perm-role-col {
+  width: 90px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.aj-perm-override-col {
+  width: 120px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Group headers */
+.aj-perm-group {
+  margin-bottom: 4px;
+}
+
+.aj-perm-group-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  user-select: none;
+}
+
+.aj-perm-group-header:hover {
+  background: var(--bg-card);
+}
+
+.aj-perm-count {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+/* Permission rows */
+.aj-perm-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px 8px 36px;
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition-fast);
+}
+
+.aj-perm-row:hover {
+  background: var(--bg-input);
+}
+
+.aj-perm-row:last-child {
+  border-bottom: none;
+}
+
+.aj-perm-row-override {
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.aj-perm-name {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.aj-perm-desc {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* Checkbox styling */
+.aj-perm-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.aj-perm-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Toggle all button */
+.aj-perm-toggle-all {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.aj-perm-toggle-all.all {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-inverse);
+}
+
+.aj-perm-toggle-all.some {
+  background: rgba(102, 126, 234, 0.3);
+  border-color: var(--primary);
+  color: var(--text-inverse);
+}
+
+/* Actions bar */
+.aj-perm-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+}
+
+.aj-perm-dirty {
+  font-size: 0.8rem;
+  color: var(--warning);
+  font-weight: 500;
+}
+
+.aj-btn-ghost.aj-btn-danger {
+  color: var(--error);
+  border-color: color-mix(in srgb, var(--error) 30%, transparent);
+}
+
+.aj-btn-ghost.aj-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* User selection */
+.aj-perm-user-select {
+  margin-bottom: var(--space-lg);
+}
+
+.aj-perm-user-select label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.aj-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+}
+
+.aj-select:focus {
+  border-color: var(--border-focus);
+}
+
+/* User info panel */
+.aj-perm-user-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.aj-perm-user-email {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.aj-perm-user-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.aj-perm-count-effective {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.aj-perm-override-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.15);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+/* Override header */
+.aj-perm-override-header .aj-perm-label-col {
+  font-size: 0.72rem;
+}
+
+/* Inherited badge */
+.aj-perm-inherited {
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.aj-perm-inherited.granted {
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.aj-perm-inherited.denied {
+  color: var(--text-muted);
+  background: var(--bg-input);
+}
+
+/* Override buttons */
+.aj-perm-override-btns {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.aj-perm-obtn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  font-family: inherit;
+}
+
+.aj-perm-obtn:hover {
+  background: var(--bg-input);
+  color: var(--text);
+}
+
+.aj-perm-obtn.active.grant {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.aj-perm-obtn.active.deny {
+  background: var(--error);
+  border-color: var(--error);
+  color: #fff;
+}
+
+/* Permisos responsive */
+@media (max-width: 768px) {
+  .aj-perm-role-col {
+    width: 60px;
+  }
+  .aj-perm-override-col {
+    width: 90px;
+  }
+  .aj-perm-row {
+    padding-left: 20px;
+  }
+  .aj-perm-desc {
+    display: none;
+  }
+  .aj-perm-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 /* ── Print ────────────────────────────────────────────────────────── */
 @media print {
   .aj-sidebar,

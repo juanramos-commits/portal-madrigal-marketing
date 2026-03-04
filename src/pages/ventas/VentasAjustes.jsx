@@ -12,6 +12,7 @@ import AjustesWebhooks from '../../components/ventas/AjustesWebhooks'
 import AjustesReunionEstados from '../../components/ventas/AjustesReunionEstados'
 import AjustesCamposObligatorios from '../../components/ventas/AjustesCamposObligatorios'
 import AjustesLog from '../../components/ventas/AjustesLog'
+import AjustesPermisos from '../../components/ventas/AjustesPermisos'
 import '../../styles/ventas-ajustes.css'
 import '../../styles/ventas-calendario.css'
 
@@ -81,6 +82,11 @@ const ActivityIcon = () => (
     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
   </svg>
 )
+const ShieldIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="aj-icon-nav" aria-hidden="true">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+)
 const ChevronLeftIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="aj-icon-back" aria-hidden="true">
     <polyline points="15 18 9 12 15 6"/>
@@ -114,6 +120,7 @@ const SECCIONES = [
       { id: 'reunion_estados', label: 'Estados de reunion', icon: VideoIcon, minRole: 'admin' },
       { id: 'campos_obligatorios', label: 'Campos obligatorios', icon: CheckSquareIcon, minRole: 'admin' },
       { id: 'log', label: 'Log de actividad', icon: ActivityIcon, minRole: 'admin' },
+      { id: 'permisos', label: 'Permisos', icon: ShieldIcon, minRole: 'admin' },
     ],
   },
 ]
@@ -267,6 +274,8 @@ export default function VentasAjustes() {
             onCargar={ajustes.cargarActividad}
           />
         )
+      case 'permisos':
+        return <AjustesPermisos />
       default:
         return null
     }

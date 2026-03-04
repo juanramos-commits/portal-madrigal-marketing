@@ -62,7 +62,7 @@ function SmartRedirect() {
   if (usuario?.tipo === 'cliente') return <Navigate to="/mi-cuenta" replace />
   // Esperar a que los permisos estén cargados antes de decidir
   if (usuario && usuario.tipo !== 'super_admin' && permisos.length === 0) return null
-  if (tienePermiso('ventas.ver_dashboard')) return <Navigate to="/ventas/dashboard" replace />
+  if (tienePermiso('ventas.dashboard.ver')) return <Navigate to="/ventas/dashboard" replace />
   if (tienePermiso('dashboard.ver')) return <Navigate to="/dashboard" replace />
   return <Navigate to="/mi-seguridad" replace />
 }
@@ -95,15 +95,15 @@ function App() {
             <Route path="mi-cuenta" element={<ClienteDashboard />} />
             <Route path="clientes" element={<PermissionRoute permiso="clientes.ver_lista"><TablaClientesAvanzada /></PermissionRoute>} />
             <Route path="clientes/:id" element={<PermissionRoute permiso="clientes.ver_detalle"><ClienteDetalleAvanzado /></PermissionRoute>} />
-            <Route path="ventas/dashboard" element={<PermissionRoute permiso="ventas.ver_dashboard"><VentasDashboard /></PermissionRoute>} />
-            <Route path="ventas/notificaciones" element={<PermissionRoute permiso="ventas.ver_notificaciones"><VentasNotificaciones /></PermissionRoute>} />
-            <Route path="ventas/crm" element={<PermissionRoute permiso="ventas.ver_crm"><VentasCRM /></PermissionRoute>} />
-            <Route path="ventas/crm/lead/:id" element={<PermissionRoute permiso="ventas.ver_crm"><CRMLeadDetalle /></PermissionRoute>} />
-            <Route path="ventas/ventas" element={<PermissionRoute permiso="ventas.ver_ventas"><VentasVentas /></PermissionRoute>} />
-            <Route path="ventas/biblioteca" element={<PermissionRoute permiso="ventas.ver_biblioteca"><VentasBiblioteca /></PermissionRoute>} />
-            <Route path="ventas/wallet" element={<PermissionRoute permiso="ventas.ver_wallet"><VentasWallet /></PermissionRoute>} />
-            <Route path="ventas/calendario" element={<PermissionRoute permiso="ventas.ver_calendario"><VentasCalendario /></PermissionRoute>} />
-            <Route path="ventas/ajustes" element={<PermissionRoute permiso="ventas.ver_ajustes"><VentasAjustes /></PermissionRoute>} />
+            <Route path="ventas/dashboard" element={<PermissionRoute permiso="ventas.dashboard.ver"><VentasDashboard /></PermissionRoute>} />
+            <Route path="ventas/notificaciones" element={<PermissionRoute permiso="ventas.notificaciones.ver"><VentasNotificaciones /></PermissionRoute>} />
+            <Route path="ventas/crm" element={<PermissionRoute permiso="ventas.crm.ver"><VentasCRM /></PermissionRoute>} />
+            <Route path="ventas/crm/lead/:id" element={<PermissionRoute permiso="ventas.crm.ver"><CRMLeadDetalle /></PermissionRoute>} />
+            <Route path="ventas/ventas" element={<PermissionRoute permiso="ventas.ventas.ver"><VentasVentas /></PermissionRoute>} />
+            <Route path="ventas/biblioteca" element={<PermissionRoute permiso="ventas.biblioteca.ver"><VentasBiblioteca /></PermissionRoute>} />
+            <Route path="ventas/wallet" element={<PermissionRoute permiso="ventas.wallet.ver"><VentasWallet /></PermissionRoute>} />
+            <Route path="ventas/calendario" element={<PermissionRoute permiso="ventas.calendario.ver"><VentasCalendario /></PermissionRoute>} />
+            <Route path="ventas/ajustes" element={<PermissionRoute permiso="ventas.ajustes.ver"><VentasAjustes /></PermissionRoute>} />
 
             {/* Generales */}
             <Route path="notificaciones" element={<Notificaciones />} />
