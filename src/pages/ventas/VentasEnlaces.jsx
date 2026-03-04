@@ -28,16 +28,27 @@ export default function VentasEnlaces() {
     setLoading(true)
     const { data } = await supabase
       .from('ventas_enlaces_agenda')
-      .select('*, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email), creado_por:usuarios!ventas_enlaces_agenda_creado_por_id_fkey(id, nombre)')
+      .select('*')
       .order('created_at', { ascending: false })
 
+    // Load setters for each enlace
+    const enlacesList = data || []
+    const setterIds = [...new Set(enlacesList.filter(e => e.setter_id).map(e => e.setter_id))]
+    let settersMap = {}
+    if (setterIds.length > 0) {
+      const { data: settersData } = await supabase.from('usuarios').select('id, nombre, email').in('id', setterIds)
+      for (const s of (settersData || [])) settersMap[s.id] = s
+    }
+    for (const e of enlacesList) {
+      e.setter = e.setter_id ? settersMap[e.setter_id] || null : null
+    }
+
     // Load closers for each enlace
-    const enlacesData = data || []
-    if (enlacesData.length > 0) {
+    if (enlacesList.length > 0) {
       const { data: vecData } = await supabase
         .from('ventas_enlaces_closers')
         .select('enlace_id, closer_id')
-        .in('enlace_id', enlacesData.map(e => e.id))
+        .in('enlace_id', enlacesList.map(e => e.id))
 
       const closersByEnlace = {}
       for (const vec of (vecData || [])) {
@@ -45,12 +56,12 @@ export default function VentasEnlaces() {
         closersByEnlace[vec.enlace_id].push(vec.closer_id)
       }
 
-      for (const e of enlacesData) {
+      for (const e of enlacesList) {
         e.closer_ids = closersByEnlace[e.id] || []
       }
     }
 
-    setEnlaces(enlacesData)
+    setEnlaces(enlacesList)
     setLoading(false)
   }, [])
 
@@ -69,9 +80,17 @@ export default function VentasEnlaces() {
         activo: true,
         creado_por_id: user?.id,
       })
-      .select('*, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email)')
+      .select('*')
       .single()
     if (error) throw error
+
+    // Load setter if present
+    if (data.setter_id) {
+      const { data: setter } = await supabase.from('usuarios').select('id, nombre, email').eq('id', data.setter_id).single()
+      data.setter = setter
+    } else {
+      data.setter = null
+    }
 
     // Insert closers
     if (enlace.closer_ids?.length > 0) {
@@ -88,22 +107,46 @@ export default function VentasEnlaces() {
 
   const actualizarEnlace = useCallback(async (enlaceId, campos) => {
     const { closer_ids, ...dbCampos } = campos
-    const { data, error } = await supabase
+
+    const { data: rows, error } = await supabase
       .from('ventas_enlaces_agenda')
       .update({ ...dbCampos, updated_at: new Date().toISOString() })
       .eq('id', enlaceId)
-      .select('*, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email)')
-      .single()
-    if (error) throw error
+      .select('*')
+    if (error) {
+      console.error('Error updating enlace:', error)
+      throw error
+    }
+    const data = rows?.[0]
+    if (!data) throw new Error('No se pudo actualizar el enlace')
+
+    // Load setter separately if needed
+    if (data.setter_id) {
+      const { data: setter } = await supabase
+        .from('usuarios')
+        .select('id, nombre, email')
+        .eq('id', data.setter_id)
+        .single()
+      data.setter = setter
+    } else {
+      data.setter = null
+    }
 
     // Update closers if provided
     if (closer_ids !== undefined) {
-      await supabase.from('ventas_enlaces_closers').delete().eq('enlace_id', enlaceId)
+      const { error: delError } = await supabase.from('ventas_enlaces_closers').delete().eq('enlace_id', enlaceId)
+      if (delError) {
+        console.error('Error deleting closers:', delError)
+        throw delError
+      }
       if (closer_ids.length > 0) {
         const { error: vecError } = await supabase
           .from('ventas_enlaces_closers')
           .insert(closer_ids.map(cid => ({ enlace_id: enlaceId, closer_id: cid })))
-        if (vecError) throw vecError
+        if (vecError) {
+          console.error('Error inserting closers:', vecError)
+          throw vecError
+        }
       }
       data.closer_ids = closer_ids
     }
