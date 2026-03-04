@@ -627,16 +627,18 @@ export function useAjustes() {
 
   // ═══ REPARTO ═══
   const cargarReparto = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_reparto_config')
-      .select('*, usuario:usuarios!ventas_reparto_config_setter_id_fkey(id, nombre, email)')
+      .select('*')
       .order('updated_at', { ascending: false, nullsFirst: false })
-    setRepartoConfig(data?.map(r => ({ ...r, usuario_id: r.setter_id })) || [])
+    if (error) { console.error('[Reparto] Error cargando config:', error); return }
+    setRepartoConfig((data || []).map(r => ({ ...r, usuario_id: r.setter_id })))
   }, [])
 
   const guardarReparto = useCallback(async (configs) => {
     // Delete existing
-    await supabase.from('ventas_reparto_config').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    const { error: delError } = await supabase.from('ventas_reparto_config').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    if (delError) throw delError
     // Insert new
     if (configs.length > 0) {
       const { error } = await supabase
