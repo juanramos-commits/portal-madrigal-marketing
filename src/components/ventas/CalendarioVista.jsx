@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import CalendarioCita from './CalendarioCita'
+import CalendarioCita, { getColorCita } from './CalendarioCita'
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
 const DIAS_CORTOS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
@@ -284,6 +284,7 @@ function VistaDiaria({ fechaActual, citas, bloqueos, onClickCita, esDirector, es
                   <div
                     key={c._isGoogleEvent ? `g-${c.id}` : c.id}
                     className={`vc-dia-cita${c._isGoogleEvent ? ' vc-google-event' : ''}`}
+                    style={{ borderLeftColor: getColorCita(c) }}
                     role="button"
                     tabIndex={0}
                     onClick={() => onClickCita(c)}

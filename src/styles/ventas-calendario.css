@@ -6,7 +6,7 @@
 .vc-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-lg);
   min-height: 100%;
 }
 
@@ -68,36 +68,38 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: transparent;
+  background: var(--bg-card);
   color: var(--text-muted);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.vc-nav-btn:hover { background: var(--bg-skeleton); color: var(--text); }
+.vc-nav-btn:hover { background: var(--bg-skeleton); color: var(--text); border-color: var(--border-hover); }
 
 .vc-nav-hoy {
-  height: 34px;
-  padding: 0 var(--space-sm);
+  height: 36px;
+  padding: 0 var(--space-3);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: 1px solid var(--primary);
   background: transparent;
-  color: var(--text);
+  color: var(--primary);
   font-size: var(--font-sm-md);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.vc-nav-hoy:hover { background: var(--bg-skeleton); }
+.vc-nav-hoy:hover { background: var(--primary); color: var(--text-inverse); }
 
 .vc-nav-titulo {
-  font-size: var(--font-base);
-  font-weight: var(--weight-semibold);
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
   color: var(--text);
   white-space: nowrap;
+  letter-spacing: -0.01em;
+  margin-left: var(--space-sm);
 }
 
 .vc-controles-right {
@@ -111,24 +113,27 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  height: 34px;
+  height: 36px;
+  background: var(--bg-card);
 }
 
 .vc-vista-btn {
-  padding: 0 var(--space-sm);
+  padding: 0 var(--space-3);
   height: 100%;
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: var(--font-sm-md);
-  font-weight: var(--weight-medium);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
   transition: all var(--transition-fast);
   border-right: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .vc-vista-btn:last-child { border-right: none; }
 .vc-vista-btn:hover { background: var(--bg-skeleton); color: var(--text); }
-.vc-vista-btn.active { background: var(--bg-active); color: var(--text); }
+.vc-vista-btn.active { background: var(--primary); color: var(--text-inverse); }
 
 .vc-controles-right .ui-field {
   margin-bottom: 0;
@@ -145,23 +150,24 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  background: var(--bg-card);
 }
 
 .vc-mes-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background: rgba(255,255,255,0.02);
+  background: rgba(255,255,255,0.03);
   border-bottom: 1px solid var(--border);
 }
 
 .vc-mes-dia-nombre {
-  padding: var(--space-sm);
+  padding: var(--space-2-5) var(--space-sm);
   text-align: center;
-  font-size: var(--font-xs);
-  font-weight: var(--weight-semibold);
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-bold);
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.08em;
 }
 
 .vc-mes-grid {
@@ -170,48 +176,57 @@
 }
 
 .vc-mes-celda {
-  min-height: 90px;
+  min-height: 100px;
   padding: var(--space-xs);
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), box-shadow var(--transition-fast);
   overflow: hidden;
 }
 .vc-mes-celda:nth-child(7n) { border-right: none; }
-.vc-mes-celda:hover { background: rgba(255,255,255,0.02); }
-.vc-mes-celda.vc-otro-mes { opacity: 0.35; }
-.vc-mes-celda.vc-hoy { background: var(--bg-active); }
+.vc-mes-celda:hover { background: rgba(255,255,255,0.03); }
+.vc-mes-celda.vc-otro-mes { opacity: 0.3; }
+.vc-mes-celda.vc-hoy {
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
+  box-shadow: inset 0 2px 0 0 var(--primary);
+}
 
 .vc-mes-numero {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--space-lg);
-  height: var(--space-lg);
-  font-size: var(--font-sm);
+  width: 28px;
+  height: 28px;
+  font-size: var(--font-sm-md);
   font-weight: var(--weight-medium);
-  color: var(--text);
+  color: var(--text-muted);
   margin-bottom: var(--space-2xs);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
 }
+
+.vc-mes-celda:hover .vc-mes-numero { color: var(--text); }
 
 .vc-hoy-numero {
   background: var(--primary);
-  color: var(--text-inverse);
-  border-radius: 50%;
+  color: var(--text-inverse) !important;
+  border-radius: var(--radius-sm);
   font-weight: var(--weight-bold);
 }
 
 .vc-mes-citas {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2xs);
+  gap: 3px;
 }
 
 .vc-mes-mas {
   font-size: var(--font-2xs);
-  color: var(--text-muted);
+  color: var(--primary);
+  font-weight: var(--weight-semibold);
   padding: 1px var(--space-xs);
+  cursor: pointer;
 }
 
 /* Dots for mobile month view */
@@ -242,29 +257,32 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  padding: 1px var(--space-xs);
-  border-radius: 3px;
-  background: rgba(255,255,255,0.04);
+  padding: var(--space-2xs) var(--space-xs);
+  border-radius: var(--radius-xs);
+  background: rgba(255,255,255,0.05);
   border: none;
   border-left: 3px solid var(--status-onboarding-text);
   cursor: pointer;
   text-align: left;
   width: 100%;
-  transition: background var(--transition-fast);
+  transition: all var(--transition-fast);
   overflow: hidden;
 }
-.vc-cita-bloque:hover { background: rgba(255,255,255,0.08); }
+.vc-cita-bloque:hover {
+  background: rgba(255,255,255,0.10);
+  transform: translateX(1px);
+}
 
 .vc-cita-hora {
   font-size: var(--font-2xs);
-  font-weight: var(--weight-semibold);
-  color: var(--text-muted);
+  font-weight: var(--weight-bold);
+  color: var(--text);
   flex-shrink: 0;
 }
 
 .vc-cita-nombre {
   font-size: var(--font-2xs);
-  color: var(--text);
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -283,12 +301,13 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  background: var(--bg-card);
 }
 
 .vc-semana-header {
   display: grid;
   grid-template-columns: 50px repeat(7, 1fr);
-  background: rgba(255,255,255,0.02);
+  background: rgba(255,255,255,0.03);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -303,33 +322,38 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--space-1-5) var(--space-xs);
+  padding: var(--space-sm) var(--space-xs);
   gap: var(--space-2xs);
+  transition: background var(--transition-fast);
 }
-.vc-semana-dia-header.vc-hoy { background: var(--bg-active); }
+.vc-semana-dia-header.vc-hoy {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
 
 .vc-semana-dia-nombre {
-  font-size: var(--font-xs);
-  font-weight: var(--weight-semibold);
+  font-size: var(--font-2xs);
+  font-weight: var(--weight-bold);
   color: var(--text-muted);
   text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .vc-semana-dia-num {
-  font-size: var(--font-base);
-  font-weight: var(--weight-medium);
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
   color: var(--text);
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-sm);
 }
 
 .vc-semana-dia-num.vc-hoy-numero {
   background: var(--primary);
   color: var(--text-inverse);
-  border-radius: 50%;
+  border-radius: var(--radius-sm);
   font-weight: var(--weight-bold);
 }
 
@@ -353,8 +377,10 @@
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  padding: var(--space-2xs) var(--space-1-5) 0;
+  padding: var(--space-2xs) var(--space-sm) 0;
   font-size: var(--font-2xs);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
   color: var(--text-muted);
   border-right: 1px solid var(--border);
   box-sizing: border-box;
@@ -378,9 +404,9 @@
   right: var(--space-2xs);
   border: none;
   border-left: 3px solid var(--status-onboarding-text);
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   background: rgba(255,255,255,0.06);
-  padding: var(--space-2xs) var(--space-xs);
+  padding: 3px var(--space-xs);
   cursor: pointer;
   text-align: left;
   overflow: hidden;
@@ -388,25 +414,29 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  transition: background var(--transition-fast);
+  transition: all var(--transition-fast);
 }
-.vc-semana-event:hover { background: rgba(255,255,255,0.12); }
+.vc-semana-event:hover {
+  background: rgba(255,255,255,0.14);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 2;
+}
 .vc-semana-event.vc-google-event {
   background: rgba(66, 133, 244, 0.12);
   border-left-color: #4285f4;
 }
-.vc-semana-event.vc-google-event:hover { background: rgba(66, 133, 244, 0.22); }
+.vc-semana-event.vc-google-event:hover { background: rgba(66, 133, 244, 0.25); }
 
 .vc-semana-event-time {
   font-size: var(--font-2xs);
-  font-weight: var(--weight-semibold);
-  color: var(--text-muted);
+  font-weight: var(--weight-bold);
+  color: var(--text);
   line-height: 1.2;
 }
 
 .vc-semana-event-name {
   font-size: var(--font-2xs);
-  color: var(--text);
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -419,16 +449,18 @@
 }
 
 .vc-dia-titulo {
-  font-size: 15px;
-  font-weight: var(--weight-semibold);
+  font-size: var(--font-lg);
+  font-weight: var(--weight-bold);
   color: var(--text);
   text-transform: capitalize;
+  letter-spacing: -0.01em;
 }
 
 .vc-dia-body {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  background: var(--bg-card);
 }
 
 .vc-dia-fila {
@@ -446,8 +478,10 @@
 }
 
 .vc-dia-hora-label {
-  padding: var(--space-sm) var(--space-1-5);
+  padding: var(--space-sm) var(--space-sm);
   font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
   color: var(--text-muted);
   text-align: right;
   border-right: 1px solid var(--border);
@@ -465,30 +499,38 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-3);
+  padding: var(--space-2-5) var(--space-3);
   background: rgba(255,255,255,0.04);
   border-radius: var(--radius-sm);
+  border-left: 3px solid var(--status-onboarding-text);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: all var(--transition-fast);
 }
-.vc-dia-cita:hover { background: rgba(255,255,255,0.08); }
+.vc-dia-cita:hover {
+  background: rgba(255,255,255,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transform: translateX(2px);
+}
 
 .vc-dia-cita-hora {
   font-size: var(--font-sm-md);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   color: var(--text);
   flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .vc-dia-cita-nombre {
   font-size: var(--font-sm-md);
   color: var(--text);
   flex: 1;
+  font-weight: var(--weight-medium);
 }
 
 .vc-dia-cita-closer {
   font-size: var(--font-sm);
   color: var(--text-muted);
+  font-style: italic;
 }
 
 /* ── Google Calendar events ───────────────────────────────────────── */
@@ -500,10 +542,9 @@
 .vc-google-event.vc-cita-bloque:hover { background: rgba(66, 133, 244, 0.18); }
 
 .vc-dia-cita.vc-google-event {
-  background: rgba(66, 133, 244, 0.1);
-  border-left: 3px solid #4285f4;
+  background: rgba(66, 133, 244, 0.08);
 }
-.vc-dia-cita.vc-google-event:hover { background: rgba(66, 133, 244, 0.18); }
+.vc-dia-cita.vc-google-event:hover { background: rgba(66, 133, 244, 0.15); }
 
 /* ── Current time line ────────────────────────────────────────────── */
 .vc-linea-ahora {
@@ -512,24 +553,27 @@
   right: 0;
   height: 2px;
   background: var(--error);
-  z-index: 1;
+  z-index: 3;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--error) 50%, transparent);
 }
 .vc-linea-ahora::before {
   content: '';
   position: absolute;
-  left: -4px;
-  top: -3px;
-  width: 8px;
-  height: 8px;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: var(--error);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--error) 40%, transparent);
 }
 
 /* ── Badges ───────────────────────────────────────────────────────── */
 .vc-badge {
   display: inline-flex;
-  padding: var(--space-2xs) var(--space-2-5);
-  border-radius: var(--radius-md);
+  align-items: center;
+  padding: 3px var(--space-2-5);
+  border-radius: var(--radius-full);
   font-size: var(--font-xs);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.3px;
@@ -538,10 +582,12 @@
 
 .vc-badge-sm {
   display: inline-flex;
-  padding: 1px var(--space-1-5);
-  border-radius: var(--radius-sm);
+  align-items: center;
+  padding: var(--space-2xs) var(--space-sm);
+  border-radius: var(--radius-full);
   font-size: var(--font-2xs);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.02em;
 }
 
 /* ── Responsive visibility ────────────────────────────────────────── */
@@ -1244,6 +1290,7 @@
   padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
   font-size: var(--font-base);
+  font-weight: var(--weight-medium);
 }
 
 .vc-empty {
@@ -1264,13 +1311,18 @@
   opacity: 0.5;
   z-index: 5;
   pointer-events: none;
+  backdrop-filter: blur(1px);
 }
 
 .vc-empty-state {
   text-align: center;
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
-  font-size: var(--font-sm-md);
+  font-size: var(--font-base);
+  font-weight: var(--weight-medium);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-sm);
 }
 
 .vc-error-msg {
@@ -1329,6 +1381,7 @@
 
   .vc-nav-titulo {
     font-size: var(--font-base);
+    margin-left: 0;
   }
 
   .vc-mes-celda {
@@ -1476,6 +1529,7 @@
   .vc-meet-link,
   .vc-cita-bloque,
   .vc-dia-cita,
+  .vc-semana-event,
   .vc-disp-dia,
   .vc-disp-del,
   .vc-disp-add,
@@ -1487,6 +1541,11 @@
   .vc-field-inline input,
   .vc-disp-franja input[type="time"] {
     transition: none;
+  }
+
+  .vc-cita-bloque:hover,
+  .vc-dia-cita:hover {
+    transform: none;
   }
 }
 
