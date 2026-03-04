@@ -1647,19 +1647,42 @@
 
 /* ── Responsive Breakpoints ────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .crm-toolbar-label {
-    display: none;
+  .crm-header {
+    gap: var(--space-2-5);
   }
 
-  .crm-search {
-    max-width: none;
-    flex-basis: 100%;
-    order: 10;
+  .crm-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .crm-toolbar-label {
+    display: none;
   }
 
   .crm-pipeline-tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+  }
+
+  .crm-pipeline-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .crm-header-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: nowrap;
+  }
+
+  .crm-search {
+    flex: 1;
+    min-width: 0;
+    max-width: none;
   }
 
   .crm-new-btn {
