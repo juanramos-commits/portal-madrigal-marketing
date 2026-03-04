@@ -141,7 +141,7 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
                 <p className="vc-gcal-desc">Calendario: {gcalCalendarId}</p>
               )}
               <p className="vc-gcal-desc">
-                Las citas se sincronizan automaticamente con Google Calendar. Se creara un enlace de Google Meet para cada cita.
+                Las citas se sincronizan bidireccionalmente con Google Calendar. Los cambios en Google Calendar (mover o cancelar eventos) se reflejaran automaticamente en el portal. Se creara un enlace de Google Meet para cada cita.
               </p>
               <button
                 className="vc-btn-sm vc-btn-danger-outline"

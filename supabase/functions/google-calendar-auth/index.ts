@@ -132,12 +132,67 @@ Deno.serve(async (req) => {
         scope: tokens.scope,
       }
 
+      // Set up Google Calendar push notification channel (bidirectional sync)
+      let channelId: string | null = null
+      let resourceId: string | null = null
+      let channelExpiration: number | null = null
+
+      try {
+        channelId = crypto.randomUUID()
+        const watchRes = await fetch(
+          `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/watch`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${tokens.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: channelId,
+              type: 'web_hook',
+              address: `${config.supabaseUrl}/functions/v1/google-calendar-watch`,
+              params: { ttl: '604800' }, // 7 days
+            }),
+          },
+        )
+        const watchData = await watchRes.json()
+        if (watchData.resourceId) {
+          resourceId = watchData.resourceId
+          channelExpiration = Number(watchData.expiration)
+        } else {
+          channelId = null // Watch failed, don't store
+        }
+      } catch {
+        channelId = null // Watch setup non-critical
+      }
+
+      // Get initial syncToken for incremental sync
+      let syncToken: string | null = null
+      try {
+        const syncRes = await fetch(
+          `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events?maxResults=1&timeMin=${encodeURIComponent(new Date().toISOString())}`,
+          {
+            headers: { Authorization: `Bearer ${tokens.access_token}` },
+          },
+        )
+        const syncData = await syncRes.json()
+        if (syncData.nextSyncToken) {
+          syncToken = syncData.nextSyncToken
+        }
+      } catch {
+        // Non-critical
+      }
+
       const { error: dbErr } = await supabase
         .from('ventas_calendario_config')
         .upsert({
           usuario_id: state.user_id,
           google_calendar_token: tokenData,
           google_calendar_id: calendarId,
+          google_channel_id: channelId,
+          google_resource_id: resourceId,
+          google_channel_expiration: channelExpiration,
+          google_sync_token: syncToken,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'usuario_id' })
 
@@ -161,15 +216,35 @@ Deno.serve(async (req) => {
       const userId = url.searchParams.get('user_id')
       if (!userId) return jsonResponse({ error: 'user_id is required' }, 400)
 
-      // Get current token
+      // Get current config (token + channel info)
       const { data: configData } = await supabase
         .from('ventas_calendario_config')
-        .select('google_calendar_token')
+        .select('google_calendar_token, google_channel_id, google_resource_id')
         .eq('usuario_id', userId)
         .maybeSingle()
 
-      // Revoke with Google (best effort)
       const token = configData?.google_calendar_token
+
+      // Stop watch channel (best effort)
+      if (configData?.google_channel_id && configData?.google_resource_id && token?.access_token) {
+        try {
+          await fetch(`${GOOGLE_CALENDAR_API}/channels/stop`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token.access_token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              id: configData.google_channel_id,
+              resourceId: configData.google_resource_id,
+            }),
+          })
+        } catch {
+          // Non-critical
+        }
+      }
+
+      // Revoke with Google (best effort)
       if (token?.access_token) {
         try {
           await fetch(`${GOOGLE_REVOKE_URL}?token=${token.access_token}`, { method: 'POST' })
@@ -178,12 +253,16 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Clear tokens in DB
+      // Clear all Google-related fields in DB
       await supabase
         .from('ventas_calendario_config')
         .update({
           google_calendar_token: null,
           google_calendar_id: null,
+          google_channel_id: null,
+          google_resource_id: null,
+          google_channel_expiration: null,
+          google_sync_token: null,
           updated_at: new Date().toISOString(),
         })
         .eq('usuario_id', userId)
