@@ -206,6 +206,13 @@ export default function CalendarioEnlaces({
                   {e.setter && <span>{e.setter.nombre || e.setter.email}</span>}
                   {e.fuente && <span>{e.fuente}</span>}
                 </div>
+                <div className="vc-closer-tags" style={{ marginTop: 6, marginBottom: 6 }}>
+                  {(e.closer_ids || []).map(cid => {
+                    const c = closers.find(x => x.id === cid)
+                    return c ? <span key={cid} className="vc-tag">{c.nombre || c.email}</span> : null
+                  })}
+                  {(!e.closer_ids || e.closer_ids.length === 0) && <span className="vc-cell-muted">Sin closers</span>}
+                </div>
                 <div className="vc-enlace-card-actions">
                   <button className="vc-btn-copy" onClick={() => copiarUrl(e.slug)}>
                     <CopyIcon /> {copiado === e.slug ? '¡Copiado!' : 'Copiar URL'}

@@ -23,46 +23,63 @@ export default function VentasEnlaces() {
 
   const [enlaces, setEnlaces] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
 
   const cargarEnlaces = useCallback(async () => {
-    setLoading(true)
-    const { data } = await supabase
-      .from('ventas_enlaces_agenda')
-      .select('*')
-      .order('created_at', { ascending: false })
+    try {
+      setLoading(true)
+      setLoadError(null)
 
-    // Load setters for each enlace
-    const enlacesList = data || []
-    const setterIds = [...new Set(enlacesList.filter(e => e.setter_id).map(e => e.setter_id))]
-    let settersMap = {}
-    if (setterIds.length > 0) {
-      const { data: settersData } = await supabase.from('usuarios').select('id, nombre, email').in('id', setterIds)
-      for (const s of (settersData || [])) settersMap[s.id] = s
-    }
-    for (const e of enlacesList) {
-      e.setter = e.setter_id ? settersMap[e.setter_id] || null : null
-    }
+      const { data, error } = await supabase
+        .from('ventas_enlaces_agenda')
+        .select('*')
+        .order('created_at', { ascending: false })
 
-    // Load closers for each enlace
-    if (enlacesList.length > 0) {
-      const { data: vecData } = await supabase
-        .from('ventas_enlaces_closers')
-        .select('enlace_id, closer_id')
-        .in('enlace_id', enlacesList.map(e => e.id))
-
-      const closersByEnlace = {}
-      for (const vec of (vecData || [])) {
-        if (!closersByEnlace[vec.enlace_id]) closersByEnlace[vec.enlace_id] = []
-        closersByEnlace[vec.enlace_id].push(vec.closer_id)
+      if (error) {
+        console.error('Error loading enlaces:', error)
+        setLoadError('Error al cargar enlaces')
+        setLoading(false)
+        return
       }
 
+      const enlacesList = data || []
+
+      // Load setters for each enlace
+      const setterIds = [...new Set(enlacesList.filter(e => e.setter_id).map(e => e.setter_id))]
+      let settersMap = {}
+      if (setterIds.length > 0) {
+        const { data: settersData } = await supabase.from('usuarios').select('id, nombre, email').in('id', setterIds)
+        for (const s of (settersData || [])) settersMap[s.id] = s
+      }
       for (const e of enlacesList) {
-        e.closer_ids = closersByEnlace[e.id] || []
+        e.setter = e.setter_id ? settersMap[e.setter_id] || null : null
       }
-    }
 
-    setEnlaces(enlacesList)
-    setLoading(false)
+      // Load closers for each enlace
+      if (enlacesList.length > 0) {
+        const { data: vecData } = await supabase
+          .from('ventas_enlaces_closers')
+          .select('enlace_id, closer_id')
+          .in('enlace_id', enlacesList.map(e => e.id))
+
+        const closersByEnlace = {}
+        for (const vec of (vecData || [])) {
+          if (!closersByEnlace[vec.enlace_id]) closersByEnlace[vec.enlace_id] = []
+          closersByEnlace[vec.enlace_id].push(vec.closer_id)
+        }
+
+        for (const e of enlacesList) {
+          e.closer_ids = closersByEnlace[e.id] || []
+        }
+      }
+
+      setEnlaces(enlacesList)
+    } catch (err) {
+      console.error('Error loading enlaces:', err)
+      setLoadError('Error al cargar enlaces')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -82,7 +99,10 @@ export default function VentasEnlaces() {
       })
       .select('*')
       .single()
-    if (error) throw error
+    if (error) {
+      console.error('Error creating enlace:', error)
+      throw error
+    }
 
     // Load setter if present
     if (data.setter_id) {
@@ -97,7 +117,10 @@ export default function VentasEnlaces() {
       const { error: vecError } = await supabase
         .from('ventas_enlaces_closers')
         .insert(enlace.closer_ids.map(cid => ({ enlace_id: data.id, closer_id: cid })))
-      if (vecError) throw vecError
+      if (vecError) {
+        console.error('Error inserting closers:', vecError)
+        throw vecError
+      }
     }
 
     data.closer_ids = enlace.closer_ids || []
@@ -159,7 +182,10 @@ export default function VentasEnlaces() {
       .from('ventas_enlaces_agenda')
       .delete()
       .eq('id', enlaceId)
-    if (error) throw error
+    if (error) {
+      console.error('Error deleting enlace:', error)
+      throw error
+    }
     setEnlaces(prev => prev.filter(e => e.id !== enlaceId))
   }, [])
 
@@ -171,6 +197,8 @@ export default function VentasEnlaces() {
 
       {loading ? (
         <div className="vc-loading">Cargando enlaces...</div>
+      ) : loadError ? (
+        <div className="vc-error-msg">{loadError}</div>
       ) : (
         <CalendarioEnlaces
           enlaces={enlaces}

@@ -3,7 +3,6 @@ import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import '../styles/reservar-cita.css'
 
-const DIAS_SEMANA = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 const ClockIcon = () => (
@@ -26,12 +25,28 @@ const ArrowLeft = () => (
 
 function formatFecha(date) {
   const d = new Date(date)
-  return `${DIAS_SEMANA[d.getDay()]} ${d.getDate()} de ${MESES[d.getMonth()]} ${d.getFullYear()}`
+  return d.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'Europe/Madrid',
+  })
 }
 
 function formatHora(date) {
   const d = new Date(date)
   return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' })
+}
+
+// Get date parts in Europe/Madrid timezone
+function getMadridDateParts(date) {
+  const d = new Date(date)
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    timeZone: 'Europe/Madrid',
+  }).format(d) // Returns YYYY-MM-DD
+  return parts
 }
 
 export default function ReservarCita() {
@@ -50,32 +65,47 @@ export default function ReservarCita() {
   const [error, setError] = useState(null)
   const [resultData, setResultData] = useState(null)
 
+  const [loadError, setLoadError] = useState(false)
+
   // Load enlace info + slots
   useEffect(() => {
     async function load() {
-      setLoading(true)
+      try {
+        setLoading(true)
+        setLoadError(false)
 
-      const [infoRes, slotsRes] = await Promise.all([
-        supabase.rpc('obtener_info_enlace_publico', { p_slug: slug }),
-        supabase.rpc('obtener_slots_disponibles', { p_slug: slug }),
-      ])
+        const [infoRes, slotsRes] = await Promise.all([
+          supabase.rpc('obtener_info_enlace_publico', { p_slug: slug }),
+          supabase.rpc('obtener_slots_disponibles', { p_slug: slug }),
+        ])
 
-      setEnlace(infoRes.data)
-      setSlots(slotsRes.data || [])
-      setLoading(false)
+        if (infoRes.error) {
+          console.error('Error loading enlace info:', infoRes.error)
+          setLoadError(true)
+          setLoading(false)
+          return
+        }
+
+        setEnlace(infoRes.data)
+        setSlots(slotsRes.data || [])
+      } catch (err) {
+        console.error('Error loading booking page:', err)
+        setLoadError(true)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [slug])
 
-  // Group slots by date string, deduplicate by time (keep first closer = least busy)
+  // Group slots by date string (Europe/Madrid), deduplicate by time (keep first closer = least busy)
   const slotsByDate = useMemo(() => {
     const map = {}
     for (const s of slots) {
-      const d = new Date(s.fecha_hora)
-      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const dateKey = getMadridDateParts(s.fecha_hora)
       if (!map[dateKey]) map[dateKey] = []
       // Deduplicate: only keep first closer per time
-      const timeStr = d.toISOString()
+      const timeStr = new Date(s.fecha_hora).toISOString()
       if (!map[dateKey].find(x => x.fecha_hora === timeStr)) {
         map[dateKey].push({ ...s, fecha_hora: timeStr })
       }
@@ -189,6 +219,16 @@ export default function ReservarCita() {
             <div className="rb-spinner" />
             <p>Cargando disponibilidad...</p>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="rb-page">
+        <div className="rb-container">
+          <div className="rb-not-found">Error al cargar. Por favor, recarga la pagina.</div>
         </div>
       </div>
     )
