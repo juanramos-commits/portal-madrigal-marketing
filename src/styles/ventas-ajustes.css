@@ -1377,13 +1377,9 @@
 }
 
 .aj-success {
-  padding: 10px var(--space-md);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--success) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--success) 20%, transparent);
   color: var(--success);
   font-size: 0.82rem;
-  margin-top: var(--space-sm);
+  font-weight: 500;
 }
 
 /* ═══ PERFIL ═══ */
