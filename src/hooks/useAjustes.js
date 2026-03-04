@@ -338,8 +338,8 @@ export function useAjustes() {
   }, [])
 
   const guardarComisionesConfig = useCallback(async (configs) => {
-    for (const cfg of configs) {
-      const { error } = await supabase
+    const updates = configs.map(cfg =>
+      supabase
         .from('ventas_comisiones_config')
         .update({
           comision_fija: cfg.comision_fija,
@@ -347,18 +347,21 @@ export function useAjustes() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', cfg.id)
-      if (error) throw error
-    }
+    )
+    const results = await Promise.all(updates)
+    const failed = results.find(r => r.error)
+    if (failed) throw failed.error
     setComisionesConfig(configs)
     logActividad('ajustes', 'editar', 'Comisiones configuradas', { entidad: 'comisiones' })
   }, [])
 
   const asignarBonusManual = useCallback(async (datos) => {
+    const monto = Number(datos.monto)
     const { error } = await supabase
       .from('ventas_comisiones')
       .insert({
         usuario_id: datos.usuario_id,
-        monto: datos.monto,
+        monto,
         concepto: datos.concepto || 'Bonus manual',
         es_bonus: true,
         es_bonus_manual: true,
@@ -366,23 +369,32 @@ export function useAjustes() {
         created_at: new Date().toISOString(),
       })
     if (error) throw error
-    // Update wallet balance
-    const { data: wallet } = await supabase
-      .from('ventas_wallet')
-      .select('saldo, total_ganado')
-      .eq('usuario_id', datos.usuario_id)
-      .single()
-    if (wallet) {
-      await supabase
+    // Atomic wallet balance increment via RPC or fallback to optimistic update
+    const { error: rpcError } = await supabase.rpc('incrementar_wallet', {
+      p_usuario_id: datos.usuario_id,
+      p_monto: monto,
+    })
+    if (rpcError) {
+      // Fallback: read-then-write (less safe but functional if RPC doesn't exist)
+      console.warn('[Bonus] RPC not available, using fallback:', rpcError.message)
+      const { data: wallet } = await supabase
         .from('ventas_wallet')
-        .update({
-          saldo: (wallet.saldo || 0) + Number(datos.monto),
-          total_ganado: (wallet.total_ganado || 0) + Number(datos.monto),
-          updated_at: new Date().toISOString(),
-        })
+        .select('saldo, total_ganado')
         .eq('usuario_id', datos.usuario_id)
+        .single()
+      if (wallet) {
+        const { error: updateError } = await supabase
+          .from('ventas_wallet')
+          .update({
+            saldo: (wallet.saldo || 0) + monto,
+            total_ganado: (wallet.total_ganado || 0) + monto,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('usuario_id', datos.usuario_id)
+        if (updateError) throw updateError
+      }
     }
-    logActividad('wallet', 'crear', `Bonus manual: ${datos.monto}€ — ${datos.concepto || 'Bonus manual'}`, { entidad: 'comision' })
+    logActividad('wallet', 'crear', `Bonus manual: ${monto}€ — ${datos.concepto || 'Bonus manual'}`, { entidad: 'comision' })
   }, [])
 
   // ═══ EMPRESA FISCAL ═══

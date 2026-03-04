@@ -50,6 +50,9 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
       if (gcalStatus === 'success' && onGcalStatusChange) {
         onGcalStatusChange()
       }
+      if (gcalStatus === 'error') {
+        setError('Error al conectar con Google Calendar. Inténtalo de nuevo.')
+      }
     }
   }, [onGcalStatusChange])
 
@@ -131,11 +134,16 @@ export default function CalendarioConfig({ config, onGuardar, targetUserId, onGc
     const userId = targetUserId || config?.usuario_id
     if (!userId || !SUPABASE_URL) return
     setGcalLoading(true)
+    setError(null)
     try {
-      await fetch(`${SUPABASE_URL}/functions/v1/google-calendar-auth?action=disconnect&user_id=${userId}`)
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/google-calendar-auth?action=disconnect&user_id=${userId}`, {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      })
+      if (!res.ok) throw new Error('Error al desconectar')
       onGcalStatusChange?.()
-    } catch {
-      // Non-critical
+    } catch (e) {
+      setError(e.message || 'Error al desconectar Google Calendar')
     } finally {
       setGcalLoading(false)
     }

@@ -60,10 +60,14 @@ export default function AjustesWebhooks({
 
   const getWebhookUrl = (w) => `${SUPABASE_URL}/functions/v1/webhook-leads/${w.endpoint_token}`
 
-  const copiarUrl = (w) => {
-    navigator.clipboard.writeText(getWebhookUrl(w))
-    setCopiado(w.id)
-    setTimeout(() => setCopiado(null), 2000)
+  const copiarUrl = async (w) => {
+    try {
+      await navigator.clipboard.writeText(getWebhookUrl(w))
+      setCopiado(w.id)
+      setTimeout(() => setCopiado(null), 2000)
+    } catch {
+      setError('No se pudo copiar. Usa HTTPS o copia manualmente.')
+    }
   }
 
   const abrirNuevo = () => { setEditando(null); setForm({ nombre: '', fuente: '' }); setError(null); setShowForm(true) }
@@ -130,6 +134,8 @@ export default function AjustesWebhooks({
   // Logs
   const abrirLogs = async (w) => {
     setShowLogs(w)
+    setLogs([])
+    setExpandedLog(null)
     setLogsLoading(true)
     try {
       const data = await onCargarLogs(w.id)
