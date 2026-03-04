@@ -235,7 +235,7 @@ export function useVentasCRM() {
       ])
 
       // Procesar citas pasadas → mover leads a "Cita Realizada" (fire-and-forget)
-      supabase.rpc('ventas_procesar_citas_pasadas').catch(() => {})
+      try { supabase.rpc('ventas_procesar_citas_pasadas') } catch { /* non-critical */ }
 
       if (requestId !== loadRequestRef.current) return
 
