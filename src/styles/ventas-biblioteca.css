@@ -926,6 +926,17 @@
     white-space: nowrap;
   }
 
+  .bib-buscador-input {
+    height: 44px;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .bib-buscador-clear {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .bib-btn-icon {
     min-width: 44px;
     min-height: 44px;
