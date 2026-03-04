@@ -1175,6 +1175,16 @@
   .vv-filter-field input[type="date"] {
     min-width: 0;
   }
+
+  .vv-pagination {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .vv-pagination-btns button {
+    height: 44px;
+    padding: var(--space-sm) var(--space-lg);
+  }
 }
 
 /* ── Focus visible ───────────────────────────────────────────────── */

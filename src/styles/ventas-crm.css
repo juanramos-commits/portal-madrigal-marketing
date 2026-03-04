@@ -1795,6 +1795,16 @@
   .crm-detail-sidebar {
     order: -1;
   }
+
+  .crm-pagination {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .crm-pagination button {
+    height: 44px;
+    padding: 0 var(--space-lg);
+  }
 }
 
 @media (min-width: 1024px) {
