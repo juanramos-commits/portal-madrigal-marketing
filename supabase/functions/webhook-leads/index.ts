@@ -97,11 +97,10 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Failed to create lead', detail: leadErr.message }, 500)
     }
 
-    // Assign to first pipeline (setters) + first etapa
+    // Assign to first active pipeline + first etapa
     const { data: pipeline } = await supabase
       .from('ventas_pipelines')
       .select('id')
-      .eq('tipo', 'setters')
       .eq('activo', true)
       .order('orden')
       .limit(1)

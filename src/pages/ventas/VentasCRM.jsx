@@ -184,7 +184,7 @@ export default function VentasCRM() {
               await ventasHook.registrarVenta(datosVenta)
               await ventasHook.moverLeadAVenta(
                 crm.leadParaVenta.id,
-                crm.pipelineActivo.id,
+                crm.pipelineActivo?.id,
                 crm.etapaVentaDestino
               )
               crm.refrescar()

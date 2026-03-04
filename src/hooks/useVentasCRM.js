@@ -623,6 +623,7 @@ export function useVentasCRM() {
       if (!tienePermiso('ventas.ventas.crear')) throw new Error('No tienes permiso para registrar ventas')
       setLeadParaVenta(leadData)
       setEtapaVentaDestino(etapaDestinoId)
+      movingLeadsRef.current.delete(leadId)
       return
     }
 
@@ -754,6 +755,7 @@ export function useVentasCRM() {
 
   // ── Create lead ────────────────────────────────────────────────────
   const crearLead = useCallback(async (datos) => {
+    if (!tienePermiso('ventas.crm.crear_leads')) throw new Error('No tienes permiso para crear leads')
     const primeraEtapa = etapas.find(e => e.orden === Math.min(...etapas.map(et => et.orden)))
     if (!primeraEtapa) throw new Error('No hay etapas en el pipeline')
 

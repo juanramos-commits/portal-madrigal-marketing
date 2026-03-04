@@ -456,7 +456,7 @@ export default function CRMLeadDetalle() {
       }
       setLead(prev => ({
         ...prev,
-        lead_etiquetas: prev.lead_etiquetas.filter(e => e.id !== etiquetaId),
+        lead_etiquetas: (prev.lead_etiquetas || []).filter(e => e.id !== etiquetaId),
       }))
     } catch (err) {
       showToast('Error al quitar etiqueta', 'error')

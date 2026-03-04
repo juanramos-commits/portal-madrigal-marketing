@@ -152,7 +152,7 @@ export default function WalletAdminRetiros({
             {retiros.map(r => {
               const estado = estadoConfig[r.estado] || estadoConfig.pendiente
               return (
-                <div key={r.id} className="wt-admin-card">
+                <div key={r.id} className={`wt-admin-card wt-admin-card--${r.estado}`}>
                   <div className="wt-admin-card-top">
                     <span className={`wt-badge ${estado.className}`}>{estado.label}</span>
                     <span className="wt-amount-bold">{formatMoneda(r.monto)}</span>
