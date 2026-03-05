@@ -88,7 +88,7 @@ function formatGoogleEvent(cita: Record<string, unknown>, configData: Record<str
   descParts.push(`\nPortal: https://app.madrigalmarketing.es/ventas/calendario`)
 
   return {
-    summary: `Cita - ${leadNombre}`,
+    summary: `${leadNombre} & Madrigal Marketing`,
     description: descParts.join('\n'),
     start: {
       dateTime: fechaHora.toISOString(),
