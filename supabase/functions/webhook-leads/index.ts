@@ -71,6 +71,27 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Resolve categoria: if _categoria is set, look up categoria_id by name
+    if (leadData._categoria) {
+      const categoriaTexto = String(leadData._categoria).trim()
+      delete leadData._categoria
+      if (categoriaTexto) {
+        // Try exact match first, then fuzzy (unaccented) match
+        const { data: cats } = await supabase
+          .from('ventas_categorias')
+          .select('id, nombre')
+        if (cats && cats.length > 0) {
+          const normalize = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+          const normalTexto = normalize(categoriaTexto)
+          const match = cats.find(c => normalize(c.nombre) === normalTexto)
+            || cats.find(c => normalize(c.nombre).includes(normalTexto) || normalTexto.includes(normalize(c.nombre)))
+          if (match) {
+            leadData.categoria_id = match.id
+          }
+        }
+      }
+    }
+
     // Ensure minimum required field: nombre
     if (!leadData.nombre) {
       leadData.nombre = (flatPayload.name || flatPayload.nombre || payload.name ||
