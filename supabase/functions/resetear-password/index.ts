@@ -157,16 +157,18 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Registrar auditoria
-    await supabaseAdmin.rpc('registrar_auditoria', {
-      p_usuario_id: user.id,
-      p_accion: 'UPDATE',
-      p_categoria: 'usuarios',
-      p_descripcion: `Contraseña reseteada para: ${target.nombre} (${target.email})`,
-      p_tabla: 'usuarios',
-      p_registro_id: usuario_id,
-      p_datos_antes: null,
-    })
+    // Registrar auditoria (non-blocking)
+    try {
+      await supabaseAdmin.rpc('registrar_auditoria', {
+        p_usuario_id: user.id,
+        p_accion: 'UPDATE',
+        p_categoria: 'usuarios',
+        p_descripcion: `Contraseña reseteada para: ${target.nombre} (${target.email})`,
+        p_tabla: 'usuarios',
+        p_registro_id: usuario_id,
+        p_datos_antes: null,
+      })
+    } catch { /* non-critical */ }
 
     return new Response(JSON.stringify({
       success: true,
