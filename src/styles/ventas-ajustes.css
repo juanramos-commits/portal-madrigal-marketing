@@ -1156,6 +1156,10 @@
   outline: none;
 }
 
+.aj-mapeo-row .ui-field {
+  margin-bottom: 0;
+}
+
 .aj-mapeo-row input:focus,
 .aj-mapeo-row select:focus {
   border-color: var(--border-focus);
