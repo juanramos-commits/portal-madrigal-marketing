@@ -37,6 +37,13 @@
   --rb-error-bg: rgba(255, 107, 107, 0.08);
 }
 
+/* ── Override global html/body overflow:hidden (needed for app shell but not public pages) */
+html:has(.rb-page),
+html:has(.rb-page) body {
+  overflow: auto;
+  height: auto;
+}
+
 /* ── Page wrapper + animated mesh gradient ─────────────────────── */
 .rb-page {
   min-height: 100vh;
