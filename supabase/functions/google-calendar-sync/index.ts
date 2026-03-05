@@ -88,7 +88,6 @@ function formatGoogleEvent(cita: Record<string, unknown>, configData: Record<str
   const descParts = []
   if (leadTelefono) descParts.push(`Teléfono: ${leadTelefono}`)
   if (leadEmail) descParts.push(`Email: ${leadEmail}`)
-  descParts.push(`\nPortal: https://app.madrigalmarketing.es/ventas/calendario`)
 
   return {
     summary: `${leadNombre} & Madrigal Marketing`,
