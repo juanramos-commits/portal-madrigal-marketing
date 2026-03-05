@@ -297,7 +297,7 @@ export default function Layout() {
       { name: 'Biblioteca', href: '/ventas/biblioteca', icon: Icons.BookOpen, permiso: 'ventas.biblioteca.ver' },
       { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet, permiso: 'ventas.wallet.ver' },
       { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar, permiso: 'ventas.calendario.ver' },
-      { name: 'Enlaces', href: '/ventas/enlaces', icon: Icons.Link2, permiso: 'ventas.calendario.enlaces' },
+      { name: 'Enlaces', href: '/ventas/enlaces', icon: Icons.Link2, permiso: 'ventas.enlaces.ver' },
       { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ajustes.ver' },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [

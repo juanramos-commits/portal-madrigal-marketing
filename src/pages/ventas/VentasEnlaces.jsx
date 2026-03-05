@@ -5,7 +5,7 @@ import CalendarioEnlaces from '../../components/ventas/CalendarioEnlaces'
 import '../../styles/ventas-calendario.css'
 
 export default function VentasEnlaces() {
-  const { user, rolesComerciales } = useAuth()
+  const { user, rolesComerciales, tienePermiso } = useAuth()
 
   const closers = useMemo(() => {
     const seen = new Set()
@@ -207,6 +207,10 @@ export default function VentasEnlaces() {
           onCrear={crearEnlace}
           onActualizar={actualizarEnlace}
           onEliminar={eliminarEnlace}
+          puedeCrear={tienePermiso('ventas.enlaces.crear')}
+          puedeEditar={tienePermiso('ventas.enlaces.editar')}
+          puedeEliminar={tienePermiso('ventas.enlaces.eliminar')}
+          puedeToggle={tienePermiso('ventas.enlaces.toggle_activo')}
         />
       )}
     </div>

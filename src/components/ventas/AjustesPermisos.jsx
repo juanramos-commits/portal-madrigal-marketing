@@ -11,6 +11,7 @@ const MODULO_LABELS = {
   ventas_dashboard: 'Dashboard',
   ventas_biblioteca: 'Biblioteca',
   ventas_calendario: 'Calendario',
+  ventas_enlaces: 'Enlaces de agenda',
   ventas_notificaciones: 'Notificaciones',
   ventas_ajustes: 'Ajustes',
 }

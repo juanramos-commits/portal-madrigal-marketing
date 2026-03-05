@@ -39,6 +39,10 @@ export default function CalendarioEnlaces({
   onCrear,
   onActualizar,
   onEliminar,
+  puedeCrear = true,
+  puedeEditar = true,
+  puedeEliminar = true,
+  puedeToggle = true,
 }) {
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
@@ -135,9 +139,11 @@ export default function CalendarioEnlaces({
     <div className="vc-enlaces">
       <div className="vc-enlaces-header">
         <h3>Enlaces de agenda</h3>
-        <button className="vc-btn-sm" onClick={abrirNuevo}>
-          <PlusIcon /> Nuevo enlace
-        </button>
+        {puedeCrear && (
+          <button className="vc-btn-sm" onClick={abrirNuevo}>
+            <PlusIcon /> Nuevo enlace
+          </button>
+        )}
       </div>
 
       {enlaces.length === 0 ? (
@@ -177,7 +183,7 @@ export default function CalendarioEnlaces({
                       <td>{e.setter?.nombre || e.setter?.email || '-'}</td>
                       <td>{e.fuente || '-'}</td>
                       <td>
-                        <Toggle checked={e.activo} onChange={() => handleToggleActivo(e)} />
+                        <Toggle checked={e.activo} onChange={() => handleToggleActivo(e)} disabled={!puedeToggle} />
                       </td>
                       <td>
                         <button className="vc-btn-copy" onClick={() => copiarUrl(e.slug)}>
@@ -186,8 +192,8 @@ export default function CalendarioEnlaces({
                       </td>
                       <td>
                         <div className="vc-actions-cell">
-                          <button className="vc-btn-sm" onClick={() => abrirEditar(e)}>Editar</button>
-                          <button className="vc-btn-icon-danger" onClick={() => handleEliminar(e.id)}><TrashIcon /></button>
+                          {puedeEditar && <button className="vc-btn-sm" onClick={() => abrirEditar(e)}>Editar</button>}
+                          {puedeEliminar && <button className="vc-btn-icon-danger" onClick={() => handleEliminar(e.id)}><TrashIcon /></button>}
                         </div>
                       </td>
                     </tr>
@@ -203,7 +209,7 @@ export default function CalendarioEnlaces({
               <div key={e.id} className="vc-enlace-card">
                 <div className="vc-enlace-card-top">
                   <span className="vc-cell-bold">{e.nombre}</span>
-                  <Toggle checked={e.activo} onChange={() => handleToggleActivo(e)} />
+                  <Toggle checked={e.activo} onChange={() => handleToggleActivo(e)} disabled={!puedeToggle} />
                 </div>
                 <div className="vc-enlace-card-meta">
                   <span>/{e.slug}</span>
@@ -221,8 +227,8 @@ export default function CalendarioEnlaces({
                   <button className="vc-btn-copy" onClick={() => copiarUrl(e.slug)}>
                     <CopyIcon /> {copiado === e.slug ? '¡Copiado!' : 'Copiar URL'}
                   </button>
-                  <button className="vc-btn-sm" onClick={() => abrirEditar(e)}>Editar</button>
-                  <button className="vc-btn-icon-danger" onClick={() => handleEliminar(e.id)}><TrashIcon /></button>
+                  {puedeEditar && <button className="vc-btn-sm" onClick={() => abrirEditar(e)}>Editar</button>}
+                  {puedeEliminar && <button className="vc-btn-icon-danger" onClick={() => handleEliminar(e.id)}><TrashIcon /></button>}
                 </div>
               </div>
             ))}

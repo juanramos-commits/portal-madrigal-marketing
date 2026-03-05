@@ -107,7 +107,7 @@ function App() {
             <Route path="ventas/wallet" element={<PermissionRoute permiso="ventas.wallet.ver"><VentasWallet /></PermissionRoute>} />
             <Route path="ventas/calendario" element={<PermissionRoute permiso="ventas.calendario.ver"><VentasCalendario /></PermissionRoute>} />
             <Route path="ventas/ajustes" element={<PermissionRoute permiso="ventas.ajustes.ver"><VentasAjustes /></PermissionRoute>} />
-            <Route path="ventas/enlaces" element={<PermissionRoute permiso="ventas.calendario.enlaces"><VentasEnlaces /></PermissionRoute>} />
+            <Route path="ventas/enlaces" element={<PermissionRoute permiso="ventas.enlaces.ver"><VentasEnlaces /></PermissionRoute>} />
 
             {/* Generales */}
             <Route path="notificaciones" element={<Notificaciones />} />
