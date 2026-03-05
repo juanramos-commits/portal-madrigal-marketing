@@ -244,13 +244,20 @@ export default function Usuarios() {
 
   const eliminarUsuario = async (id) => {
     try {
-      const { data, error } = await supabase.functions.invoke('eliminar-usuario', {
-        body: { usuario_id: id }
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${supabaseUrl}/functions/v1/eliminar-usuario`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': supabaseAnonKey
+        },
+        body: JSON.stringify({ usuario_id: id })
       })
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
-      // Soft delete: marcar como inactivo en la UI
-      setUsuarios(prev => prev.map(u => u.id === id ? { ...u, activo: false } : u))
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al eliminar usuario')
+      setUsuarios(prev => prev.filter(u => u.id !== id))
+      showToast('Usuario eliminado', 'success')
     } catch (error) {
       logger.error('Error eliminando usuario:', error)
       showToast(error.message || 'Error al eliminar usuario', 'error')

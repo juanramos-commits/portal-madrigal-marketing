@@ -78,17 +78,19 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Verificar permiso usuarios.editar
-    const { data: tienePermiso } = await supabaseAdmin.rpc('tiene_permiso', {
-      p_usuario_id: user.id,
-      p_permiso_codigo: 'usuarios.editar',
-    })
-
-    if (!tienePermiso) {
-      return new Response(JSON.stringify({ error: 'No tienes permiso para cambiar contraseñas' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Verificar permiso (super_admin tiene acceso total)
+    if (ejecutor.tipo !== 'super_admin') {
+      const { data: tienePermiso } = await supabaseAdmin.rpc('tiene_permiso', {
+        p_usuario_id: user.id,
+        p_permiso_codigo: 'usuarios.editar',
       })
+
+      if (!tienePermiso) {
+        return new Response(JSON.stringify({ error: 'No tienes permiso para cambiar contraseñas' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
     }
 
     // No cambiar contraseña propia por esta vía
