@@ -134,9 +134,19 @@ Deno.serve(async (req) => {
       })
     }
 
+    // Find the auth user ID (may differ from usuarios.id)
+    const { data: { users: authUsers }, error: listError } = await supabaseAdmin.auth.admin.listUsers()
+    const authUser = authUsers?.find((u: { email?: string }) => u.email === target.email)
+    if (listError || !authUser) {
+      return new Response(JSON.stringify({ error: 'Usuario no encontrado en auth' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Cambiar contraseña usando Admin API
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      usuario_id,
+      authUser.id,
       { password: nueva_password }
     )
 
