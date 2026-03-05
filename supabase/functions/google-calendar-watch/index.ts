@@ -227,12 +227,12 @@ Deno.serve(async (req) => {
           .eq('id', cita.id)
 
         // Log the action
-        await supabase.from('ventas_log_actividad').insert({
+        await supabase.from('ventas_actividad').insert({
+          lead_id: cita.lead_id,
           usuario_id: userId,
-          accion: 'cancelar',
-          modulo: 'citas',
-          entidad_id: cita.id,
-          detalle: { origen: 'google_calendar', motivo: 'Evento eliminado en Google Calendar' },
+          tipo: 'cita_cancelada',
+          descripcion: 'Cita cancelada desde Google Calendar',
+          datos: { cita_id: cita.id, origen: 'google_calendar' },
         })
 
         continue
@@ -254,17 +254,12 @@ Deno.serve(async (req) => {
             .eq('id', cita.id)
 
           // Log the action
-          await supabase.from('ventas_log_actividad').insert({
+          await supabase.from('ventas_actividad').insert({
+            lead_id: cita.lead_id,
             usuario_id: userId,
-            accion: 'editar',
-            modulo: 'citas',
-            entidad_id: cita.id,
-            detalle: {
-              origen: 'google_calendar',
-              campo: 'fecha_hora',
-              anterior: cita.fecha_hora,
-              nuevo: nuevaFecha.toISOString(),
-            },
+            tipo: 'cita_reagendada',
+            descripcion: 'Cita reagendada desde Google Calendar',
+            datos: { cita_id: cita.id, origen: 'google_calendar', anterior: cita.fecha_hora, nuevo: nuevaFecha.toISOString() },
           })
         }
       }
@@ -345,12 +340,12 @@ Deno.serve(async (req) => {
             })
             .eq('id', cita.id)
 
-          await supabase.from('ventas_log_actividad').insert({
+          await supabase.from('ventas_actividad').insert({
+            lead_id: cita.lead_id,
             usuario_id: userId,
-            accion: 'cancelar',
-            modulo: 'citas',
-            entidad_id: cita.id,
-            detalle: { origen: 'google_calendar', motivo: 'Evento eliminado en Google Calendar' },
+            tipo: 'cita_cancelada',
+            descripcion: 'Cita cancelada desde Google Calendar',
+            datos: { cita_id: cita.id, origen: 'google_calendar' },
           })
           continue
         }
@@ -367,17 +362,12 @@ Deno.serve(async (req) => {
               })
               .eq('id', cita.id)
 
-            await supabase.from('ventas_log_actividad').insert({
+            await supabase.from('ventas_actividad').insert({
+              lead_id: cita.lead_id,
               usuario_id: userId,
-              accion: 'editar',
-              modulo: 'citas',
-              entidad_id: cita.id,
-              detalle: {
-                origen: 'google_calendar',
-                campo: 'fecha_hora',
-                anterior: cita.fecha_hora,
-                nuevo: nuevaFecha.toISOString(),
-              },
+              tipo: 'cita_reagendada',
+              descripcion: 'Cita reagendada desde Google Calendar',
+              datos: { cita_id: cita.id, origen: 'google_calendar', anterior: cita.fecha_hora, nuevo: nuevaFecha.toISOString() },
             })
           }
         }

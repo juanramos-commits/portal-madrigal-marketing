@@ -116,6 +116,7 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
   const validar = () => {
     const e = {}
     if (!form.fecha_venta) e.fecha_venta = 'La fecha es obligatoria'
+    else if (form.fecha_venta > new Date().toISOString().split('T')[0]) e.fecha_venta = 'La fecha no puede ser futura'
     if (!form.paquete_id) e.paquete_id = 'Selecciona un paquete'
     if (!form.importe || Number(form.importe) <= 0) e.importe = 'El importe debe ser mayor que 0'
     else if (Number(form.importe) > 999999) e.importe = 'El importe parece demasiado alto. Verifica el valor.'
@@ -199,6 +200,7 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
             type="date"
             value={form.fecha_venta}
             onChange={e => handleChange('fecha_venta', e.target.value)}
+            max={new Date().toISOString().split('T')[0]}
           />
           {errores.fecha_venta && <span className="vv-field-error">{errores.fecha_venta}</span>}
         </div>

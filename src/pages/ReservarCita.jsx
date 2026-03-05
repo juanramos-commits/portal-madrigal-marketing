@@ -173,6 +173,7 @@ export default function ReservarCita() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (enviando) return
     if (!form.nombre.trim() || !form.email.trim() || !form.telefono.trim()) {
       setError('Todos los campos son obligatorios')
       return
@@ -298,7 +299,7 @@ export default function ReservarCita() {
                     <button
                       key={i}
                       className={classes}
-                      onClick={() => day.hasSlots && setSelectedDate(day.date)}
+                      onClick={() => { if (day.hasSlots) { setSelectedDate(day.date); setSelectedSlot(null) } }}
                       disabled={!day.hasSlots}
                       aria-label={`${day.day} de ${MESES[currentMonth.getMonth()]}`}
                     >

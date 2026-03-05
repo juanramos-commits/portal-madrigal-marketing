@@ -1045,6 +1045,75 @@
 .crm-agendar-lead-info strong { font-size: var(--font-sm-md); }
 .crm-agendar-lead-info span { color: var(--text-muted); }
 
+/* ── Duplicate detection warning ──────────────────────────────────── */
+.crm-duplicados-warning {
+  background: rgba(234, 179, 8, 0.08);
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.crm-duplicados-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: #eab308;
+  font-size: var(--font-sm);
+}
+
+.crm-duplicados-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.crm-duplicado-item {
+  background: var(--bg-raised);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs) var(--space-sm);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-sm);
+}
+
+.crm-duplicado-nombre {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.crm-duplicado-match {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+  font-weight: 500;
+}
+
+.crm-duplicado-dato {
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+}
+
+.crm-duplicados-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-xs);
+}
+
+.ui-btn--warning {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+.ui-btn--warning:hover { background: rgba(234, 179, 8, 0.25); }
+
 .crm-field {
   display: flex;
   flex-direction: column;
@@ -1125,6 +1194,57 @@
   font-size: var(--font-sm-md);
   font-weight: var(--weight-medium);
   color: var(--text-muted);
+}
+
+/* ── Note Input ────────────────────────────────────────────────────────── */
+.crm-nota-input {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: flex-end;
+  margin-bottom: var(--space-md);
+}
+
+.crm-nota-input textarea {
+  flex: 1;
+  resize: none;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  color: var(--text);
+  font-size: var(--font-sm);
+  font-family: inherit;
+  min-height: 40px;
+  transition: border-color 150ms;
+}
+
+.crm-nota-input textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.crm-nota-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 150ms;
+}
+
+.crm-nota-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.crm-nota-btn:not(:disabled):hover {
+  opacity: 0.85;
 }
 
 /* ── Activity Timeline ──────────────────────────────────────────────────── */

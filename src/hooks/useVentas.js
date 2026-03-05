@@ -48,10 +48,11 @@ export function useVentas() {
   useEffect(() => {
     if (!user?.id) return
     const cargar = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('ventas_roles_comerciales')
         .select('*')
         .eq('activo', true)
+      if (error) console.error('Error cargando roles comerciales:', error)
       setRolesComerciales(data || [])
       setRolesLoaded(true)
     }
@@ -60,11 +61,12 @@ export function useVentas() {
 
   // ── Load packages ──────────────────────────────────────────────────
   const cargarPaquetes = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('ventas_paquetes')
       .select('*')
       .eq('activo', true)
       .order('orden')
+    if (error) console.error('Error cargando paquetes:', error)
     setPaquetes(data || [])
   }, [])
 
@@ -474,7 +476,7 @@ export function useVentas() {
     // Log activity (non-critical)
     const { error: actErr } = await supabase.from('ventas_actividad').insert({
       lead_id: datos.lead_id,
-      usuario_id: user.id,
+      usuario_id: user?.id,
       tipo: 'venta',
       descripcion: `Venta registrada — ${datos.paquete_nombre || 'Paquete'} — ${Number(datos.importe).toLocaleString('es-ES', { minimumFractionDigits: 2 })}€`,
       datos: { venta_id: venta.id, importe: datos.importe },

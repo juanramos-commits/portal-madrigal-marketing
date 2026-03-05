@@ -15,7 +15,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const isSigningIn = useRef(false)
 
-  const cargarUsuario = useCallback(async (email, { esLoginFresco = false } = {}) => {
+  const cargarUsuario = useCallback(async (email, { esLoginFresco = false, _retry = 0 } = {}) => {
     try {
       const { data: usuarioData, error: usuarioError } = await supabase
         .from('usuarios')
@@ -25,6 +25,12 @@ export function AuthProvider({ children }) {
 
       if (usuarioError) {
         logger.error('Error cargando usuario:', usuarioError)
+        // Retry once on transient errors (AbortError, network issues)
+        if (_retry < 1) {
+          logger.warn('Reintentando cargarUsuario...')
+          await new Promise(r => setTimeout(r, 1000))
+          return cargarUsuario(email, { esLoginFresco, _retry: _retry + 1 })
+        }
         return null
       }
 
@@ -60,6 +66,12 @@ export function AuthProvider({ children }) {
       return usuarioData
     } catch (error) {
       logger.error('Error en cargarUsuario:', error)
+      // Retry once on transient errors (AbortError, network issues)
+      if (_retry < 1) {
+        logger.warn('Reintentando cargarUsuario tras excepción...')
+        await new Promise(r => setTimeout(r, 1000))
+        return cargarUsuario(email, { esLoginFresco, _retry: _retry + 1 })
+      }
       return null
     }
   }, [])

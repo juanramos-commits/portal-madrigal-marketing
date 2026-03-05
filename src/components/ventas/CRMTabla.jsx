@@ -22,7 +22,7 @@ export default function CRMTabla({
 }) {
   const navigate = useNavigate()
   const pageSize = 50
-  const totalPages = Math.ceil(totalCount / pageSize)
+  const totalPages = Math.ceil((totalCount || 0) / pageSize) || 1
 
   const handleSort = (col) => {
     onSortChange({

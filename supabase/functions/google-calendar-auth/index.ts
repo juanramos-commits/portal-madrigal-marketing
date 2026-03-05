@@ -216,6 +216,17 @@ Deno.serve(async (req) => {
       const userId = url.searchParams.get('user_id')
       if (!userId) return jsonResponse({ error: 'user_id is required' }, 400)
 
+      // Verify the caller is authenticated and matches the user_id (or is admin)
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) return jsonResponse({ error: 'Authorization required' }, 401)
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
+      if (authError || !authUser) return jsonResponse({ error: 'Invalid authorization' }, 401)
+      if (authUser.id !== userId) {
+        // Check if caller is admin
+        const { data: caller } = await supabase.from('usuarios').select('tipo').eq('id', authUser.id).single()
+        if (caller?.tipo !== 'super_admin') return jsonResponse({ error: 'Not authorized to disconnect this user' }, 403)
+      }
+
       // Get current config (token + channel info)
       const { data: configData } = await supabase
         .from('ventas_calendario_config')

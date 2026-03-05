@@ -13,11 +13,11 @@ import CRMLeadCard from './CRMLeadCard'
 import CRMBottomSheetMover from './CRMBottomSheetMover'
 
 export default function CRMKanban({
-  etapas,
+  etapas = [],
   leads,
   leadCounts,
-  hasMore,
-  loadingMore,
+  hasMore = {},
+  loadingMore = {},
   onLoadMore,
   onMoverLead,
   showAssignee,

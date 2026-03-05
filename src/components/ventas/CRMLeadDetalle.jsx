@@ -5,7 +5,7 @@ import {
   User, Mail, Phone, Globe, GitBranch, Users, FileText,
   Video, Tag, Clock, Calendar,
   PlusCircle, ArrowRightCircle, UserCheck, Pencil,
-  Trash2,
+  Trash2, Send,
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -62,12 +62,18 @@ const ACTIVITY_ICONS = {
   cambio_etapa: ArrowRightCircle,
   asignacion: UserCheck,
   edicion: Pencil,
+  nota: FileText,
+  cita_agendada: Calendar,
+  cita_cancelada: Calendar,
+  cita_reagendada: Calendar,
+  venta: PlusCircle,
+  venta_rechazada: Trash2,
 }
 
 export default function CRMLeadDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { user, usuario } = useAuth()
+  const { user, usuario, tienePermiso } = useAuth()
 
   const [lead, setLead] = useState(null)
   const [categorias, setCategorias] = useState([])
@@ -89,15 +95,17 @@ export default function CRMLeadDetalle() {
   const [showTagPicker, setShowTagPicker] = useState(false)
   const [reunionEstados, setReunionEstados] = useState([])
   const [savingEstadoCita, setSavingEstadoCita] = useState(null)
+  const [notaTexto, setNotaTexto] = useState('')
+  const [enviandoNota, setEnviandoNota] = useState(false)
 
   const { showToast } = useToast()
+  const savingActionRef = useRef(false)
   const debounceRefs = useRef({})
   const pendingFieldUpdatesRef = useRef({})
   const snapshotRef = useRef(null)
   const registroTimeoutRef = useRef(null)
   const loadDetailRef = useRef(0)
 
-  const { tienePermiso } = useAuth()
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
   const esAdminODirector = tienePermiso('ventas.crm.ver_todos')
   const puedeAsignar = tienePermiso('ventas.crm.asignar')
@@ -239,7 +247,9 @@ export default function CRMLeadDetalle() {
 
   // ── Update lead field with debounce ────────────────────────────────
   const updateField = (field, value) => {
-    if (!puedeEditar) return
+    // Allow setter/closer to edit their own resumen fields
+    const canEditResumen = (field === 'resumen_setter' && esMiLeadSetter) || (field === 'resumen_closer' && esMiLeadCloser)
+    if (!puedeEditar && !canEditResumen) return
     const prevValue = lead?.[field]
     setLead(prev => ({ ...prev, [field]: value }))
     pendingFieldUpdatesRef.current[field] = value
@@ -353,6 +363,8 @@ export default function CRMLeadDetalle() {
 
   // ── Change stage ───────────────────────────────────────────────────
   const cambiarEtapa = async (pipelineId, nuevaEtapaId) => {
+    if (savingActionRef.current) return
+    savingActionRef.current = true
     setShowEtapaDropdown(null)
     try {
       const ps = lead.pipeline_states?.find(p => p.pipeline_id === pipelineId)
@@ -378,11 +390,15 @@ export default function CRMLeadDetalle() {
       cargarLead()
     } catch {
       showToast('Error al cambiar etapa', 'error')
+    } finally {
+      savingActionRef.current = false
     }
   }
 
   // ── Assign setter/closer ───────────────────────────────────────────
   const asignarSetter = async (setterId) => {
+    if (savingActionRef.current) return
+    savingActionRef.current = true
     try {
       const prevNombre = lead.setter?.nombre || 'Ninguno'
       const nuevoSetter = setters.find(s => s.usuario_id === setterId)
@@ -399,10 +415,14 @@ export default function CRMLeadDetalle() {
       cargarLead()
     } catch {
       showToast('Error', 'error')
+    } finally {
+      savingActionRef.current = false
     }
   }
 
   const asignarCloser = async (closerId) => {
+    if (savingActionRef.current) return
+    savingActionRef.current = true
     try {
       const prevNombre = lead.closer?.nombre || 'Ninguno'
       const nuevoCloser = closers.find(c => c.usuario_id === closerId)
@@ -419,18 +439,54 @@ export default function CRMLeadDetalle() {
       cargarLead()
     } catch {
       showToast('Error', 'error')
+    } finally {
+      savingActionRef.current = false
     }
   }
 
-  // ── Delete lead ────────────────────────────────────────────────────
+  // ── Delete lead (super_admin only via RPC) ─────────────────────────
   const eliminar = async () => {
+    if (savingActionRef.current) return
+    savingActionRef.current = true
     try {
-      const { error } = await supabase.from('ventas_leads').delete().eq('id', id)
+      const { data, error } = await supabase.rpc('ventas_eliminar_lead', { p_lead_id: id })
       if (error) throw error
+      if (data && !data.ok) throw new Error(data.error)
       showToast('Lead eliminado', 'success')
       navigate('/ventas/crm', { replace: true })
+    } catch (err) {
+      showToast(err.message || 'Error al eliminar el lead', 'error')
+    } finally {
+      savingActionRef.current = false
+    }
+  }
+
+  // ── Add note to timeline ──────────────────────────────────────────
+  const añadirNota = async () => {
+    const texto = notaTexto.trim()
+    if (!texto || enviandoNota) return
+    setEnviandoNota(true)
+    try {
+      const { error } = await supabase.from('ventas_actividad').insert({
+        lead_id: id,
+        usuario_id: user.id,
+        tipo: 'nota',
+        descripcion: texto,
+      })
+      if (error) throw error
+      setNotaTexto('')
+      // Add to top of timeline optimistically
+      setActividad(prev => [{
+        id: crypto.randomUUID(),
+        tipo: 'nota',
+        descripcion: texto,
+        created_at: new Date().toISOString(),
+        usuario: { nombre: usuario?.nombre || user?.email },
+      }, ...prev])
     } catch {
-      showToast('Error al eliminar el lead', 'error')
+      showToast('Error al añadir nota', 'error')
+    } finally {
+      setEnviandoNota(false)
     }
   }
 
@@ -995,6 +1051,23 @@ export default function CRMLeadDetalle() {
           {/* ── Actividad ─────────────────────────────────────────── */}
           <div className="crm-section">
             <div className="crm-section-title"><Clock /> Historial de actividad</div>
+            <div className="crm-nota-input">
+              <textarea
+                value={notaTexto}
+                onChange={e => setNotaTexto(e.target.value)}
+                placeholder="Añadir una nota..."
+                rows={2}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); añadirNota() } }}
+              />
+              <button
+                className="crm-nota-btn"
+                onClick={añadirNota}
+                disabled={!notaTexto.trim() || enviandoNota}
+                title="Añadir nota"
+              >
+                <Send size={16} />
+              </button>
+            </div>
             <div className="crm-timeline">
               {actividad.length === 0 && (
                 <div className="crm-empty">Sin actividad registrada</div>

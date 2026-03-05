@@ -22,7 +22,8 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
   const totalGanado = wallet.total_ganado || 0
   const totalRetirado = wallet.total_retirado || 0
   const saldoNegativo = saldo < 0
-  const disponibleDiferente = Math.abs(saldoDisponible - saldo) > 0.01
+  const disponible = saldoDisponible ?? saldo
+  const disponibleDiferente = Math.abs(disponible - saldo) > 0.01
 
   return (
     <div className="wt-resumen">
@@ -53,10 +54,10 @@ export default function WalletResumen({ wallet, saldoDisponible, esCloser, close
 
       {/* Saldo disponible info */}
       <div className="wt-saldo-info">
-        <span>Saldo disponible para retiro: <strong>{formatMoneda(saldoDisponible)}</strong></span>
-        {disponibleDiferente && saldoDisponible < saldo && (
+        <span>Saldo disponible para retiro: <strong>{formatMoneda(disponible)}</strong></span>
+        {disponibleDiferente && disponible < saldo && (
           <span className="wt-saldo-retenido">
-            En retención (48h) o retiros pendientes: {formatMoneda(saldo - saldoDisponible)}
+            En retención (48h) o retiros pendientes: {formatMoneda(saldo - disponible)}
           </span>
         )}
       </div>

@@ -76,10 +76,11 @@ export function useWallet() {
   useEffect(() => {
     if (!user?.id) return
     const cargar = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('ventas_roles_comerciales')
         .select('*, usuario:usuarios(id, nombre, email)')
         .eq('activo', true)
+      if (error) console.error('Error cargando roles comerciales (wallet):', error)
       setRolesComerciales(data || [])
       const unique = []
       const seen = new Set()
@@ -652,7 +653,13 @@ export function useWallet() {
 
   // ── Initial load ───────────────────────────────────────────────────
   const initialLoadDone = useRef(false)
+  const prevUserIdRef = useRef(null)
   useEffect(() => {
+    // Reset on user change (logout/login as different user)
+    if (user?.id !== prevUserIdRef.current) {
+      prevUserIdRef.current = user?.id
+      initialLoadDone.current = false
+    }
     if (!user?.id || authLoading || initialLoadDone.current) return
     if (rolesComerciales.length > 0 || esAdmin) {
       initialLoadDone.current = true

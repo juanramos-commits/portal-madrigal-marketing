@@ -50,6 +50,11 @@ export default function Usuarios() {
   const [modalInvitar, setModalInvitar] = useState(false)
   const [modalPermisos, setModalPermisos] = useState(null)
   const [modalConfirmar, setModalConfirmar] = useState(null)
+  const [modalPassword, setModalPassword] = useState(null)
+  const [nuevaPassword, setNuevaPassword] = useState('')
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
   
   const [inviteForm, setInviteForm] = useState({ email: '', nombre: '', tipo: 'equipo', rol_id: '' })
   const [inviteLoading, setInviteLoading] = useState(false)
@@ -269,6 +274,35 @@ export default function Usuarios() {
     }
   }
 
+  const resetearPassword = async (e) => {
+    e.preventDefault()
+    if (!modalPassword || !nuevaPassword) return
+    if (nuevaPassword.length < 8) {
+      setPasswordError('La contraseña debe tener al menos 8 caracteres')
+      return
+    }
+    setPasswordLoading(true)
+    setPasswordError('')
+    try {
+      const { data, error } = await supabase.functions.invoke('resetear-password', {
+        body: { usuario_id: modalPassword.id, nueva_password: nuevaPassword }
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      setPasswordSuccess('Contraseña actualizada correctamente')
+      setTimeout(() => {
+        setModalPassword(null)
+        setNuevaPassword('')
+        setPasswordSuccess('')
+      }, 1500)
+    } catch (error) {
+      logger.error('Error reseteando password:', error)
+      setPasswordError(error.message || 'Error al cambiar la contraseña')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
   if (loading) {
     return <div style={{ display: 'flex', justifyContent: 'center', padding: '100px' }}><div className="spinner"></div></div>
   }
@@ -367,6 +401,7 @@ export default function Usuarios() {
                     {u.id !== currentUser?.id && u.tipo !== 'super_admin' && (
                       <div style={{ display: 'flex', gap: '4px' }}>
                         {tienePermiso('usuarios.editar') && <button onClick={() => abrirModalPermisos(u)} className="btn btn-icon btn-sm" title="Permisos">🛡️</button>}
+                        {tienePermiso('usuarios.editar') && <button onClick={() => { setModalPassword(u); setNuevaPassword(''); setPasswordError(''); setPasswordSuccess('') }} className="btn btn-icon btn-sm" title="Cambiar contraseña">🔑</button>}
                         {tienePermiso('usuarios.activar_desactivar') && <button onClick={() => setModalConfirmar({ tipo: 'toggle', usuario: u })} className="btn btn-icon btn-sm">{u.activo ? '🚫' : '✅'}</button>}
                         {tienePermiso('usuarios.eliminar') && <button onClick={() => setModalConfirmar({ tipo: 'eliminar', usuario: u })} className="btn btn-icon btn-sm" style={{ color: 'var(--error)' }}>🗑️</button>}
                       </div>
@@ -484,6 +519,41 @@ export default function Usuarios() {
         onConfirm={() => modalConfirmar?.tipo === 'eliminar' ? eliminarUsuario(modalConfirmar.usuario.id) : toggleActivo(modalConfirmar.usuario.id, modalConfirmar.usuario.activo)}
         onCancel={() => setModalConfirmar(null)}
       />
+
+      {/* Modal Cambiar Contraseña */}
+      <Modal
+        open={!!modalPassword}
+        onClose={() => !passwordLoading && setModalPassword(null)}
+        title={`Cambiar contraseña de ${modalPassword?.nombre || ''}`}
+        footer={
+          <>
+            <button type="button" onClick={() => setModalPassword(null)} className="btn" disabled={passwordLoading}>Cancelar</button>
+            <button type="submit" form="usuarios-password-form" className="btn primary" disabled={passwordLoading || !nuevaPassword}>
+              {passwordLoading ? 'Guardando...' : 'Cambiar Contraseña'}
+            </button>
+          </>
+        }
+      >
+        <form id="usuarios-password-form" onSubmit={resetearPassword}>
+          {passwordError && <div className="alert error" style={{ marginBottom: '16px' }}>{passwordError}</div>}
+          {passwordSuccess && <div className="alert success" style={{ marginBottom: '16px' }}>{passwordSuccess}</div>}
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+            Introduce la nueva contraseña para <strong>{modalPassword?.email}</strong>. El usuario deberá usar esta contraseña en su próximo inicio de sesión.
+          </p>
+          <div className="field" style={{ marginBottom: '16px' }}>
+            <label className="field-label">Nueva contraseña</label>
+            <input
+              type="text"
+              value={nuevaPassword}
+              onChange={e => setNuevaPassword(e.target.value)}
+              className="input"
+              placeholder="Mínimo 8 caracteres"
+              autoFocus
+              disabled={passwordLoading}
+            />
+          </div>
+        </form>
+      </Modal>
 
       <style>{`
         .alert.success { background: rgba(46,229,157,0.1); border: 1px solid rgba(46,229,157,0.3); color: var(--success); padding: 12px; border-radius: 8px; }

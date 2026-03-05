@@ -21,7 +21,7 @@ export default function WalletBloqueado({ citasPendientes = [] }) {
         {citasPendientes.length > 0 && (
           <div className="wt-bloqueado-citas">
             {citasPendientes.map(c => (
-              <div key={c.id} className="wt-bloqueado-cita" onClick={() => navigate(`/ventas/crm/lead/${c.lead?.id}`)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && navigate(`/ventas/crm/lead/${c.lead?.id}`)}>
+              <div key={c.id} className="wt-bloqueado-cita" onClick={() => c.lead?.id && navigate(`/ventas/crm/lead/${c.lead.id}`)} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && c.lead?.id && navigate(`/ventas/crm/lead/${c.lead.id}`)}>
                 <Calendar size={14} />
                 <span className="wt-bloqueado-cita-nombre">{c.lead?.nombre || 'Lead'}</span>
                 <span className="wt-bloqueado-cita-fecha">{formatFechaCita(c.fecha_hora)}</span>

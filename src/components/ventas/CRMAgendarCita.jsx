@@ -3,9 +3,11 @@ import { Calendar, Clock, User } from 'lucide-react'
 import Modal from '../ui/Modal'
 import Select from '../ui/Select'
 import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
 import { logActividad } from '../../lib/logActividad'
 
 export default function CRMAgendarCita({ lead, closers = [], onSuccess, onCancel }) {
+  const { user } = useAuth()
   const [closerId, setCloserId] = useState(lead?.closer_asignado_id || '')
   const [fecha, setFecha] = useState('')
   const [hora, setHora] = useState('')
@@ -47,11 +49,19 @@ export default function CRMAgendarCita({ lead, closers = [], onSuccess, onCancel
 
       if (citaErr) throw citaErr
 
+      // Update closer_asignado_id on the lead
+      try {
+        await supabase
+          .from('ventas_leads')
+          .update({ closer_asignado_id: closerId })
+          .eq('id', lead.id)
+      } catch { /* non-critical — cita already created */ }
+
       // Log activity (non-critical)
       try {
         await supabase.from('ventas_actividad').insert({
           lead_id: lead.id,
-          usuario_id: closerId,
+          usuario_id: user?.id || closerId,
           tipo: 'cita_agendada',
           descripcion: `Cita agendada para ${fecha} ${hora}`,
           datos: { cita_id: cita.id },

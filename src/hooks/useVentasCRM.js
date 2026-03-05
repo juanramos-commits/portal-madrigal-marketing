@@ -96,6 +96,9 @@ export function useVentasCRM() {
         query = query.eq('lead.setter_asignado_id', user.id)
       } else if (nombre.includes('closer') && esCloser) {
         query = query.eq('lead.closer_asignado_id', user.id)
+      } else {
+        // User has no matching role for this pipeline — return no results
+        query = query.eq('lead_id', '00000000-0000-0000-0000-000000000000')
       }
     }
 
@@ -124,7 +127,7 @@ export function useVentasCRM() {
 
     // Search — escape special PostgREST filter chars to prevent query injection
     if (busqueda.trim()) {
-      const sanitized = busqueda.trim().replace(/[%_\\,().]/g, '')
+      const sanitized = busqueda.trim().replace(/[%_\\,()]/g, '')
       if (sanitized) {
         query = query.or(`nombre.ilike.%${sanitized}%,telefono.ilike.%${sanitized}%`, { foreignTable: 'ventas_leads' })
       }
@@ -222,20 +225,23 @@ export function useVentasCRM() {
       setLoading(true)
       setError(null)
 
-      const [
-        { data: pipelinesData },
-        { data: categoriasData },
-        { data: etiquetasData },
-        { data: rolesData },
-      ] = await Promise.all([
+      const results = await Promise.all([
         supabase.from('ventas_pipelines').select('*').eq('activo', true).order('orden'),
         supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
         supabase.from('ventas_etiquetas').select('*').eq('activo', true),
         supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
       ])
 
+      // Check for critical errors (pipelines must load)
+      if (results[0].error) throw new Error('Error cargando pipelines: ' + results[0].error.message)
+
+      const pipelinesData = results[0].data
+      const categoriasData = results[1].data
+      const etiquetasData = results[2].data
+      const rolesData = results[3].data
+
       // Procesar citas pasadas → mover leads a "Cita Realizada" (fire-and-forget)
-      try { supabase.rpc('ventas_procesar_citas_pasadas') } catch { /* non-critical */ }
+      try { await supabase.rpc('ventas_procesar_citas_pasadas') } catch { /* non-critical */ }
 
       if (requestId !== loadRequestRef.current) return
 
@@ -615,7 +621,6 @@ export function useVentasCRM() {
   const moverLead = useCallback(async (leadId, etapaOrigenId, etapaDestinoId) => {
     if (etapaOrigenId === etapaDestinoId) return
     if (movingLeadsRef.current.has(leadId)) return
-    movingLeadsRef.current.add(leadId)
     if (!tienePermiso('ventas.crm.mover_leads')) throw new Error('No tienes permiso para mover leads')
 
     const etapaDestino = etapas.find(e => e.id === etapaDestinoId)
@@ -631,7 +636,6 @@ export function useVentasCRM() {
       if (!tienePermiso('ventas.ventas.crear')) throw new Error('No tienes permiso para registrar ventas')
       setLeadParaVenta(leadData)
       setEtapaVentaDestino(etapaDestinoId)
-      movingLeadsRef.current.delete(leadId)
       return
     }
 
@@ -640,9 +644,10 @@ export function useVentasCRM() {
     if (nombreLower.includes('agendad') || nombreLower.includes('llamada agendada')) {
       setLeadParaCita(leadData)
       setEtapaCitaDestino(etapaDestinoId)
-      movingLeadsRef.current.delete(leadId)
       return
     }
+
+    movingLeadsRef.current.add(leadId)
 
     // Optimistic update
     const nuevoContadorOptimistic = (etapaDestino.tipo === 'ghosting' || etapaDestino.tipo === 'seguimiento')
@@ -757,6 +762,7 @@ export function useVentasCRM() {
 
   // ── Force move lead (after venta popup confirms) ───────────────────
   const moverLeadForzado = useCallback(async (leadId, pipelineId, etapaDestinoId) => {
+    if (!tienePermiso('ventas.crm.mover_leads')) throw new Error('No tienes permiso para mover leads')
     const { error: err } = await supabase
       .from('ventas_lead_pipeline')
       .update({
@@ -844,14 +850,12 @@ export function useVentasCRM() {
     refrescar()
   }, [refrescar])
 
-  // ── Delete lead ────────────────────────────────────────────────────
+  // ── Delete lead (super_admin only via RPC) ─────────────────────────
   const eliminarLead = useCallback(async (leadId) => {
-    const { error: err } = await supabase
-      .from('ventas_leads')
-      .delete()
-      .eq('id', leadId)
+    const { data, error: err } = await supabase.rpc('ventas_eliminar_lead', { p_lead_id: leadId })
 
     if (err) throw err
+    if (data && !data.ok) throw new Error(data.error || 'No se pudo eliminar el lead')
 
     logActividad('crm', 'eliminar', 'Lead eliminado', { entidad: 'lead', entidad_id: leadId })
 
@@ -927,6 +931,10 @@ export function useVentasCRM() {
     const { error: updateErr } = await supabase.from('ventas_leads').update({ setter_asignado_id: setterId }).eq('id', leadId)
     if (updateErr) throw updateErr
 
+    // Get lead name for notification
+    const leadData = Object.values(leads).flat().find(l => l.id === leadId)
+    const leadNombre = leadData?.nombre || 'Lead'
+
     const { error: actErr } = await supabase.from('ventas_actividad').insert({
       lead_id: leadId,
       usuario_id: user.id,
@@ -936,14 +944,31 @@ export function useVentasCRM() {
     })
     if (actErr) console.error('Error registrando actividad setter:', actErr)
 
+    // Notify assigned setter
+    if (setterId && setterId !== user.id) {
+      try {
+        await supabase.from('ventas_notificaciones').insert({
+          usuario_id: setterId,
+          tipo: 'asignacion',
+          titulo: 'Lead asignado',
+          mensaje: `Se te ha asignado el lead "${leadNombre}"`,
+          datos: { lead_id: leadId },
+        })
+      } catch { /* non-critical */ }
+    }
+
     logActividad('crm', 'asignar', 'Setter reasignado', { entidad: 'lead', entidad_id: leadId })
 
     refrescar()
-  }, [user?.id, refrescar])
+  }, [user?.id, leads, refrescar])
 
   const cambiarCloserAsignado = useCallback(async (leadId, closerId) => {
     const { error: updateErr } = await supabase.from('ventas_leads').update({ closer_asignado_id: closerId }).eq('id', leadId)
     if (updateErr) throw updateErr
+
+    // Get lead name for notification
+    const leadData = Object.values(leads).flat().find(l => l.id === leadId)
+    const leadNombre = leadData?.nombre || 'Lead'
 
     const { error: actErr } = await supabase.from('ventas_actividad').insert({
       lead_id: leadId,
@@ -954,10 +979,23 @@ export function useVentasCRM() {
     })
     if (actErr) console.error('Error registrando actividad closer:', actErr)
 
+    // Notify assigned closer
+    if (closerId && closerId !== user.id) {
+      try {
+        await supabase.from('ventas_notificaciones').insert({
+          usuario_id: closerId,
+          tipo: 'asignacion',
+          titulo: 'Lead asignado',
+          mensaje: `Se te ha asignado el lead "${leadNombre}" como closer`,
+          datos: { lead_id: leadId },
+        })
+      } catch { /* non-critical */ }
+    }
+
     logActividad('crm', 'asignar', 'Closer reasignado', { entidad: 'lead', entidad_id: leadId })
 
     refrescar()
-  }, [user?.id, refrescar])
+  }, [user?.id, leads, refrescar])
 
   // ── Tags ───────────────────────────────────────────────────────────
   const añadirEtiqueta = useCallback(async (leadId, etiquetaId) => {
