@@ -284,11 +284,18 @@ export default function Usuarios() {
     setPasswordLoading(true)
     setPasswordError('')
     try {
-      const { data, error } = await supabase.functions.invoke('resetear-password', {
-        body: { usuario_id: modalPassword.id, nueva_password: nuevaPassword }
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${supabaseUrl}/functions/v1/resetear-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': supabaseAnonKey
+        },
+        body: JSON.stringify({ usuario_id: modalPassword.id, nueva_password: nuevaPassword })
       })
-      if (error) throw error
-      if (data?.error) throw new Error(data.error)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al cambiar la contraseña')
       setPasswordSuccess('Contraseña actualizada correctamente')
       setTimeout(() => {
         setModalPassword(null)
