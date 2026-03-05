@@ -57,12 +57,15 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Normalize payload: extract Tally fields array into flat object
+    const flatPayload = flattenPayload(payload)
+
     // Apply field mapping: mapeo_campos = { "external_field": "crm_field", ... }
     const mapeo = (webhook.mapeo_campos || {}) as Record<string, string>
     const leadData: Record<string, unknown> = {}
 
     for (const [campoExterno, campoCRM] of Object.entries(mapeo)) {
-      const value = getNestedValue(payload, campoExterno)
+      const value = flatPayload[campoExterno] ?? getNestedValue(payload, campoExterno)
       if (value !== undefined && value !== null) {
         leadData[campoCRM] = value
       }
@@ -70,14 +73,17 @@ Deno.serve(async (req) => {
 
     // Ensure minimum required field: nombre
     if (!leadData.nombre) {
-      leadData.nombre = (payload.name || payload.nombre || payload.full_name ||
-        payload.first_name || payload.NOMBRE || 'Lead webhook') as string
+      leadData.nombre = (flatPayload.name || flatPayload.nombre || payload.name ||
+        payload.nombre || payload.full_name || payload.first_name ||
+        payload.NOMBRE || 'Lead webhook') as string
     }
 
     // Map common fields that might come unmapped
-    if (!leadData.email && payload.email) leadData.email = payload.email
-    if (!leadData.telefono && (payload.phone || payload.telefono)) {
-      leadData.telefono = payload.phone || payload.telefono
+    if (!leadData.email && (flatPayload.email || payload.email)) {
+      leadData.email = flatPayload.email || payload.email
+    }
+    if (!leadData.telefono && (flatPayload.phone || flatPayload.telefono || payload.phone || payload.telefono)) {
+      leadData.telefono = flatPayload.phone || flatPayload.telefono || payload.phone || payload.telefono
     }
 
     // Insert lead
@@ -168,6 +174,41 @@ async function logWebhook(
   } catch {
     // Logging failure should not break the webhook response
   }
+}
+
+// Helper: flatten Tally/form payloads — extracts data.fields[] into { key: value } map
+function flattenPayload(payload: Record<string, unknown>): Record<string, unknown> {
+  const flat: Record<string, unknown> = {}
+  const data = payload.data as Record<string, unknown> | undefined
+  const fields = (data?.fields || payload.fields) as Array<Record<string, unknown>> | undefined
+
+  if (!Array.isArray(fields)) return flat
+
+  for (const field of fields) {
+    const key = field.key as string | undefined
+    const label = field.label as string | undefined
+    const type = field.type as string | undefined
+    let value = field.value
+
+    // For MULTIPLE_CHOICE, resolve selected option text
+    if (type === 'MULTIPLE_CHOICE' && Array.isArray(value) && Array.isArray(field.options)) {
+      const options = field.options as Array<Record<string, unknown>>
+      const selectedTexts = (value as string[])
+        .map(id => options.find(o => o.id === id)?.text)
+        .filter(Boolean)
+      value = selectedTexts.join(', ')
+    }
+
+    if (key && value !== undefined && value !== null) {
+      flat[key] = value
+    }
+    // Also index by label if available (e.g., "utm_content")
+    if (label && value !== undefined && value !== null) {
+      flat[label] = value
+    }
+  }
+
+  return flat
 }
 
 // Helper: get nested value from object (supports "data.attributes.name" syntax)
