@@ -52,7 +52,7 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   position: relative;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 /* Animated mesh gradient background */
