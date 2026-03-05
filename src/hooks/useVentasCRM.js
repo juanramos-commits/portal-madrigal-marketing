@@ -618,7 +618,7 @@ export function useVentasCRM() {
 
   // ── Move lead (drag & drop) ────────────────────────────────────────
   const movingLeadsRef = useRef(new Set())
-  const moverLead = useCallback(async (leadId, etapaOrigenId, etapaDestinoId) => {
+  const moverLead = useCallback(async (leadId, etapaOrigenId, etapaDestinoId, dropIndex = 0) => {
     if (etapaOrigenId === etapaDestinoId) return
     if (movingLeadsRef.current.has(leadId)) return
     if (!tienePermiso('ventas.crm.mover_leads')) throw new Error('No tienes permiso para mover leads')
@@ -658,7 +658,10 @@ export function useVentasCRM() {
       const newLeads = { ...prev }
       newLeads[etapaOrigenId] = (prev[etapaOrigenId] || []).filter(l => l.id !== leadId)
       const movedLead = { ...leadData, etapa_id: etapaDestinoId, contador_intentos: nuevoContadorOptimistic }
-      newLeads[etapaDestinoId] = [movedLead, ...(prev[etapaDestinoId] || [])]
+      const destLeads = [...(prev[etapaDestinoId] || [])]
+      const idx = Math.min(dropIndex, destLeads.length)
+      destLeads.splice(idx, 0, movedLead)
+      newLeads[etapaDestinoId] = destLeads
       return newLeads
     })
 

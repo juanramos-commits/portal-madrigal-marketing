@@ -83,29 +83,34 @@ export default function CRMKanban({
     const result = findLeadEtapa(active.id)
     if (!result) return
 
-    // Determine target column
+    // Determine target column and drop index
     let targetEtapaId = null
+    let dropIndex = 0
 
-    // Dropped on a column
+    // Dropped on a column directly
     if (etapas.find(e => e.id === over.id)) {
       targetEtapaId = over.id
+      dropIndex = (leads[over.id] || []).length // append at end
     }
-    // Dropped on a lead card — find which column it belongs to
+    // Dropped on a lead card — find which column and position
     else {
       const overResult = findLeadEtapa(over.id)
       if (overResult) {
         targetEtapaId = overResult.etapaId
+        const columnLeads = leads[overResult.etapaId] || []
+        const overIndex = columnLeads.findIndex(l => l.id === over.id)
+        dropIndex = overIndex >= 0 ? overIndex : columnLeads.length
       }
     }
 
     if (!targetEtapaId || targetEtapaId === result.etapaId) return
 
     try {
-      await onMoverLead(active.id, result.etapaId, targetEtapaId)
+      await onMoverLead(active.id, result.etapaId, targetEtapaId, dropIndex)
     } catch (err) {
       onError?.(err.message || 'Error al mover el lead')
     }
-  }, [findLeadEtapa, etapas, onMoverLead, onError])
+  }, [findLeadEtapa, etapas, leads, onMoverLead, onError])
 
   const handleDragCancel = useCallback(() => {
     setActiveLead(null)
