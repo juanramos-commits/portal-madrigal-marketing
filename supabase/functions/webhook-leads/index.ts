@@ -71,12 +71,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Resolve categoria: if _categoria is set, look up categoria_id by name
-    if (leadData._categoria) {
-      const categoriaTexto = String(leadData._categoria).trim()
-      delete leadData._categoria
+    // Resolve categoria_id: if it's a text name (not a UUID), look up by name
+    if (leadData.categoria_id && typeof leadData.categoria_id === 'string'
+        && !/^[0-9a-f]{8}-[0-9a-f]{4}-/.test(leadData.categoria_id as string)) {
+      const categoriaTexto = String(leadData.categoria_id).trim()
       if (categoriaTexto) {
-        // Try exact match first, then fuzzy (unaccented) match
         const { data: cats } = await supabase
           .from('ventas_categorias')
           .select('id, nombre')
@@ -85,9 +84,9 @@ Deno.serve(async (req) => {
           const normalTexto = normalize(categoriaTexto)
           const match = cats.find(c => normalize(c.nombre) === normalTexto)
             || cats.find(c => normalize(c.nombre).includes(normalTexto) || normalTexto.includes(normalize(c.nombre)))
-          if (match) {
-            leadData.categoria_id = match.id
-          }
+          leadData.categoria_id = match ? match.id : null
+        } else {
+          leadData.categoria_id = null
         }
       }
     }
