@@ -81,7 +81,13 @@ function formatGoogleEvent(cita: Record<string, unknown>, configData: Record<str
   const setterNombre = (cita.setter_origen as Record<string, unknown>)?.nombre || ''
   const fuente = (cita.enlace as Record<string, unknown>)?.fuente || ''
 
+  const lead = cita.lead as Record<string, unknown> | undefined
+  const leadTelefono = lead?.telefono || ''
+  const leadEmail = lead?.email || ''
+
   const descParts = []
+  if (leadTelefono) descParts.push(`Teléfono: ${leadTelefono}`)
+  if (leadEmail) descParts.push(`Email: ${leadEmail}`)
   if (setterNombre) descParts.push(`Setter: ${setterNombre}`)
   if (fuente) descParts.push(`Fuente: ${fuente}`)
   if (cita.notas_closer) descParts.push(`Notas: ${cita.notas_closer}`)
