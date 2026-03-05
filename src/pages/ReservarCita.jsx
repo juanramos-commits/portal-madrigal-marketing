@@ -36,7 +36,7 @@ const VideoIcon = () => (
 )
 
 const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ width: 32, height: 32 }}>
     <polyline points="20 6 9 17 4 12"/>
   </svg>
 )
@@ -158,7 +158,21 @@ export default function ReservarCita() {
     return map
   }, [slots])
 
-  const datesWithSlots = useMemo(() => new Set(Object.keys(slotsByDate)), [slotsByDate])
+  // Limit to only the next 3 days with available slots
+  const allowedDates = useMemo(() => {
+    const sorted = Object.keys(slotsByDate).sort()
+    return new Set(sorted.slice(0, 3))
+  }, [slotsByDate])
+
+  // Auto-select the first available date on load
+  useEffect(() => {
+    if (selectedDate || allowedDates.size === 0) return
+    const firstDateKey = [...allowedDates].sort()[0]
+    const [y, m, d] = firstDateKey.split('-').map(Number)
+    setSelectedDate(new Date(y, m - 1, d))
+    // Also ensure the calendar shows the right month
+    setCurrentMonth(new Date(y, m - 1, 1))
+  }, [allowedDates]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Calendar grid generation
   const calendarDays = useMemo(() => {
@@ -187,7 +201,7 @@ export default function ReservarCita() {
         date,
         dateKey,
         day: d,
-        hasSlots: datesWithSlots.has(dateKey),
+        hasSlots: allowedDates.has(dateKey),
         isToday,
         otherMonth: false,
       })
