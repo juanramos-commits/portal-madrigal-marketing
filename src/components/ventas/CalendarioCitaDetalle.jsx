@@ -67,7 +67,7 @@ export default function CalendarioCitaDetalle({
 
   if (!cita) return null
 
-  const puedeEditar = esCloser || esDirector
+  const puedeEditar = (esCloser || esDirector) && cita.estado !== 'cancelada'
   const estadoActual = reunionEstados?.find(e => e.id === cita.estado_reunion_id)
 
   const guardarEstado = async (id) => {
@@ -190,7 +190,11 @@ export default function CalendarioCitaDetalle({
 
         <div className="vc-detalle-row">
           <span className="vc-detalle-label">Estado reunión</span>
-          {estadoActual ? (
+          {cita.estado === 'cancelada' ? (
+            <span className="vc-badge" style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
+              Cancelada
+            </span>
+          ) : estadoActual ? (
             <span className="vc-badge" style={{ background: `${estadoActual.color}20`, color: estadoActual.color }}>
               {estadoActual.nombre}
             </span>

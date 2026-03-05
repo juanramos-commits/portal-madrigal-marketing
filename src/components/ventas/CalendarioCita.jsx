@@ -31,11 +31,12 @@ const GoogleIcon = () => (
 export default function CalendarioCita({ cita, onClick, mostrarCloser, compacto }) {
   const color = getColorCita(cita)
   const isGoogle = cita._isGoogleEvent
+  const isCancelada = cita.estado === 'cancelada'
 
   if (compacto) {
     return (
       <button
-        className={`vc-cita-dot${isGoogle ? ' vc-google-event' : ''}`}
+        className={`vc-cita-dot${isGoogle ? ' vc-google-event' : ''}${isCancelada ? ' vc-cita-cancelada' : ''}`}
         style={{ background: color }}
         onClick={e => { e.stopPropagation(); onClick?.(cita) }}
         aria-label={`${formatHora(cita.fecha_hora)} - ${cita.lead?.nombre || 'Sin nombre'}`}
@@ -45,15 +46,16 @@ export default function CalendarioCita({ cita, onClick, mostrarCloser, compacto 
 
   return (
     <button
-      className={`vc-cita-bloque${isGoogle ? ' vc-google-event' : ''}`}
+      className={`vc-cita-bloque${isGoogle ? ' vc-google-event' : ''}${isCancelada ? ' vc-cita-cancelada' : ''}`}
       style={{ borderLeftColor: color }}
       onClick={e => { e.stopPropagation(); onClick?.(cita) }}
       aria-label={`${formatHora(cita.fecha_hora)} - ${cita.lead?.nombre || 'Sin nombre'}`}
     >
       {isGoogle && <GoogleIcon />}
       <span className="vc-cita-hora">{formatHora(cita.fecha_hora)}</span>
-      <span className="vc-cita-nombre">{cita.lead?.nombre || 'Sin nombre'}</span>
-      {mostrarCloser && !isGoogle && cita.closer && (
+      <span className={`vc-cita-nombre${isCancelada ? ' vc-text-tachado' : ''}`}>{cita.lead?.nombre || 'Sin nombre'}</span>
+      {isCancelada && <span className="vc-cita-cancelada-badge">Cancelada</span>}
+      {mostrarCloser && !isGoogle && cita.closer && !isCancelada && (
         <span className="vc-cita-closer">{cita.closer.nombre || cita.closer.email}</span>
       )}
     </button>

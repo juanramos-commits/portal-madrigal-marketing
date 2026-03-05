@@ -217,7 +217,7 @@ function VistaSemanal({ fechaActual, citas, bloqueos, onClickCita, esDirector, e
                   return (
                     <button
                       key={c._isGoogleEvent ? `g-${c.id}` : c.id}
-                      className={`vc-semana-event${c._isGoogleEvent ? ' vc-google-event' : ''}`}
+                      className={`vc-semana-event${c._isGoogleEvent ? ' vc-google-event' : ''}${c.estado === 'cancelada' ? ' vc-cita-cancelada' : ''}`}
                       style={{
                         top: topPx,
                         height: heightPx,
@@ -283,7 +283,7 @@ function VistaDiaria({ fechaActual, citas, bloqueos, onClickCita, esDirector, es
                 {citasHora.map(c => (
                   <div
                     key={c._isGoogleEvent ? `g-${c.id}` : c.id}
-                    className={`vc-dia-cita${c._isGoogleEvent ? ' vc-google-event' : ''}`}
+                    className={`vc-dia-cita${c._isGoogleEvent ? ' vc-google-event' : ''}${c.estado === 'cancelada' ? ' vc-cita-cancelada' : ''}`}
                     style={{ borderLeftColor: getColorCita(c) }}
                     role="button"
                     tabIndex={0}
