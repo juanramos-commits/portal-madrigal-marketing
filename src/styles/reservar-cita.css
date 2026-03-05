@@ -1,34 +1,43 @@
 /* ============================================================================
-   RESERVAR CITA — Premium booking page (redesign v2)
+   RESERVAR CITA — Dark Premium Booking (Madrigal Marketing)
    ============================================================================ */
+
+/* ── Inter font ───────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── CSS Houdini: animated angle for rotating border ─────────── */
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
 
 /* ── Variables ─────────────────────────────────────────────────── */
 .rb-page {
-  --rb-primary: #2563eb;
-  --rb-primary-dark: #1d4ed8;
-  --rb-primary-soft: rgba(37, 99, 235, 0.08);
-  --rb-primary-ring: rgba(37, 99, 235, 0.18);
-  --rb-text: #0f172a;
-  --rb-text-secondary: #475569;
-  --rb-text-muted: #94a3b8;
-  --rb-bg: #f8fafc;
-  --rb-card: #ffffff;
-  --rb-border: #e2e8f0;
-  --rb-border-light: #f1f5f9;
-  --rb-radius: 16px;
-  --rb-radius-sm: 12px;
-  --rb-radius-xs: 8px;
-  --rb-shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --rb-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06);
-  --rb-shadow-lg: 0 4px 6px rgba(0,0,0,0.04), 0 16px 48px rgba(0,0,0,0.08);
+  --rb-bg: #09090b;
+  --rb-card: #111113;
+  --rb-card-elevated: #161618;
+  --rb-text: rgba(255, 255, 255, 0.95);
+  --rb-text-secondary: rgba(255, 255, 255, 0.6);
+  --rb-text-muted: rgba(255, 255, 255, 0.35);
+  --rb-text-placeholder: rgba(255, 255, 255, 0.2);
+  --rb-border: rgba(255, 255, 255, 0.08);
+  --rb-border-hover: rgba(255, 255, 255, 0.15);
+  --rb-border-bright: rgba(255, 255, 255, 0.25);
+  --rb-glass: rgba(255, 255, 255, 0.04);
+  --rb-glass-hover: rgba(255, 255, 255, 0.07);
+  --rb-radius: 24px;
+  --rb-radius-sm: 14px;
+  --rb-radius-xs: 10px;
   --rb-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --rb-success: #16a34a;
-  --rb-success-bg: #f0fdf4;
-  --rb-error: #dc2626;
-  --rb-error-bg: #fef2f2;
+  --rb-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --rb-success: #2ee59d;
+  --rb-success-bg: rgba(46, 229, 157, 0.1);
+  --rb-error: #ff6b6b;
+  --rb-error-bg: rgba(255, 107, 107, 0.08);
 }
 
-/* ── Page wrapper ──────────────────────────────────────────────── */
+/* ── Page wrapper + animated mesh gradient ─────────────────────── */
 .rb-page {
   min-height: 100vh;
   min-height: 100dvh;
@@ -37,40 +46,132 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 40px 20px 32px;
+  padding: 48px 20px 32px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
   color: var(--rb-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  overflow-x: hidden;
 }
 
+/* Animated mesh gradient background */
+.rb-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 30%, rgba(139, 92, 246, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 50% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+  background-size: 200% 200%, 200% 200%, 200% 200%;
+  animation: rb-meshMove 20s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes rb-meshMove {
+  0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
+  33% { background-position: 30% 20%, 70% 40%, 20% 60%; }
+  66% { background-position: 60% 40%, 40% 60%, 80% 30%; }
+  100% { background-position: 100% 60%, 0% 80%, 50% 0%; }
+}
+
+/* ── Container card with rotating border glow ──────────────────── */
 .rb-container {
   width: 100%;
-  max-width: 920px;
+  max-width: 940px;
+  position: relative;
+  z-index: 1;
+  border-radius: var(--rb-radius);
+  padding: 1px;
+}
+
+/* Rotating conic-gradient border */
+.rb-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--rb-radius);
+  background: conic-gradient(from var(--angle), transparent 55%, rgba(255,255,255,0.12) 70%, rgba(139,92,246,0.12) 78%, rgba(59,130,246,0.10) 85%, transparent 95%);
+  animation: rb-rotateBorder 8s linear infinite;
+  z-index: -1;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  padding: 1px;
+}
+
+@keyframes rb-rotateBorder {
+  to { --angle: 360deg; }
+}
+
+/* Inner card */
+.rb-container-inner {
   background: var(--rb-card);
   border-radius: var(--rb-radius);
-  box-shadow: var(--rb-shadow);
-  border: 1px solid var(--rb-border-light);
+  border: 1px solid var(--rb-border);
   overflow: hidden;
-  animation: rb-fadeIn 0.5s ease both;
+  box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
+  position: relative;
 }
 
-@keyframes rb-fadeIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Spotlight effect — mouse following glow */
+.rb-spotlight {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--rb-radius);
+  background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.03), transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.3s;
+  opacity: 0;
+}
+.rb-container-inner:hover .rb-spotlight { opacity: 1; }
+
+/* ── Staggered entrance animations ─────────────────────────────── */
+.rb-anim-enter {
+  opacity: 0;
+  transform: translateY(12px);
+  filter: blur(4px);
+  animation: rb-staggerIn 0.7s var(--rb-ease-out) forwards;
 }
 
-/* ── Header ─────────────────────────────────────────────────────── */
+@keyframes rb-staggerIn {
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.rb-anim-delay-1 { animation-delay: 0.08s; }
+.rb-anim-delay-2 { animation-delay: 0.16s; }
+.rb-anim-delay-3 { animation-delay: 0.28s; }
+.rb-anim-delay-4 { animation-delay: 0.38s; }
+
+/* ── Header — hero de marca ─────────────────────────────────────── */
 .rb-header {
-  padding: 32px 40px 28px;
+  padding: 40px 44px 36px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
-  border-bottom: 1px solid var(--rb-border-light);
+  text-align: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Gradient separator instead of solid border */
+.rb-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
 }
 
 .rb-logo {
-  height: 44px;
+  height: 48px;
   width: auto;
   object-fit: contain;
   flex-shrink: 0;
@@ -79,60 +180,87 @@
 .rb-header-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 10px;
 }
 
 .rb-header-info h1 {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   margin: 0;
   color: var(--rb-text);
-  letter-spacing: -0.4px;
-  line-height: 1.2;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
-.rb-header-meta {
+.rb-header-subtitle {
+  font-size: 15px;
+  color: var(--rb-text-secondary);
+  line-height: 1.5;
+  max-width: 420px;
+  margin: 0;
+}
+
+/* Trust badges row */
+.rb-badges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.rb-badge-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 100px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.07);
   font-size: 13px;
   font-weight: 500;
-  color: var(--rb-text-muted);
+  color: var(--rb-text-secondary);
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(8px);
 }
 
-.rb-header-meta svg {
+.rb-badge-pill svg {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+  opacity: 0.7;
 }
 
-/* ── Main content: calendar + slots side by side ────────────────── */
+/* ── Main content: calendar + slots ────────────────────────────── */
 .rb-body {
   display: flex;
   min-height: 460px;
+  position: relative;
+  z-index: 1;
 }
 
 .rb-calendar-panel {
   flex: 1;
-  padding: 28px 36px 32px;
-  border-right: 1px solid var(--rb-border-light);
+  padding: 32px 40px 36px;
+  border-right: 1px solid var(--rb-border);
 }
 
 .rb-slots-panel {
-  width: 280px;
+  width: 290px;
   flex-shrink: 0;
-  padding: 28px 24px;
+  padding: 32px 24px;
   overflow-y: auto;
   max-height: 540px;
   display: flex;
   flex-direction: column;
-  background: var(--rb-bg);
+  background: rgba(255,255,255,0.015);
 }
 
-/* Custom scrollbar for slots panel */
+/* Custom scrollbar */
 .rb-slots-panel::-webkit-scrollbar { width: 4px; }
 .rb-slots-panel::-webkit-scrollbar-track { background: transparent; }
-.rb-slots-panel::-webkit-scrollbar-thumb { background: var(--rb-border); border-radius: 4px; }
+.rb-slots-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
 /* ── Mini calendar ──────────────────────────────────────────────── */
 .rb-cal-nav {
@@ -143,20 +271,20 @@
 }
 
 .rb-cal-nav h2 {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   margin: 0;
   color: var(--rb-text);
   text-transform: capitalize;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.02em;
 }
 
 .rb-cal-nav button {
-  background: var(--rb-card);
+  background: transparent;
   border: 1px solid var(--rb-border);
   border-radius: var(--rb-radius-xs);
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,15 +294,15 @@
   transition: all var(--rb-transition);
 }
 .rb-cal-nav button:hover {
-  background: var(--rb-primary-soft);
-  border-color: var(--rb-primary);
-  color: var(--rb-primary);
+  background: var(--rb-glass-hover);
+  border-color: var(--rb-border-hover);
+  color: var(--rb-text);
 }
 
 .rb-cal-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .rb-cal-weekday {
@@ -184,13 +312,13 @@
   color: var(--rb-text-muted);
   padding: 8px 0;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .rb-cal-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: 3px;
 }
 
 .rb-cal-day {
@@ -203,7 +331,7 @@
   background: none;
   font-size: 14px;
   font-weight: 400;
-  color: var(--rb-border);
+  color: var(--rb-text-muted);
   border-radius: var(--rb-radius-xs);
   cursor: default;
   transition: all var(--rb-transition);
@@ -216,32 +344,33 @@
 }
 
 .rb-cal-day.has-slots:hover {
-  background: var(--rb-primary-soft);
-  color: var(--rb-primary);
+  background: rgba(255,255,255,0.06);
+  transform: scale(1.08);
 }
 
 .rb-cal-day.selected {
-  background: var(--rb-primary);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  background: #ffffff;
+  color: #000000;
+  font-weight: 700;
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.18), 0 0 0 1px rgba(255,255,255,0.3);
+  transform: scale(1.08);
 }
 
 .rb-cal-day.today:not(.selected) {
   font-weight: 700;
-  color: var(--rb-primary);
+  color: #ffffff;
   position: relative;
 }
 .rb-cal-day.today:not(.selected)::before {
   content: '';
   position: absolute;
-  bottom: 5px;
+  bottom: 4px;
   left: 50%;
   transform: translateX(-50%);
   width: 16px;
   height: 2px;
   border-radius: 1px;
-  background: var(--rb-primary);
+  background: rgba(255,255,255,0.5);
 }
 
 .rb-cal-day.other-month {
@@ -253,16 +382,16 @@
   font-size: 14px;
   font-weight: 700;
   color: var(--rb-text);
-  margin: 0 0 16px 0;
+  margin: 0 0 18px 0;
   text-transform: capitalize;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.01em;
 }
 
 .rb-no-date {
   font-size: 14px;
   color: var(--rb-text-muted);
   text-align: center;
-  padding: 48px 16px;
+  padding: 56px 16px;
   line-height: 1.6;
 }
 
@@ -270,18 +399,33 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  animation: rb-slideUp 0.3s ease both;
 }
 
-@keyframes rb-slideUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* Stagger animation for slot items */
 .rb-slot-wrapper {
   display: flex;
   gap: 8px;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s var(--rb-ease-out);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: rb-slotIn 0.4s var(--rb-ease-out) forwards;
+}
+
+/* Stagger delays via nth-child */
+.rb-slot-wrapper:nth-child(1) { animation-delay: 0.00s; }
+.rb-slot-wrapper:nth-child(2) { animation-delay: 0.04s; }
+.rb-slot-wrapper:nth-child(3) { animation-delay: 0.08s; }
+.rb-slot-wrapper:nth-child(4) { animation-delay: 0.12s; }
+.rb-slot-wrapper:nth-child(5) { animation-delay: 0.16s; }
+.rb-slot-wrapper:nth-child(6) { animation-delay: 0.20s; }
+.rb-slot-wrapper:nth-child(7) { animation-delay: 0.24s; }
+.rb-slot-wrapper:nth-child(8) { animation-delay: 0.28s; }
+.rb-slot-wrapper:nth-child(9) { animation-delay: 0.32s; }
+.rb-slot-wrapper:nth-child(10) { animation-delay: 0.36s; }
+.rb-slot-wrapper:nth-child(n+11) { animation-delay: 0.40s; }
+
+@keyframes rb-slotIn {
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .rb-slot-btn {
@@ -289,45 +433,47 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 11px 16px;
-  border: 1.5px solid var(--rb-border);
+  padding: 12px 16px;
+  border: 1px solid var(--rb-border);
   border-radius: var(--rb-radius-xs);
-  background: var(--rb-card);
-  color: var(--rb-primary);
+  background: transparent;
+  color: var(--rb-text);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all var(--rb-transition);
   font-variant-numeric: tabular-nums;
+  backdrop-filter: blur(4px);
 }
 .rb-slot-btn:hover {
-  border-color: var(--rb-primary);
-  background: var(--rb-primary-soft);
+  border-color: var(--rb-border-bright);
+  background: var(--rb-glass);
 }
 
 .rb-slot-wrapper.active .rb-slot-btn {
   flex: 1;
-  background: var(--rb-primary-soft);
-  color: var(--rb-primary);
-  border-color: var(--rb-primary);
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: 0 0 16px rgba(255,255,255,0.06);
 }
 
 .rb-slot-confirm {
-  padding: 11px 20px;
+  padding: 12px 22px;
   border: none;
   border-radius: var(--rb-radius-xs);
-  background: var(--rb-primary);
-  color: #fff;
+  background: #ffffff;
+  color: #000000;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all var(--rb-transition);
   white-space: nowrap;
-  animation: rb-slideIn 0.2s ease both;
+  animation: rb-slideIn 0.25s var(--rb-ease-out) both;
 }
 .rb-slot-confirm:hover {
-  background: var(--rb-primary-dark);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 0 24px rgba(255, 255, 255, 0.2);
+  transform: scale(1.03);
 }
 
 @keyframes rb-slideIn {
@@ -337,10 +483,12 @@
 
 /* ── Form step ──────────────────────────────────────────────────── */
 .rb-form-panel {
-  padding: 36px 44px 44px;
+  padding: 40px 48px 48px;
   max-width: 520px;
   margin: 0 auto;
-  animation: rb-fadeIn 0.3s ease both;
+  position: relative;
+  z-index: 1;
+  animation: rb-staggerIn 0.5s var(--rb-ease-out) both;
 }
 
 .rb-back-btn {
@@ -354,27 +502,28 @@
   font-weight: 500;
   cursor: pointer;
   padding: 0;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   transition: color var(--rb-transition);
 }
-.rb-back-btn:hover { color: var(--rb-primary); }
+.rb-back-btn:hover { color: var(--rb-text); }
 .rb-back-btn svg { width: 16px; height: 16px; }
 
 .rb-selected-summary {
-  background: var(--rb-primary-soft);
-  border: 1px solid rgba(37, 99, 235, 0.12);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--rb-border);
+  border-left: 3px solid rgba(255,255,255,0.6);
   border-radius: var(--rb-radius-sm);
-  padding: 16px 20px;
-  margin-bottom: 28px;
+  padding: 18px 22px;
+  margin-bottom: 32px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .rb-selected-summary svg {
-  width: 20px;
-  height: 20px;
-  color: var(--rb-primary);
+  width: 22px;
+  height: 22px;
+  color: var(--rb-text-secondary);
   flex-shrink: 0;
 }
 
@@ -387,74 +536,96 @@
 .rb-selected-summary .rb-sum-time {
   font-size: 13px;
   color: var(--rb-text-secondary);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .rb-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 22px;
 }
 
 .rb-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .rb-field label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--rb-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .rb-field input {
-  padding: 0 16px;
-  border: 1.5px solid var(--rb-border);
+  padding: 0 18px;
+  border: 1px solid var(--rb-border);
   border-radius: var(--rb-radius-xs);
   font-size: 15px;
   color: var(--rb-text);
-  background: var(--rb-card);
+  background: rgba(255,255,255,0.03);
   transition: all var(--rb-transition);
   outline: none;
-  height: 48px;
+  height: 50px;
+  font-family: inherit;
 }
 .rb-field input:focus {
-  border-color: var(--rb-primary);
-  box-shadow: 0 0 0 3px var(--rb-primary-ring);
+  border-color: rgba(255,255,255,0.3);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.05);
 }
 .rb-field input::placeholder {
-  color: var(--rb-text-muted);
+  color: var(--rb-text-placeholder);
   font-weight: 400;
 }
 
 .rb-submit-btn {
-  padding: 0 28px;
-  height: 50px;
+  padding: 0 32px;
+  height: 54px;
   border: none;
   border-radius: var(--rb-radius-xs);
-  background: var(--rb-primary);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
+  background: #ffffff;
+  color: #000000;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   transition: all var(--rb-transition);
-  margin-top: 4px;
-  letter-spacing: -0.2px;
+  margin-top: 6px;
+  letter-spacing: -0.01em;
+  font-family: inherit;
 }
 .rb-submit-btn:hover {
-  background: var(--rb-primary-dark);
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
-  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(255, 255, 255, 0.15), 0 0 0 1px rgba(255,255,255,0.1);
+  transform: translateY(-2px);
 }
 .rb-submit-btn:active {
   transform: translateY(0);
 }
 .rb-submit-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* Trust signal below button */
+.rb-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--rb-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.rb-trust svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.6;
 }
 
 .rb-error {
@@ -463,44 +634,50 @@
   padding: 12px 16px;
   background: var(--rb-error-bg);
   border-radius: var(--rb-radius-xs);
-  border: 1px solid rgba(220, 38, 38, 0.15);
+  border: 1px solid rgba(255, 107, 107, 0.12);
   font-weight: 500;
 }
 
 /* ── Success screen ─────────────────────────────────────────────── */
 .rb-exito {
-  padding: 72px 40px 64px;
+  padding: 80px 40px 72px;
   text-align: center;
-  animation: rb-fadeIn 0.4s ease both;
+  position: relative;
+  z-index: 1;
+  animation: rb-staggerIn 0.5s var(--rb-ease-out) both;
 }
 
 .rb-exito-icon {
-  width: 68px;
-  height: 68px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  background: var(--rb-success-bg);
-  color: var(--rb-success);
+  background: #ffffff;
+  color: #000000;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
-  margin-bottom: 20px;
-  animation: rb-scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.08);
+  margin-bottom: 24px;
+  animation: rb-successPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow:
+    0 0 0 8px rgba(255, 255, 255, 0.06),
+    0 0 0 16px rgba(255, 255, 255, 0.03),
+    0 0 40px rgba(255, 255, 255, 0.1);
 }
 
-@keyframes rb-scaleIn {
-  from { opacity: 0; transform: scale(0.5); }
-  to { opacity: 1; transform: scale(1); }
+@keyframes rb-successPop {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { opacity: 1; }
+  100% { transform: scale(1); }
 }
 
 .rb-exito h2 {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
   color: var(--rb-text);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.03em;
 }
 
 .rb-exito p {
@@ -508,27 +685,62 @@
   font-size: 15px;
   margin: 0;
   line-height: 1.6;
-  max-width: 380px;
+  max-width: 400px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .rb-exito-details {
-  background: var(--rb-bg);
-  border: 1px solid var(--rb-border-light);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--rb-border);
   border-radius: var(--rb-radius-sm);
-  padding: 18px 24px;
-  margin-top: 24px;
-  display: inline-block;
+  padding: 20px 28px;
+  margin-top: 28px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
   text-align: left;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--rb-text-secondary);
+  animation: rb-staggerIn 0.5s var(--rb-ease-out) 0.3s both;
 }
+
+.rb-exito-details-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rb-exito-details-row svg {
+  width: 16px;
+  height: 16px;
+  color: var(--rb-text-muted);
+  flex-shrink: 0;
+}
+
 .rb-exito-details strong {
   color: var(--rb-text);
+  font-weight: 600;
 }
-.rb-exito-details div + div {
-  margin-top: 4px;
+
+.rb-exito-reminder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 20px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  background: var(--rb-success-bg);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rb-success);
+  animation: rb-staggerIn 0.5s var(--rb-ease-out) 0.5s both;
+}
+
+.rb-exito-reminder svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 /* ── Not found / inactive ───────────────────────────────────────── */
@@ -538,6 +750,8 @@
   color: var(--rb-text-muted);
   font-size: 15px;
   line-height: 1.6;
+  position: relative;
+  z-index: 1;
 }
 
 /* ── Loading ────────────────────────────────────────────────────── */
@@ -546,14 +760,16 @@
   text-align: center;
   color: var(--rb-text-muted);
   font-size: 14px;
+  position: relative;
+  z-index: 1;
 }
 
 .rb-spinner {
   display: inline-block;
   width: 28px;
   height: 28px;
-  border: 2.5px solid var(--rb-border);
-  border-top-color: var(--rb-primary);
+  border: 2px solid var(--rb-border);
+  border-top-color: rgba(255,255,255,0.6);
   border-radius: 50%;
   animation: rb-spin 0.7s linear infinite;
   margin-bottom: 16px;
@@ -565,11 +781,13 @@
 
 /* ── Footer ─────────────────────────────────────────────────────── */
 .rb-footer {
-  padding: 24px 20px;
+  padding: 28px 20px;
   text-align: center;
   font-size: 12px;
   color: var(--rb-text-muted);
   letter-spacing: 0.02em;
+  position: relative;
+  z-index: 1;
 }
 
 .rb-footer a {
@@ -579,32 +797,60 @@
   transition: color var(--rb-transition);
 }
 .rb-footer a:hover {
-  color: var(--rb-primary);
+  color: var(--rb-text);
 }
 
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .rb-page {
     padding: 0;
-    background: var(--rb-card);
+  }
+
+  /* Disable mesh gradient on mobile for performance */
+  .rb-page::before {
+    background:
+      radial-gradient(ellipse 80% 60% at 30% 10%, rgba(59, 130, 246, 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 80% at 70% 90%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+    animation: none;
   }
 
   .rb-container {
     border-radius: 0;
     min-height: 100vh;
     min-height: 100dvh;
+  }
+
+  .rb-container::before {
+    display: none; /* No rotating border on mobile */
+  }
+
+  .rb-container-inner {
+    border-radius: 0;
     box-shadow: none;
     border: none;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 
   .rb-header {
-    padding: 24px 20px 20px;
-    flex-direction: column;
-    text-align: center;
+    padding: 28px 20px 24px;
   }
 
-  .rb-header-info {
-    align-items: center;
+  .rb-header-info h1 {
+    font-size: 22px;
+  }
+
+  .rb-header-subtitle {
+    font-size: 14px;
+  }
+
+  .rb-badges {
+    gap: 8px;
+  }
+
+  .rb-badge-pill {
+    font-size: 12px;
+    padding: 6px 12px;
   }
 
   .rb-body {
@@ -613,20 +859,20 @@
 
   .rb-calendar-panel {
     border-right: none;
-    border-bottom: 1px solid var(--rb-border-light);
-    padding: 20px 16px 24px;
+    border-bottom: 1px solid var(--rb-border);
+    padding: 24px 16px 28px;
   }
 
   .rb-slots-panel {
     width: 100%;
     max-height: none;
-    padding: 20px 16px;
+    padding: 24px 16px;
     background: var(--rb-card);
   }
 
   .rb-slots-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 8px;
   }
 
@@ -640,38 +886,56 @@
   }
 
   .rb-slot-btn {
-    padding: 10px 12px;
+    padding: 11px 12px;
     font-size: 14px;
   }
 
   .rb-form-panel {
-    padding: 24px 20px 32px;
+    padding: 28px 20px 36px;
   }
 
   .rb-exito {
-    padding: 48px 20px;
+    padding: 56px 20px 48px;
   }
 
-  .rb-header-info h1 {
-    font-size: 18px;
+  .rb-footer {
+    padding: 20px;
   }
+}
 
-  .rb-cal-nav h2 {
-    font-size: 16px;
-  }
+/* ── Focus visible ──────────────────────────────────────────────── */
+.rb-cal-day:focus-visible,
+.rb-slot-btn:focus-visible,
+.rb-slot-confirm:focus-visible,
+.rb-submit-btn:focus-visible,
+.rb-back-btn:focus-visible,
+.rb-cal-nav button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--rb-bg), 0 0 0 4px rgba(255,255,255,0.3);
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .rb-container,
-  .rb-slots-list,
+  .rb-page::before,
+  .rb-container::before {
+    animation: none;
+  }
+  .rb-anim-enter,
+  .rb-slot-wrapper,
   .rb-slot-confirm,
   .rb-exito,
   .rb-exito-icon,
-  .rb-form-panel {
+  .rb-form-panel,
+  .rb-exito-details,
+  .rb-exito-reminder {
     animation: none;
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
-  .rb-submit-btn:hover {
+  .rb-submit-btn:hover,
+  .rb-slot-confirm:hover,
+  .rb-cal-day.has-slots:hover {
     transform: none;
   }
 }

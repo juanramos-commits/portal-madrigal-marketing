@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import '../styles/reservar-cita.css'
@@ -20,6 +20,30 @@ const CalendarIcon = () => (
 const ArrowLeft = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+  </svg>
+)
+
+const ShieldIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+  </svg>
+)
+
+const VideoIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+  </svg>
+)
+
+const CheckIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+)
+
+const MailIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
   </svg>
 )
 
@@ -51,6 +75,7 @@ function getMadridDateParts(date) {
 
 export default function ReservarCita() {
   const { slug } = useParams()
+  const containerRef = useRef(null)
 
   // State
   const [enlace, setEnlace] = useState(null)
@@ -66,6 +91,22 @@ export default function ReservarCita() {
   const [resultData, setResultData] = useState(null)
 
   const [loadError, setLoadError] = useState(false)
+
+  // Spotlight effect: track mouse position on the card
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    // Only on desktop (no touch)
+    if (window.matchMedia('(pointer: coarse)').matches) return
+
+    const handleMouse = (e) => {
+      const rect = el.getBoundingClientRect()
+      el.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`)
+      el.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`)
+    }
+    el.addEventListener('mousemove', handleMouse)
+    return () => el.removeEventListener('mousemove', handleMouse)
+  }, [loading, loadError, enlace])
 
   // Load enlace info + slots
   useEffect(() => {
@@ -220,9 +261,11 @@ export default function ReservarCita() {
     return (
       <div className="rb-page">
         <div className="rb-container">
-          <div className="rb-loading">
-            <div className="rb-spinner" />
-            <p>Cargando disponibilidad...</p>
+          <div className="rb-container-inner">
+            <div className="rb-loading">
+              <div className="rb-spinner" />
+              <p>Cargando disponibilidad...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -233,7 +276,9 @@ export default function ReservarCita() {
     return (
       <div className="rb-page">
         <div className="rb-container">
-          <div className="rb-not-found">Error al cargar. Por favor, recarga la página.</div>
+          <div className="rb-container-inner">
+            <div className="rb-not-found">Error al cargar. Por favor, recarga la página.</div>
+          </div>
         </div>
       </div>
     )
@@ -243,7 +288,9 @@ export default function ReservarCita() {
     return (
       <div className="rb-page">
         <div className="rb-container">
-          <div className="rb-not-found">Este enlace de reserva no está disponible.</div>
+          <div className="rb-container-inner">
+            <div className="rb-not-found">Este enlace de reserva no está disponible.</div>
+          </div>
         </div>
       </div>
     )
@@ -252,174 +299,209 @@ export default function ReservarCita() {
   return (
     <div className="rb-page">
       <div className="rb-container">
-        {/* Header */}
-        <div className="rb-header">
-          <img src="/logo.png" alt="Madrigal Marketing" className="rb-logo" />
-          <div className="rb-header-info">
-            <h1>{enlace.nombre}</h1>
-            <div className="rb-header-meta">
-              <ClockIcon />
-              <span>{enlace.duracion} min</span>
+        <div className="rb-container-inner" ref={containerRef}>
+          {/* Spotlight overlay */}
+          <div className="rb-spotlight" />
+
+          {/* Header */}
+          <div className="rb-header">
+            <img src="/logo.png" alt="Madrigal Marketing" className="rb-logo rb-anim-enter rb-anim-delay-1" />
+            <div className="rb-header-info">
+              <h1 className="rb-anim-enter rb-anim-delay-2">{enlace.nombre}</h1>
+              <p className="rb-header-subtitle rb-anim-enter rb-anim-delay-2">
+                Descubre cómo escalar tu negocio con estrategias de marketing digital a medida
+              </p>
+              <div className="rb-badges rb-anim-enter rb-anim-delay-3">
+                <span className="rb-badge-pill">
+                  <ClockIcon />
+                  {enlace.duracion} min
+                </span>
+                <span className="rb-badge-pill">
+                  <ShieldIcon />
+                  Gratuita
+                </span>
+                <span className="rb-badge-pill">
+                  <VideoIcon />
+                  Online
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Step: Calendar + Slots */}
-        {step === 'calendar' && (
-          <div className="rb-body">
-            <div className="rb-calendar-panel">
-              {/* Month navigation */}
-              <div className="rb-cal-nav">
-                <button onClick={prevMonth} aria-label="Mes anterior">&larr;</button>
-                <h2>{MESES[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h2>
-                <button onClick={nextMonth} aria-label="Mes siguiente">&rarr;</button>
+          {/* Step: Calendar + Slots */}
+          {step === 'calendar' && (
+            <div className="rb-body rb-anim-enter rb-anim-delay-4">
+              <div className="rb-calendar-panel">
+                {/* Month navigation */}
+                <div className="rb-cal-nav">
+                  <button onClick={prevMonth} aria-label="Mes anterior">&larr;</button>
+                  <h2>{MESES[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h2>
+                  <button onClick={nextMonth} aria-label="Mes siguiente">&rarr;</button>
+                </div>
+
+                {/* Weekday headers */}
+                <div className="rb-cal-weekdays">
+                  {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => (
+                    <div key={d} className="rb-cal-weekday">{d}</div>
+                  ))}
+                </div>
+
+                {/* Days grid */}
+                <div className="rb-cal-days">
+                  {calendarDays.map((day, i) => {
+                    if (day.otherMonth) return <div key={i} className="rb-cal-day other-month" />
+
+                    const isSelected = selectedDate && selectedDate.getTime() === day.date.getTime()
+                    const classes = [
+                      'rb-cal-day',
+                      day.hasSlots && 'has-slots',
+                      isSelected && 'selected',
+                      day.isToday && 'today',
+                    ].filter(Boolean).join(' ')
+
+                    return (
+                      <button
+                        key={i}
+                        className={classes}
+                        onClick={() => { if (day.hasSlots) { setSelectedDate(day.date); setSelectedSlot(null) } }}
+                        disabled={!day.hasSlots}
+                        aria-label={`${day.day} de ${MESES[currentMonth.getMonth()]}`}
+                      >
+                        {day.day}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
-              {/* Weekday headers */}
-              <div className="rb-cal-weekdays">
-                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => (
-                  <div key={d} className="rb-cal-weekday">{d}</div>
-                ))}
-              </div>
-
-              {/* Days grid */}
-              <div className="rb-cal-days">
-                {calendarDays.map((day, i) => {
-                  if (day.otherMonth) return <div key={i} className="rb-cal-day other-month" />
-
-                  const isSelected = selectedDate && selectedDate.getTime() === day.date.getTime()
-                  const classes = [
-                    'rb-cal-day',
-                    day.hasSlots && 'has-slots',
-                    isSelected && 'selected',
-                    day.isToday && 'today',
-                  ].filter(Boolean).join(' ')
-
-                  return (
-                    <button
-                      key={i}
-                      className={classes}
-                      onClick={() => { if (day.hasSlots) { setSelectedDate(day.date); setSelectedSlot(null) } }}
-                      disabled={!day.hasSlots}
-                      aria-label={`${day.day} de ${MESES[currentMonth.getMonth()]}`}
-                    >
-                      {day.day}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Slots panel */}
-            <div className="rb-slots-panel">
-              {!selectedDate ? (
-                <p className="rb-no-date">Selecciona un dia para ver los horarios disponibles</p>
-              ) : (
-                <>
-                  <p className="rb-slots-title">{formatFecha(selectedDate)}</p>
-                  <div className="rb-slots-list">
-                    {slotsForDay.length === 0 ? (
-                      <p className="rb-no-date">No hay horarios disponibles</p>
-                    ) : (
-                      slotsForDay.map(slot => {
-                        const isActive = selectedSlot?.fecha_hora === slot.fecha_hora
-                        return (
-                          <div key={slot.fecha_hora} className={`rb-slot-wrapper${isActive ? ' active' : ''}`}>
-                            <button
-                              className="rb-slot-btn"
-                              onClick={() => handleSelectSlot(slot)}
-                            >
-                              {formatHora(slot.fecha_hora)}
-                            </button>
-                            {isActive && (
-                              <button className="rb-slot-confirm" onClick={handleConfirmSlot}>
-                                Confirmar
+              {/* Slots panel */}
+              <div className="rb-slots-panel">
+                {!selectedDate ? (
+                  <p className="rb-no-date">Selecciona un día para ver los horarios disponibles</p>
+                ) : (
+                  <>
+                    <p className="rb-slots-title">{formatFecha(selectedDate)}</p>
+                    <div className="rb-slots-list" key={selectedDateKey}>
+                      {slotsForDay.length === 0 ? (
+                        <p className="rb-no-date">No hay horarios disponibles</p>
+                      ) : (
+                        slotsForDay.map(slot => {
+                          const isActive = selectedSlot?.fecha_hora === slot.fecha_hora
+                          return (
+                            <div key={slot.fecha_hora} className={`rb-slot-wrapper${isActive ? ' active' : ''}`}>
+                              <button
+                                className="rb-slot-btn"
+                                onClick={() => handleSelectSlot(slot)}
+                              >
+                                {formatHora(slot.fecha_hora)}
                               </button>
-                            )}
-                          </div>
-                        )
-                      })
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Step: Form */}
-        {step === 'form' && selectedSlot && (
-          <div className="rb-form-panel">
-            <button className="rb-back-btn" onClick={() => setStep('calendar')}>
-              <ArrowLeft /> Volver al calendario
-            </button>
-
-            <div className="rb-selected-summary">
-              <CalendarIcon />
-              <div>
-                <div className="rb-sum-date">{formatFecha(selectedSlot.fecha_hora)}</div>
-                <div className="rb-sum-time">{formatHora(selectedSlot.fecha_hora)} · {enlace.duracion} min</div>
+                              {isActive && (
+                                <button className="rb-slot-confirm" onClick={handleConfirmSlot}>
+                                  Confirmar
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
+          )}
 
-            <form className="rb-form" onSubmit={handleSubmit}>
-              <div className="rb-field">
-                <label htmlFor="rb-nombre">Nombre *</label>
-                <input
-                  id="rb-nombre"
-                  type="text"
-                  value={form.nombre}
-                  onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-                  placeholder="Tu nombre completo"
-                  required
-                />
-              </div>
-              <div className="rb-field">
-                <label htmlFor="rb-email">Email *</label>
-                <input
-                  id="rb-email"
-                  type="email"
-                  value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  placeholder="tu@email.com"
-                  required
-                />
-              </div>
-              <div className="rb-field">
-                <label htmlFor="rb-telefono">Telefono *</label>
-                <input
-                  id="rb-telefono"
-                  type="tel"
-                  value={form.telefono}
-                  onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
-                  placeholder="+34 600 000 000"
-                  required
-                />
-              </div>
-
-              {error && <div className="rb-error">{error}</div>}
-
-              <button type="submit" className="rb-submit-btn" disabled={enviando}>
-                {enviando ? 'Confirmando...' : 'Agendar cita'}
+          {/* Step: Form */}
+          {step === 'form' && selectedSlot && (
+            <div className="rb-form-panel">
+              <button className="rb-back-btn" onClick={() => setStep('calendar')}>
+                <ArrowLeft /> Volver al calendario
               </button>
-            </form>
-          </div>
-        )}
 
-        {/* Step: Success */}
-        {step === 'success' && (
-          <div className="rb-exito">
-            <div className="rb-exito-icon">✓</div>
-            <h2>Cita confirmada</h2>
-            <p>Tu cita ha sido agendada correctamente. Te enviaremos un recordatorio por email.</p>
-            {resultData && (
-              <div className="rb-exito-details">
-                <div><strong>{formatFecha(resultData.fecha_hora)}</strong></div>
-                <div>{formatHora(resultData.fecha_hora)} · {resultData.duracion} min</div>
+              <div className="rb-selected-summary">
+                <CalendarIcon />
+                <div>
+                  <div className="rb-sum-date">{formatFecha(selectedSlot.fecha_hora)}</div>
+                  <div className="rb-sum-time">{formatHora(selectedSlot.fecha_hora)} · {enlace.duracion} min</div>
+                </div>
               </div>
-            )}
-          </div>
-        )}
+
+              <form className="rb-form" onSubmit={handleSubmit}>
+                <div className="rb-field">
+                  <label htmlFor="rb-nombre">Nombre</label>
+                  <input
+                    id="rb-nombre"
+                    type="text"
+                    value={form.nombre}
+                    onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                    placeholder="Tu nombre completo"
+                    required
+                  />
+                </div>
+                <div className="rb-field">
+                  <label htmlFor="rb-email">Email</label>
+                  <input
+                    id="rb-email"
+                    type="email"
+                    value={form.email}
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    placeholder="tu@email.com"
+                    required
+                  />
+                </div>
+                <div className="rb-field">
+                  <label htmlFor="rb-telefono">Teléfono</label>
+                  <input
+                    id="rb-telefono"
+                    type="tel"
+                    value={form.telefono}
+                    onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
+                    placeholder="+34 600 000 000"
+                    required
+                  />
+                </div>
+
+                {error && <div className="rb-error">{error}</div>}
+
+                <button type="submit" className="rb-submit-btn" disabled={enviando}>
+                  {enviando ? 'Confirmando...' : 'Confirmar mi reserva'}
+                </button>
+
+                <div className="rb-trust">
+                  <ShieldIcon />
+                  <span>Tus datos están protegidos y seguros</span>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Step: Success */}
+          {step === 'success' && (
+            <div className="rb-exito">
+              <div className="rb-exito-icon">
+                <CheckIcon />
+              </div>
+              <h2>¡Reserva confirmada!</h2>
+              <p>Tu cita ha sido agendada correctamente.</p>
+              {resultData && (
+                <div className="rb-exito-details">
+                  <div className="rb-exito-details-row">
+                    <CalendarIcon />
+                    <strong>{formatFecha(resultData.fecha_hora)}</strong>
+                  </div>
+                  <div className="rb-exito-details-row">
+                    <ClockIcon />
+                    <span>{formatHora(resultData.fecha_hora)} · {resultData.duracion} min</span>
+                  </div>
+                </div>
+              )}
+              <div className="rb-exito-reminder">
+                <MailIcon />
+                <span>Recibirás un email de confirmación</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Footer */}

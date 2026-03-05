@@ -33,6 +33,18 @@ const CameraIcon = () => (
   </svg>
 )
 
+const PhoneIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }} aria-hidden="true">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+  </svg>
+)
+
+const MailIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14 }} aria-hidden="true">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+  </svg>
+)
+
 export default function CalendarioCitaDetalle({
   cita,
   reunionEstados,
@@ -147,20 +159,50 @@ export default function CalendarioCitaDetalle({
     setTimeout(() => setSuccessMsg(null), 2000)
   }
 
+  const leadTelefono = cita.lead?.telefono
+  const leadEmail = cita.lead?.email
+
   return (
     <Modal
       open={true}
       onClose={onClose}
       title="Detalle de cita"
     >
-      {/* Lead info */}
+      {/* Lead hero */}
       <div className="vc-detalle-section">
-        <div className="vc-detalle-row">
-          <span className="vc-detalle-label">Lead</span>
-          <button className="vc-link-btn" onClick={() => navigate(`/ventas/crm/lead/${cita.lead?.id}`)}>
-            {cita.lead?.nombre || 'Sin nombre'} <LinkIcon />
-          </button>
+        <div className="vc-detalle-hero">
+          <span className="vc-detalle-hero-name" onClick={() => navigate(`/ventas/crm/lead/${cita.lead?.id}`)}>
+            {cita.lead?.nombre || 'Sin nombre'}
+          </span>
+          {cita.estado === 'cancelada' ? (
+            <span className="vc-badge" style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
+              Cancelada
+            </span>
+          ) : estadoActual ? (
+            <span className="vc-badge" style={{ background: `${estadoActual.color}20`, color: estadoActual.color }}>
+              {estadoActual.nombre}
+            </span>
+          ) : (
+            <span className="vc-badge" style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--text-muted)' }}>Sin estado</span>
+          )}
         </div>
+
+        {(leadTelefono || leadEmail) && (
+          <div className="vc-detalle-contact">
+            {leadTelefono && (
+              <div className="vc-detalle-contact-item">
+                <PhoneIcon />
+                <a href={`tel:${leadTelefono}`}>{leadTelefono}</a>
+              </div>
+            )}
+            {leadEmail && (
+              <div className="vc-detalle-contact-item">
+                <MailIcon />
+                <a href={`mailto:${leadEmail}`}>{leadEmail}</a>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="vc-detalle-row">
           <span className="vc-detalle-label">Fecha y hora</span>
@@ -188,26 +230,11 @@ export default function CalendarioCitaDetalle({
           </div>
         )}
 
-        <div className="vc-detalle-row">
-          <span className="vc-detalle-label">Estado reunión</span>
-          {cita.estado === 'cancelada' ? (
-            <span className="vc-badge" style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>
-              Cancelada
-            </span>
-          ) : estadoActual ? (
-            <span className="vc-badge" style={{ background: `${estadoActual.color}20`, color: estadoActual.color }}>
-              {estadoActual.nombre}
-            </span>
-          ) : (
-            <span className="vc-text-muted">Sin estado</span>
-          )}
-        </div>
-
         {cita.google_meet_url && (
           <div className="vc-detalle-row">
             <span className="vc-detalle-label">Google Meet</span>
             <a href={cita.google_meet_url} target="_blank" rel="noopener noreferrer" className="vc-meet-link">
-              <CameraIcon /> Abrir Meet
+              <CameraIcon /> Unirse a la reunión
             </a>
           </div>
         )}
