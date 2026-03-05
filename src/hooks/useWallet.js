@@ -171,7 +171,7 @@ export function useWallet() {
     const from = retirosPagina * RETIROS_PAGE_SIZE
     const { data, count } = await supabase
       .from('ventas_retiros')
-      .select('*, factura:ventas_facturas(id, numero_factura)', { count: 'exact' })
+      .select('*, factura:ventas_facturas!ventas_retiros_factura_id_fkey(id, numero_factura)', { count: 'exact' })
       .eq('usuario_id', user.id)
       .order('created_at', { ascending: false })
       .range(from, from + RETIROS_PAGE_SIZE - 1)
@@ -258,7 +258,7 @@ export function useWallet() {
       .select(`
         *,
         usuario:usuarios!ventas_retiros_usuario_id_fkey(id, nombre, email),
-        factura:ventas_facturas(id, numero_factura)
+        factura:ventas_facturas!ventas_retiros_factura_id_fkey(id, numero_factura)
       `, { count: 'exact' })
       .order('created_at', { ascending: false })
 
@@ -375,7 +375,7 @@ export function useWallet() {
       const ids = results.map(r => r.retiro_id)
       const { data } = await supabase
         .from('ventas_retiros')
-        .select('*, factura:ventas_facturas(id, numero_factura)')
+        .select('*, factura:ventas_facturas!ventas_retiros_factura_id_fkey(id, numero_factura)')
         .in('id', ids)
       if (requestId !== retirosSearchRef.current) return
       const relevMap = Object.fromEntries(results.map(r => [r.retiro_id, r.relevancia]))
@@ -453,7 +453,7 @@ export function useWallet() {
       const ids = results.map(r => r.retiro_id)
       const { data } = await supabase
         .from('ventas_retiros')
-        .select('*, usuario:usuarios!ventas_retiros_usuario_id_fkey(id, nombre, email), factura:ventas_facturas(id, numero_factura)')
+        .select('*, usuario:usuarios!ventas_retiros_usuario_id_fkey(id, nombre, email), factura:ventas_facturas!ventas_retiros_factura_id_fkey(id, numero_factura)')
         .in('id', ids)
       if (requestId !== adminRetirosSearchRef.current) return
       const relevMap = Object.fromEntries(results.map(r => [r.retiro_id, r.relevancia]))
