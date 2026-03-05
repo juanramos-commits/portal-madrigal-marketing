@@ -60,7 +60,7 @@ export default function SecurityAlerts() {
     try {
       let query = supabase
         .from('security_alerts')
-        .select('*, afectado:usuario_afectado_id(nombre, email), origen:usuario_origen_id(nombre, email), resolutor:resuelta_por(nombre)', { count: 'exact' })
+        .select('*, afectado:usuarios!security_alerts_usuario_afectado_id_fkey(nombre, email), origen:usuarios!security_alerts_usuario_origen_id_fkey(nombre, email), resolutor:usuarios!security_alerts_resuelta_por_fkey(nombre)', { count: 'exact' })
 
       if (filtroSeveridad) query = query.eq('severidad', filtroSeveridad)
       if (filtroTipo) query = query.eq('tipo', filtroTipo)

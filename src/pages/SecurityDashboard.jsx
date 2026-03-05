@@ -80,7 +80,7 @@ export default function SecurityDashboard() {
   const loadRecentAlerts = async () => {
     const { data } = await supabase
       .from('security_alerts')
-      .select('*, afectado:usuario_afectado_id(nombre)')
+      .select('*, afectado:usuarios!security_alerts_usuario_afectado_id_fkey(nombre)')
       .eq('resuelta', false)
       .order('created_at', { ascending: false })
       .limit(5)
