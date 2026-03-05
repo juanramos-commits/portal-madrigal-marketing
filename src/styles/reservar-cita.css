@@ -112,7 +112,7 @@
   background: var(--rb-card);
   border-radius: var(--rb-radius);
   border: 1px solid var(--rb-border);
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 0 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03);
   position: relative;
 }
