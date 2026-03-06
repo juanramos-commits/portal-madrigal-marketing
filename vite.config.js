@@ -11,25 +11,20 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return
 
-          // vendor-react: core React + router
-          if (
-            id.includes('/react-dom/') ||
-            id.includes('/react/') ||
-            id.includes('/react-router') ||
-            id.includes('/scheduler/')
-          ) return 'vendor-react'
+          // NOTE: react/react-dom stay in the main chunk to guarantee they load
+          // before any component chunk. Splitting them causes forwardRef errors.
 
           // vendor-supabase
           if (id.includes('/@supabase/')) return 'vendor-supabase'
 
-          // vendor-charts: recharts + d3 deps
+          // vendor-charts: recharts + d3 deps (lazy-loaded with Dashboard)
           if (
             id.includes('/recharts/') ||
             id.includes('/d3-') ||
             id.includes('/victory-vendor/')
           ) return 'vendor-charts'
 
-          // vendor-grid: react-grid-layout + dependencies
+          // vendor-grid: react-grid-layout (lazy-loaded with Dashboard)
           if (
             id.includes('/react-grid-layout/') ||
             id.includes('/react-draggable/') ||
@@ -40,6 +35,7 @@ export default defineConfig({
           if (id.includes('/@dnd-kit/')) return 'vendor-dnd'
 
           // vendor-export: jspdf, file-saver, jszip, papaparse, html2canvas
+          // These are dynamic-imported, so they only load on export click
           if (
             id.includes('/jspdf/') ||
             id.includes('/file-saver/') ||
