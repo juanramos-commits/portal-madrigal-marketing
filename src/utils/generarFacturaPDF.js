@@ -1,4 +1,3 @@
-import { jsPDF } from 'jspdf'
 import { formatMoneda } from './formatters'
 
 function formatFechaLarga(d) {
@@ -6,7 +5,8 @@ function formatFechaLarga(d) {
   return new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export function generarFacturaPDF(factura) {
+export async function generarFacturaPDF(factura) {
+  const { jsPDF } = await import('jspdf')
   const doc = new jsPDF('p', 'mm', 'a4')
   const pageW = doc.internal.pageSize.getWidth()
   const margin = 20

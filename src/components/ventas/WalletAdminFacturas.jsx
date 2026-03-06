@@ -13,8 +13,8 @@ export default function WalletAdminFacturas({
   busqueda,
   onBusquedaChange,
 }) {
-  const handleDescargar = (factura) => {
-    generarFacturaPDF(factura)
+  const handleDescargar = async (factura) => {
+    await generarFacturaPDF(factura)
   }
 
   const handleExportCSV = () => {

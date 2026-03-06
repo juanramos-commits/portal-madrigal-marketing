@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import Papa from 'papaparse'
-import { saveAs } from 'file-saver'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
@@ -430,6 +428,8 @@ export function useVentas() {
         'Fecha Devolución': fmtDate(v.fecha_devolucion),
       }))
 
+      const Papa = (await import('papaparse')).default
+      const { saveAs } = await import('file-saver')
       const csv = Papa.unparse(csvData, { delimiter: ';', quotes: true })
       const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })
       const fecha = new Date().toISOString().split('T')[0]

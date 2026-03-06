@@ -4,9 +4,6 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase } from '../lib/supabase'
-import Papa from 'papaparse'
-import JSZip from 'jszip'
-import { saveAs } from 'file-saver'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 
 export default function SecurityDashboard() {
@@ -164,6 +161,11 @@ export default function SecurityDashboard() {
         supabase.from('audit_log').select('id, usuario_id, accion, categoria, descripcion, created_at').order('created_at', { ascending: false }).limit(5000)
       ])
 
+      const [{ default: JSZip }, { default: Papa }, { saveAs: saveAsFn }] = await Promise.all([
+        import('jszip'),
+        import('papaparse'),
+        import('file-saver'),
+      ])
       const zip = new JSZip()
 
       zip.file('clientes.csv', Papa.unparse(clientesRes.data || []))
@@ -189,7 +191,7 @@ export default function SecurityDashboard() {
 
       const blob = await zip.generateAsync({ type: 'blob' })
       const dateStr = new Date().toISOString().split('T')[0]
-      saveAs(blob, `madrigal-export-${dateStr}.zip`)
+      saveAsFn(blob, `madrigal-export-${dateStr}.zip`)
 
       // Registrar en auditoría
       try {
