@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
  * o cuando la ventana recupera el foco.
  * Incluye un mínimo de 30s entre refrescos para no bombardear la API.
  */
-export function useRefreshOnFocus(refrescarFn, { enabled = true, minInterval = 30_000 } = {}) {
+export function useRefreshOnFocus(refrescarFn, { enabled = true, minInterval = 10_000 } = {}) {
   const lastRefresh = useRef(Date.now())
 
   useEffect(() => {

@@ -11,6 +11,33 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(msg)
 }
 
+// Custom fetch with automatic retry on transient network errors
+const fetchWithRetry = (url, options = {}) => {
+  const maxRetries = 2
+  const retryDelay = 1000
+
+  const attempt = (retryCount) =>
+    fetch(url, options).then((response) => {
+      // Retry on 502/503/504 (server temporarily down)
+      if (retryCount < maxRetries && response.status >= 502 && response.status <= 504) {
+        return new Promise((resolve) =>
+          setTimeout(() => resolve(attempt(retryCount + 1)), retryDelay * (retryCount + 1))
+        )
+      }
+      return response
+    }).catch((err) => {
+      // Retry on network errors (offline, DNS failure, connection reset)
+      if (retryCount < maxRetries && (err.name === 'TypeError' || err.name === 'AbortError')) {
+        return new Promise((resolve, reject) =>
+          setTimeout(() => attempt(retryCount + 1).then(resolve, reject), retryDelay * (retryCount + 1))
+        )
+      }
+      throw err
+    })
+
+  return attempt(0)
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
@@ -18,6 +45,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storageKey: 'madrigal-auth',
     autoRefreshToken: true,
     detectSessionInUrl: true,
-  }
+  },
+  global: {
+    fetch: fetchWithRetry,
+  },
 })
 export { supabaseUrl, supabaseAnonKey }

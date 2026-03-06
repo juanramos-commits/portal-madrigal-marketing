@@ -156,9 +156,28 @@ export function AuthProvider({ children }) {
       setLoading(false)
     })
 
+    // Recover from token refresh failures — check session health periodically
+    const sessionHealthCheck = setInterval(async () => {
+      if (!mounted) return
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session && usuario) {
+          // Session expired silently — force re-auth
+          logger.warn('Session expired, signing out...')
+          setUser(null)
+          setUsuario(null)
+          setPermisos([])
+          setRolesComerciales([])
+        }
+      } catch {
+        // Network error — ignore, will retry next interval
+      }
+    }, 5 * 60 * 1000) // Every 5 minutes
+
     return () => {
       mounted = false
       subscription.unsubscribe()
+      clearInterval(sessionHealthCheck)
     }
   }, [cargarUsuario])
 

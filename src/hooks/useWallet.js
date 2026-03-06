@@ -651,6 +651,20 @@ export function useWallet() {
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
 
+  // ── Safety net: never stay in loading state for more than 15s ──────
+  const loadingTimeoutRef = useRef(null)
+  useEffect(() => {
+    if (loading) {
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.warn('[Wallet] Loading timeout — forcing loading=false')
+        setLoading(false)
+      }, 15000)
+    } else {
+      clearTimeout(loadingTimeoutRef.current)
+    }
+    return () => clearTimeout(loadingTimeoutRef.current)
+  }, [loading])
+
   // ── Initial load ───────────────────────────────────────────────────
   const initialLoadDone = useRef(false)
   const prevUserIdRef = useRef(null)
@@ -663,9 +677,12 @@ export function useWallet() {
     if (!user?.id || authLoading || initialLoadDone.current) return
     if (rolesComerciales.length > 0 || esAdmin) {
       initialLoadDone.current = true
-      refrescar()
+      refrescar().catch(() => {
+        // If initial load fails, allow retry on next render cycle
+        initialLoadDone.current = false
+      })
     }
-  }, [user?.id, rolesComerciales.length, esAdmin, authLoading])
+  }, [user?.id, rolesComerciales.length, esAdmin, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fallback: stop infinite loading if no roles
   useEffect(() => {

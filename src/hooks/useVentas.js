@@ -31,6 +31,7 @@ export function useVentas() {
   const searchRequestRef = useRef(0)
   const loadRequestRef = useRef(0)
   const realtimeDebounceRef = useRef(null)
+  const loadingTimeoutRef = useRef(null)
   const [searchResultCount, setSearchResultCount] = useState(null)
   const [exportando, setExportando] = useState(false)
 
@@ -619,6 +620,19 @@ export function useVentas() {
 
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
+
+  // ── Safety net: never stay in loading state for more than 15s ──────
+  useEffect(() => {
+    if (loading) {
+      loadingTimeoutRef.current = setTimeout(() => {
+        console.warn('[Ventas] Loading timeout — forcing loading=false')
+        setLoading(false)
+      }, 15000)
+    } else {
+      clearTimeout(loadingTimeoutRef.current)
+    }
+    return () => clearTimeout(loadingTimeoutRef.current)
+  }, [loading])
 
   // ── Realtime: listen to ventas changes ─────────────────────────────
   useEffect(() => {
