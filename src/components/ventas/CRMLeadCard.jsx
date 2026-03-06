@@ -9,6 +9,21 @@ function getInitials(name) {
   return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
+function timeAgo(date) {
+  if (!date) return ''
+  const now = new Date()
+  const d = new Date(date)
+  const diffMs = now - d
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'ahora'
+  if (mins < 60) return `hace ${mins} min`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `hace ${hours}h`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return 'hace 1 día'
+  return `hace ${days} días`
+}
+
 function getAvatarColor(name) {
   if (!name) return 'var(--bg-active)'
   let hash = 0
@@ -121,6 +136,9 @@ export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }
           </span>
         )}
       </div>
+      {lead.created_at && (
+        <div className="crm-card-date">{timeAgo(lead.created_at)}</div>
+      )}
     </div>
   )
 }

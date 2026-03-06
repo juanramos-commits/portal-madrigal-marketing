@@ -1,6 +1,5 @@
 -- ==========================================================================
--- DASHBOARD WIDGETS FASE 3 — Añade 2 KPIs: tasa_conversion, citas_agendadas
--- Total: 49 branches (47 anteriores + 2 nuevos)
+-- PATCH: Excluir leads descartados de ventas_dashboard_widget_data
 -- ==========================================================================
 
 CREATE OR REPLACE FUNCTION ventas_dashboard_widget_data(
@@ -31,17 +30,15 @@ BEGIN
   v_fecha_prev_fin := p_fecha_inicio - 1;
   v_fecha_prev_inicio := v_fecha_prev_fin - v_diff;
 
-  -- ══════════════════════════════════════════════════════════════════════════
-  -- ORIGINAL 14 BRANCHES
-  -- ══════════════════════════════════════════════════════════════════════════
-
   -- ── KPI: total_leads ──
   IF 'total_leads' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('total_leads', jsonb_build_object(
       'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)),
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id)),
       'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date BETWEEN v_fecha_prev_inicio AND v_fecha_prev_fin
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id))
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id))
     ));
   END IF;
 
@@ -49,9 +46,11 @@ BEGIN
   IF 'leads_hoy' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('leads_hoy', jsonb_build_object(
       'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date = CURRENT_DATE
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)),
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id)),
       'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date = CURRENT_DATE - 1
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id))
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id))
     ));
   END IF;
 
@@ -59,9 +58,11 @@ BEGIN
   IF 'leads_esta_semana' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('leads_esta_semana', jsonb_build_object(
       'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= date_trunc('week', CURRENT_DATE)::date
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)),
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id)),
       'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= (date_trunc('week', CURRENT_DATE) - interval '7 days')::date AND created_at::date < date_trunc('week', CURRENT_DATE)::date
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id))
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id))
     ));
   END IF;
 
@@ -69,9 +70,11 @@ BEGIN
   IF 'leads_este_mes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('leads_este_mes', jsonb_build_object(
       'valor', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= date_trunc('month', CURRENT_DATE)::date
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)),
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id)),
       'anterior', (SELECT COUNT(*) FROM ventas_leads WHERE created_at::date >= (date_trunc('month', CURRENT_DATE) - interval '1 month')::date AND created_at::date < date_trunc('month', CURRENT_DATE)::date
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id))
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id))
     ));
   END IF;
 
@@ -144,6 +147,7 @@ BEGIN
         FROM ventas_leads
         WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
           AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(id)
         GROUP BY created_at::date
         ORDER BY fecha
       ) t
@@ -204,15 +208,7 @@ BEGIN
     ));
   END IF;
 
-  -- ══════════════════════════════════════════════════════════════════════════
-  -- FASE 2: 33 BRANCHES
-  -- ══════════════════════════════════════════════════════════════════════════
-
-  -- ────────────────────────────────────────────────────────────────────────
-  -- WALLET KPIs (6)
-  -- ────────────────────────────────────────────────────────────────────────
-
-  -- ── KPI: mi_saldo ──
+  -- ── WALLET KPIs ──
   IF 'mi_saldo' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('mi_saldo', jsonb_build_object(
       'valor', COALESCE((SELECT w.saldo FROM ventas_wallet w WHERE w.usuario_id = p_usuario_id), 0),
@@ -220,7 +216,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── KPI: mi_saldo_disponible ──
   IF 'mi_saldo_disponible' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('mi_saldo_disponible', jsonb_build_object(
       'valor', COALESCE(ventas_obtener_saldo_disponible(p_usuario_id), 0),
@@ -228,7 +223,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── KPI: total_ganado ──
   IF 'total_ganado' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('total_ganado', jsonb_build_object(
       'valor', COALESCE((SELECT w.total_ganado FROM ventas_wallet w WHERE w.usuario_id = p_usuario_id), 0),
@@ -236,7 +230,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── KPI: total_retirado ──
   IF 'total_retirado' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('total_retirado', jsonb_build_object(
       'valor', COALESCE((SELECT w.total_retirado FROM ventas_wallet w WHERE w.usuario_id = p_usuario_id), 0),
@@ -244,7 +237,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── KPI: comisiones_pendientes ──
   IF 'comisiones_pendientes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('comisiones_pendientes', jsonb_build_object(
       'valor', COALESCE((SELECT SUM(c.monto) FROM ventas_comisiones c WHERE c.usuario_id = p_usuario_id AND c.disponible_desde > now()), 0),
@@ -252,7 +244,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── KPI: retiros_pendientes ──
   IF 'retiros_pendientes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('retiros_pendientes', jsonb_build_object(
       'valor', COALESCE((
@@ -264,10 +255,6 @@ BEGIN
     ));
   END IF;
 
-  -- ────────────────────────────────────────────────────────────────────────
-  -- CHARTS TIME-SERIES (6)
-  -- ────────────────────────────────────────────────────────────────────────
-
   -- ── Chart: leads_por_semana ──
   IF 'leads_por_semana' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('leads_por_semana', (
@@ -277,6 +264,7 @@ BEGIN
         FROM ventas_leads
         WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
           AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(id)
         GROUP BY date_trunc('week', created_at)::date
         ORDER BY fecha
       ) t
@@ -365,6 +353,7 @@ BEGIN
           FROM ventas_leads
           WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
             AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+            AND NOT ventas_lead_descartado(id)
           GROUP BY created_at::date
         ) le ON le.fecha = d.fecha::date
         LEFT JOIN (
@@ -380,10 +369,6 @@ BEGIN
     ));
   END IF;
 
-  -- ────────────────────────────────────────────────────────────────────────
-  -- DISTRIBUTION (6)
-  -- ────────────────────────────────────────────────────────────────────────
-
   -- ── Distribution: leads_por_fuente ──
   IF 'leads_por_fuente' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('leads_por_fuente', (
@@ -393,6 +378,7 @@ BEGIN
         FROM ventas_leads l
         WHERE l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
           AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(l.id)
         GROUP BY l.fuente
         ORDER BY valor DESC
       ) t
@@ -409,6 +395,7 @@ BEGIN
         LEFT JOIN ventas_categorias c ON c.id = l.categoria_id
         WHERE l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
           AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(l.id)
         GROUP BY c.nombre
         ORDER BY valor DESC
       ) t
@@ -459,6 +446,7 @@ BEGIN
         JOIN ventas_leads l ON l.id = lp.lead_id
         WHERE e.activo = true
           AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(l.id)
         GROUP BY e.nombre, e.color, e.orden
         ORDER BY e.orden
       ) t
@@ -480,11 +468,7 @@ BEGIN
     ));
   END IF;
 
-  -- ────────────────────────────────────────────────────────────────────────
-  -- TABLES (4)
-  -- ────────────────────────────────────────────────────────────────────────
-
-  -- ── Table: comisiones_recientes ──
+  -- ── Tables ──
   IF 'comisiones_recientes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('comisiones_recientes', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
@@ -501,7 +485,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── Table: retiros_recientes ──
   IF 'retiros_recientes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('retiros_recientes', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
@@ -515,7 +498,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── Table: leads_sin_contactar ──
   IF 'leads_sin_contactar' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('leads_sin_contactar', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
@@ -527,13 +509,13 @@ BEGIN
         WHERE e.nombre ILIKE '%por contactar%'
           AND l.created_at < now() - interval '48 hours'
           AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(l.id)
         ORDER BY l.created_at ASC
         LIMIT 20
       ) t
     ));
   END IF;
 
-  -- ── Table: citas_proximas ──
   IF 'citas_proximas' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('citas_proximas', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
@@ -557,11 +539,7 @@ BEGIN
     ));
   END IF;
 
-  -- ────────────────────────────────────────────────────────────────────────
-  -- TEAM (5)
-  -- ────────────────────────────────────────────────────────────────────────
-
-  -- ── Team: ranking_closers ──
+  -- ── Team ──
   IF 'ranking_closers' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('ranking_closers', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
@@ -580,27 +558,23 @@ BEGIN
     ));
   END IF;
 
-  -- ── Team: ranking_setters ──
   IF 'ranking_setters' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('ranking_setters', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
       FROM (
         SELECT u.nombre, u.email,
           COALESCE(COUNT(DISTINCT ci.id), 0) as citas,
-          COALESCE(COUNT(DISTINCT l.id), 0) as leads_asignados
+          (SELECT COUNT(*) FROM ventas_leads l2 WHERE l2.setter_asignado_id = u.id AND l2.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin AND NOT ventas_lead_descartado(l2.id)) as leads_asignados
         FROM usuarios u
         JOIN ventas_roles_comerciales rc ON rc.usuario_id = u.id AND rc.rol = 'setter' AND rc.activo = true
         LEFT JOIN ventas_citas ci ON ci.setter_origen_id = u.id
           AND ci.fecha_hora::date BETWEEN p_fecha_inicio AND p_fecha_fin
-        LEFT JOIN ventas_leads l ON l.setter_asignado_id = u.id
-          AND l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
         GROUP BY u.id, u.nombre, u.email
         ORDER BY citas DESC
       ) t
     ));
   END IF;
 
-  -- ── Team: actividad_reciente ──
   IF 'actividad_reciente' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('actividad_reciente', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
@@ -618,7 +592,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── Team: conversion_por_closer ──
   IF 'conversion_por_closer' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('conversion_por_closer', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
@@ -650,7 +623,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── Team: conversion_por_setter ──
   IF 'conversion_por_setter' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('conversion_por_setter', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
@@ -668,6 +640,7 @@ BEGIN
           SELECT l.setter_asignado_id, COUNT(*) as total
           FROM ventas_leads l
           WHERE l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
+            AND NOT ventas_lead_descartado(l.id)
           GROUP BY l.setter_asignado_id
         ) l_count ON l_count.setter_asignado_id = u.id
         LEFT JOIN (
@@ -681,11 +654,7 @@ BEGIN
     ));
   END IF;
 
-  -- ────────────────────────────────────────────────────────────────────────
-  -- FUNNEL (4)
-  -- ────────────────────────────────────────────────────────────────────────
-
-  -- ── Funnel: funnel_setters ──
+  -- ── Funnel ──
   IF 'funnel_setters' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('funnel_setters', jsonb_build_object(
       'leads', COALESCE((
@@ -693,6 +662,7 @@ BEGIN
         FROM ventas_leads l
         WHERE l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
           AND (v_es_admin OR v_rol = 'director_ventas' OR v_rol = 'setter' AND l.setter_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(l.id)
       ), 0),
       'contactados', COALESCE((
         SELECT COUNT(DISTINCT lp.lead_id)
@@ -704,6 +674,7 @@ BEGIN
           AND e.nombre NOT ILIKE '%por contactar%'
           AND l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
           AND (v_es_admin OR v_rol = 'director_ventas' OR v_rol = 'setter' AND l.setter_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(l.id)
       ), 0),
       'citas', COALESCE((
         SELECT COUNT(*)
@@ -722,7 +693,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── Funnel: funnel_closers ──
   IF 'funnel_closers' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('funnel_closers', jsonb_build_object(
       'citas_recibidas', COALESCE((
@@ -757,7 +727,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── Funnel: pipeline_resumen ──
   IF 'pipeline_resumen' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('pipeline_resumen', (
       SELECT COALESCE(jsonb_agg(row_to_json(t)::jsonb), '[]'::jsonb)
@@ -768,13 +737,13 @@ BEGIN
         LEFT JOIN ventas_leads l ON l.id = lp.lead_id
         WHERE e.activo = true
           AND (lp.id IS NULL OR v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
+          AND (lp.id IS NULL OR NOT ventas_lead_descartado(l.id))
         GROUP BY e.id, e.nombre, e.color, e.orden
         ORDER BY e.orden
       ) t
     ));
   END IF;
 
-  -- ── Funnel: tasa_ghosting ──
   IF 'tasa_ghosting' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('tasa_ghosting', jsonb_build_object(
       'valor', COALESCE((
@@ -787,16 +756,13 @@ BEGIN
         JOIN ventas_leads l ON l.id = lp.lead_id
         WHERE l.created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
           AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(l.id)
       ), 0),
       'anterior', NULL
     ));
   END IF;
 
-  -- ────────────────────────────────────────────────────────────────────────
-  -- GOALS (2)
-  -- ────────────────────────────────────────────────────────────────────────
-
-  -- ── Goal: objetivo_ventas_mes ──
+  -- ── Goals ──
   IF 'objetivo_ventas_mes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('objetivo_ventas_mes', jsonb_build_object(
       'actual', COALESCE((
@@ -812,7 +778,6 @@ BEGIN
     ));
   END IF;
 
-  -- ── Goal: objetivo_leads_mes ──
   IF 'objetivo_leads_mes' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('objetivo_leads_mes', jsonb_build_object(
       'actual', COALESCE((
@@ -820,6 +785,7 @@ BEGIN
         FROM ventas_leads l
         WHERE l.created_at::date >= date_trunc('month', CURRENT_DATE)::date
           AND (v_es_admin OR v_rol = 'director_ventas' OR l.setter_asignado_id = p_usuario_id OR l.closer_asignado_id = p_usuario_id)
+          AND NOT ventas_lead_descartado(l.id)
       ), 0),
       'dias_restantes', (
         SELECT (date_trunc('month', CURRENT_DATE)::date + interval '1 month' - interval '1 day')::date - CURRENT_DATE
@@ -827,11 +793,7 @@ BEGIN
     ));
   END IF;
 
-  -- ══════════════════════════════════════════════════════════════════════════
-  -- FASE 3: 2 NEW BRANCHES
-  -- ══════════════════════════════════════════════════════════════════════════
-
-  -- ── KPI: tasa_conversion (leads → ventas aprobadas en periodo) ──
+  -- ── KPI: tasa_conversion ──
   IF 'tasa_conversion' = ANY(p_widgets) THEN
     DECLARE
       v_leads_count BIGINT;
@@ -842,7 +804,8 @@ BEGIN
       SELECT COUNT(*) INTO v_leads_count
       FROM ventas_leads
       WHERE created_at::date BETWEEN p_fecha_inicio AND p_fecha_fin
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id);
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id);
 
       SELECT COUNT(*) INTO v_ventas_count
       FROM ventas_ventas
@@ -853,7 +816,8 @@ BEGIN
       SELECT COUNT(*) INTO v_leads_prev
       FROM ventas_leads
       WHERE created_at::date BETWEEN v_fecha_prev_inicio AND v_fecha_prev_fin
-        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id);
+        AND (v_es_admin OR v_rol = 'director_ventas' OR setter_asignado_id = p_usuario_id OR closer_asignado_id = p_usuario_id)
+        AND NOT ventas_lead_descartado(id);
 
       SELECT COUNT(*) INTO v_ventas_prev
       FROM ventas_ventas
@@ -868,7 +832,7 @@ BEGIN
     END;
   END IF;
 
-  -- ── KPI: citas_agendadas (citas en periodo) ──
+  -- ── KPI: citas_agendadas ──
   IF 'citas_agendadas' = ANY(p_widgets) THEN
     v_result := v_result || jsonb_build_object('citas_agendadas', jsonb_build_object(
       'valor', COALESCE((
@@ -891,5 +855,3 @@ BEGIN
   RETURN v_result;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
-GRANT EXECUTE ON FUNCTION ventas_dashboard_widget_data(UUID, DATE, DATE, TEXT[]) TO authenticated;

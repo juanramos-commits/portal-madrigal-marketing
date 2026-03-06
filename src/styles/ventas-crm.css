@@ -640,6 +640,12 @@
   flex-shrink: 0;
 }
 
+.crm-card-date {
+  font-size: var(--font-2xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-xs);
+}
+
 /* ── Responsive Toggle ──────────────────────────────────────────────────── */
 .crm-desktop-only { display: block; }
 .crm-mobile-only { display: none; }

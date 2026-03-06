@@ -494,6 +494,7 @@ export default function CRMLeadDetalle() {
   const addTag = async (etiquetaId) => {
     setShowTagPicker(false)
     try {
+      const etiqueta = etiquetasDisponibles.find(e => e.id === etiquetaId)
       const { error } = await supabase.from('ventas_lead_etiquetas').insert({ lead_id: id, etiqueta_id: etiquetaId })
       if (error) {
         if (error.code !== '23505') {
@@ -502,6 +503,12 @@ export default function CRMLeadDetalle() {
         }
         return
       }
+      await supabase.from('ventas_actividad').insert({
+        lead_id: id, usuario_id: user.id, tipo: 'etiqueta',
+        descripcion: `Etiqueta añadida: ${etiqueta?.nombre || 'Desconocida'}`,
+        datos: { etiqueta_id: etiquetaId, accion: 'añadir' },
+      })
+      logActividad('crm', 'etiqueta', `Etiqueta añadida: ${etiqueta?.nombre || 'Desconocida'}`, { entidad: 'lead', entidad_id: id })
       cargarLead()
     } catch (err) {
       showToast('Error al añadir etiqueta', 'error')
@@ -536,12 +543,19 @@ export default function CRMLeadDetalle() {
 
   const removeTag = async (etiquetaId) => {
     try {
+      const etiqueta = (lead.lead_etiquetas || []).find(e => e.id === etiquetaId)
       const { error } = await supabase.from('ventas_lead_etiquetas').delete().eq('lead_id', id).eq('etiqueta_id', etiquetaId)
       if (error) {
         showToast('Error al quitar etiqueta', 'error')
         console.error('Error removeTag:', error)
         return
       }
+      await supabase.from('ventas_actividad').insert({
+        lead_id: id, usuario_id: user.id, tipo: 'etiqueta',
+        descripcion: `Etiqueta quitada: ${etiqueta?.nombre || 'Desconocida'}`,
+        datos: { etiqueta_id: etiquetaId, accion: 'quitar' },
+      })
+      logActividad('crm', 'etiqueta', `Etiqueta quitada: ${etiqueta?.nombre || 'Desconocida'}`, { entidad: 'lead', entidad_id: id })
       setLead(prev => ({
         ...prev,
         lead_etiquetas: (prev.lead_etiquetas || []).filter(e => e.id !== etiquetaId),
