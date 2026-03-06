@@ -213,10 +213,11 @@ export function AuthProvider({ children }) {
     setRolesComerciales(data || [])
   }, [user?.id])
 
+  // Trigger: usuario.id (stable primitive) avoids re-firing on object reference changes
   useEffect(() => {
-    if (!user?.id || !usuario) return
+    if (!usuario?.id) return
     refrescarRolesComerciales()
-  }, [user?.id, usuario, refrescarRolesComerciales])
+  }, [usuario?.id, refrescarRolesComerciales])
 
   const signInWithEmail = async (email, password) => {
     isSigningIn.current = true

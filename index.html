@@ -3,37 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <title>Madrigal Marketing | Portal</title>
-    
-    <!-- Favicon por defecto -->
+
+    <!-- Favicon por defecto (tema se detecta al final del body) -->
     <link rel="icon" type="image/png" id="favicon" href="/favicon-light.png" />
-    
+
+    <!-- Preconnect al backend Supabase para acelerar la primera petición auth -->
+    <link rel="preconnect" href="https://ootncgtcvwnrskqtamak.supabase.co" />
+    <link rel="dns-prefetch" href="https://ootncgtcvwnrskqtamak.supabase.co" />
+
     <link rel="preload" as="image" href="/logo.webp" type="image/webp">
     <meta name="description" content="Portal de gestión de clientes de Madrigal Marketing" />
     <meta name="theme-color" content="#0a0a0b" />
-    
-    <script>
-      // Detectar tema del sistema y cambiar favicon
-      function updateFavicon() {
-        const favicon = document.getElementById('favicon');
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        favicon.href = isDark ? '/favicon-light.png' : '/favicon-dark.png';
-      }
-      
-      // Ejecutar al cargar
-      updateFavicon();
-      
-      // Escuchar cambios de tema
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateFavicon);
-    </script>
+
+    <!-- CSS crítico: spinner de carga visible antes de que cargue el CSS externo -->
+    <style>
+      .page-loader{display:flex;justify-content:center;align-items:center;padding:100px 0;min-height:100vh;background:#0a0a0b}
+      .page-loader .spinner{width:28px;height:28px;border:2.5px solid rgba(255,255,255,.08);border-top-color:#2ee59d;border-radius:50%;animation:spin .8s linear infinite}
+      @keyframes spin{to{transform:rotate(360deg)}}
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Spinner visible mientras React carga — eliminado automáticamente por React al montar -->
+      <div class="page-loader"><div class="spinner"></div></div>
+    </div>
+
+    <!-- Limpiar service workers y cachés residuales -->
     <script>
-      // Limpiar service workers y cachés residuales (debe estar en HTML, no en JS bundle)
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(regs) {
           regs.forEach(function(r) { r.unregister(); });
@@ -45,6 +42,20 @@
         });
       }
     </script>
+
+    <!-- Detectar tema del sistema y cambiar favicon (no bloqueante) -->
+    <script>
+      (function() {
+        var favicon = document.getElementById('favicon');
+        function updateFavicon() {
+          favicon.href = window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? '/favicon-light.png' : '/favicon-dark.png';
+        }
+        updateFavicon();
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateFavicon);
+      })();
+    </script>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

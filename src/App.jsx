@@ -49,11 +49,17 @@ const Reuniones = lazy(() => import('./pages/Reuniones'))
 const Archivos = lazy(() => import('./pages/Archivos'))
 const Madrigalito = lazy(() => import('./pages/Madrigalito'))
 
-// Spinner de carga para Suspense
+// Spinner de carga para Suspense — estilos inline para que sea visible antes del CSS externo
 function PageLoader() {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '100px 0' }}>
-      <div className="spinner"></div>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '100px 0', minHeight: '100vh' }}>
+      <div style={{
+        width: 28, height: 28,
+        border: '2.5px solid rgba(255,255,255,.08)',
+        borderTopColor: '#2ee59d',
+        borderRadius: '50%',
+        animation: 'spin .8s linear infinite',
+      }} />
     </div>
   )
 }
