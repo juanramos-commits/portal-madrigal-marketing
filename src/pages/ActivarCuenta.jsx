@@ -59,7 +59,7 @@ export default function ActivarCuenta() {
   if (checking) {
     return (
       <div className="login-page"><div className="login-container"><div className="login-card">
-        <div className="login-header"><img src="/logo.png" alt="Madrigal" className="login-logo-img" /></div>
+        <div className="login-header"><picture><source srcSet="/logo.webp" type="image/webp" /><img src="/logo.png" alt="Madrigal" className="login-logo-img" loading="lazy" /></picture></div>
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
           <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
           <p style={{ color: 'var(--text-muted)' }}>Verificando...</p>
@@ -71,7 +71,7 @@ export default function ActivarCuenta() {
   if (!ready) {
     return (
       <div className="login-page"><div className="login-container"><div className="login-card">
-        <div className="login-header"><img src="/logo.png" alt="Madrigal" className="login-logo-img" /></div>
+        <div className="login-header"><picture><source srcSet="/logo.webp" type="image/webp" /><img src="/logo.png" alt="Madrigal" className="login-logo-img" loading="lazy" /></picture></div>
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <div style={{ width: '64px', height: '64px', background: 'rgba(255,107,107,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: '28px' }}>⚠️</div>
           <h2 style={{ fontSize: '22px', fontWeight: 600, marginBottom: '12px' }}>Enlace inválido</h2>
@@ -85,7 +85,7 @@ export default function ActivarCuenta() {
   if (success) {
     return (
       <div className="login-page"><div className="login-container"><div className="login-card">
-        <div className="login-header"><img src="/logo.png" alt="Madrigal" className="login-logo-img" /></div>
+        <div className="login-header"><picture><source srcSet="/logo.webp" type="image/webp" /><img src="/logo.png" alt="Madrigal" className="login-logo-img" loading="lazy" /></picture></div>
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <div style={{ width: '64px', height: '64px', background: 'rgba(46,229,157,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px', fontSize: '28px', color: 'var(--success)' }}>✓</div>
           <h2 style={{ fontSize: '22px', fontWeight: 600, marginBottom: '12px' }}>¡Cuenta activada!</h2>
@@ -99,7 +99,7 @@ export default function ActivarCuenta() {
   return (
     <div className="login-page"><div className="login-container"><div className="login-card">
       <div className="login-header">
-        <img src="/logo.png" alt="Madrigal" className="login-logo-img" />
+        <picture><source srcSet="/logo.webp" type="image/webp" /><img src="/logo.png" alt="Madrigal" className="login-logo-img" loading="lazy" /></picture>
         <p className="login-subtitle">Activa tu cuenta</p>
       </div>
 

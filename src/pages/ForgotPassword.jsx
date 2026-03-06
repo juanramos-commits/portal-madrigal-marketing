@@ -28,11 +28,10 @@ export default function ForgotPassword() {
         <div className="login-container">
           <div className="login-card">
             <div className="login-header">
-              <img 
-                src="/logo.png" 
-                alt="Madrigal Marketing" 
-                className="login-logo-img"
-              />
+              <picture>
+                <source srcSet="/logo.webp" type="image/webp" />
+                <img src="/logo.png" alt="Madrigal Marketing" className="login-logo-img" loading="lazy" />
+              </picture>
             </div>
 
             <div style={{ textAlign: 'center', padding: '20px 0' }}>
@@ -115,11 +114,10 @@ export default function ForgotPassword() {
       <div className="login-container">
         <div className="login-card">
           <div className="login-header">
-            <img 
-              src="/logo.png" 
-              alt="Madrigal Marketing" 
-              className="login-logo-img"
-            />
+            <picture>
+              <source srcSet="/logo.webp" type="image/webp" />
+              <img src="/logo.png" alt="Madrigal Marketing" className="login-logo-img" loading="lazy" />
+            </picture>
             <p className="login-subtitle">Recupera el acceso a tu cuenta</p>
           </div>
 

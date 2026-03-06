@@ -520,7 +520,10 @@ export default function Layout() {
       <ConnectionBanner />
       <aside className={`sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
-          <img src="/logo.png" alt="Madrigal" />
+          <picture>
+            <source srcSet="/logo.webp" type="image/webp" />
+            <img src="/logo.png" alt="Madrigal" />
+          </picture>
         </div>
 
         <nav className="nav">

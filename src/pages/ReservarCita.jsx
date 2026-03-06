@@ -319,7 +319,10 @@ export default function ReservarCita() {
 
           {/* Header */}
           <div className="rb-header">
-            <img src="/logo.png" alt="Madrigal Marketing" className="rb-logo rb-anim-enter rb-anim-delay-1" />
+            <picture>
+              <source srcSet="/logo.webp" type="image/webp" />
+              <img src="/logo.png" alt="Madrigal Marketing" className="rb-logo rb-anim-enter rb-anim-delay-1" loading="lazy" />
+            </picture>
             <div className="rb-header-info">
               <h1 className="rb-anim-enter rb-anim-delay-2">{enlace.nombre}</h1>
               <p className="rb-header-subtitle rb-anim-enter rb-anim-delay-2">
