@@ -80,7 +80,8 @@ export function useVentasCRM() {
           created_at, updated_at, tags, contactos_adicionales, fuente_detalle,
           categoria:ventas_categorias(id, nombre),
           setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
-          closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
+          closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email),
+          lead_etiquetas:ventas_lead_etiquetas(etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color))
         )
       `, { count: 'exact' })
       .eq('pipeline_id', pipelineId)
@@ -518,7 +519,8 @@ export function useVentasCRM() {
             created_at, updated_at, tags, contactos_adicionales, fuente_detalle,
             categoria:ventas_categorias(id, nombre),
             setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
-            closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
+            closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email),
+            lead_etiquetas:ventas_lead_etiquetas(etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color))
           )
         `)
         .eq('pipeline_id', pipelineActivo.id)

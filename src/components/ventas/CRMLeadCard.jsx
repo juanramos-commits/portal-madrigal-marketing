@@ -60,6 +60,7 @@ export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }
 
   const showAttempts = etapa && (etapa.tipo === 'ghosting' || etapa.tipo === 'seguimiento')
   const assignee = lead.setter || lead.closer
+  const isHot = lead.lead_etiquetas?.some(le => le.etiqueta?.nombre === 'Hot Lead')
 
   return (
     <div
@@ -67,9 +68,10 @@ export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }
       style={style}
       {...attributes}
       {...listeners}
-      className={`crm-card${isDragging ? ' dragging' : ''}`}
+      className={`crm-card${isDragging ? ' dragging' : ''}${isHot ? ' crm-card-is-hot' : ''}`}
       onClick={handleClick}
     >
+      {isHot && <span className="crm-card-hot" />}
       <div className="crm-card-top">
         <span className="crm-card-name">{lead.nombre}</span>
         <div className="crm-card-actions">
