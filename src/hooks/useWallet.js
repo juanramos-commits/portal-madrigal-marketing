@@ -104,7 +104,7 @@ export function useWallet() {
       .eq('usuario_id', user.id)
       .maybeSingle()
 
-    if (err) { setError('Error al cargar wallet'); return }
+    if (err) { console.warn('Error al cargar wallet:', err.message); return }
     setWallet(data)
   }, [user?.id])
 
@@ -113,6 +113,7 @@ export function useWallet() {
     if (!user?.id) return
     const { data, error: err } = await supabase.rpc('ventas_obtener_saldo_disponible', { p_usuario_id: user.id })
     if (!err) setSaldoDisponible(data || 0)
+    else console.warn('Error al cargar saldo disponible:', err.message)
   }, [user?.id])
 
   // ── Verificar closer al día + cargar citas pendientes ──────────────
@@ -585,7 +586,7 @@ export function useWallet() {
     setLoading(true)
     setError(null)
     try {
-      await Promise.all([
+      const results = await Promise.allSettled([
         cargarWallet(),
         cargarSaldoDisponible(),
         cargarDatosFiscales(),
@@ -596,11 +597,17 @@ export function useWallet() {
         esCloser ? verificarCloserAlDia() : Promise.resolve(),
       ])
       if (esAdmin) {
-        await Promise.all([
+        await Promise.allSettled([
           cargarTodosRetiros(),
           cargarContadoresRetiros(),
           cargarTodasFacturas(),
         ])
+      }
+      // Report if any sub-fetch failed
+      const failed = results.filter(r => r.status === 'rejected')
+      if (failed.length > 0) {
+        console.warn(`[Wallet] ${failed.length} sub-fetches failed`)
+        setError('Algunos datos no se pudieron cargar')
       }
     } catch (_) {
       setError('Error al cargar datos del wallet')

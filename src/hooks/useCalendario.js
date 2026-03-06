@@ -608,9 +608,11 @@ export function useCalendario() {
     if (!user?.id || authLoading || initialLoadDone.current) return
     if (rolesComerciales.length > 0 || esAdmin) {
       initialLoadDone.current = true
-      refrescar()
+      refrescar().catch(() => {
+        initialLoadDone.current = false
+      })
     }
-  }, [user?.id, rolesComerciales.length, esAdmin, authLoading])
+  }, [user?.id, rolesComerciales.length, esAdmin, authLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fallback: if auth done and no roles, stop loading
   useEffect(() => {
@@ -627,12 +629,17 @@ export function useCalendario() {
   }, [config, user?.id, pullGoogleEvents, cargarGoogleEvents])
 
   // Reload citas + google events on navigation/filter change
+  const prevCalendarRef = useRef({ vista, fechaActual, closerFiltro })
   useEffect(() => {
+    const prev = prevCalendarRef.current
+    prevCalendarRef.current = { vista, fechaActual, closerFiltro }
+    // Only reload when these values actually change (not when other deps trigger)
+    if (prev.vista === vista && prev.fechaActual === fechaActual && prev.closerFiltro === closerFiltro) return
     if (user?.id && (rolesComerciales.length > 0 || esAdmin)) {
       setLoading(true)
       Promise.all([cargarCitas(), cargarGoogleEvents()]).finally(() => setLoading(false))
     }
-  }, [vista, fechaActual, closerFiltro]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [vista, fechaActual, closerFiltro, user?.id, rolesComerciales.length, esAdmin, cargarCitas, cargarGoogleEvents])
 
   return {
     citas, googleEvents, eventosMerged,

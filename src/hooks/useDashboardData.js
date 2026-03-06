@@ -63,8 +63,8 @@ export function useDashboardData(layout) {
       setLoading(false)
       return
     }
-    const keys = dataKeysStr.split(',')
-    if (keys.length === 0 || keys[0] === '') { setLoading(false); return }
+    const keys = dataKeysStr.split(',').filter(Boolean)
+    if (keys.length === 0) { setLoading(false); return }
 
     const reqId = ++requestRef.current
     setLoading(true)

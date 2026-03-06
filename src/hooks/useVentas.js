@@ -327,13 +327,13 @@ export function useVentas() {
       setVentas(sorted)
       setTotalVentas(totalCount)
       setSearchResultCount(totalCount)
-      cargarContadoresConBusqueda(query)
+      cargarContadoresConBusqueda(query).catch(() => {})
     } catch (err) {
       if (requestId !== searchRequestRef.current) return
       console.warn('RPC ventas_buscar_ventas no disponible, usando búsqueda simple:', err.message)
       setSearchResultCount(null)
-      cargarVentas()
-      cargarContadores()
+      await cargarVentas()
+      cargarContadores().catch(() => {})
     } finally {
       if (requestId === searchRequestRef.current) setLoading(false)
     }

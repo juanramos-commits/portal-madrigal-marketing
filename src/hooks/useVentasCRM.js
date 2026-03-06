@@ -155,11 +155,11 @@ export function useVentasCRM() {
         .order('orden')
 
       if (etapasErr) throw etapasErr
-      if (requestId !== loadRequestRef.current) return
+      if (requestId !== loadRequestRef.current) { setLoading(false); return }
 
       setEtapas(etapasData || [])
 
-      if ((etapasData || []).length === 0) return
+      if ((etapasData || []).length === 0) { setLoading(false); return }
 
       // Step 2: Load leads using the etapas we just fetched (no stale state)
       if (vistaActual === 'kanban') {
@@ -244,7 +244,7 @@ export function useVentasCRM() {
       // Procesar citas pasadas → mover leads a "Cita Realizada" (fire-and-forget)
       try { await supabase.rpc('ventas_procesar_citas_pasadas') } catch { /* non-critical */ }
 
-      if (requestId !== loadRequestRef.current) return
+      if (requestId !== loadRequestRef.current) { setLoading(false); return }
 
       setPipelines(pipelinesData || [])
       setCategorias(categoriasData || [])
@@ -275,6 +275,7 @@ export function useVentasCRM() {
 
       if (!defaultPipeline) {
         // No pipelines — nothing more to load
+        setLoading(false)
         return
       }
 
@@ -585,19 +586,21 @@ export function useVentasCRM() {
     } catch (err) {
       if (requestId !== searchRequestRef.current) return
       // Fallback: use the old simple search (buildLeadQuery with ilike)
-      // Delegate loading state entirely to the fallback function
       console.warn('RPC ventas_buscar_leads no disponible, usando búsqueda simple:', err.message)
       setSearchResultCount(null)
-      if (vista === 'kanban') {
-        await cargarLeads()
-      } else {
-        await cargarLeadsTabla()
+      try {
+        if (vista === 'kanban') {
+          await cargarLeads()
+        } else {
+          await cargarLeadsTabla()
+        }
+      } finally {
+        if (requestId === searchRequestRef.current) setLoading(false)
       }
-      return // Skip finally's setLoading — fallback manages its own loading state
-    } finally {
-      if (requestId === searchRequestRef.current) {
-        setLoading(false)
-      }
+      return
+    }
+    if (requestId === searchRequestRef.current) {
+      setLoading(false)
     }
   }, [pipelineActivo, etapas, esAdminODirector, user?.id, vista, filtros, cargarLeads, cargarLeadsTabla])
 
