@@ -106,6 +106,10 @@ export default function VentasWallet() {
         <div className="wt-error-general" role="alert">{w.error}</div>
       )}
 
+      {w.loading && !w.wallet ? (
+        <div className="wt-loading" role="status">Cargando wallet...</div>
+      ) : <>
+
       {tab === 'resumen' && (
         <WalletResumen
           wallet={w.wallet}
@@ -201,6 +205,8 @@ export default function VentasWallet() {
           onBusquedaChange={w.setAdminFacturasBusqueda}
         />
       )}
+
+      </>}
 
       {showRetiroModal && (
         <WalletSolicitarRetiro

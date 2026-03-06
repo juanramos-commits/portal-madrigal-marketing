@@ -547,7 +547,7 @@ export function useCalendario() {
     setLoading(true)
     setError(null)
     try {
-      await Promise.all([
+      const results = await Promise.allSettled([
         cargarCitas(),
         cargarGoogleEvents(),
         cargarReunionEstados(),
@@ -556,6 +556,11 @@ export function useCalendario() {
         esCloser ? cargarConfig() : Promise.resolve(),
         esDirector ? cargarEnlaces() : Promise.resolve(),
       ])
+      const failed = results.filter(r => r.status === 'rejected')
+      if (failed.length > 0) {
+        import.meta.env.DEV && console.error('[Calendario] Partial failures:', failed)
+        setError('Algunos datos no se pudieron cargar')
+      }
     } catch (_) {
       setError('Error al cargar datos del calendario')
     } finally {
@@ -620,6 +625,17 @@ export function useCalendario() {
       setLoading(false)
     }
   }, [user?.id, authLoading, rolesComerciales.length, esAdmin])
+
+  // Safety net: force loading=false after 15s
+  useEffect(() => {
+    if (!loading) return
+    const timeout = setTimeout(() => {
+      import.meta.env.DEV && console.error('[Calendario] Loading timeout — forcing loading=false')
+      setLoading(false)
+      setError('La carga tardó demasiado. Intenta refrescar.')
+    }, 15000)
+    return () => clearTimeout(timeout)
+  }, [loading])
 
   // Auto-pull Google events once per session (if Google connected)
   useEffect(() => {

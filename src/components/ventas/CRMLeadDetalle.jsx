@@ -387,7 +387,7 @@ export default function CRMLeadDetalle() {
       logActividad('crm', 'cambio_etapa', `${pipelineNombre}: ${etapaAnterior} → ${etapaNueva}`, { entidad: 'lead', entidad_id: id })
 
       showToast('Etapa actualizada', 'success')
-      cargarLead()
+      await cargarLead()
     } catch {
       showToast('Error al cambiar etapa', 'error')
     } finally {
@@ -412,7 +412,7 @@ export default function CRMLeadDetalle() {
       })
       logActividad('crm', 'asignar', `Setter: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
       showToast('Setter actualizado', 'success')
-      cargarLead()
+      await cargarLead()
     } catch {
       showToast('Error', 'error')
     } finally {
@@ -436,7 +436,7 @@ export default function CRMLeadDetalle() {
       })
       logActividad('crm', 'asignar', `Closer: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
       showToast('Closer actualizado', 'success')
-      cargarLead()
+      await cargarLead()
     } catch {
       showToast('Error', 'error')
     } finally {
@@ -509,7 +509,7 @@ export default function CRMLeadDetalle() {
         datos: { etiqueta_id: etiquetaId, accion: 'añadir' },
       })
       logActividad('crm', 'etiqueta', `Etiqueta añadida: ${etiqueta?.nombre || 'Desconocida'}`, { entidad: 'lead', entidad_id: id })
-      cargarLead()
+      await cargarLead()
     } catch (err) {
       showToast('Error al añadir etiqueta', 'error')
       console.error('Error addTag:', err)

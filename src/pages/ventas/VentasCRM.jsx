@@ -126,7 +126,9 @@ export default function VentasCRM() {
       </div>
 
       {/* ── Content ─────────────────────────────────────────────────── */}
-      {crm.vista === 'kanban' ? (
+      {crm.loading && crm.leads.length === 0 && crm.leadsTabla.length === 0 ? (
+        <div className="crm-loading" role="status">Cargando leads...</div>
+      ) : crm.vista === 'kanban' ? (
         <CRMKanban
           etapas={crm.etapas}
           leads={crm.leads}

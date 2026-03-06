@@ -171,7 +171,7 @@ export default function VentasDashboard() {
                     onRemove={db.removeWidget}
                     loading={db.dataLoading}
                   >
-                    {renderWidget(widgetDef, widgetData, item.config)}
+                    {db.dataLoading ? null : renderWidget(widgetDef, widgetData ?? null, item.config)}
                   </WidgetShell>
                 </div>
               )

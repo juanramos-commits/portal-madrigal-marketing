@@ -106,11 +106,11 @@ export default function VentasCalendario() {
       {cal.error && <div className="vc-error-msg" role="alert">{cal.error}</div>}
 
       {/* Calendar view */}
-      {cal.loading && cal.citas.length === 0 ? (
+      {cal.loading && cal.eventosMerged.length === 0 ? (
         <div className="vc-loading">Cargando calendario...</div>
       ) : (
         <div className="vc-calendar-wrap">
-          {cal.loading && <div className="vc-loading-overlay" />}
+          {cal.loading && cal.eventosMerged.length > 0 && <div className="vc-loading-overlay" />}
           <CalendarioVista
             vista={cal.vista}
             fechaActual={cal.fechaActual}

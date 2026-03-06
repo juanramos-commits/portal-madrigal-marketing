@@ -1676,6 +1676,15 @@
 }
 
 /* ── Error State ────────────────────────────────────────────────────────── */
+.crm-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl) var(--space-lg);
+  font-size: var(--font-base);
+  color: var(--text-muted);
+}
+
 .crm-error {
   display: flex;
   flex-direction: column;
