@@ -54,6 +54,9 @@ export function useVentasCRM() {
   const busquedaTimeoutRef = useRef(null)
   const searchRequestRef = useRef(0)
   const realtimeDebounceRef = useRef(null)
+  const selfChangeRef = useRef(false)
+  const refrescarRef = useRef(null)
+  const buildLeadQueryRef = useRef(null)
   const [searchResultCount, setSearchResultCount] = useState(null)
 
   const esAdmin = usuario?.tipo === 'super_admin'
@@ -137,6 +140,9 @@ export function useVentasCRM() {
     return query
   }, [esAdminODirector, esSetter, esCloser, user?.id, filtros, busqueda])
 
+  // Keep ref in sync — avoids cascading dependency rebuilds
+  useEffect(() => { buildLeadQueryRef.current = buildLeadQuery }, [buildLeadQuery])
+
   // ── Core: load etapas + leads for a pipeline (sequential, no useEffect chain) ──
   const cargarPipelineCompleto = useCallback(async (pipeline, vistaActual) => {
     if (!pipeline) return
@@ -162,13 +168,14 @@ export function useVentasCRM() {
       if ((etapasData || []).length === 0) { setLoading(false); return }
 
       // Step 2: Load leads using the etapas we just fetched (no stale state)
+      const queryFn = buildLeadQueryRef.current || buildLeadQuery
       if (vistaActual === 'kanban') {
         const newLeads = {}
         const newCounts = {}
         let total = 0
 
         await Promise.all((etapasData || []).map(async (etapa) => {
-          const query = buildLeadQuery(pipeline.id, pipeline.nombre, etapa.id)
+          const query = queryFn(pipeline.id, pipeline.nombre, etapa.id)
             .order('fecha_entrada', { ascending: false })
             .range(0, LEADS_PER_BATCH - 1)
 
@@ -187,7 +194,7 @@ export function useVentasCRM() {
         setLeadCounts(newCounts)
         setTotalLeads(total)
       } else {
-        const query = buildLeadQuery(pipeline.id, pipeline.nombre)
+        const query = queryFn(pipeline.id, pipeline.nombre)
           .order('fecha_entrada', { ascending: false })
           .range(0, TABLE_PAGE_SIZE - 1)
 
@@ -216,7 +223,7 @@ export function useVentasCRM() {
         setLoading(false)
       }
     }
-  }, [buildLeadQuery])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load initial data + default pipeline ──────────────────────────────
   const cargarDatosIniciales = useCallback(async () => {
@@ -301,8 +308,9 @@ export function useVentasCRM() {
       const newCounts = {}
       let total = 0
 
+      const queryFn = buildLeadQueryRef.current || buildLeadQuery
       await Promise.all((etapasData || []).map(async (etapa) => {
-        const query = buildLeadQuery(defaultPipeline.id, defaultPipeline.nombre, etapa.id)
+        const query = queryFn(defaultPipeline.id, defaultPipeline.nombre, etapa.id)
           .order('fecha_entrada', { ascending: false })
           .range(0, LEADS_PER_BATCH - 1)
 
@@ -330,7 +338,7 @@ export function useVentasCRM() {
         setLoading(false)
       }
     }
-  }, [user?.id, usuario?.tipo, buildLeadQuery])
+  }, [user?.id, usuario?.tipo]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load leads for Kanban (used by refrescar, filter/search changes) ──
   const cargarLeads = useCallback(async () => {
@@ -677,6 +685,9 @@ export function useVentasCRM() {
     }))
 
     try {
+      // Flag to skip realtime refresh for our own DB change
+      selfChangeRef.current = true
+
       // Calculate new counter
       let nuevoContador = 0
       if (etapaDestino.tipo === 'ghosting' || etapaDestino.tipo === 'seguimiento') {
@@ -1055,6 +1066,9 @@ export function useVentasCRM() {
     cargarPipelineCompleto(pipeline, vista)
   }, [cargarPipelineCompleto, vista])
 
+  // Keep refrescar ref in sync — stabilizes realtime + focus listeners
+  useEffect(() => { refrescarRef.current = refrescar }, [refrescar])
+
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!pipelineActivo })
 
@@ -1075,9 +1089,16 @@ export function useVentasCRM() {
         table: 'ventas_lead_pipeline',
         filter: `pipeline_id=eq.${pipelineActivo.id}`,
       }, () => {
-        // Debounce to avoid thundering herd from rapid changes
+        // Skip refresh if this was triggered by our own action
+        if (selfChangeRef.current) {
+          selfChangeRef.current = false
+          return
+        }
+        // Debounce rapid realtime events (e.g. bulk imports)
         if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current)
-        realtimeDebounceRef.current = setTimeout(() => refrescar(), 500)
+        realtimeDebounceRef.current = setTimeout(() => {
+          refrescarRef.current?.()
+        }, 1000)
       })
       .subscribe()
 
@@ -1085,7 +1106,7 @@ export function useVentasCRM() {
       if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current)
       supabase.removeChannel(channel)
     }
-  }, [pipelineActivo?.id, refrescar])
+  }, [pipelineActivo?.id]) // stable dep — no more refrescar in deps
 
   // ── Reload leads on filter or vista change ─────────────────────────
   // Pipeline changes are handled by setPipelineActivo → cargarPipelineCompleto
