@@ -1,5 +1,5 @@
 import { logger } from '../lib/logger'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -314,6 +314,11 @@ export default function Layout() {
 
   const { contador: notifContador } = useNotificacionesBadge()
 
+  const handleNavigate = useCallback((href) => {
+    setMobileMenuOpen(false)
+    navigate(href)
+  }, [navigate])
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -583,10 +588,7 @@ export default function Layout() {
                       key={item.id}
                       item={item}
                       isActive={isActive(item.href)}
-                      onNavigate={(href) => {
-                        setMobileMenuOpen(false)
-                        navigate(href)
-                      }}
+                      onNavigate={handleNavigate}
                     />
                   )
                 })}
