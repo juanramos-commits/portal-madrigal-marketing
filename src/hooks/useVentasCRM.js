@@ -215,6 +215,7 @@ export function useVentasCRM() {
         setTotalLeads(count || 0)
       }
     } catch (err) {
+      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       if (requestId === loadRequestRef.current) {
         setError(err.message || 'Error al cargar pipeline')
       }
@@ -329,6 +330,8 @@ export function useVentasCRM() {
       setLeadCounts(newCounts)
       setTotalLeads(total)
     } catch (err) {
+      // Ignore AbortError / network errors from cancelled requests (navigation away)
+      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       console.error('CRM cargarDatosIniciales error:', err)
       if (requestId === loadRequestRef.current) {
         setError('Error al cargar datos iniciales')
@@ -373,6 +376,7 @@ export function useVentasCRM() {
       setLeadCounts(newCounts)
       setTotalLeads(total)
     } catch (err) {
+      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       if (requestId === loadRequestRef.current) {
         setError('Error al cargar leads')
       }
@@ -458,7 +462,8 @@ export function useVentasCRM() {
       setLeadsTabla(mapped)
       setTablaTotalCount(count || 0)
       setTotalLeads(count || 0)
-    } catch {
+    } catch (err) {
+      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       if (requestId === loadRequestRef.current) {
         setError('Error al cargar leads')
       }
