@@ -115,7 +115,70 @@ export default function CRMLeadDetalle() {
   const esMiLeadSetter = lead?.setter_asignado_id === user?.id
   const esMiLeadCloser = lead?.closer_asignado_id === user?.id
 
-  // ── Load lead detail ───────────────────────────────────────────────
+  // ── Load static catalogs (once per mount) ─────────────────────────
+  const staticLoadedRef = useRef(false)
+  const cargarCatalogos = useCallback(async () => {
+    if (staticLoadedRef.current) return
+    const [
+      { data: cats },
+      { data: etqs },
+      { data: roles },
+      { data: etapasAll },
+      { data: reunionEstadosData },
+    ] = await Promise.all([
+      supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
+      supabase.from('ventas_etiquetas').select('*').eq('activo', true),
+      supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
+      supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
+      supabase.from('ventas_reunion_estados').select('*').order('orden'),
+    ])
+    staticLoadedRef.current = true
+    setCategorias(cats || [])
+    setEtiquetasDisponibles(etqs || [])
+    setRolesComerciales(roles || [])
+    setAllEtapas(etapasAll || [])
+    setReunionEstados(reunionEstadosData || [])
+    setSetters((roles || []).filter(r => r.rol === 'setter' && r.activo))
+    setClosers((roles || []).filter(r => r.rol === 'closer' && r.activo))
+  }, [])
+
+  // ── Load lead-specific data ──────────────────────────────────────
+  const cargarLeadData = useCallback(async (requestId) => {
+    const [
+      { data: leadData, error: leadErr },
+      { data: pipelineStates },
+      { data: citas },
+      { data: leadEtiquetas },
+    ] = await Promise.all([
+      supabase.from('ventas_leads').select(`
+        *,
+        categoria:ventas_categorias(id, nombre),
+        setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
+        closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
+      `).eq('id', id).single(),
+      supabase.from('ventas_lead_pipeline').select(`
+        *, pipeline:ventas_pipelines(id, nombre),
+        etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
+      `).eq('lead_id', id),
+      supabase.from('ventas_citas').select(`
+        *, closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
+        estado_reunion:ventas_reunion_estados(id, nombre, color)
+      `).eq('lead_id', id).order('fecha_hora', { ascending: false }),
+      supabase.from('ventas_lead_etiquetas').select('*, etiqueta:ventas_etiquetas(*)').eq('lead_id', id),
+    ])
+
+    if (requestId !== loadDetailRef.current) return null
+    if (leadErr) throw leadErr
+
+    return {
+      ...leadData,
+      pipeline_states: pipelineStates || [],
+      citas: citas || [],
+      lead_etiquetas: (leadEtiquetas || []).map(le => le.etiqueta),
+    }
+  }, [id])
+
+  // ── Full load (initial) ──────────────────────────────────────────
   const cargarLead = useCallback(async () => {
     const requestId = ++loadDetailRef.current
 
@@ -123,60 +186,18 @@ export default function CRMLeadDetalle() {
       setLoading(true)
       setError(null)
 
-      const [
-        { data: leadData, error: leadErr },
-        { data: pipelineStates },
-        { data: citas },
-        { data: leadEtiquetas },
-        { data: cats },
-        { data: etqs },
-        { data: roles },
-        { data: etapasAll },
-        { data: reunionEstadosData },
-      ] = await Promise.all([
-        supabase.from('ventas_leads').select(`
-          *,
-          categoria:ventas_categorias(id, nombre),
-          setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
-          closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
-        `).eq('id', id).single(),
-        supabase.from('ventas_lead_pipeline').select(`
-          *, pipeline:ventas_pipelines(id, nombre),
-          etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
-        `).eq('lead_id', id),
-        supabase.from('ventas_citas').select(`
-          *, closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
-          estado_reunion:ventas_reunion_estados(id, nombre, color)
-        `).eq('lead_id', id).order('fecha_hora', { ascending: false }),
-        supabase.from('ventas_lead_etiquetas').select('*, etiqueta:ventas_etiquetas(*)').eq('lead_id', id),
-        supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
-        supabase.from('ventas_etiquetas').select('*').eq('activo', true),
-        supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
-        supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
-        supabase.from('ventas_reunion_estados').select('*').order('orden'),
+      // Catalogs + lead data in parallel
+      const [, leadResult] = await Promise.all([
+        cargarCatalogos(),
+        cargarLeadData(requestId),
       ])
 
-      if (requestId !== loadDetailRef.current) return
-      if (leadErr) throw leadErr
+      if (requestId !== loadDetailRef.current || !leadResult) return
 
-      setLead({
-        ...leadData,
-        pipeline_states: pipelineStates || [],
-        citas: citas || [],
-        lead_etiquetas: (leadEtiquetas || []).map(le => le.etiqueta),
-      })
-      setCategorias(cats || [])
-      setEtiquetasDisponibles(etqs || [])
-      setRolesComerciales(roles || [])
-      setAllEtapas(etapasAll || [])
-      setReunionEstados(reunionEstadosData || [])
-      setSetters((roles || []).filter(r => r.rol === 'setter' && r.activo))
-      setClosers((roles || []).filter(r => r.rol === 'closer' && r.activo))
-
-      // Reset snapshot para que se recree con datos frescos
+      setLead(leadResult)
       snapshotRef.current = null
 
-      // Load initial activity
+      // Load initial activity (non-blocking for UI)
       const { data: actData } = await supabase.from('ventas_actividad')
         .select('*, usuario:usuarios(id, nombre)')
         .eq('lead_id', id)
@@ -197,7 +218,22 @@ export default function CRMLeadDetalle() {
         setLoading(false)
       }
     }
-  }, [id])
+  }, [id, cargarCatalogos, cargarLeadData])
+
+  // ── Refresh lead only (after actions like cambiarEtapa) ──────────
+  const refrescarLead = useCallback(async () => {
+    const requestId = ++loadDetailRef.current
+    try {
+      const leadResult = await cargarLeadData(requestId)
+      if (requestId !== loadDetailRef.current || !leadResult) return
+      setLead(leadResult)
+      snapshotRef.current = null
+    } catch (err) {
+      if (requestId === loadDetailRef.current) {
+        showToast(err.message || 'Error al refrescar', 'error')
+      }
+    }
+  }, [cargarLeadData, showToast])
 
   useEffect(() => {
     if (!id) return
@@ -226,8 +262,8 @@ export default function CRMLeadDetalle() {
   }, [lead])
 
   // ── Load more activity ─────────────────────────────────────────────
-  const cargarMasActividad = async () => {
-    if (loadingMoreActividad) return
+  const cargarMasActividad = useCallback(async () => {
+    if (loadingMoreActividad || !isMountedRef.current) return
     setLoadingMoreActividad(true)
     try {
       const { data } = await supabase.from('ventas_actividad')
@@ -236,15 +272,16 @@ export default function CRMLeadDetalle() {
         .order('created_at', { ascending: false })
         .range(actividadOffset, actividadOffset + 19)
 
+      if (!isMountedRef.current) return
       setActividad(prev => [...prev, ...(data || [])])
       setActividadOffset(prev => prev + 20)
       setHasMoreActividad((data || []).length >= 20)
     } catch {
-      setError('Error al cargar más actividad')
+      if (isMountedRef.current) showToast('Error al cargar más actividad', 'error')
     } finally {
-      setLoadingMoreActividad(false)
+      if (isMountedRef.current) setLoadingMoreActividad(false)
     }
-  }
+  }, [id, actividadOffset, loadingMoreActividad, showToast])
 
   // ── Update lead field with debounce ────────────────────────────────
   const updateField = (field, value) => {
@@ -263,6 +300,7 @@ export default function CRMLeadDetalle() {
         const { error } = await supabase.from('ventas_leads').update({ [field]: savedValue ?? value }).eq('id', id)
         if (error) throw error
       } catch {
+        if (!isMountedRef.current) return
         setLead(prev => ({ ...prev, [field]: prevValue }))
         showToast('Error al guardar. El cambio se ha revertido.', 'error')
       }
@@ -282,19 +320,24 @@ export default function CRMLeadDetalle() {
     return String(valor)
   }
 
+  // Keep a ref to the latest lead for use in registrarCambiosCampos
+  const leadRef = useRef(lead)
+  useEffect(() => { leadRef.current = lead }, [lead])
+
   const registrarCambiosCampos = useCallback(async () => {
-    if (!snapshotRef.current || !lead) return
+    const currentLead = leadRef.current
+    if (!snapshotRef.current || !currentLead) return
 
     const cambios = []
     TRACKED_FIELDS.forEach(field => {
       const antes = (snapshotRef.current[field.key] ?? '').toString().trim()
-      const ahora = (lead[field.key] ?? '').toString().trim()
+      const ahora = (currentLead[field.key] ?? '').toString().trim()
       if (antes !== ahora) {
         cambios.push({
           campo: field.key,
           label: field.label,
           anterior: snapshotRef.current[field.key],
-          nuevo: lead[field.key],
+          nuevo: currentLead[field.key],
         })
       }
     })
@@ -309,26 +352,32 @@ export default function CRMLeadDetalle() {
       descripcion = `Campos actualizados: ${cambios.map(c => c.label).join(', ')}`
     }
 
-    const { error } = await supabase.from('ventas_actividad').insert({
-      lead_id: lead.id,
-      usuario_id: user.id,
-      tipo: 'edicion',
-      descripcion,
-      datos: {
-        cambios: cambios.map(c => ({ campo: c.campo, anterior: c.anterior, nuevo: c.nuevo })),
-        campos_modificados: cambios.map(c => c.campo),
-        via: 'detalle_inline',
-      },
-    })
-    if (error) console.error('Error registrando actividad de edición:', error)
+    try {
+      await supabase.from('ventas_actividad').insert({
+        lead_id: currentLead.id,
+        usuario_id: user.id,
+        tipo: 'edicion',
+        descripcion,
+        datos: {
+          cambios: cambios.map(c => ({ campo: c.campo, anterior: c.anterior, nuevo: c.nuevo })),
+          campos_modificados: cambios.map(c => c.campo),
+          via: 'detalle_inline',
+        },
+      })
+    } catch (err) {
+      console.error('Error registrando actividad de edición:', err)
+      return // Don't update snapshot if insert failed
+    }
 
-    logActividad('crm', 'editar', descripcion, { entidad: 'lead', entidad_id: lead.id })
+    logActividad('crm', 'editar', descripcion, { entidad: 'lead', entidad_id: currentLead.id })
 
     // Actualizar snapshot
-    TRACKED_FIELDS.forEach(f => {
-      snapshotRef.current[f.key] = lead[f.key] ?? null
-    })
-  }, [lead, user, categorias])
+    if (snapshotRef.current) {
+      TRACKED_FIELDS.forEach(f => {
+        snapshotRef.current[f.key] = currentLead[f.key] ?? null
+      })
+    }
+  }, [user]) // stable: only depends on user, reads lead from ref
 
   const registrarRef = useRef(registrarCambiosCampos)
   useEffect(() => { registrarRef.current = registrarCambiosCampos }, [registrarCambiosCampos])
@@ -340,25 +389,31 @@ export default function CRMLeadDetalle() {
     }, 2000)
   }, [])
 
-  // Cleanup: flush pending saves and activity tracking on unmount
+  // Cleanup: flush pending saves and activity tracking on unmount or id change
   useEffect(() => {
+    // Reset mounted state on id change (e.g. navigating between leads)
+    isMountedRef.current = true
+    staticLoadedRef.current = false
+
     return () => {
       isMountedRef.current = false
       // 1. Clear debounce timers (prevent double-saves)
       Object.values(debounceRefs.current).forEach(clearTimeout)
       debounceRefs.current = {}
 
-      // 2. Flush any pending field saves in a single call
-      const pending = pendingFieldUpdatesRef.current
+      // 2. Flush any pending field saves in a single call (fire-and-forget)
+      const pending = { ...pendingFieldUpdatesRef.current }
+      pendingFieldUpdatesRef.current = {}
       if (Object.keys(pending).length > 0) {
         supabase.from('ventas_leads').update(pending).eq('id', id)
           .then(({ error }) => { if (error) console.error('[CRM Detail] Unmount flush failed:', error) })
-        pendingFieldUpdatesRef.current = {}
+          .catch(() => {}) // swallow network errors on unmount
       }
 
-      // 3. Flush activity tracking
+      // 3. Flush activity tracking (fire-and-forget, ignore errors)
       if (registroTimeoutRef.current) clearTimeout(registroTimeoutRef.current)
-      registrarRef.current?.()
+      registroTimeoutRef.current = null
+      try { registrarRef.current?.() } catch {} // swallow errors on unmount
       snapshotRef.current = null
     }
   }, [id])
@@ -390,9 +445,9 @@ export default function CRMLeadDetalle() {
 
       if (!isMountedRef.current) return
       showToast('Etapa actualizada', 'success')
-      await cargarLead()
+      await refrescarLead()
     } catch {
-      showToast('Error al cambiar etapa', 'error')
+      if (isMountedRef.current) showToast('Error al cambiar etapa', 'error')
     } finally {
       savingActionRef.current = false
     }
@@ -416,9 +471,9 @@ export default function CRMLeadDetalle() {
       logActividad('crm', 'asignar', `Setter: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
       if (!isMountedRef.current) return
       showToast('Setter actualizado', 'success')
-      await cargarLead()
+      await refrescarLead()
     } catch {
-      showToast('Error', 'error')
+      if (isMountedRef.current) showToast('Error', 'error')
     } finally {
       savingActionRef.current = false
     }
@@ -441,9 +496,9 @@ export default function CRMLeadDetalle() {
       logActividad('crm', 'asignar', `Closer: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
       if (!isMountedRef.current) return
       showToast('Closer actualizado', 'success')
-      await cargarLead()
+      await refrescarLead()
     } catch {
-      showToast('Error', 'error')
+      if (isMountedRef.current) showToast('Error', 'error')
     } finally {
       savingActionRef.current = false
     }
@@ -457,10 +512,10 @@ export default function CRMLeadDetalle() {
       const { data, error } = await supabase.rpc('ventas_eliminar_lead', { p_lead_id: id })
       if (error) throw error
       if (data && !data.ok) throw new Error(data.error)
-      showToast('Lead eliminado', 'success')
+      if (isMountedRef.current) showToast('Lead eliminado', 'success')
       navigate('/ventas/crm', { replace: true })
     } catch (err) {
-      showToast(err.message || 'Error al eliminar el lead', 'error')
+      if (isMountedRef.current) showToast(err.message || 'Error al eliminar el lead', 'error')
     } finally {
       savingActionRef.current = false
     }
@@ -489,9 +544,9 @@ export default function CRMLeadDetalle() {
         usuario: { nombre: usuario?.nombre || user?.email },
       }, ...prev])
     } catch {
-      showToast('Error al añadir nota', 'error')
+      if (isMountedRef.current) showToast('Error al añadir nota', 'error')
     } finally {
-      setEnviandoNota(false)
+      if (isMountedRef.current) setEnviandoNota(false)
     }
   }
 
@@ -514,9 +569,10 @@ export default function CRMLeadDetalle() {
         datos: { etiqueta_id: etiquetaId, accion: 'añadir' },
       })
       logActividad('crm', 'etiqueta', `Etiqueta añadida: ${etiqueta?.nombre || 'Desconocida'}`, { entidad: 'lead', entidad_id: id })
-      await cargarLead()
+      if (!isMountedRef.current) return
+      await refrescarLead()
     } catch (err) {
-      showToast('Error al añadir etiqueta', 'error')
+      if (isMountedRef.current) showToast('Error al añadir etiqueta', 'error')
       console.error('Error addTag:', err)
     }
   }
@@ -538,11 +594,11 @@ export default function CRMLeadDetalle() {
             : c
         ),
       }))
-      showToast('Estado de reunión actualizado', 'success')
+      if (isMountedRef.current) showToast('Estado de reunión actualizado', 'success')
     } catch {
-      showToast('Error al actualizar estado de reunión', 'error')
+      if (isMountedRef.current) showToast('Error al actualizar estado de reunión', 'error')
     } finally {
-      setSavingEstadoCita(null)
+      if (isMountedRef.current) setSavingEstadoCita(null)
     }
   }
 
