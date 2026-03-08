@@ -27,13 +27,16 @@ export default function CalendarioAdminPanel({
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    let active = true
     const cargar = async () => {
       setLoading(true)
       const data = await cargarClosersConConfig()
+      if (!active) return
       setClosersData(data)
       setLoading(false)
     }
     cargar()
+    return () => { active = false }
   }, [cargarClosersConConfig])
 
   const handleMinimoChange = (closerId, value) => {

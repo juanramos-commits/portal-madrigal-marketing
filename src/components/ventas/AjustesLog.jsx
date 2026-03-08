@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import Select from '../ui/Select'
 
@@ -50,20 +50,24 @@ export default function AjustesLog({
   const [pagina, setPagina] = useState(0)
   const [usuarios, setUsuarios] = useState([])
   const [loading, setLoading] = useState(false)
+  const mountedRef = useRef(true)
 
   useEffect(() => {
+    mountedRef.current = true
     const cargarUsuarios = async () => {
       const { data } = await supabase
         .from('usuarios')
         .select('id, nombre, email')
         .eq('activo', true)
         .order('nombre')
-      setUsuarios(data || [])
+      if (mountedRef.current) setUsuarios(data || [])
     }
     cargarUsuarios()
+    return () => { mountedRef.current = false }
   }, [])
 
   useEffect(() => {
+    let active = true
     setLoading(true)
     onCargar({
       usuario_id: filtroUsuario || undefined,
@@ -71,7 +75,8 @@ export default function AjustesLog({
       accion: filtroAccion || undefined,
       desde: filtroDesde || undefined,
       hasta: filtroHasta || undefined,
-    }, pagina, POR_PAGINA).finally(() => setLoading(false))
+    }, pagina, POR_PAGINA).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
   }, [filtroUsuario, filtroModulo, filtroAccion, filtroDesde, filtroHasta, pagina])
 
   const totalPaginas = Math.ceil(actividadTotal / POR_PAGINA)

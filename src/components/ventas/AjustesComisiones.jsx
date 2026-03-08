@@ -22,7 +22,9 @@ export default function AjustesComisiones({
   const [bonusError, setBonusError] = useState(null)
 
   useEffect(() => {
-    Promise.all([onCargar(), onCargarEquipo?.()]).finally(() => setLoading(false))
+    let active = true
+    Promise.all([onCargar(), onCargarEquipo?.()]).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
   }, [])
 
   useEffect(() => {
