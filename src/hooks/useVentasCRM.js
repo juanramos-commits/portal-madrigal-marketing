@@ -1103,36 +1103,115 @@ export function useVentasCRM() {
     if (user?.id) cargarDatosIniciales()
   }, [user?.id, cargarDatosIniciales])
 
-  // ── Realtime: listen to pipeline changes from other users ──────────
+  // ── Realtime: granular updates — only fetch the lead that changed ──
+  const pendingRealtimeRef = useRef(new Set())
+  const realtimeFlushRef = useRef(null)
+
   useEffect(() => {
     if (!pipelineActivo?.id) return
 
-    const channel = supabase
-      .channel(`crm-pipeline-${pipelineActivo.id}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'ventas_lead_pipeline',
-        filter: `pipeline_id=eq.${pipelineActivo.id}`,
-      }, () => {
-        // Skip refresh if this was triggered by our own action
-        if (selfChangeRef.current) {
-          selfChangeRef.current = false
+    // Fetch a single lead by pipeline join ID and merge into state
+    const fetchAndMergeLead = async (leadId, newEtapaId) => {
+      try {
+        const { data, error: err } = await supabase
+          .from('ventas_lead_pipeline')
+          .select(`
+            id, lead_id, pipeline_id, etapa_id, contador_intentos, fecha_entrada,
+            lead:ventas_leads!inner(
+              id, nombre, email, telefono, nombre_negocio, fuente, valor, notas,
+              resumen_setter, resumen_closer, enlace_grabacion, creado_por,
+              created_at, updated_at, tags, contactos_adicionales, fuente_detalle,
+              categoria:ventas_categorias(id, nombre),
+              setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
+              closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email),
+              lead_etiquetas:ventas_lead_etiquetas(etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color))
+            )
+          `)
+          .eq('pipeline_id', pipelineActivo.id)
+          .eq('lead_id', leadId)
+          .maybeSingle()
+        if (err || !data) return
+        const [mapped] = mapLeadItems([data])
+        if (!mapped) return
+
+        setLeads(prev => {
+          const next = { ...prev }
+          // Remove lead from any stage it was in
+          for (const etId of Object.keys(next)) {
+            const idx = next[etId]?.findIndex(l => l.id === leadId)
+            if (idx >= 0) {
+              next[etId] = [...next[etId]]
+              next[etId].splice(idx, 1)
+            }
+          }
+          // Add to the new stage
+          if (next[newEtapaId]) {
+            next[newEtapaId] = [mapped, ...(next[newEtapaId] || [])]
+          }
+          return next
+        })
+      } catch { /* ignore — next full refresh will fix it */ }
+    }
+
+    const handleEvent = (payload) => {
+      if (selfChangeRef.current) { selfChangeRef.current = false; return }
+
+      // Accumulate changes, flush after debounce
+      const leadId = payload.new?.lead_id || payload.old?.lead_id
+      if (leadId) pendingRealtimeRef.current.add(JSON.stringify({
+        leadId,
+        etapaId: payload.new?.etapa_id || null,
+        event: payload.eventType,
+      }))
+
+      if (realtimeFlushRef.current) clearTimeout(realtimeFlushRef.current)
+      realtimeFlushRef.current = setTimeout(() => {
+        const pending = pendingRealtimeRef.current
+        pendingRealtimeRef.current = new Set()
+
+        // If too many changes, do a full refresh
+        if (pending.size > 8) {
+          refrescarRef.current?.()
           return
         }
-        // Debounce rapid realtime events (e.g. bulk imports)
-        if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current)
-        realtimeDebounceRef.current = setTimeout(() => {
-          refrescarRef.current?.()
-        }, 1000)
-      })
+
+        for (const item of pending) {
+          const { leadId, etapaId, event } = JSON.parse(item)
+          if (event === 'DELETE') {
+            // Remove from state
+            setLeads(prev => {
+              const next = { ...prev }
+              for (const etId of Object.keys(next)) {
+                next[etId] = (next[etId] || []).filter(l => l.id !== leadId)
+              }
+              return next
+            })
+            setLeadCounts(prev => {
+              const next = { ...prev }
+              if (etapaId && next[etapaId]) next[etapaId] = Math.max(0, next[etapaId] - 1)
+              return next
+            })
+            setTotalLeads(prev => Math.max(0, prev - 1))
+          } else {
+            fetchAndMergeLead(leadId, etapaId)
+          }
+        }
+      }, 800)
+    }
+
+    const channel = supabase
+      .channel(`crm-pipeline-${pipelineActivo.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ventas_lead_pipeline', filter: `pipeline_id=eq.${pipelineActivo.id}` }, handleEvent)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'ventas_lead_pipeline', filter: `pipeline_id=eq.${pipelineActivo.id}` }, handleEvent)
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'ventas_lead_pipeline', filter: `pipeline_id=eq.${pipelineActivo.id}` }, handleEvent)
       .subscribe()
 
     return () => {
-      if (realtimeDebounceRef.current) clearTimeout(realtimeDebounceRef.current)
+      if (realtimeFlushRef.current) clearTimeout(realtimeFlushRef.current)
+      pendingRealtimeRef.current.clear()
       supabase.removeChannel(channel)
     }
-  }, [pipelineActivo?.id]) // stable dep — no more refrescar in deps
+  }, [pipelineActivo?.id]) // stable dep
 
   // ── Reload leads on filter or vista change ─────────────────────────
   // Pipeline changes are handled by setPipelineActivo → cargarPipelineCompleto
