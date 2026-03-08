@@ -4,6 +4,8 @@ import { memo, useCallback, useMemo, useRef } from 'react'
 import { Inbox } from 'lucide-react'
 import CRMLeadCard from './CRMLeadCard'
 
+const VIRTUAL_THRESHOLD = 20
+
 export default memo(function CRMKanbanColumn({
   etapa,
   leads = [],
@@ -22,6 +24,7 @@ export default memo(function CRMKanbanColumn({
   const scrollRef = useRef(null)
   const scrollThrottleRef = useRef(false)
   const leadIds = useMemo(() => leads.map(l => l.id), [leads])
+  const shouldVirtualize = leads.length >= VIRTUAL_THRESHOLD
 
   const handleScroll = useCallback(() => {
     if (scrollThrottleRef.current) return
@@ -53,6 +56,7 @@ export default memo(function CRMKanbanColumn({
               etapa={etapa}
               showAssignee={showAssignee}
               onMoverMobile={onMoverMobile}
+              virtualize={shouldVirtualize}
             />
           ))}
         </SortableContext>

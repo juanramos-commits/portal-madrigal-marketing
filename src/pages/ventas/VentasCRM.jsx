@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, lazy, Suspense } from 'react'
 import { Kanban, List, Filter, Plus, RefreshCw } from 'lucide-react'
 import { useVentasCRM } from '../../hooks/useVentasCRM'
 import { useVentas } from '../../hooks/useVentas'
@@ -7,12 +7,13 @@ import { useToast } from '../../contexts/ToastContext'
 import CRMKanban from '../../components/ventas/CRMKanban'
 import CRMTabla from '../../components/ventas/CRMTabla'
 import CRMBuscador from '../../components/ventas/CRMBuscador'
-import CRMFiltros from '../../components/ventas/CRMFiltros'
-import CRMNuevoLead from '../../components/ventas/CRMNuevoLead'
-import VentaPopupCierre from '../../components/ventas/VentaPopupCierre'
-import CRMAgendarCita from '../../components/ventas/CRMAgendarCita'
 import '../../styles/ventas-crm.css'
 import '../../styles/ventas-ventas.css'
+
+const CRMFiltros = lazy(() => import('../../components/ventas/CRMFiltros'))
+const CRMNuevoLead = lazy(() => import('../../components/ventas/CRMNuevoLead'))
+const VentaPopupCierre = lazy(() => import('../../components/ventas/VentaPopupCierre'))
+const CRMAgendarCita = lazy(() => import('../../components/ventas/CRMAgendarCita'))
 
 export default function VentasCRM() {
   const crm = useVentasCRM()
@@ -157,6 +158,7 @@ export default function VentasCRM() {
       )}
 
       {/* ── Filters Panel ───────────────────────────────────────────── */}
+      <Suspense fallback={null}>
       {showFilters && (
         <CRMFiltros
           filtros={crm.filtros}
@@ -225,6 +227,7 @@ export default function VentasCRM() {
           }}
         />
       )}
+      </Suspense>
 
     </div>
   )

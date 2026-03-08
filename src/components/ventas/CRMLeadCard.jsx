@@ -1,4 +1,4 @@
-import { memo, useRef, useCallback } from 'react'
+import { memo, useRef, useCallback, useState, useEffect } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
@@ -36,13 +36,16 @@ function getAvatarColor(name) {
   return `hsl(${hue}, 50%, 40%)`
 }
 
-export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }) {
+export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile, virtualize = false }) {
   const navigate = useNavigate()
+  const [isVisible, setIsVisible] = useState(!virtualize)
+  const observerRef = useRef(null)
+  const hoverTimer = useRef(null)
 
   const {
     attributes,
     listeners,
-    setNodeRef,
+    setNodeRef: setSortableRef,
     transform,
     transition,
     isDragging,
@@ -51,23 +54,58 @@ export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMob
     data: { type: 'lead', lead, etapaId: etapa?.id },
   })
 
+  // Combined ref: attach sortable + IntersectionObserver when virtualizing
+  const nodeRef = useCallback((node) => {
+    setSortableRef(node)
+    if (!virtualize) return
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+      observerRef.current = null
+    }
+    if (node) {
+      const obs = new IntersectionObserver(
+        ([entry]) => setIsVisible(entry.isIntersecting),
+        { rootMargin: '300px 0px' }
+      )
+      obs.observe(node)
+      observerRef.current = obs
+    }
+  }, [setSortableRef, virtualize])
+
+  useEffect(() => () => {
+    observerRef.current?.disconnect()
+    clearTimeout(hoverTimer.current)
+  }, [])
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
   }
 
+  // Off-screen placeholder — keeps useSortable active for dnd-kit, minimal DOM
+  if (virtualize && !isVisible && !isDragging) {
+    return (
+      <div
+        ref={nodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        className="crm-card crm-card-placeholder"
+      />
+    )
+  }
+
   // Prefetch lead data on hover so detail page opens instantly
-  const hoverTimer = useRef(null)
-  const handleMouseEnter = useCallback(() => {
+  const handleMouseEnter = () => {
     hoverTimer.current = setTimeout(() => prefetchLeadDetail(lead.id), 150)
-  }, [lead.id])
-  const handleMouseLeave = useCallback(() => {
+  }
+  const handleMouseLeave = () => {
     clearTimeout(hoverTimer.current)
-  }, [])
+  }
 
   const handleClick = () => {
     if (isDragging) return
-    prefetchLeadDetail(lead.id) // ensure prefetch started even if hover was brief
+    prefetchLeadDetail(lead.id)
     navigate(`/ventas/crm/lead/${lead.id}`)
   }
 
@@ -91,7 +129,7 @@ export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMob
 
   return (
     <div
-      ref={setNodeRef}
+      ref={nodeRef}
       style={style}
       {...attributes}
       {...listeners}

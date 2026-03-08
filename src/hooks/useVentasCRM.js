@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
 import { logActividad } from '../lib/logActividad'
+import { cacheGet, cacheSet } from '../lib/offlineCache'
 
 const LEADS_PER_BATCH = 20
 const TABLE_PAGE_SIZE = 50
@@ -29,12 +30,28 @@ function loadCRMCatalogs() {
       roles: results[3].data || [],
     }
     _crmCatalogPromise = null
+    // Persist to IndexedDB for offline / instant next-session load
+    cacheSet('crm_catalogs', _crmCatalogCache).catch(() => {})
     return _crmCatalogCache
   }).catch(err => {
     _crmCatalogPromise = null
     throw err
   })
   return _crmCatalogPromise
+}
+
+// Try IndexedDB first for instant startup, then refresh from network
+async function loadCRMCatalogsWithOffline() {
+  if (_crmCatalogCache) return _crmCatalogCache
+  // Try IndexedDB cache for instant load
+  const cached = await cacheGet('crm_catalogs').catch(() => null)
+  if (cached?.pipelines?.length > 0) {
+    _crmCatalogCache = cached
+    // Refresh in background (stale-while-revalidate)
+    loadCRMCatalogs().catch(() => {})
+    return cached
+  }
+  return loadCRMCatalogs()
 }
 
 // Helper: map lead pipeline join data to flat lead objects
@@ -263,7 +280,7 @@ export function useVentasCRM() {
       setLoading(true)
       setError(null)
 
-      const cache = await loadCRMCatalogs()
+      const cache = await loadCRMCatalogsWithOffline()
 
       const pipelinesData = cache.pipelines
       const categoriasData = cache.categorias

@@ -517,6 +517,11 @@
   50% { border-color: rgba(239, 68, 68, 0.7); box-shadow: 0 0 8px rgba(239, 68, 68, 0.15); }
 }
 
+.crm-card-placeholder {
+  min-height: 80px;
+  pointer-events: none;
+}
+
 .crm-card:hover {
   border-color: var(--border-hover);
   background: var(--bg-hover);

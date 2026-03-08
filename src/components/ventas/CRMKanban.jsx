@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -120,17 +120,46 @@ export default function CRMKanban({
   // Stable empty array reference — prevents React.memo bypass on CRMKanbanColumn
   const EMPTY_LEADS = useMemo(() => [], [])
 
+  // Cache column structure for intelligent skeletons
+  const structureSaved = useRef(false)
+  useEffect(() => {
+    if (loading || etapas.length === 0 || structureSaved.current) return
+    structureSaved.current = true
+    try {
+      const structure = etapas.map(e => ({
+        nombre: e.nombre,
+        color: e.color,
+        count: Math.min((leads[e.id] || []).length, 6),
+      }))
+      sessionStorage.setItem('crm_skeleton', JSON.stringify(structure))
+    } catch { /* ignore quota errors */ }
+  }, [loading, etapas, leads])
+
   if (loading) {
+    let skeleton = [1, 2, 3, 4].map(i => ({ nombre: null, color: null, count: 3 }))
+    try {
+      const cached = sessionStorage.getItem('crm_skeleton')
+      if (cached) skeleton = JSON.parse(cached)
+    } catch { /* use default */ }
     return (
       <div className="crm-kanban" aria-busy="true" aria-label="Cargando tablero">
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="crm-column">
+        {skeleton.map((col, i) => (
+          <div key={i} className="crm-column" style={col.color ? { '--column-color': col.color } : undefined}>
             <div className="crm-column-header">
-              <span className="crm-skeleton crm-skeleton-dot" />
-              <span className="crm-skeleton crm-skeleton-title" />
+              {col.nombre ? (
+                <>
+                  <span className="crm-column-dot" style={{ background: col.color || 'var(--text-muted)' }} />
+                  <span className="crm-column-name">{col.nombre}</span>
+                </>
+              ) : (
+                <>
+                  <span className="crm-skeleton crm-skeleton-dot" />
+                  <span className="crm-skeleton crm-skeleton-title" />
+                </>
+              )}
             </div>
             <div className="crm-column-body">
-              {[1, 2, 3].map(j => (
+              {Array.from({ length: col.count || 3 }, (_, j) => (
                 <div key={j} className="crm-skeleton crm-skeleton-card" />
               ))}
             </div>

@@ -11,6 +11,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { supabase } from '../../lib/supabase'
 import { logActividad } from '../../lib/logActividad'
+import { cacheGet, cacheSet } from '../../lib/offlineCache'
 import Select from '../ui/Select'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import WhatsAppIcon from '../icons/WhatsAppIcon'
@@ -145,12 +146,24 @@ function loadCatalogs() {
       reunionEstados: reunionEstadosData.data || [],
     }
     _catalogPromise = null
+    cacheSet('lead_detail_catalogs', _catalogCache).catch(() => {})
     return _catalogCache
   }).catch(err => {
     _catalogPromise = null
     throw err
   })
   return _catalogPromise
+}
+
+async function loadCatalogsWithOffline() {
+  if (_catalogCache) return _catalogCache
+  const cached = await cacheGet('lead_detail_catalogs').catch(() => null)
+  if (cached?.categorias?.length > 0) {
+    _catalogCache = cached
+    loadCatalogs().catch(() => {})
+    return cached
+  }
+  return loadCatalogs()
 }
 
 export default function CRMLeadDetalle() {
@@ -201,7 +214,7 @@ export default function CRMLeadDetalle() {
   // ── Load static catalogs (module-level cache — no re-fetch on each mount) ──
   const cargarCatalogos = useCallback(async () => {
     try {
-      const cache = await loadCatalogs()
+      const cache = await loadCatalogsWithOffline()
       if (!isMountedRef.current) return
       setCategorias(cache.categorias)
       setEtiquetasDisponibles(cache.etiquetas)
@@ -521,23 +534,32 @@ export default function CRMLeadDetalle() {
   const asignarSetter = async (setterId) => {
     if (savingActionRef.current) return
     savingActionRef.current = true
+    const prevSetter = lead.setter
+    const prevSetterId = lead.setter_asignado_id
+    const nuevoSetter = setters.find(s => s.usuario_id === setterId)
+    const prevNombre = prevSetter?.nombre || 'Ninguno'
+    const nuevoNombre = nuevoSetter?.usuario?.nombre || 'Ninguno'
+    // Optimistic update
+    setLead(prev => ({
+      ...prev,
+      setter_asignado_id: setterId || null,
+      setter: setterId ? { id: setterId, nombre: nuevoSetter?.usuario?.nombre, email: nuevoSetter?.usuario?.email } : null,
+    }))
     try {
-      const prevNombre = lead.setter?.nombre || 'Ninguno'
-      const nuevoSetter = setters.find(s => s.usuario_id === setterId)
-      const nuevoNombre = nuevoSetter?.usuario?.nombre || 'Ninguno'
       const { error: setterErr } = await supabase.from('ventas_leads').update({ setter_asignado_id: setterId || null }).eq('id', id)
       if (setterErr) throw setterErr
-      await supabase.from('ventas_actividad').insert({
+      supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'asignacion',
         descripcion: `Setter: ${prevNombre} → ${nuevoNombre}`,
-        datos: { setter_id: setterId, anterior: lead.setter_asignado_id },
-      })
+        datos: { setter_id: setterId, anterior: prevSetterId },
+      }).then(() => {})
       logActividad('crm', 'asignar', `Setter: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
-      if (!isMountedRef.current) return
-      showToast('Setter actualizado', 'success')
-      await refrescarLead()
+      if (isMountedRef.current) showToast('Setter actualizado', 'success')
     } catch {
-      if (isMountedRef.current) showToast('Error', 'error')
+      if (isMountedRef.current) {
+        setLead(prev => ({ ...prev, setter_asignado_id: prevSetterId, setter: prevSetter }))
+        showToast('Error al asignar setter', 'error')
+      }
     } finally {
       savingActionRef.current = false
     }
@@ -546,23 +568,32 @@ export default function CRMLeadDetalle() {
   const asignarCloser = async (closerId) => {
     if (savingActionRef.current) return
     savingActionRef.current = true
+    const prevCloser = lead.closer
+    const prevCloserId = lead.closer_asignado_id
+    const nuevoCloser = closers.find(c => c.usuario_id === closerId)
+    const prevNombre = prevCloser?.nombre || 'Ninguno'
+    const nuevoNombre = nuevoCloser?.usuario?.nombre || 'Ninguno'
+    // Optimistic update
+    setLead(prev => ({
+      ...prev,
+      closer_asignado_id: closerId || null,
+      closer: closerId ? { id: closerId, nombre: nuevoCloser?.usuario?.nombre, email: nuevoCloser?.usuario?.email } : null,
+    }))
     try {
-      const prevNombre = lead.closer?.nombre || 'Ninguno'
-      const nuevoCloser = closers.find(c => c.usuario_id === closerId)
-      const nuevoNombre = nuevoCloser?.usuario?.nombre || 'Ninguno'
       const { error: closerErr } = await supabase.from('ventas_leads').update({ closer_asignado_id: closerId || null }).eq('id', id)
       if (closerErr) throw closerErr
-      await supabase.from('ventas_actividad').insert({
+      supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'asignacion',
         descripcion: `Closer: ${prevNombre} → ${nuevoNombre}`,
-        datos: { closer_id: closerId, anterior: lead.closer_asignado_id },
-      })
+        datos: { closer_id: closerId, anterior: prevCloserId },
+      }).then(() => {})
       logActividad('crm', 'asignar', `Closer: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
-      if (!isMountedRef.current) return
-      showToast('Closer actualizado', 'success')
-      await refrescarLead()
+      if (isMountedRef.current) showToast('Closer actualizado', 'success')
     } catch {
-      if (isMountedRef.current) showToast('Error', 'error')
+      if (isMountedRef.current) {
+        setLead(prev => ({ ...prev, closer_asignado_id: prevCloserId, closer: prevCloser }))
+        showToast('Error al asignar closer', 'error')
+      }
     } finally {
       savingActionRef.current = false
     }
@@ -618,77 +649,90 @@ export default function CRMLeadDetalle() {
   // ── Tags ───────────────────────────────────────────────────────────
   const addTag = async (etiquetaId) => {
     setShowTagPicker(false)
+    const etiqueta = etiquetasDisponibles.find(e => e.id === etiquetaId)
+    if (!etiqueta) return
+    // Optimistic update
+    setLead(prev => ({
+      ...prev,
+      lead_etiquetas: [...(prev.lead_etiquetas || []), etiqueta],
+    }))
     try {
-      const etiqueta = etiquetasDisponibles.find(e => e.id === etiquetaId)
       const { error } = await supabase.from('ventas_lead_etiquetas').insert({ lead_id: id, etiqueta_id: etiquetaId })
       if (error) {
-        if (error.code !== '23505' && isMountedRef.current) {
-          showToast('Error al añadir etiqueta', 'error')
-          console.error('Error addTag:', error)
-        }
-        return
+        if (error.code === '23505') return // duplicate — already exists, optimistic state is correct
+        throw error
       }
-      await supabase.from('ventas_actividad').insert({
+      supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'etiqueta',
-        descripcion: `Etiqueta añadida: ${etiqueta?.nombre || 'Desconocida'}`,
+        descripcion: `Etiqueta añadida: ${etiqueta.nombre}`,
         datos: { etiqueta_id: etiquetaId, accion: 'añadir' },
-      })
-      logActividad('crm', 'etiqueta', `Etiqueta añadida: ${etiqueta?.nombre || 'Desconocida'}`, { entidad: 'lead', entidad_id: id })
-      if (!isMountedRef.current) return
-      await refrescarLead()
+      }).then(() => {})
+      logActividad('crm', 'etiqueta', `Etiqueta añadida: ${etiqueta.nombre}`, { entidad: 'lead', entidad_id: id })
     } catch (err) {
-      if (isMountedRef.current) showToast('Error al añadir etiqueta', 'error')
+      // Rollback
+      if (isMountedRef.current) {
+        setLead(prev => ({
+          ...prev,
+          lead_etiquetas: (prev.lead_etiquetas || []).filter(e => e.id !== etiquetaId),
+        }))
+        showToast('Error al añadir etiqueta', 'error')
+      }
       console.error('Error addTag:', err)
     }
   }
 
   const cambiarEstadoReunion = async (citaId, estadoReunionId) => {
     setSavingEstadoCita(citaId)
+    const prevCitas = lead.citas
+    // Optimistic update
+    setLead(prev => ({
+      ...prev,
+      citas: (prev.citas || []).map(c =>
+        c.id === citaId
+          ? { ...c, estado_reunion_id: estadoReunionId || null, estado_reunion: reunionEstados.find(e => e.id === estadoReunionId) || null }
+          : c
+      ),
+    }))
     try {
       const { error } = await supabase
         .from('ventas_citas')
         .update({ estado_reunion_id: estadoReunionId || null, updated_at: new Date().toISOString() })
         .eq('id', citaId)
       if (error) throw error
-      // Update local state
-      setLead(prev => ({
-        ...prev,
-        citas: (prev.citas || []).map(c =>
-          c.id === citaId
-            ? { ...c, estado_reunion_id: estadoReunionId || null, estado_reunion: reunionEstados.find(e => e.id === estadoReunionId) || null }
-            : c
-        ),
-      }))
       if (isMountedRef.current) showToast('Estado de reunión actualizado', 'success')
     } catch {
-      if (isMountedRef.current) showToast('Error al actualizar estado de reunión', 'error')
+      if (isMountedRef.current) {
+        setLead(prev => ({ ...prev, citas: prevCitas }))
+        showToast('Error al actualizar estado de reunión', 'error')
+      }
     } finally {
       if (isMountedRef.current) setSavingEstadoCita(null)
     }
   }
 
   const removeTag = async (etiquetaId) => {
+    const etiqueta = (lead.lead_etiquetas || []).find(e => e.id === etiquetaId)
+    const prevTags = lead.lead_etiquetas
+    // Optimistic update
+    setLead(prev => ({
+      ...prev,
+      lead_etiquetas: (prev.lead_etiquetas || []).filter(e => e.id !== etiquetaId),
+    }))
     try {
-      const etiqueta = (lead.lead_etiquetas || []).find(e => e.id === etiquetaId)
       const { error } = await supabase.from('ventas_lead_etiquetas').delete().eq('lead_id', id).eq('etiqueta_id', etiquetaId)
-      if (error) {
-        if (isMountedRef.current) showToast('Error al quitar etiqueta', 'error')
-        console.error('Error removeTag:', error)
-        return
-      }
-      await supabase.from('ventas_actividad').insert({
+      if (error) throw error
+      supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'etiqueta',
         descripcion: `Etiqueta quitada: ${etiqueta?.nombre || 'Desconocida'}`,
         datos: { etiqueta_id: etiquetaId, accion: 'quitar' },
-      })
+      }).then(() => {})
       logActividad('crm', 'etiqueta', `Etiqueta quitada: ${etiqueta?.nombre || 'Desconocida'}`, { entidad: 'lead', entidad_id: id })
-      if (!isMountedRef.current) return
-      setLead(prev => ({
-        ...prev,
-        lead_etiquetas: (prev.lead_etiquetas || []).filter(e => e.id !== etiquetaId),
-      }))
     } catch (err) {
-      if (isMountedRef.current) showToast('Error al quitar etiqueta', 'error')
+      // Rollback
+      if (isMountedRef.current) {
+        setLead(prev => ({ ...prev, lead_etiquetas: prevTags }))
+        showToast('Error al quitar etiqueta', 'error')
+      }
       console.error('Error removeTag:', err)
     }
   }

@@ -1,15 +1,16 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import { useWallet } from '../../hooks/useWallet'
 import { useAuth } from '../../contexts/AuthContext'
 import WalletResumen from '../../components/ventas/WalletResumen'
-import WalletComisiones from '../../components/ventas/WalletComisiones'
-import WalletRetiros from '../../components/ventas/WalletRetiros'
-import WalletSolicitarRetiro from '../../components/ventas/WalletSolicitarRetiro'
-import WalletDatosFiscales from '../../components/ventas/WalletDatosFiscales'
-import WalletFacturas from '../../components/ventas/WalletFacturas'
-import WalletAdminRetiros from '../../components/ventas/WalletAdminRetiros'
-import WalletAdminFacturas from '../../components/ventas/WalletAdminFacturas'
 import '../../styles/ventas-wallet.css'
+
+const WalletComisiones = lazy(() => import('../../components/ventas/WalletComisiones'))
+const WalletRetiros = lazy(() => import('../../components/ventas/WalletRetiros'))
+const WalletSolicitarRetiro = lazy(() => import('../../components/ventas/WalletSolicitarRetiro'))
+const WalletDatosFiscales = lazy(() => import('../../components/ventas/WalletDatosFiscales'))
+const WalletFacturas = lazy(() => import('../../components/ventas/WalletFacturas'))
+const WalletAdminRetiros = lazy(() => import('../../components/ventas/WalletAdminRetiros'))
+const WalletAdminFacturas = lazy(() => import('../../components/ventas/WalletAdminFacturas'))
 
 const tabsBase = [
   { key: 'resumen', label: 'Resumen' },
@@ -108,7 +109,7 @@ export default function VentasWallet() {
 
       {w.loading && !w.wallet ? (
         <div className="wt-loading" role="status">Cargando wallet...</div>
-      ) : <>
+      ) : <Suspense fallback={<div className="wt-loading">Cargando...</div>}>
 
       {tab === 'resumen' && (
         <WalletResumen
@@ -206,7 +207,7 @@ export default function VentasWallet() {
         />
       )}
 
-      </>}
+      </Suspense>}
 
       {showRetiroModal && (
         <WalletSolicitarRetiro

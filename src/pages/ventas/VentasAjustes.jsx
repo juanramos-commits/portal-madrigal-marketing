@@ -1,21 +1,23 @@
+import { lazy, Suspense } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAjustes } from '../../hooks/useAjustes'
 import AjustesPerfil from '../../components/ventas/AjustesPerfil'
-import AjustesCalendario from '../../components/ventas/AjustesCalendario'
-import AjustesPipelines from '../../components/ventas/AjustesPipelines'
-import AjustesReparto from '../../components/ventas/AjustesReparto'
-import AjustesPaquetes from '../../components/ventas/AjustesPaquetes'
-import AjustesCategorias from '../../components/ventas/AjustesCategorias'
-import AjustesComisiones from '../../components/ventas/AjustesComisiones'
-import AjustesEmpresaFiscal from '../../components/ventas/AjustesEmpresaFiscal'
-import AjustesEquipo from '../../components/ventas/AjustesEquipo'
-import AjustesWebhooks from '../../components/ventas/AjustesWebhooks'
-import AjustesReunionEstados from '../../components/ventas/AjustesReunionEstados'
-import AjustesCamposObligatorios from '../../components/ventas/AjustesCamposObligatorios'
-import AjustesLog from '../../components/ventas/AjustesLog'
-import AjustesPermisos from '../../components/ventas/AjustesPermisos'
 import '../../styles/ventas-ajustes.css'
 import '../../styles/ventas-calendario.css'
+
+const AjustesCalendario = lazy(() => import('../../components/ventas/AjustesCalendario'))
+const AjustesPipelines = lazy(() => import('../../components/ventas/AjustesPipelines'))
+const AjustesReparto = lazy(() => import('../../components/ventas/AjustesReparto'))
+const AjustesPaquetes = lazy(() => import('../../components/ventas/AjustesPaquetes'))
+const AjustesCategorias = lazy(() => import('../../components/ventas/AjustesCategorias'))
+const AjustesComisiones = lazy(() => import('../../components/ventas/AjustesComisiones'))
+const AjustesEmpresaFiscal = lazy(() => import('../../components/ventas/AjustesEmpresaFiscal'))
+const AjustesEquipo = lazy(() => import('../../components/ventas/AjustesEquipo'))
+const AjustesWebhooks = lazy(() => import('../../components/ventas/AjustesWebhooks'))
+const AjustesReunionEstados = lazy(() => import('../../components/ventas/AjustesReunionEstados'))
+const AjustesCamposObligatorios = lazy(() => import('../../components/ventas/AjustesCamposObligatorios'))
+const AjustesLog = lazy(() => import('../../components/ventas/AjustesLog'))
+const AjustesPermisos = lazy(() => import('../../components/ventas/AjustesPermisos'))
 
 const UserIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="aj-icon-nav" aria-hidden="true">
@@ -323,7 +325,9 @@ export default function VentasAjustes() {
           <div className="aj-content-header">
             <h2>{seccionLabel}</h2>
           </div>
-          {renderSeccion()}
+          <Suspense fallback={<div className="aj-loading-section">Cargando...</div>}>
+            {renderSeccion()}
+          </Suspense>
         </main>
       </div>
 
