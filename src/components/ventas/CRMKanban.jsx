@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -117,6 +117,9 @@ export default function CRMKanban({
     setActiveEtapa(null)
   }, [])
 
+  // Stable empty array reference — prevents React.memo bypass on CRMKanbanColumn
+  const EMPTY_LEADS = useMemo(() => [], [])
+
   if (loading) {
     return (
       <div className="crm-kanban" aria-busy="true" aria-label="Cargando tablero">
@@ -151,7 +154,7 @@ export default function CRMKanban({
           <CRMKanbanColumn
             key={etapa.id}
             etapa={etapa}
-            leads={leads[etapa.id] || []}
+            leads={leads[etapa.id] || EMPTY_LEADS}
             count={leadCounts[etapa.id] || 0}
             hasMore={hasMore[etapa.id]}
             loadingMore={loadingMore[etapa.id]}
