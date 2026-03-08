@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { Kanban, List, Filter, Plus, RefreshCw } from 'lucide-react'
 import { useVentasCRM } from '../../hooks/useVentasCRM'
 import { useVentas } from '../../hooks/useVentas'
@@ -21,6 +21,8 @@ export default function VentasCRM() {
   const { showToast } = useToast()
   const [showFilters, setShowFilters] = useState(false)
   const [showNewLead, setShowNewLead] = useState(false)
+
+  const handleCRMError = useCallback((msg) => showToast(msg, 'error', 3000), [showToast])
 
   const filtroCount = useMemo(() => {
     return Object.values(crm.filtros).filter(v => v != null && v !== '' && !(Array.isArray(v) && v.length === 0)).length
@@ -139,7 +141,7 @@ export default function VentasCRM() {
           onMoverLead={crm.moverLead}
           showAssignee={tienePermiso('ventas.crm.ver_todos')}
           loading={crm.loading}
-          onError={(msg) => showToast(msg, 'error', 3000)}
+          onError={handleCRMError}
           canMove={tienePermiso('ventas.crm.mover_leads')}
         />
       ) : (
