@@ -27,7 +27,8 @@ const fetchWithRetry = (url, options = {}) => {
       return response
     }).catch((err) => {
       // Retry on network errors (offline, DNS failure, connection reset)
-      if (retryCount < maxRetries && (err.name === 'TypeError' || err.name === 'AbortError')) {
+      // Never retry AbortError — it means the request was intentionally cancelled (e.g. navigation)
+      if (retryCount < maxRetries && err.name === 'TypeError') {
         return new Promise((resolve, reject) =>
           setTimeout(() => attempt(retryCount + 1).then(resolve, reject), retryDelay * (retryCount + 1))
         )
