@@ -70,6 +70,37 @@ const ACTIVITY_ICONS = {
   venta_rechazada: Trash2,
 }
 
+// Module-level cache for static catalogs — survives across mounts/unmounts
+// so opening/closing leads doesn't re-fetch 5 queries each time
+let _catalogCache = null
+let _catalogPromise = null
+
+function loadCatalogs() {
+  if (_catalogCache) return Promise.resolve(_catalogCache)
+  if (_catalogPromise) return _catalogPromise
+  _catalogPromise = Promise.all([
+    supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
+    supabase.from('ventas_etiquetas').select('*').eq('activo', true),
+    supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
+    supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
+    supabase.from('ventas_reunion_estados').select('*').order('orden'),
+  ]).then(([cats, etqs, roles, etapasAll, reunionEstadosData]) => {
+    _catalogCache = {
+      categorias: cats.data || [],
+      etiquetas: etqs.data || [],
+      roles: roles.data || [],
+      etapas: etapasAll.data || [],
+      reunionEstados: reunionEstadosData.data || [],
+    }
+    _catalogPromise = null
+    return _catalogCache
+  }).catch(err => {
+    _catalogPromise = null
+    throw err
+  })
+  return _catalogPromise
+}
+
 export default function CRMLeadDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -115,33 +146,18 @@ export default function CRMLeadDetalle() {
   const esMiLeadSetter = lead?.setter_asignado_id === user?.id
   const esMiLeadCloser = lead?.closer_asignado_id === user?.id
 
-  // ── Load static catalogs (once per mount) ─────────────────────────
-  const staticLoadedRef = useRef(false)
+  // ── Load static catalogs (module-level cache — no re-fetch on each mount) ──
   const cargarCatalogos = useCallback(async () => {
-    if (staticLoadedRef.current) return
     try {
-      const [
-        { data: cats },
-        { data: etqs },
-        { data: roles },
-        { data: etapasAll },
-        { data: reunionEstadosData },
-      ] = await Promise.all([
-        supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
-        supabase.from('ventas_etiquetas').select('*').eq('activo', true),
-        supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
-        supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
-        supabase.from('ventas_reunion_estados').select('*').order('orden'),
-      ])
+      const cache = await loadCatalogs()
       if (!isMountedRef.current) return
-      staticLoadedRef.current = true
-      setCategorias(cats || [])
-      setEtiquetasDisponibles(etqs || [])
-      setRolesComerciales(roles || [])
-      setAllEtapas(etapasAll || [])
-      setReunionEstados(reunionEstadosData || [])
-      setSetters((roles || []).filter(r => r.rol === 'setter' && r.activo))
-      setClosers((roles || []).filter(r => r.rol === 'closer' && r.activo))
+      setCategorias(cache.categorias)
+      setEtiquetasDisponibles(cache.etiquetas)
+      setRolesComerciales(cache.roles)
+      setAllEtapas(cache.etapas)
+      setReunionEstados(cache.reunionEstados)
+      setSetters(cache.roles.filter(r => r.rol === 'setter' && r.activo))
+      setClosers(cache.roles.filter(r => r.rol === 'closer' && r.activo))
     } catch {
       // Swallow — catalogos are non-critical, will retry on next mount
     }
@@ -197,23 +213,24 @@ export default function CRMLeadDetalle() {
         cargarLeadData(requestId),
       ])
 
-      if (requestId !== loadDetailRef.current || !leadResult) return
+      if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
 
       setLead(leadResult)
       snapshotRef.current = null
 
-      // Load initial activity (non-blocking for UI)
-      const { data: actData } = await supabase.from('ventas_actividad')
+      // Load activity in background — don't block the lead from rendering
+      supabase.from('ventas_actividad')
         .select('*, usuario:usuarios(id, nombre)')
         .eq('lead_id', id)
         .order('created_at', { ascending: false })
         .range(0, 19)
-
-      if (requestId !== loadDetailRef.current) return
-
-      setActividad(actData || [])
-      setActividadOffset(20)
-      setHasMoreActividad((actData || []).length >= 20)
+        .then(({ data: actData }) => {
+          if (requestId !== loadDetailRef.current || !isMountedRef.current) return
+          setActividad(actData || [])
+          setActividadOffset(20)
+          setHasMoreActividad((actData || []).length >= 20)
+        })
+        .catch(() => {}) // non-critical
     } catch (err) {
       // Ignore cancelled requests from rapid navigation
       if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
@@ -403,7 +420,6 @@ export default function CRMLeadDetalle() {
   useEffect(() => {
     // Reset mounted state on id change (e.g. navigating between leads)
     isMountedRef.current = true
-    staticLoadedRef.current = false
 
     return () => {
       isMountedRef.current = false

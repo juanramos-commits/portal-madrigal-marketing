@@ -8,6 +8,35 @@ const LEADS_PER_BATCH = 20
 const TABLE_PAGE_SIZE = 50
 const LOADING_TIMEOUT_MS = 15000
 
+// Module-level cache for CRM catalog data — survives route changes
+let _crmCatalogCache = null
+let _crmCatalogPromise = null
+
+function loadCRMCatalogs() {
+  if (_crmCatalogCache) return Promise.resolve(_crmCatalogCache)
+  if (_crmCatalogPromise) return _crmCatalogPromise
+  _crmCatalogPromise = Promise.all([
+    supabase.from('ventas_pipelines').select('*').eq('activo', true).order('orden'),
+    supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
+    supabase.from('ventas_etiquetas').select('*').eq('activo', true),
+    supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
+  ]).then(results => {
+    if (results[0].error) throw new Error('Error cargando pipelines: ' + results[0].error.message)
+    _crmCatalogCache = {
+      pipelines: results[0].data || [],
+      categorias: results[1].data || [],
+      etiquetas: results[2].data || [],
+      roles: results[3].data || [],
+    }
+    _crmCatalogPromise = null
+    return _crmCatalogCache
+  }).catch(err => {
+    _crmCatalogPromise = null
+    throw err
+  })
+  return _crmCatalogPromise
+}
+
 // Helper: map lead pipeline join data to flat lead objects
 function mapLeadItems(data) {
   return (data || []).map(item => ({
@@ -234,20 +263,12 @@ export function useVentasCRM() {
       setLoading(true)
       setError(null)
 
-      const results = await Promise.all([
-        supabase.from('ventas_pipelines').select('*').eq('activo', true).order('orden'),
-        supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
-        supabase.from('ventas_etiquetas').select('*').eq('activo', true),
-        supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
-      ])
+      const cache = await loadCRMCatalogs()
 
-      // Check for critical errors (pipelines must load)
-      if (results[0].error) throw new Error('Error cargando pipelines: ' + results[0].error.message)
-
-      const pipelinesData = results[0].data
-      const categoriasData = results[1].data
-      const etiquetasData = results[2].data
-      const rolesData = results[3].data
+      const pipelinesData = cache.pipelines
+      const categoriasData = cache.categorias
+      const etiquetasData = cache.etiquetas
+      const rolesData = cache.roles
 
       // Procesar citas pasadas → mover leads a "Cita Realizada" (truly fire-and-forget)
       supabase.rpc('ventas_procesar_citas_pasadas').then(() => {}).catch(() => {})
