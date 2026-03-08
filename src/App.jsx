@@ -1,11 +1,17 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ToastProvider } from './contexts/ToastContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 import PermissionRoute from './components/PermissionRoute'
 import Layout from './components/Layout'
+
+// Wraps ErrorBoundary so it resets on navigation (route change)
+function LocationAwareErrorBoundary({ children }) {
+  const location = useLocation()
+  return <ErrorBoundary resetKey={location.pathname}>{children}</ErrorBoundary>
+}
 
 // Páginas públicas
 const Login = lazy(() => import('./pages/Login'))
@@ -81,7 +87,7 @@ function App() {
     <AuthProvider>
       <ToastProvider>
       <BrowserRouter>
-        <ErrorBoundary>
+        <LocationAwareErrorBoundary>
         <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Rutas públicas */}
@@ -142,7 +148,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
-        </ErrorBoundary>
+        </LocationAwareErrorBoundary>
       </BrowserRouter>
       </ToastProvider>
     </AuthProvider>

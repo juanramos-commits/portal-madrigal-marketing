@@ -10,6 +10,13 @@ export default class ErrorBoundary extends Component {
     return { hasError: true, error }
   }
 
+  // Reset error state when resetKey changes (e.g., navigation)
+  componentDidUpdate(prevProps) {
+    if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
+      this.setState({ hasError: false, error: null })
+    }
+  }
+
   componentDidCatch(error, info) {
     console.error('ErrorBoundary caught:', error, info.componentStack)
   }
