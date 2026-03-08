@@ -7,7 +7,9 @@ import { cacheGet, cacheSet } from '../lib/offlineCache'
 
 const LEADS_PER_BATCH = 20
 const TABLE_PAGE_SIZE = 50
-const LOADING_TIMEOUT_MS = 15000
+const LOADING_TIMEOUT_MS = 30000
+const REALTIME_BATCH_THRESHOLD = 50
+const REALTIME_DEBOUNCE_MS = 1200
 
 // Module-level cache for CRM catalog data — survives route changes
 let _crmCatalogCache = null
@@ -220,18 +222,32 @@ export function useVentasCRM() {
         const newCounts = {}
         let total = 0
 
+        // Optimization: when no filters/search, get all column counts in 1 query via RPC
+        const hasFilters = Object.values(filtros).some(v => v != null && v !== '' && !(Array.isArray(v) && v.length === 0))
+        const hasBusqueda = busqueda.trim() !== ''
+        let rpcCounts = null
+        if (!hasFilters && !hasBusqueda) {
+          const { data: countData } = await supabase.rpc('ventas_contar_leads_por_etapa', { p_pipeline_id: pipeline.id }).catch(() => ({ data: null }))
+          if (countData) {
+            rpcCounts = {}
+            for (const row of countData) rpcCounts[row.etapa_id] = Number(row.lead_count)
+          }
+        }
+
         await Promise.all((etapasData || []).map(async (etapa) => {
           const query = queryFn(pipeline.id, pipeline.nombre, etapa.id)
             .order('fecha_entrada', { ascending: false })
             .range(0, LEADS_PER_BATCH - 1)
 
+          // If RPC counts available, skip per-column count
           const { data, count, error: err } = await query
           if (err) throw err
 
+          const effectiveCount = rpcCounts ? (rpcCounts[etapa.id] || 0) : (count || 0)
           newLeads[etapa.id] = mapLeadItems(data)
-          newCounts[etapa.id] = count || 0
-          total += count || 0
-          hasMoreRef.current[etapa.id] = (count || 0) > LEADS_PER_BATCH
+          newCounts[etapa.id] = effectiveCount
+          total += effectiveCount
+          hasMoreRef.current[etapa.id] = effectiveCount > LEADS_PER_BATCH
           leadsOffsetRef.current[etapa.id] = (data || []).length
         }))
 
@@ -1186,8 +1202,8 @@ export function useVentasCRM() {
         const pending = pendingRealtimeRef.current
         pendingRealtimeRef.current = new Set()
 
-        // If too many changes, do a full refresh
-        if (pending.size > 8) {
+        // If too many changes, do a full refresh (e.g. bulk import)
+        if (pending.size > REALTIME_BATCH_THRESHOLD) {
           refrescarRef.current?.()
           return
         }
@@ -1213,7 +1229,7 @@ export function useVentasCRM() {
             fetchAndMergeLead(leadId, etapaId)
           }
         }
-      }, 800)
+      }, REALTIME_DEBOUNCE_MS)
     }
 
     const channel = supabase
