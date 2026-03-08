@@ -75,6 +75,58 @@ const ACTIVITY_ICONS = {
 let _catalogCache = null
 let _catalogPromise = null
 
+// ── Prefetch cache: load lead data on hover so detail opens instantly ──
+const _prefetchCache = new Map() // Map<leadId, { promise, data, ts }>
+const PREFETCH_TTL = 30_000 // 30 seconds
+
+function fetchLeadDetail(leadId) {
+  return Promise.all([
+    supabase.from('ventas_leads').select(`
+      *,
+      categoria:ventas_categorias(id, nombre),
+      setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
+      closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
+    `).eq('id', leadId).single(),
+    supabase.from('ventas_lead_pipeline').select(`
+      *, pipeline:ventas_pipelines(id, nombre),
+      etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
+    `).eq('lead_id', leadId),
+    supabase.from('ventas_citas').select(`
+      *, closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
+      estado_reunion:ventas_reunion_estados(id, nombre, color)
+    `).eq('lead_id', leadId).order('fecha_hora', { ascending: false }),
+    supabase.from('ventas_lead_etiquetas').select('*, etiqueta:ventas_etiquetas(*)').eq('lead_id', leadId),
+  ]).then(([leadRes, pipelineRes, citasRes, etiquetasRes]) => {
+    if (leadRes.error) throw leadRes.error
+    return {
+      ...leadRes.data,
+      pipeline_states: pipelineRes.data || [],
+      citas: citasRes.data || [],
+      lead_etiquetas: (etiquetasRes.data || []).map(le => le.etiqueta),
+    }
+  })
+}
+
+export function prefetchLeadDetail(leadId) {
+  if (!leadId) return
+  const cached = _prefetchCache.get(leadId)
+  if (cached && Date.now() - cached.ts < PREFETCH_TTL) return cached.promise
+  // Clean stale entries
+  for (const [k, v] of _prefetchCache) {
+    if (Date.now() - v.ts > PREFETCH_TTL) _prefetchCache.delete(k)
+  }
+  const promise = fetchLeadDetail(leadId).then(data => {
+    const entry = _prefetchCache.get(leadId)
+    if (entry) entry.data = data
+    return data
+  }).catch(() => {
+    _prefetchCache.delete(leadId)
+    return null
+  })
+  _prefetchCache.set(leadId, { promise, data: null, ts: Date.now() })
+  return promise
+}
+
 function loadCatalogs() {
   if (_catalogCache) return Promise.resolve(_catalogCache)
   if (_catalogPromise) return _catalogPromise
@@ -163,40 +215,23 @@ export default function CRMLeadDetalle() {
     }
   }, [])
 
-  // ── Load lead-specific data ──────────────────────────────────────
+  // ── Load lead-specific data (uses prefetch cache if available) ───
   const cargarLeadData = useCallback(async (requestId) => {
-    const [
-      { data: leadData, error: leadErr },
-      { data: pipelineStates },
-      { data: citas },
-      { data: leadEtiquetas },
-    ] = await Promise.all([
-      supabase.from('ventas_leads').select(`
-        *,
-        categoria:ventas_categorias(id, nombre),
-        setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
-        closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
-      `).eq('id', id).single(),
-      supabase.from('ventas_lead_pipeline').select(`
-        *, pipeline:ventas_pipelines(id, nombre),
-        etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
-      `).eq('lead_id', id),
-      supabase.from('ventas_citas').select(`
-        *, closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
-        estado_reunion:ventas_reunion_estados(id, nombre, color)
-      `).eq('lead_id', id).order('fecha_hora', { ascending: false }),
-      supabase.from('ventas_lead_etiquetas').select('*, etiqueta:ventas_etiquetas(*)').eq('lead_id', id),
-    ])
-
-    if (requestId !== loadDetailRef.current) return null
-    if (leadErr) throw leadErr
-
-    return {
-      ...leadData,
-      pipeline_states: pipelineStates || [],
-      citas: citas || [],
-      lead_etiquetas: (leadEtiquetas || []).map(le => le.etiqueta),
+    // Check prefetch cache first
+    const cached = _prefetchCache.get(id)
+    if (cached) {
+      _prefetchCache.delete(id)
+      if (cached.data) return cached.data
+      try {
+        const data = await cached.promise
+        if (requestId !== loadDetailRef.current) return null
+        if (data) return data
+      } catch { /* fall through to fresh fetch */ }
     }
+    return fetchLeadDetail(id).then(data => {
+      if (requestId !== loadDetailRef.current) return null
+      return data
+    })
   }, [id])
 
   // ── Full load (initial) ──────────────────────────────────────────

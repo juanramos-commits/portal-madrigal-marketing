@@ -1,9 +1,10 @@
-import { memo } from 'react'
+import { memo, useRef, useCallback } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRightLeft } from 'lucide-react'
 import WhatsAppIcon from '../icons/WhatsAppIcon'
+import { prefetchLeadDetail } from './CRMLeadDetalle'
 
 function getInitials(name) {
   if (!name) return '?'
@@ -55,8 +56,18 @@ export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMob
     transition,
   }
 
+  // Prefetch lead data on hover so detail page opens instantly
+  const hoverTimer = useRef(null)
+  const handleMouseEnter = useCallback(() => {
+    hoverTimer.current = setTimeout(() => prefetchLeadDetail(lead.id), 150)
+  }, [lead.id])
+  const handleMouseLeave = useCallback(() => {
+    clearTimeout(hoverTimer.current)
+  }, [])
+
   const handleClick = () => {
     if (isDragging) return
+    prefetchLeadDetail(lead.id) // ensure prefetch started even if hover was brief
     navigate(`/ventas/crm/lead/${lead.id}`)
   }
 
@@ -86,6 +97,8 @@ export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMob
       {...listeners}
       className={`crm-card${isDragging ? ' dragging' : ''}${isHot ? ' crm-card-is-hot' : ''}`}
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {isHot && <span className="crm-card-hot" />}
       <div className="crm-card-top">
