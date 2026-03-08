@@ -61,10 +61,6 @@ export default function BibliotecaFormRecurso({ recurso, secciones, seccionIdIni
       setError('Selecciona una sección')
       return
     }
-    if (url.trim() && !/^https?:\/\//i.test(url.trim())) {
-      setError('La URL debe empezar con http:// o https://')
-      return
-    }
     setSaving(true)
     setError(null)
     try {
@@ -117,12 +113,12 @@ export default function BibliotecaFormRecurso({ recurso, secciones, seccionIdIni
         />
       </div>
       <div className="bib-field">
-        <label>URL</label>
+        <label>Enlace / Valor</label>
         <input
-          type="url"
+          type="text"
           value={url}
           onChange={e => setUrl(e.target.value)}
-          placeholder="https://..."
+          placeholder="URL o valor de texto"
         />
       </div>
       <div className="bib-form-row">
