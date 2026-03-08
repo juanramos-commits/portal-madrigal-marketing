@@ -571,7 +571,13 @@ export function useCalendario() {
   // Refresh on tab focus
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
 
-  // Realtime: listen to citas changes
+  // Keep refs in sync — avoids realtime subscription churn when cargarCitas/cargarGoogleEvents are rebuilt
+  const cargarCitasRef = useRef(cargarCitas)
+  useEffect(() => { cargarCitasRef.current = cargarCitas }, [cargarCitas])
+  const cargarGoogleEventsRef = useRef(cargarGoogleEvents)
+  useEffect(() => { cargarGoogleEventsRef.current = cargarGoogleEvents }, [cargarGoogleEvents])
+
+  // Realtime: listen to citas changes (stable subscription — no churn on filter changes)
   useEffect(() => {
     if (!user?.id) return
 
@@ -582,14 +588,14 @@ export function useCalendario() {
         schema: 'public',
         table: 'ventas_citas',
       }, () => {
-        cargarCitas()
+        cargarCitasRef.current?.()
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [user?.id, cargarCitas])
+  }, [user?.id])
 
-  // Realtime: listen to google events changes
+  // Realtime: listen to google events changes (stable subscription)
   useEffect(() => {
     if (!user?.id) return
 
@@ -600,12 +606,12 @@ export function useCalendario() {
         schema: 'public',
         table: 'ventas_google_events',
       }, () => {
-        cargarGoogleEvents()
+        cargarGoogleEventsRef.current?.()
       })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [user?.id, cargarGoogleEvents])
+  }, [user?.id])
 
   // Initial load — load once auth is ready (even with 0 roles, to avoid infinite spinner)
   const initialLoadDone = useRef(false)
