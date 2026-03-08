@@ -119,27 +119,32 @@ export default function CRMLeadDetalle() {
   const staticLoadedRef = useRef(false)
   const cargarCatalogos = useCallback(async () => {
     if (staticLoadedRef.current) return
-    const [
-      { data: cats },
-      { data: etqs },
-      { data: roles },
-      { data: etapasAll },
-      { data: reunionEstadosData },
-    ] = await Promise.all([
-      supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
-      supabase.from('ventas_etiquetas').select('*').eq('activo', true),
-      supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
-      supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
-      supabase.from('ventas_reunion_estados').select('*').order('orden'),
-    ])
-    staticLoadedRef.current = true
-    setCategorias(cats || [])
-    setEtiquetasDisponibles(etqs || [])
-    setRolesComerciales(roles || [])
-    setAllEtapas(etapasAll || [])
-    setReunionEstados(reunionEstadosData || [])
-    setSetters((roles || []).filter(r => r.rol === 'setter' && r.activo))
-    setClosers((roles || []).filter(r => r.rol === 'closer' && r.activo))
+    try {
+      const [
+        { data: cats },
+        { data: etqs },
+        { data: roles },
+        { data: etapasAll },
+        { data: reunionEstadosData },
+      ] = await Promise.all([
+        supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
+        supabase.from('ventas_etiquetas').select('*').eq('activo', true),
+        supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
+        supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
+        supabase.from('ventas_reunion_estados').select('*').order('orden'),
+      ])
+      if (!isMountedRef.current) return
+      staticLoadedRef.current = true
+      setCategorias(cats || [])
+      setEtiquetasDisponibles(etqs || [])
+      setRolesComerciales(roles || [])
+      setAllEtapas(etapasAll || [])
+      setReunionEstados(reunionEstadosData || [])
+      setSetters((roles || []).filter(r => r.rol === 'setter' && r.activo))
+      setClosers((roles || []).filter(r => r.rol === 'closer' && r.activo))
+    } catch {
+      // Swallow — catalogos are non-critical, will retry on next mount
+    }
   }, [])
 
   // ── Load lead-specific data ──────────────────────────────────────
@@ -210,11 +215,14 @@ export default function CRMLeadDetalle() {
       setActividadOffset(20)
       setHasMoreActividad((actData || []).length >= 20)
     } catch (err) {
+      // Ignore cancelled requests from rapid navigation
+      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
+      if (!isMountedRef.current) return
       if (requestId === loadDetailRef.current) {
         setError(err.message || 'Error al cargar el lead')
       }
     } finally {
-      if (requestId === loadDetailRef.current) {
+      if (requestId === loadDetailRef.current && isMountedRef.current) {
         setLoading(false)
       }
     }
@@ -225,10 +233,12 @@ export default function CRMLeadDetalle() {
     const requestId = ++loadDetailRef.current
     try {
       const leadResult = await cargarLeadData(requestId)
-      if (requestId !== loadDetailRef.current || !leadResult) return
+      if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
       setLead(leadResult)
       snapshotRef.current = null
     } catch (err) {
+      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
+      if (!isMountedRef.current) return
       if (requestId === loadDetailRef.current) {
         showToast(err.message || 'Error al refrescar', 'error')
       }
@@ -410,10 +420,13 @@ export default function CRMLeadDetalle() {
           .catch(() => {}) // swallow network errors on unmount
       }
 
-      // 3. Flush activity tracking (fire-and-forget, ignore errors)
+      // 3. Flush activity tracking (fire-and-forget, swallow ALL errors including async)
       if (registroTimeoutRef.current) clearTimeout(registroTimeoutRef.current)
       registroTimeoutRef.current = null
-      try { registrarRef.current?.() } catch {} // swallow errors on unmount
+      try {
+        const p = registrarRef.current?.()
+        if (p && typeof p.catch === 'function') p.catch(() => {})
+      } catch {}
       snapshotRef.current = null
     }
   }, [id])
@@ -534,6 +547,7 @@ export default function CRMLeadDetalle() {
         descripcion: texto,
       })
       if (error) throw error
+      if (!isMountedRef.current) return
       setNotaTexto('')
       // Add to top of timeline optimistically
       setActividad(prev => [{
@@ -557,7 +571,7 @@ export default function CRMLeadDetalle() {
       const etiqueta = etiquetasDisponibles.find(e => e.id === etiquetaId)
       const { error } = await supabase.from('ventas_lead_etiquetas').insert({ lead_id: id, etiqueta_id: etiquetaId })
       if (error) {
-        if (error.code !== '23505') {
+        if (error.code !== '23505' && isMountedRef.current) {
           showToast('Error al añadir etiqueta', 'error')
           console.error('Error addTag:', error)
         }
@@ -607,7 +621,7 @@ export default function CRMLeadDetalle() {
       const etiqueta = (lead.lead_etiquetas || []).find(e => e.id === etiquetaId)
       const { error } = await supabase.from('ventas_lead_etiquetas').delete().eq('lead_id', id).eq('etiqueta_id', etiquetaId)
       if (error) {
-        showToast('Error al quitar etiqueta', 'error')
+        if (isMountedRef.current) showToast('Error al quitar etiqueta', 'error')
         console.error('Error removeTag:', error)
         return
       }
@@ -617,12 +631,13 @@ export default function CRMLeadDetalle() {
         datos: { etiqueta_id: etiquetaId, accion: 'quitar' },
       })
       logActividad('crm', 'etiqueta', `Etiqueta quitada: ${etiqueta?.nombre || 'Desconocida'}`, { entidad: 'lead', entidad_id: id })
+      if (!isMountedRef.current) return
       setLead(prev => ({
         ...prev,
         lead_etiquetas: (prev.lead_etiquetas || []).filter(e => e.id !== etiquetaId),
       }))
     } catch (err) {
-      showToast('Error al quitar etiqueta', 'error')
+      if (isMountedRef.current) showToast('Error al quitar etiqueta', 'error')
       console.error('Error removeTag:', err)
     }
   }
