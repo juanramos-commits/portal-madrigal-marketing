@@ -249,8 +249,8 @@ export function useVentasCRM() {
       const etiquetasData = results[2].data
       const rolesData = results[3].data
 
-      // Procesar citas pasadas → mover leads a "Cita Realizada" (fire-and-forget)
-      try { await supabase.rpc('ventas_procesar_citas_pasadas') } catch { /* non-critical */ }
+      // Procesar citas pasadas → mover leads a "Cita Realizada" (truly fire-and-forget)
+      supabase.rpc('ventas_procesar_citas_pasadas').then(() => {}).catch(() => {})
 
       if (requestId !== loadRequestRef.current) { setLoading(false); return }
 
