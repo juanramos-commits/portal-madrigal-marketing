@@ -30,6 +30,7 @@ export function useVentas() {
   const loadRequestRef = useRef(0)
   const realtimeDebounceRef = useRef(null)
   const loadingTimeoutRef = useRef(null)
+  const refrescarRef = useRef(null)
   const [searchResultCount, setSearchResultCount] = useState(null)
   const [exportando, setExportando] = useState(false)
 
@@ -453,6 +454,8 @@ export function useVentas() {
     }
   }, [busqueda, buscarVentas, cargarVentas, cargarContadores])
 
+  useEffect(() => { refrescarRef.current = refrescar }, [refrescar])
+
   // ── Register sale (from pop-up) ────────────────────────────────────
   const registrarVenta = useCallback(async (datos) => {
     if (!tienePermiso('ventas.ventas.crear')) throw new Error('No tienes permiso para registrar ventas')
@@ -646,7 +649,7 @@ export function useVentas() {
         table: 'ventas_ventas',
       }, () => {
         clearTimeout(realtimeDebounceRef.current)
-        realtimeDebounceRef.current = setTimeout(() => refrescar(), 500)
+        realtimeDebounceRef.current = setTimeout(() => refrescarRef.current?.(), 500)
       })
       .subscribe()
 
@@ -654,7 +657,7 @@ export function useVentas() {
       clearTimeout(realtimeDebounceRef.current)
       supabase.removeChannel(channel)
     }
-  }, [user?.id, refrescar])
+  }, [user?.id])
 
   // ── Initial load ───────────────────────────────────────────────────
   useEffect(() => {

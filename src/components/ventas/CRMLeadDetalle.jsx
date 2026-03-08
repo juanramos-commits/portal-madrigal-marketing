@@ -100,6 +100,7 @@ export default function CRMLeadDetalle() {
 
   const { showToast } = useToast()
   const savingActionRef = useRef(false)
+  const isMountedRef = useRef(true)
   const debounceRefs = useRef({})
   const pendingFieldUpdatesRef = useRef({})
   const snapshotRef = useRef(null)
@@ -342,6 +343,7 @@ export default function CRMLeadDetalle() {
   // Cleanup: flush pending saves and activity tracking on unmount
   useEffect(() => {
     return () => {
+      isMountedRef.current = false
       // 1. Clear debounce timers (prevent double-saves)
       Object.values(debounceRefs.current).forEach(clearTimeout)
       debounceRefs.current = {}
@@ -386,6 +388,7 @@ export default function CRMLeadDetalle() {
 
       logActividad('crm', 'cambio_etapa', `${pipelineNombre}: ${etapaAnterior} → ${etapaNueva}`, { entidad: 'lead', entidad_id: id })
 
+      if (!isMountedRef.current) return
       showToast('Etapa actualizada', 'success')
       await cargarLead()
     } catch {
@@ -411,6 +414,7 @@ export default function CRMLeadDetalle() {
         datos: { setter_id: setterId, anterior: lead.setter_asignado_id },
       })
       logActividad('crm', 'asignar', `Setter: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
+      if (!isMountedRef.current) return
       showToast('Setter actualizado', 'success')
       await cargarLead()
     } catch {
@@ -435,6 +439,7 @@ export default function CRMLeadDetalle() {
         datos: { closer_id: closerId, anterior: lead.closer_asignado_id },
       })
       logActividad('crm', 'asignar', `Closer: ${prevNombre} → ${nuevoNombre}`, { entidad: 'lead', entidad_id: id })
+      if (!isMountedRef.current) return
       showToast('Closer actualizado', 'success')
       await cargarLead()
     } catch {
