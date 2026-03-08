@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useNavigate } from 'react-router-dom'
@@ -34,7 +35,7 @@ function getAvatarColor(name) {
   return `hsl(${hue}, 50%, 40%)`
 }
 
-export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }) {
+export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }) {
   const navigate = useNavigate()
 
   const {
@@ -141,4 +142,4 @@ export default function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile }
       )}
     </div>
   )
-}
+})

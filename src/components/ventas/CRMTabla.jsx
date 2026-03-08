@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronUp, ChevronDown, Users } from 'lucide-react'
 import WhatsAppIcon from '../icons/WhatsAppIcon'
@@ -11,7 +12,7 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
-export default function CRMTabla({
+export default memo(function CRMTabla({
   leads,
   totalCount,
   page,
@@ -220,4 +221,4 @@ export default function CRMTabla({
       )}
     </>
   )
-}
+})
