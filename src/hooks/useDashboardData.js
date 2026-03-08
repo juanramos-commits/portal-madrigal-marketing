@@ -34,6 +34,8 @@ export function useDashboardData(layout) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const requestRef = useRef(0)
+  const mountedRef = useRef(true)
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
   useEffect(() => {
     if (periodo === 'personalizado') return
@@ -79,15 +81,16 @@ export function useDashboardData(layout) {
         p_widgets: keys,
       })
       if (rpcError) throw rpcError
-      if (reqId === requestRef.current) setData(result || {})
+      if (reqId === requestRef.current && mountedRef.current) setData(result || {})
     } catch (e) {
+      if (e?.name === 'AbortError' || e?.message?.includes('AbortError')) return
       import.meta.env.DEV && console.error('Dashboard data error:', e)
-      if (reqId === requestRef.current) {
+      if (reqId === requestRef.current && mountedRef.current) {
         setData({})
         setError(e?.message || 'Error cargando datos')
       }
     } finally {
-      if (reqId === requestRef.current) setLoading(false)
+      if (reqId === requestRef.current && mountedRef.current) setLoading(false)
     }
   }, [user?.id, usuarioFiltro, fechaInicio, fechaFin, dataKeysStr])
 

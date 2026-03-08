@@ -26,11 +26,11 @@ const metodoLabels = { stripe: 'Stripe', sequra: 'SeQura', transferencia: 'Trans
 
 export default memo(function VentaDetalle({ venta, comisiones, loadingComisiones, onLoadComisiones }) {
   const navigate = useNavigate()
-  const loadedRef = useRef(false)
+  const loadedRef = useRef(null)
 
   useEffect(() => {
-    if (!loadedRef.current && onLoadComisiones) {
-      loadedRef.current = true
+    if (loadedRef.current !== venta.id && onLoadComisiones) {
+      loadedRef.current = venta.id
       onLoadComisiones(venta.id)
     }
   }, [venta.id, onLoadComisiones])

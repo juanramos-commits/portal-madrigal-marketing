@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import CalendarioEnlaces from '../../components/ventas/CalendarioEnlaces'
@@ -24,6 +24,8 @@ export default function VentasEnlaces() {
   const [enlaces, setEnlaces] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
+  const mountedRef = useRef(true)
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
   const cargarEnlaces = useCallback(async () => {
     try {
@@ -35,6 +37,7 @@ export default function VentasEnlaces() {
         .select('*')
         .order('created_at', { ascending: false })
 
+      if (!mountedRef.current) return
       if (error) {
         console.error('Error loading enlaces:', error)
         setLoadError('Error al cargar enlaces')

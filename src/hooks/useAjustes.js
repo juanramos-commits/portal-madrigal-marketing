@@ -210,6 +210,7 @@ export function useAjustes() {
   }, [])
 
   const reordenarEtapas = useCallback(async (pipelineId, nuevasIds) => {
+    const prevEtapas = etapas
     const other = etapas.filter(e => e.pipeline_id !== pipelineId)
     const reordered = nuevasIds.map((id, i) => {
       const e = etapas.find(x => x.id === id)
@@ -217,10 +218,14 @@ export function useAjustes() {
     })
     setEtapas([...other, ...reordered])
 
-    const updates = nuevasIds.map((id, i) =>
-      supabase.from('ventas_etapas').update({ orden: i + 1 }).eq('id', id)
-    )
-    await Promise.all(updates)
+    try {
+      const updates = nuevasIds.map((id, i) =>
+        supabase.from('ventas_etapas').update({ orden: i + 1 }).eq('id', id)
+      )
+      await Promise.all(updates)
+    } catch {
+      setEtapas(prevEtapas)
+    }
   }, [etapas])
 
   // ═══ PAQUETES ═══
