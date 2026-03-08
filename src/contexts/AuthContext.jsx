@@ -1,5 +1,5 @@
 import { logger } from '../lib/logger'
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { logActividad } from '../lib/logActividad'
 
@@ -219,7 +219,7 @@ export function AuthProvider({ children }) {
     refrescarRolesComerciales()
   }, [usuario?.id, refrescarRolesComerciales])
 
-  const signInWithEmail = async (email, password) => {
+  const signInWithEmail = useCallback(async (email, password) => {
     isSigningIn.current = true
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -248,9 +248,9 @@ export function AuthProvider({ children }) {
     } finally {
       isSigningIn.current = false
     }
-  }
+  }, [cargarUsuario])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     // Registrar logout en auditoría antes de cerrar sesión
     if (usuario?.id) {
       try {
@@ -270,22 +270,29 @@ export function AuthProvider({ children }) {
     setPermisos([])
     setRolesComerciales([])
     return supabase.auth.signOut()
-  }
+  }, [usuario?.id, usuario?.email])
+
+  const refrescarUsuario = useCallback(() => {
+    return user?.email && cargarUsuario(user.email)
+  }, [user?.email, cargarUsuario])
+
+  const contextValue = useMemo(() => ({
+    user,
+    usuario,
+    permisos,
+    rolesComerciales,
+    loading,
+    tienePermiso,
+    signInWithEmail,
+    signOut,
+    refrescarUsuario,
+    refrescarPermisos,
+    refrescarRolesComerciales,
+  }), [user, usuario, permisos, rolesComerciales, loading, tienePermiso,
+       signInWithEmail, signOut, refrescarUsuario, refrescarPermisos, refrescarRolesComerciales])
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      usuario,
-      permisos,
-      rolesComerciales,
-      loading,
-      tienePermiso,
-      signInWithEmail,
-      signOut,
-      refrescarUsuario: () => user?.email && cargarUsuario(user.email),
-      refrescarPermisos,
-      refrescarRolesComerciales,
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )

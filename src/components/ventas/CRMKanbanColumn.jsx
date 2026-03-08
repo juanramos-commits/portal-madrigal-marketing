@@ -1,10 +1,10 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { useCallback, useMemo, useRef } from 'react'
+import { memo, useCallback, useMemo, useRef } from 'react'
 import { Inbox } from 'lucide-react'
 import CRMLeadCard from './CRMLeadCard'
 
-export default function CRMKanbanColumn({
+export default memo(function CRMKanbanColumn({
   etapa,
   leads = [],
   count = 0,
@@ -78,4 +78,4 @@ export default function CRMKanbanColumn({
       </div>
     </div>
   )
-}
+})
