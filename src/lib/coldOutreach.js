@@ -132,10 +132,11 @@ export async function getContactStats() {
 }
 
 // === CAMPAIGNS ===
-export async function getCampaigns({ status = '', search = '' } = {}) {
-  let query = supabase.from('ventas_co_campaigns').select('*').order('created_at', { ascending: false })
+export async function getCampaigns({ status = '', search = '', page = 0, limit = 20 } = {}) {
+  let query = supabase.from('ventas_co_campaigns').select('*', { count: 'exact' }).order('created_at', { ascending: false })
   if (status) query = query.eq('status', status)
   if (search) query = query.ilike('name', `%${search}%`)
+  query = query.range(page * limit, (page + 1) * limit - 1)
   return query
 }
 

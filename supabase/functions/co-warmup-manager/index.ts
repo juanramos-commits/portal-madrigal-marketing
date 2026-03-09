@@ -56,11 +56,12 @@ Deno.serve(async (req) => {
         .from('ventas_co_reputation_log')
         .select('*')
         .eq('domain_id', domain.id)
-        .eq('log_date', yesterday)
+        .eq('date', yesterday)
         .maybeSingle()
 
-      const bounceRate = (repLog?.bounce_rate as number) || 0
-      const complaintRate = (repLog?.complaint_rate as number) || 0
+      const sentYesterday = (repLog?.sent as number) || 0
+      const bounceRate = sentYesterday > 0 ? ((repLog?.bounced as number) || 0) / sentYesterday * 100 : 0
+      const complaintRate = sentYesterday > 0 ? ((repLog?.complained as number) || 0) / sentYesterday * 100 : 0
 
       // Evaluate warmup progression
       if (bounceRate > 5 || complaintRate > 0.1) {
@@ -85,7 +86,7 @@ Deno.serve(async (req) => {
       const { data: schedule } = await supabase
         .from('ventas_co_warmup_schedule')
         .select('max_sends')
-        .eq('warmup_day', Math.min(warmupDay, 60))
+        .eq('day', Math.min(warmupDay, 60))
         .maybeSingle()
 
       const dailyLimit = (schedule?.max_sends as number) || domain.daily_limit || 10
@@ -107,18 +108,16 @@ Deno.serve(async (req) => {
         continue
       }
 
-      // Insert/update today's reputation log row
+      // Insert/update today's reputation log row (just ensure row exists for today)
       await supabase
         .from('ventas_co_reputation_log')
         .upsert(
           {
             domain_id: domain.id,
-            log_date: today,
-            warmup_day: warmupDay,
-            daily_limit: dailyLimit,
-            health_score: healthScore,
+            date: today,
+            health_status: healthScore >= 80 ? 'excellent' : healthScore >= 60 ? 'good' : healthScore >= 40 ? 'warning' : 'critical',
           },
-          { onConflict: 'domain_id,log_date' },
+          { onConflict: 'domain_id,date', ignoreDuplicates: true },
         )
 
       // Audit log

@@ -22,7 +22,7 @@ export function useOutreachContacts() {
     if (resetPage) setPage(0)
 
     const { data, count, error: err } = await getContacts({
-      page: p, pageSize: PAGE_SIZE, search, status: statusFilter
+      page: p, limit: PAGE_SIZE, search, status: statusFilter
     })
 
     if (err) { setError(err.message); setLoading(false); return }

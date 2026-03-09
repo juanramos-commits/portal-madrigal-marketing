@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
 
       // Claim up to 25 queued sends ready to go, using FOR UPDATE SKIP LOCKED via RPC
       const { data: claimed, error: claimErr } = await supabase
-        .rpc('co_claim_sends', { p_campaign_id: campaignId, p_batch_size: 25 })
+        .rpc('co_claim_next_sends', { p_campaign_id: campaignId, p_limit: 25 })
 
       if (claimErr || !claimed || claimed.length === 0) {
         return jsonResponse({ sent: 0, message: 'No sends to process' })
@@ -367,6 +367,26 @@ Deno.serve(async (req) => {
       let sentCount = 0
 
       for (const send of claimed) {
+        // Fetch contact email (RPC only returns contact_id, not email)
+        let contactEmail = ''
+        if (send.contact_id) {
+          const { data: contact } = await supabase
+            .from('ventas_co_contacts')
+            .select('email')
+            .eq('id', send.contact_id)
+            .single()
+          contactEmail = (contact?.email as string) || ''
+        }
+
+        if (!contactEmail) {
+          // Skip sends without a valid email
+          await supabase
+            .from('ventas_co_sends')
+            .update({ status: 'failed', error_message: 'No contact email found' })
+            .eq('id', send.send_id)
+          continue
+        }
+
         // Get inbox details
         let fromAddress = RESEND_FROM_EMAIL
         let signatureHtml = ''
@@ -398,8 +418,7 @@ Deno.serve(async (req) => {
         }
 
         // Build unsubscribe URL
-        const contactEmail = send.contact_email || ''
-        const unsubscribeUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/co-unsubscribe?email=${encodeURIComponent(contactEmail as string)}&campaign_id=${campaignId}`
+        const unsubscribeUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/co-unsubscribe?email=${encodeURIComponent(contactEmail)}&campaign_id=${campaignId}`
 
         // Send via Resend API
         try {
@@ -408,11 +427,10 @@ Deno.serve(async (req) => {
             headers: {
               'Authorization': `Bearer ${RESEND_API_KEY}`,
               'Content-Type': 'application/json',
-              'Idempotency-Key': (send.idempotency_key as string) || '',
             },
             body: JSON.stringify({
               from: fromField,
-              to: [send.contact_email as string],
+              to: [contactEmail],
               subject: send.subject as string,
               html: finalHtml,
               headers: {
@@ -436,18 +454,44 @@ Deno.serve(async (req) => {
               sent_at: new Date().toISOString(),
               resend_id: resendData.id,
             })
-            .eq('id', send.id)
+            .eq('id', send.send_id)
 
           // Increment inbox sent_today
           if (send.inbox_id) {
-            await supabase.rpc('co_increment_inbox_sent_today', { p_inbox_id: send.inbox_id })
+            const { data: inbox } = await supabase
+              .from('ventas_co_inboxes')
+              .select('sent_today')
+              .eq('id', send.inbox_id)
+              .single()
+            await supabase
+              .from('ventas_co_inboxes')
+              .update({ sent_today: ((inbox?.sent_today as number) || 0) + 1 })
+              .eq('id', send.inbox_id)
           }
 
           // Increment campaign total_sent
-          await supabase.rpc('co_increment_campaign_total_sent', { p_campaign_id: campaignId })
+          await supabase.rpc('co_increment_counter', {
+            p_table: 'ventas_co_campaigns',
+            p_id: campaignId,
+            p_column: 'total_sent',
+          })
 
           // Update contact last_contacted_at and times_contacted
-          await supabase.rpc('co_update_contact_after_send', { p_contact_id: send.contact_id })
+          if (send.contact_id) {
+            const { data: ct } = await supabase
+              .from('ventas_co_contacts')
+              .select('times_contacted')
+              .eq('id', send.contact_id)
+              .single()
+            await supabase
+              .from('ventas_co_contacts')
+              .update({
+                last_contacted_at: new Date().toISOString(),
+                times_contacted: ((ct?.times_contacted as number) || 0) + 1,
+                status: 'contacted',
+              })
+              .eq('id', send.contact_id)
+          }
 
           sentCount++
         } catch (err) {
@@ -455,7 +499,7 @@ Deno.serve(async (req) => {
           await supabase
             .from('ventas_co_sends')
             .update({ status: 'failed', error_message: errMsg })
-            .eq('id', send.id)
+            .eq('id', send.send_id)
         }
 
         // Smart throttle: random 3-8 second delay between sends

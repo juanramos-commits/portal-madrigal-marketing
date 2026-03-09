@@ -18,9 +18,9 @@ export default function OutreachInboxes() {
   const [deleteConfirm, setDeleteConfirm] = useState(null)
 
   useEffect(() => {
-    cargar()
+    cargar() // no domainId = load all inboxes
     cargarDominios()
-  }, [cargar, cargarDominios])
+  }, [])
 
   if (!tienePermiso('ventas.outreach.inboxes.ver')) {
     return (

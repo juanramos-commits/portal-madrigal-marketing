@@ -22,7 +22,7 @@ export function useOutreachCampaigns() {
     if (resetPage) setPage(0)
 
     const { data, count, error: err } = await getCampaigns({
-      page: p, pageSize: PAGE_SIZE, search, status: statusFilter
+      page: p, limit: PAGE_SIZE, search, status: statusFilter
     })
 
     if (err) { setError(err.message); setLoading(false); return }

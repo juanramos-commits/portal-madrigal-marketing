@@ -12,7 +12,7 @@ export function useOutreachInboxes() {
     setLoading(true)
     setError(null)
 
-    const { data, error: err } = await getInboxes({ domainId })
+    const { data, error: err } = await getInboxes(domainId)
 
     if (err) { setError(err.message); setLoading(false); return }
     setInboxes(data || [])

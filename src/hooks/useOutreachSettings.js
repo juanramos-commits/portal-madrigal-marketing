@@ -29,7 +29,7 @@ export function useOutreachSettings() {
     setWarmupSchedule(warmup || [])
 
     // Load suppression count
-    const { count } = await getSuppressions({ limit: 0 })
+    const { count } = await supabase.from('ventas_co_suppressions').select('*', { count: 'exact', head: true })
     setSuppressionCount(count ?? 0)
 
     setLoading(false)
