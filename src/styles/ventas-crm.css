@@ -1967,6 +1967,8 @@
 
   .crm-card-move {
     display: flex;
+    width: 40px;
+    height: 40px;
   }
 
   .crm-filters-panel {

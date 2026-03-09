@@ -76,6 +76,7 @@ export default function ModalCambioEstado({ venta, nuevoEstado, onConfirm, onCan
       await onConfirm()
     } catch (err) {
       setError(err.message || 'Error al cambiar el estado')
+    } finally {
       setSubmitting(false)
     }
   }

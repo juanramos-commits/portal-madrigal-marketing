@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Modal from '../ui/Modal'
 import ConfirmDialog from '../ui/ConfirmDialog'
+import { useToast } from '../../contexts/ToastContext'
 
 function formatPrecio(n) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n || 0)
@@ -15,6 +16,7 @@ export default function AjustesPaquetes({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const { showToast } = useToast()
 
   useEffect(() => { onCargar() }, [])
 
@@ -53,7 +55,11 @@ export default function AjustesPaquetes({
 
   const handleEliminar = async () => {
     if (!confirmDelete) return
-    try { await onEliminar(confirmDelete.id) } catch (err) { console.warn('Error al eliminar paquete:', err) }
+    try {
+      await onEliminar(confirmDelete.id)
+    } catch (err) {
+      showToast('Error al eliminar paquete', 'error')
+    }
     setConfirmDelete(null)
   }
 

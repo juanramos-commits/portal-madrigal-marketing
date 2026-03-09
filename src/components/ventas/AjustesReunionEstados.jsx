@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Checkbox from '../ui/Checkbox'
 import Modal from '../ui/Modal'
 import ConfirmDialog from '../ui/ConfirmDialog'
+import { useToast } from '../../contexts/ToastContext'
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
 } from '@dnd-kit/core'
@@ -49,6 +50,7 @@ export default function AjustesReunionEstados({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const { showToast } = useToast()
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -73,7 +75,11 @@ export default function AjustesReunionEstados({
 
   const handleEliminar = async () => {
     if (!confirmDelete) return
-    try { await onEliminar(confirmDelete.id) } catch (err) { console.warn('Error al eliminar estado:', err) }
+    try {
+      await onEliminar(confirmDelete.id)
+    } catch (err) {
+      showToast('Error al eliminar estado', 'error')
+    }
     setConfirmDelete(null)
   }
 

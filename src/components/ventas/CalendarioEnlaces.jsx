@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Toggle from '../ui/Toggle'
 import Select from '../ui/Select'
 import Modal from '../ui/Modal'
+import { useToast } from '../../contexts/ToastContext'
 
 const BASE_URL = 'https://app.madrigalmarketing.es/reservar/'
 
@@ -54,6 +55,7 @@ export default function CalendarioEnlaces({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
   const [copiado, setCopiado] = useState(null)
+  const { showToast } = useToast()
 
   const abrirNuevo = () => {
     setEditando(null)
@@ -113,7 +115,7 @@ export default function CalendarioEnlaces({
     try {
       await onActualizar(enlace.id, { activo: !enlace.activo })
     } catch (err) {
-      console.warn('Error al cambiar estado del enlace:', err)
+      showToast('Error al cambiar estado del enlace', 'error')
     }
   }
 
@@ -121,7 +123,7 @@ export default function CalendarioEnlaces({
     try {
       await onEliminar(id)
     } catch (err) {
-      console.warn('Error al eliminar enlace:', err)
+      showToast('Error al eliminar enlace', 'error')
     }
   }
 
