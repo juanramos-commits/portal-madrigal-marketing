@@ -221,6 +221,7 @@ export default function EmailCampaignEditor() {
               ab_duration: `${form.ab_duration_hours}h`,
             }}
             variants={form.ab_variants}
+            onChange={(updates) => setForm(prev => ({ ...prev, ...updates }))}
           />
 
           {/* Action Buttons */}

@@ -27,7 +27,7 @@ export function useEmailSettings() {
     const { error: err } = await updateEmailSetting(key, value)
     if (err) {
       // Revert on error
-      cargar()
+      await cargar()
       return { error: err }
     }
     return {}

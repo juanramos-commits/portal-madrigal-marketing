@@ -163,16 +163,16 @@ function App() {
             <Route path="ventas/email/automaciones" element={<PermissionRoute permiso="ventas.email.automaciones.ver"><EmailAutomations /></PermissionRoute>} />
             <Route path="ventas/email/analytics" element={<PermissionRoute permiso="ventas.email.analytics.ver"><EmailAnalytics /></PermissionRoute>} />
             <Route path="ventas/email/ajustes" element={<PermissionRoute permiso="ventas.email.ajustes.ver"><EmailSettings /></PermissionRoute>} />
-            <Route path="/ventas/outreach" element={<PermissionRoute permiso="ventas.outreach.ver"><OutreachDashboard /></PermissionRoute>} />
-            <Route path="/ventas/outreach/dominios" element={<PermissionRoute permiso="ventas.outreach.dominios.ver"><OutreachDomains /></PermissionRoute>} />
-            <Route path="/ventas/outreach/inboxes" element={<PermissionRoute permiso="ventas.outreach.inboxes.ver"><OutreachInboxes /></PermissionRoute>} />
-            <Route path="/ventas/outreach/listas" element={<PermissionRoute permiso="ventas.outreach.listas.ver"><OutreachLists /></PermissionRoute>} />
-            <Route path="/ventas/outreach/listas/:id" element={<PermissionRoute permiso="ventas.outreach.listas.ver"><OutreachListDetail /></PermissionRoute>} />
-            <Route path="/ventas/outreach/campanas" element={<PermissionRoute permiso="ventas.outreach.campanas.ver"><OutreachCampaigns /></PermissionRoute>} />
-            <Route path="/ventas/outreach/campanas/:id" element={<PermissionRoute permiso="ventas.outreach.campanas.crear"><OutreachCampaignEditor /></PermissionRoute>} />
-            <Route path="/ventas/outreach/respuestas" element={<PermissionRoute permiso="ventas.outreach.respuestas.ver"><OutreachReplies /></PermissionRoute>} />
-            <Route path="/ventas/outreach/analytics" element={<PermissionRoute permiso="ventas.outreach.analytics.ver"><OutreachAnalytics /></PermissionRoute>} />
-            <Route path="/ventas/outreach/ajustes" element={<PermissionRoute permiso="ventas.outreach.ajustes.ver"><OutreachSettings /></PermissionRoute>} />
+            <Route path="ventas/outreach" element={<PermissionRoute permiso="ventas.outreach.ver"><OutreachDashboard /></PermissionRoute>} />
+            <Route path="ventas/outreach/dominios" element={<PermissionRoute permiso="ventas.outreach.dominios.ver"><OutreachDomains /></PermissionRoute>} />
+            <Route path="ventas/outreach/inboxes" element={<PermissionRoute permiso="ventas.outreach.inboxes.ver"><OutreachInboxes /></PermissionRoute>} />
+            <Route path="ventas/outreach/listas" element={<PermissionRoute permiso="ventas.outreach.listas.ver"><OutreachLists /></PermissionRoute>} />
+            <Route path="ventas/outreach/listas/:id" element={<PermissionRoute permiso="ventas.outreach.listas.ver"><OutreachListDetail /></PermissionRoute>} />
+            <Route path="ventas/outreach/campanas" element={<PermissionRoute permiso="ventas.outreach.campanas.ver"><OutreachCampaigns /></PermissionRoute>} />
+            <Route path="ventas/outreach/campanas/:id" element={<PermissionRoute permiso="ventas.outreach.campanas.crear"><OutreachCampaignEditor /></PermissionRoute>} />
+            <Route path="ventas/outreach/respuestas" element={<PermissionRoute permiso="ventas.outreach.respuestas.ver"><OutreachReplies /></PermissionRoute>} />
+            <Route path="ventas/outreach/analytics" element={<PermissionRoute permiso="ventas.outreach.analytics.ver"><OutreachAnalytics /></PermissionRoute>} />
+            <Route path="ventas/outreach/ajustes" element={<PermissionRoute permiso="ventas.outreach.ajustes.ver"><OutreachSettings /></PermissionRoute>} />
 
             {/* Generales */}
             <Route path="notificaciones" element={<Notificaciones />} />

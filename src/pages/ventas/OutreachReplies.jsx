@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Fragment } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useOutreachReplies } from '../../hooks/useOutreachReplies'
@@ -40,7 +40,7 @@ const SENTIMENT_COLORS = {
 }
 
 export default function OutreachReplies() {
-  const { tienePermiso } = useAuth()
+  const { tienePermiso, user } = useAuth()
   const { showToast } = useToast()
   const {
     replies,
@@ -90,9 +90,9 @@ export default function OutreachReplies() {
     }
   }
 
-  const handleMarcarAccionada = async (replyId) => {
+  const handleMarcarAccionada = async (replyId, userId) => {
     try {
-      await marcarGestionada(replyId)
+      await marcarGestionada(replyId, userId)
       showToast('Respuesta marcada como accionada', 'success')
       cargar()
     } catch (err) {
@@ -161,9 +161,8 @@ export default function OutreachReplies() {
             </thead>
             <tbody>
               {filtered.map((r) => (
-                <>
+                <Fragment key={r.id}>
                   <tr
-                    key={r.id}
                     className="ve-table-row ve-table-row--clickable"
                     onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}
                   >
@@ -199,7 +198,7 @@ export default function OutreachReplies() {
                           ))}
                         </select>
                         {r.requires_action && (
-                          <button className="ve-btn ve-btn--sm" onClick={() => handleMarcarAccionada(r.id)}>Accionada</button>
+                          <button className="ve-btn ve-btn--sm" onClick={() => handleMarcarAccionada(r.id, user?.id)}>Accionada</button>
                         )}
                       </div>
                     </td>
@@ -222,7 +221,7 @@ export default function OutreachReplies() {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))}
             </tbody>
           </table>

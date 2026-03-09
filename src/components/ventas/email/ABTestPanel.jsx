@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 
-export default function ABTestPanel({ campaign, variants = [], results, onGenerateSubjects }) {
+export default function ABTestPanel({ campaign, variants = [], results, onGenerateSubjects, onChange }) {
   const [enabled, setEnabled] = useState(!!(campaign?.ab_enabled || variants.length > 0))
   const [localVariants, setLocalVariants] = useState(
     variants.length > 0 ? variants : [{ subject: '' }, { subject: '' }]
@@ -8,18 +8,34 @@ export default function ABTestPanel({ campaign, variants = [], results, onGenera
   const [testSize, setTestSize] = useState(campaign?.ab_test_size || 20)
   const [duration, setDuration] = useState(campaign?.ab_duration || '4h')
 
+  const notify = useCallback((updates) => {
+    if (onChange) onChange(updates)
+  }, [onChange])
+
   const updateVariant = useCallback((idx, subject) => {
-    setLocalVariants(prev => prev.map((v, i) => i === idx ? { ...v, subject } : v))
-  }, [])
+    setLocalVariants(prev => {
+      const next = prev.map((v, i) => i === idx ? { ...v, subject } : v)
+      notify({ ab_variants: next })
+      return next
+    })
+  }, [notify])
 
   const addVariant = useCallback(() => {
-    setLocalVariants(prev => [...prev, { subject: '' }])
-  }, [])
+    setLocalVariants(prev => {
+      const next = [...prev, { subject: '' }]
+      notify({ ab_variants: next })
+      return next
+    })
+  }, [notify])
 
   const removeVariant = useCallback((idx) => {
     if (localVariants.length <= 2) return
-    setLocalVariants(prev => prev.filter((_, i) => i !== idx))
-  }, [localVariants.length])
+    setLocalVariants(prev => {
+      const next = prev.filter((_, i) => i !== idx)
+      notify({ ab_variants: next })
+      return next
+    })
+  }, [localVariants.length, notify])
 
   return (
     <div className="ve-ab-panel">
@@ -29,7 +45,7 @@ export default function ABTestPanel({ campaign, variants = [], results, onGenera
           <input
             type="checkbox"
             checked={enabled}
-            onChange={e => setEnabled(e.target.checked)}
+            onChange={e => { setEnabled(e.target.checked); notify({ ab_testing: e.target.checked }) }}
             style={{ width: 16, height: 16, accentColor: '#2ee59d' }}
           />
           <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-muted)' }}>Activar</span>
@@ -95,14 +111,14 @@ export default function ABTestPanel({ campaign, variants = [], results, onGenera
                 max={50}
                 step={5}
                 value={testSize}
-                onChange={e => setTestSize(Number(e.target.value))}
+                onChange={e => { setTestSize(Number(e.target.value)); notify({ ab_test_size: Number(e.target.value) }) }}
                 style={{ width: '100%', accentColor: '#2ee59d' }}
               />
             </div>
 
             <div className="ve-form-group" style={{ flex: 1, minWidth: 140 }}>
               <label>Duración</label>
-              <select className="ve-select" value={duration} onChange={e => setDuration(e.target.value)}>
+              <select className="ve-select" value={duration} onChange={e => { setDuration(e.target.value); notify({ ab_duration: e.target.value }) }}>
                 <option value="1h">1 hora</option>
                 <option value="2h">2 horas</option>
                 <option value="4h">4 horas</option>

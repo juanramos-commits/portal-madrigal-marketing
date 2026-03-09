@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useOutreachCampaigns } from '../../hooks/useOutreachCampaigns'
-import { getCampaign } from '../../lib/coldOutreach'
+import { getCampaign, getLists, getInboxes } from '../../lib/coldOutreach'
 import '../../styles/ventas-email.css'
 
 const DAYS_OF_WEEK = [
@@ -77,6 +77,12 @@ export default function OutreachCampaignEditor() {
     if (!isNew) {
       cargarCampana()
     }
+    const loadOptions = async () => {
+      const [listsRes, inboxesRes] = await Promise.all([getLists(), getInboxes()])
+      if (listsRes.data) setLists(listsRes.data)
+      if (inboxesRes.data) setInboxes(inboxesRes.data)
+    }
+    loadOptions()
   }, [id])
 
   const cargarCampana = async () => {
