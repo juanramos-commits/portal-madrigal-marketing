@@ -8,24 +8,27 @@
 -- ─── 1. Insertar permisos ─────────────────────────────────────────────────────
 
 INSERT INTO permisos (id, codigo, modulo, nombre, descripcion, orden) VALUES
-    (gen_random_uuid(), 'ventas.email.ver',                  'ventas', 'Ver Email Marketing',      'Acceso al módulo de email marketing',        500),
-    (gen_random_uuid(), 'ventas.email.contactos.ver',        'ventas', 'Ver contactos email',      'Ver lista de contactos de email',            501),
-    (gen_random_uuid(), 'ventas.email.contactos.editar',     'ventas', 'Editar contactos email',   'Editar contactos de email marketing',        502),
-    (gen_random_uuid(), 'ventas.email.campanas.ver',         'ventas', 'Ver campañas',             'Ver campañas de email',                      503),
-    (gen_random_uuid(), 'ventas.email.campanas.crear',       'ventas', 'Crear campañas',           'Crear y editar campañas de email',           504),
-    (gen_random_uuid(), 'ventas.email.campanas.enviar',      'ventas', 'Enviar campañas',          'Enviar campañas de email',                   505),
-    (gen_random_uuid(), 'ventas.email.plantillas.ver',       'ventas', 'Ver plantillas',           'Ver plantillas de email',                    506),
-    (gen_random_uuid(), 'ventas.email.plantillas.crear',     'ventas', 'Crear plantillas',         'Crear plantillas de email',                  507),
-    (gen_random_uuid(), 'ventas.email.plantillas.editar',    'ventas', 'Editar plantillas',        'Editar plantillas de email',                 508),
-    (gen_random_uuid(), 'ventas.email.segmentos.ver',        'ventas', 'Ver segmentos',            'Ver segmentos de audiencia',                 509),
-    (gen_random_uuid(), 'ventas.email.segmentos.crear',      'ventas', 'Crear segmentos',          'Crear segmentos de audiencia',               510),
-    (gen_random_uuid(), 'ventas.email.automaciones.ver',     'ventas', 'Ver automaciones',         'Ver automaciones de email',                  511),
-    (gen_random_uuid(), 'ventas.email.automaciones.crear',   'ventas', 'Crear automaciones',       'Crear automaciones de email',                512),
-    (gen_random_uuid(), 'ventas.email.automaciones.activar', 'ventas', 'Activar automaciones',     'Activar/desactivar automaciones',            513),
-    (gen_random_uuid(), 'ventas.email.analytics.ver',        'ventas', 'Ver analytics email',      'Ver analytics de email marketing',           514),
-    (gen_random_uuid(), 'ventas.email.ajustes.ver',          'ventas', 'Ver ajustes email',        'Ver ajustes de email marketing',             515),
-    (gen_random_uuid(), 'ventas.email.ajustes.editar',       'ventas', 'Editar ajustes email',     'Editar ajustes de email marketing',          516)
+    (gen_random_uuid(), 'ventas.email.ver',                  'ventas_email', 'Ver Email Marketing',      'Acceso al módulo de email marketing',        500),
+    (gen_random_uuid(), 'ventas.email.contactos.ver',        'ventas_email', 'Ver contactos email',      'Ver lista de contactos de email',            501),
+    (gen_random_uuid(), 'ventas.email.contactos.editar',     'ventas_email', 'Editar contactos email',   'Editar contactos de email marketing',        502),
+    (gen_random_uuid(), 'ventas.email.campanas.ver',         'ventas_email', 'Ver campañas',             'Ver campañas de email',                      503),
+    (gen_random_uuid(), 'ventas.email.campanas.crear',       'ventas_email', 'Crear campañas',           'Crear y editar campañas de email',           504),
+    (gen_random_uuid(), 'ventas.email.campanas.enviar',      'ventas_email', 'Enviar campañas',          'Enviar campañas de email',                   505),
+    (gen_random_uuid(), 'ventas.email.plantillas.ver',       'ventas_email', 'Ver plantillas',           'Ver plantillas de email',                    506),
+    (gen_random_uuid(), 'ventas.email.plantillas.crear',     'ventas_email', 'Crear plantillas',         'Crear plantillas de email',                  507),
+    (gen_random_uuid(), 'ventas.email.plantillas.editar',    'ventas_email', 'Editar plantillas',        'Editar plantillas de email',                 508),
+    (gen_random_uuid(), 'ventas.email.segmentos.ver',        'ventas_email', 'Ver segmentos',            'Ver segmentos de audiencia',                 509),
+    (gen_random_uuid(), 'ventas.email.segmentos.crear',      'ventas_email', 'Crear segmentos',          'Crear segmentos de audiencia',               510),
+    (gen_random_uuid(), 'ventas.email.automaciones.ver',     'ventas_email', 'Ver automaciones',         'Ver automaciones de email',                  511),
+    (gen_random_uuid(), 'ventas.email.automaciones.crear',   'ventas_email', 'Crear automaciones',       'Crear automaciones de email',                512),
+    (gen_random_uuid(), 'ventas.email.automaciones.activar', 'ventas_email', 'Activar automaciones',     'Activar/desactivar automaciones',            513),
+    (gen_random_uuid(), 'ventas.email.analytics.ver',        'ventas_email', 'Ver analytics email',      'Ver analytics de email marketing',           514),
+    (gen_random_uuid(), 'ventas.email.ajustes.ver',          'ventas_email', 'Ver ajustes email',        'Ver ajustes de email marketing',             515),
+    (gen_random_uuid(), 'ventas.email.ajustes.editar',       'ventas_email', 'Editar ajustes email',     'Editar ajustes de email marketing',          516)
 ON CONFLICT (codigo) DO NOTHING;
+
+-- Si los permisos ya existían con modulo='ventas', actualizar a 'ventas_email'
+UPDATE permisos SET modulo = 'ventas_email' WHERE codigo LIKE 'ventas.email.%' AND modulo != 'ventas_email';
 
 
 -- ─── 2. Asignar permisos a roles super_admin y director_ventas ────────────────

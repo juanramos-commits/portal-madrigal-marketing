@@ -13,6 +13,7 @@ const MODULO_LABELS = {
   ventas_calendario: 'Calendario',
   ventas_enlaces: 'Enlaces de agenda',
   ventas_notificaciones: 'Notificaciones',
+  ventas_email: 'Email Marketing',
   ventas_ajustes: 'Ajustes',
 }
 
