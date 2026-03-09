@@ -242,7 +242,7 @@ export function useVentasCRM() {
         const hasBusqueda = busqueda.trim() !== ''
         let rpcCounts = null
         if (!hasFilters && !hasBusqueda) {
-          const { data: countData } = await supabase.rpc('ventas_contar_leads_por_etapa', { p_pipeline_id: pipeline.id }).catch(() => ({ data: null }))
+          const { data: countData } = await supabase.rpc('ventas_contar_leads_por_etapa', { p_pipeline_id: pipeline.id }).then(r => r, () => ({ data: null }))
           if (countData) {
             rpcCounts = {}
             for (const row of countData) rpcCounts[row.etapa_id] = Number(row.lead_count)
@@ -323,7 +323,7 @@ export function useVentasCRM() {
       // FIX: throttle RPC to max once per 60s — no await (fire-and-forget)
       if (Date.now() - lastCitasProcesadasRef.current > 60000) {
         lastCitasProcesadasRef.current = Date.now()
-        supabase.rpc('ventas_procesar_citas_pasadas').catch(() => {})
+        supabase.rpc('ventas_procesar_citas_pasadas').then(() => {}, () => {})
       }
 
       if (requestId !== loadRequestRef.current || !mountedRef.current) { setLoading(false); return }
