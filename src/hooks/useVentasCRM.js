@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
 import { logActividad } from '../lib/logActividad'
 import { cacheGet, cacheSet } from '../lib/offlineCache'
+import { getCached, setCache } from '../lib/cache'
 
 const LEADS_PER_BATCH = 20
 const TABLE_PAGE_SIZE = 50
