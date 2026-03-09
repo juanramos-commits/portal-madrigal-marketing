@@ -75,6 +75,150 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   KPI GRID (Dashboard)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.ve-kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.ve-kpi-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--border-hover);
+}
+
+.ve-kpi-label {
+  font-size: var(--font-xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ve-kpi-value {
+  font-size: var(--font-3xl);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.03em;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SECTIONS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-section {
+  margin-bottom: var(--space-lg);
+}
+
+.ve-section-title {
+  font-size: var(--font-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  margin: 0 0 var(--space-md);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   WARMUP BAR
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-warmup-bar {
+  height: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: var(--space-xs);
+}
+
+.ve-warmup-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: var(--radius-full);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 4px;
+}
+
+.ve-warmup-label {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   QUICK LINKS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.ve-quick-link {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.ve-quick-link:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-card);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SPINNER
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--success);
+  border-radius: var(--radius-full);
+  animation: ve-spin 0.7s linear infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ERROR
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-error {
+  padding: var(--space-lg);
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-md);
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    CARDS & LISTS
    ══════════════════════════════════════════════════════════════════════════ */
 
@@ -1015,19 +1159,13 @@
 
 .ve-loading {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--space-sm);
   padding: var(--space-2xl);
-}
-
-.ve-loading::after {
-  content: '';
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--border);
-  border-top-color: var(--success);
-  border-radius: var(--radius-full);
-  animation: ve-spin 0.7s linear infinite;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
 }
 
 @keyframes ve-spin {
