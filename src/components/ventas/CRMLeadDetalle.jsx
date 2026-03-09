@@ -202,6 +202,12 @@ export default function CRMLeadDetalle() {
   const snapshotRef = useRef(null)
   const registroTimeoutRef = useRef(null)
   const loadDetailRef = useRef(0)
+  // FIX: mounted guard prevents setState on unmounted component (fast navigation)
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
   const esAdminODirector = tienePermiso('ventas.crm.ver_todos')
@@ -310,10 +316,14 @@ export default function CRMLeadDetalle() {
     }
   }, [cargarLeadData, showToast])
 
+  // FIX: depend on id directly — reset state on lead change to avoid stale data
   useEffect(() => {
     if (!id) return
+    setLead(null)
+    setActividad([])
+    setError(null)
     cargarLead()
-  }, [cargarLead])
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Safety net: force loading=false after timeout ──────────────────
   useEffect(() => {

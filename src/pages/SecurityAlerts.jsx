@@ -325,7 +325,7 @@ export default function SecurityAlerts() {
       {totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
           <button
-            onClick={() => setPage(p => Math.max(0, p - 1))}
+            onClick={() => { setPage(p => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
             disabled={page === 0}
             className="btn"
             style={{ fontSize: '13px', padding: '6px 12px' }}
@@ -336,7 +336,7 @@ export default function SecurityAlerts() {
             {page + 1} / {totalPages}
           </span>
           <button
-            onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+            onClick={() => { setPage(p => Math.min(totalPages - 1, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
             disabled={page >= totalPages - 1}
             className="btn"
             style={{ fontSize: '13px', padding: '6px 12px' }}

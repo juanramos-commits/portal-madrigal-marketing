@@ -30,7 +30,7 @@ export default function VentaPopupCierre({ lead, onConfirm, onCancel }) {
       try {
         const { data, error } = await supabase
           .from('ventas_paquetes')
-          .select('*')
+          .select('id, nombre, precio')
           .eq('activo', true)
           .order('orden')
         if (error) throw error

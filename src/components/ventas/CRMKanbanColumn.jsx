@@ -1,11 +1,13 @@
+import { memo, useCallback, useMemo, useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { memo, useCallback, useMemo, useRef } from 'react'
 import { Inbox } from 'lucide-react'
 import CRMLeadCard from './CRMLeadCard'
 
-const VIRTUAL_THRESHOLD = 20
-
+// PERF: memo prevents re-render of all columns when only one column's leads change
+// NOTE: Virtualización descartada — dnd-kit SortableContext + closestCenter requiere que todos
+// los items estén montados en el DOM para detección de colisiones. LEADS_PER_BATCH=20 ya limita
+// la carga inicial; el caso típico (20-60 leads/columna) no justifica el riesgo de romper DnD.
 export default memo(function CRMKanbanColumn({
   etapa,
   leads = [],
@@ -24,7 +26,6 @@ export default memo(function CRMKanbanColumn({
   const scrollRef = useRef(null)
   const scrollThrottleRef = useRef(false)
   const leadIds = useMemo(() => leads.map(l => l.id), [leads])
-  const shouldVirtualize = leads.length >= VIRTUAL_THRESHOLD
 
   const handleScroll = useCallback(() => {
     if (scrollThrottleRef.current) return
@@ -56,7 +57,6 @@ export default memo(function CRMKanbanColumn({
               etapa={etapa}
               showAssignee={showAssignee}
               onMoverMobile={onMoverMobile}
-              virtualize={shouldVirtualize}
             />
           ))}
         </SortableContext>

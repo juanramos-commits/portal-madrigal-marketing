@@ -11,6 +11,11 @@ const estadoConfig = {
 export default function WalletRetiros({ retiros, total, pagina, onPageChange, pageSize, loading, busqueda, onBusquedaChange }) {
   const totalPages = Math.ceil(total / pageSize)
 
+  const handlePageChange = (newPage) => {
+    onPageChange(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
     <div className="wt-retiros">
       <div className="wt-filtros-row">
@@ -95,8 +100,8 @@ export default function WalletRetiros({ retiros, total, pagina, onPageChange, pa
         <div className="wt-pagination">
           <span>Página {pagina + 1} de {totalPages}</span>
           <div className="wt-pagination-btns">
-            <button disabled={pagina === 0} onClick={() => onPageChange(pagina - 1)}>Anterior</button>
-            <button disabled={pagina >= totalPages - 1} onClick={() => onPageChange(pagina + 1)}>Siguiente</button>
+            <button disabled={pagina === 0} onClick={() => handlePageChange(pagina - 1)}>Anterior</button>
+            <button disabled={pagina >= totalPages - 1} onClick={() => handlePageChange(pagina + 1)}>Siguiente</button>
           </div>
         </div>
       )}

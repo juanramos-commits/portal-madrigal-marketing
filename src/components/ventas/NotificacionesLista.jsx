@@ -45,6 +45,10 @@ const GRUPO_LABELS = {
 }
 
 
+// NOTE: Virtualización descartada — items agrupados por fecha con headers, keyboard navigation
+// (querySelectorAll('.ntf-item')), aria-live="polite" y alturas variables hacen IntersectionObserver
+// windowing extremadamente frágil. Con 30 items/batch y "cargar más" manual, el caso típico (<100 items)
+// no justifica la complejidad.
 export default function NotificacionesLista({
   notificaciones,
   loading,

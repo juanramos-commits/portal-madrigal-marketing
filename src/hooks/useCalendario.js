@@ -127,7 +127,7 @@ export function useCalendario() {
   const cargarReunionEstados = useCallback(async () => {
     const { data } = await supabase
       .from('ventas_reunion_estados')
-      .select('*')
+      .select('id, nombre, color')
       .eq('activo', true)
       .order('orden')
     setReunionEstados(data || [])
@@ -139,8 +139,9 @@ export function useCalendario() {
     let query = supabase
       .from('ventas_citas')
       .select(`
-        *,
-        lead:ventas_leads(id, nombre),
+        id, fecha_hora, estado, estado_reunion_id, notas_closer, closer_id, setter_origen_id,
+        duracion_minutos, origen_agendacion, google_meet_url, cancelada_por,
+        lead:ventas_leads(id, nombre, telefono, email, enlace_grabacion),
         closer:usuarios!ventas_citas_closer_id_fkey(id, nombre, email),
         setter_origen:usuarios!ventas_citas_setter_origen_id_fkey(id, nombre, email),
         estado_reunion:ventas_reunion_estados(id, nombre, color),
@@ -183,7 +184,7 @@ export function useCalendario() {
     const { inicio, fin } = obtenerRangoFechas()
     let query = supabase
       .from('ventas_google_events')
-      .select('*')
+      .select('id, usuario_id, start_time, end_time, summary, status')
       .gte('start_time', inicio.toISOString())
       .lte('start_time', fin.toISOString())
       .neq('status', 'cancelled')
@@ -299,7 +300,7 @@ export function useCalendario() {
     if (!targetId) return
     const { data } = await supabase
       .from('ventas_calendario_disponibilidad')
-      .select('*')
+      .select('id, usuario_id, dia_semana, hora_inicio, hora_fin, activo')
       .eq('usuario_id', targetId)
       .order('dia_semana')
       .order('hora_inicio')
@@ -351,7 +352,7 @@ export function useCalendario() {
     if (!user?.id) return
     const { data } = await supabase
       .from('ventas_calendario_bloqueos')
-      .select('*')
+      .select('id, usuario_id, fecha_inicio, fecha_fin, motivo')
       .eq('usuario_id', user.id)
       .order('fecha_inicio', { ascending: false })
     setBloqueos(data || [])
@@ -392,7 +393,7 @@ export function useCalendario() {
     if (!user?.id) return
     const { data } = await supabase
       .from('ventas_calendario_config')
-      .select('*')
+      .select('id, usuario_id, duracion_slot_minutos, descanso_entre_citas_minutos, minimo_horas_semana, google_calendar_token, updated_at')
       .eq('usuario_id', user.id)
       .maybeSingle()
 
@@ -429,7 +430,7 @@ export function useCalendario() {
   const cargarEnlaces = useCallback(async () => {
     const { data } = await supabase
       .from('ventas_enlaces_agenda')
-      .select('*, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email), creado_por:usuarios!ventas_enlaces_agenda_creado_por_id_fkey(id, nombre)')
+      .select('id, nombre, slug, activo, fuente, setter_id, closer_ids, created_at, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email), creado_por:usuarios!ventas_enlaces_agenda_creado_por_id_fkey(id, nombre)')
       .order('created_at', { ascending: false })
     setEnlaces(data || [])
   }, [])
@@ -480,7 +481,7 @@ export function useCalendario() {
     if (!closers.length) return []
     const ids = closers.map(c => c.id)
     const [configsRes, citasRes] = await Promise.all([
-      supabase.from('ventas_calendario_config').select('*').in('usuario_id', ids),
+      supabase.from('ventas_calendario_config').select('id, usuario_id, duracion_slot_minutos, descanso_entre_citas_minutos, minimo_horas_semana').in('usuario_id', ids),
       supabase.from('ventas_citas').select('closer_id, fecha_hora').in('closer_id', ids).gte('fecha_hora', obtenerRangoSemana(new Date()).inicio.toISOString()).lte('fecha_hora', obtenerRangoSemana(new Date()).fin.toISOString()),
     ])
 
@@ -490,7 +491,7 @@ export function useCalendario() {
     // Load availability for each closer
     const dispRes = await supabase
       .from('ventas_calendario_disponibilidad')
-      .select('*')
+      .select('id, usuario_id, dia_semana, hora_inicio, hora_fin, activo')
       .in('usuario_id', ids)
       .eq('activo', true)
 
@@ -704,4 +705,5 @@ export function useCalendario() {
     esBloqueado,
     refrescar,
   }
+  // PERF: useMemo on return object not needed — hook is only instantiated once (Calendario page)
 }

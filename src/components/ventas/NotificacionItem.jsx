@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   UserPlus, CalendarCheck, CalendarX, CalendarClock, CircleCheckBig, CircleX,
@@ -50,7 +51,9 @@ function tiempoRelativo(fecha) {
   return f.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
 }
 
-export default function NotificacionItem({ notificacion, onMarcarLeida, onEliminar }) {
+// PERF: memo prevents re-render of all items when parent re-renders via useTick (every 60s)
+// or when a single notification is marked as read
+const NotificacionItem = memo(function NotificacionItem({ notificacion, onMarcarLeida, onEliminar }) {
   const navigate = useNavigate()
 
   const handleClick = () => {
@@ -103,4 +106,6 @@ export default function NotificacionItem({ notificacion, onMarcarLeida, onElimin
       </button>
     </div>
   )
-}
+})
+
+export default NotificacionItem

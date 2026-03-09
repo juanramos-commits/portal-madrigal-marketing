@@ -87,7 +87,7 @@ export default function AjustesCalendario() {
     if (!targetUserId) return
     const { data } = await supabase
       .from('ventas_calendario_disponibilidad')
-      .select('*')
+      .select('id, usuario_id, dia_semana, hora_inicio, hora_fin, activo')
       .eq('usuario_id', targetUserId)
       .order('dia_semana')
       .order('hora_inicio')
@@ -98,7 +98,7 @@ export default function AjustesCalendario() {
     if (!targetUserId) return
     const { data } = await supabase
       .from('ventas_calendario_bloqueos')
-      .select('*')
+      .select('id, usuario_id, fecha_inicio, fecha_fin, motivo')
       .eq('usuario_id', targetUserId)
       .order('fecha_inicio', { ascending: false })
     setBloqueos(data || [])
@@ -108,7 +108,7 @@ export default function AjustesCalendario() {
     if (!targetUserId) return
     const { data } = await supabase
       .from('ventas_calendario_config')
-      .select('*')
+      .select('id, usuario_id, duracion_slot_minutos, descanso_entre_citas_minutos, minimo_horas_semana, google_calendar_token, updated_at')
       .eq('usuario_id', targetUserId)
       .maybeSingle()
     setConfig(data || {
@@ -189,11 +189,11 @@ export default function AjustesCalendario() {
     if (!closers.length) return []
     const ids = closers.map(c => c.id)
     const [configsRes, citasRes, dispRes] = await Promise.all([
-      supabase.from('ventas_calendario_config').select('*').in('usuario_id', ids),
+      supabase.from('ventas_calendario_config').select('id, usuario_id, duracion_slot_minutos, descanso_entre_citas_minutos, minimo_horas_semana').in('usuario_id', ids),
       supabase.from('ventas_citas').select('closer_id, fecha_hora').in('closer_id', ids)
         .gte('fecha_hora', obtenerRangoSemana(new Date()).inicio.toISOString())
         .lte('fecha_hora', obtenerRangoSemana(new Date()).fin.toISOString()),
-      supabase.from('ventas_calendario_disponibilidad').select('*').in('usuario_id', ids).eq('activo', true),
+      supabase.from('ventas_calendario_disponibilidad').select('id, usuario_id, dia_semana, hora_inicio, hora_fin, activo').in('usuario_id', ids).eq('activo', true),
     ])
 
     const configs = configsRes.data || []

@@ -5,6 +5,12 @@ import WalletTableSkeleton from './WalletTableSkeleton'
 
 export default function WalletFacturas({ facturas, total, pagina, onPageChange, pageSize, loading, datosFiscales, busqueda, onBusquedaChange }) {
   const totalPages = Math.ceil(total / pageSize)
+
+  const handlePageChange = (newPage) => {
+    onPageChange(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleDescargar = async (factura) => {
     if (!datosFiscales) {
       alert('Completa tus datos fiscales antes de descargar facturas.')
@@ -107,8 +113,8 @@ export default function WalletFacturas({ facturas, total, pagina, onPageChange, 
         <div className="wt-pagination">
           <span>Página {pagina + 1} de {totalPages}</span>
           <div className="wt-pagination-btns">
-            <button disabled={pagina === 0} onClick={() => onPageChange(pagina - 1)}>Anterior</button>
-            <button disabled={pagina >= totalPages - 1} onClick={() => onPageChange(pagina + 1)}>Siguiente</button>
+            <button disabled={pagina === 0} onClick={() => handlePageChange(pagina - 1)}>Anterior</button>
+            <button disabled={pagina >= totalPages - 1} onClick={() => handlePageChange(pagina + 1)}>Siguiente</button>
           </div>
         </div>
       )}

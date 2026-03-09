@@ -172,34 +172,6 @@
 
 .vv-tabs::-webkit-scrollbar { display: none; }
 
-.vv-tab {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  padding: var(--space-1-5) var(--space-3-5);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: var(--font-sm-md);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.vv-tab:hover {
-  background: var(--bg-skeleton);
-  color: var(--text);
-}
-
-.vv-tab.active {
-  background: var(--bg-active);
-  color: var(--text);
-  border-color: var(--border-hover);
-}
-
 .vv-tab-count {
   font-size: var(--font-xs);
   background: var(--bg-badge);
@@ -530,27 +502,6 @@
 }
 
 /* ── Empty state ──────────────────────────────────────────────────── */
-.vv-empty {
-  text-align: center;
-  padding: var(--space-2xl) var(--space-lg);
-  color: var(--text-muted);
-  font-size: var(--font-base);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.vv-empty-icon {
-  color: var(--text-tertiary);
-  margin-bottom: var(--space-xs);
-}
-
-.vv-empty-hint {
-  font-size: var(--font-sm);
-  color: var(--text-tertiary);
-}
-
 /* ── Loading overlay (reload with data) ──────────────────────────── */
 .vv-loading-overlay {
   position: absolute;

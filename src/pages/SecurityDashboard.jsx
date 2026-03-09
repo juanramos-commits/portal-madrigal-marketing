@@ -87,7 +87,7 @@ export default function SecurityDashboard() {
   const loadRecentActions = async () => {
     const { data } = await supabase
       .from('audit_log')
-      .select('*')
+      .select('id, accion, categoria, descripcion, created_at')
       .in('categoria', ['usuarios', 'roles', 'auth'])
       .order('created_at', { ascending: false })
       .limit(10)

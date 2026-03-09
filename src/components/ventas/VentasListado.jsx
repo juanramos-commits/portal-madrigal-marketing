@@ -60,6 +60,11 @@ export default memo(function VentasListado({
 
   const totalPages = Math.ceil(totalCount / pageSize)
 
+  const handlePageChange = useCallback((newPage) => {
+    onPageChange(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [onPageChange])
+
   const toggleExpand = (ventaId) => {
     setExpandedId(prev => prev === ventaId ? null : ventaId)
   }
@@ -274,10 +279,10 @@ export default memo(function VentasListado({
         <nav className="vv-pagination" role="navigation" aria-label="Paginación de ventas">
           <span>Página {page + 1} de {totalPages} ({totalCount} ventas)</span>
           <div className="vv-pagination-btns">
-            <button disabled={page === 0} onClick={() => onPageChange(page - 1)}>
+            <button disabled={page === 0} onClick={() => handlePageChange(page - 1)}>
               Anterior
             </button>
-            <button disabled={page >= totalPages - 1} onClick={() => onPageChange(page + 1)}>
+            <button disabled={page >= totalPages - 1} onClick={() => handlePageChange(page + 1)}>
               Siguiente
             </button>
           </div>

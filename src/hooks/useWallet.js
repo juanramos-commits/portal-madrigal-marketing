@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
+import { useDebounce } from './useDebounce'
 import { logActividad } from '../lib/logActividad'
 
 const COMISIONES_PAGE_SIZE = 20
@@ -51,17 +52,19 @@ export function useWallet() {
   const [adminRetirosBusqueda, setAdminRetirosBusqueda] = useState('')
   const [adminFacturasBusqueda, setAdminFacturasBusqueda] = useState('')
 
-  // Search refs (race condition prevention + debounce)
+  // Debounced search values (300ms delay)
+  const comisionesBusquedaDebounced = useDebounce(comisionesBusqueda, 300)
+  const retirosBusquedaDebounced = useDebounce(retirosBusqueda, 300)
+  const facturasBusquedaDebounced = useDebounce(facturasBusqueda, 300)
+  const adminRetirosBusquedaDebounced = useDebounce(adminRetirosBusqueda, 300)
+  const adminFacturasBusquedaDebounced = useDebounce(adminFacturasBusqueda, 300)
+
+  // Search refs (race condition prevention)
   const comisionesSearchRef = useRef(0)
   const retirosSearchRef = useRef(0)
   const facturasSearchRef = useRef(0)
   const adminRetirosSearchRef = useRef(0)
   const adminFacturasSearchRef = useRef(0)
-  const comisionesBusquedaTimeout = useRef(null)
-  const retirosBusquedaTimeout = useRef(null)
-  const facturasBusquedaTimeout = useRef(null)
-  const adminRetirosBusquedaTimeout = useRef(null)
-  const adminFacturasBusquedaTimeout = useRef(null)
 
   // Members list (for admin)
   const [miembros, setMiembros] = useState([])
@@ -100,7 +103,7 @@ export function useWallet() {
     if (!user?.id) return
     const { data, error: err } = await supabase
       .from('ventas_wallet')
-      .select('*')
+      .select('id, usuario_id, saldo, total_ganado, total_retirado')
       .eq('usuario_id', user.id)
       .maybeSingle()
 
@@ -147,7 +150,7 @@ export function useWallet() {
     let query = supabase
       .from('ventas_comisiones')
       .select(`
-        *, venta:ventas_ventas(id, lead_id, lead:ventas_leads(id, nombre))
+        id, usuario_id, monto, concepto, rol, es_bonus, disponible_desde, created_at, venta:ventas_ventas(id, lead_id, lead:ventas_leads(id, nombre))
       `, { count: 'exact' })
       .eq('usuario_id', uid)
       .order('created_at', { ascending: false })
@@ -187,7 +190,7 @@ export function useWallet() {
     const from = facturasPagina * FACTURAS_PAGE_SIZE
     const { data, count } = await supabase
       .from('ventas_facturas')
-      .select('*', { count: 'exact' })
+      .select('id, usuario_id, numero_factura, fecha_emision, concepto, base_imponible, iva_porcentaje, iva_monto, total, emisor_nombre, emisor_nif, emisor_direccion, emisor_ciudad, emisor_cp, emisor_pais, receptor_nombre, receptor_cif, receptor_direccion, receptor_ciudad, receptor_cp, receptor_pais, datos_bancarios_texto', { count: 'exact' })
       .eq('usuario_id', user.id)
       .order('fecha_emision', { ascending: false })
       .range(from, from + FACTURAS_PAGE_SIZE - 1)
@@ -231,7 +234,7 @@ export function useWallet() {
   const cargarEmpresaFiscal = useCallback(async () => {
     const { data } = await supabase
       .from('ventas_empresa_fiscal')
-      .select('*')
+      .select('id, nombre_fiscal, cif, direccion, ciudad, codigo_postal, pais, concepto_factura')
       .limit(1)
       .maybeSingle()
     setEmpresaFiscal(data)
@@ -257,7 +260,7 @@ export function useWallet() {
     let query = supabase
       .from('ventas_retiros')
       .select(`
-        *,
+        id, usuario_id, monto, estado, motivo_rechazo, created_at,
         usuario:usuarios!ventas_retiros_usuario_id_fkey(id, nombre, email),
         factura:ventas_facturas!ventas_retiros_factura_id_fkey(id, numero_factura)
       `, { count: 'exact' })
@@ -294,7 +297,7 @@ export function useWallet() {
   const cargarTodasFacturas = useCallback(async () => {
     let query = supabase
       .from('ventas_facturas')
-      .select('*, usuario:usuarios(id, nombre, email)', { count: 'exact' })
+      .select('id, usuario_id, numero_factura, fecha_emision, concepto, base_imponible, iva_porcentaje, iva_monto, total, emisor_nombre, emisor_nif, receptor_nombre, receptor_cif, datos_bancarios_texto, usuario:usuarios(id, nombre, email)', { count: 'exact' })
       .order('fecha_emision', { ascending: false })
 
     if (todasFacturasFiltroUsuario) {
@@ -415,7 +418,7 @@ export function useWallet() {
       const ids = results.map(r => r.factura_id)
       const { data } = await supabase
         .from('ventas_facturas')
-        .select('*')
+        .select('id, usuario_id, numero_factura, fecha_emision, concepto, base_imponible, iva_porcentaje, iva_monto, total, emisor_nombre, emisor_nif, receptor_nombre, receptor_cif, datos_bancarios_texto')
         .in('id', ids)
       if (requestId !== facturasSearchRef.current) return
       const relevMap = Object.fromEntries(results.map(r => [r.factura_id, r.relevancia]))
@@ -454,7 +457,7 @@ export function useWallet() {
       const ids = results.map(r => r.retiro_id)
       const { data } = await supabase
         .from('ventas_retiros')
-        .select('*, usuario:usuarios!ventas_retiros_usuario_id_fkey(id, nombre, email), factura:ventas_facturas!ventas_retiros_factura_id_fkey(id, numero_factura)')
+        .select('id, usuario_id, monto, estado, motivo_rechazo, created_at, usuario:usuarios!ventas_retiros_usuario_id_fkey(id, nombre, email), factura:ventas_facturas!ventas_retiros_factura_id_fkey(id, numero_factura)')
         .in('id', ids)
       if (requestId !== adminRetirosSearchRef.current) return
       const relevMap = Object.fromEntries(results.map(r => [r.retiro_id, r.relevancia]))
@@ -490,7 +493,7 @@ export function useWallet() {
       const ids = results.map(r => r.factura_id)
       const { data } = await supabase
         .from('ventas_facturas')
-        .select('*, usuario:usuarios(id, nombre, email)')
+        .select('id, usuario_id, numero_factura, fecha_emision, concepto, base_imponible, iva_porcentaje, iva_monto, total, emisor_nombre, emisor_nif, receptor_nombre, receptor_cif, datos_bancarios_texto, usuario:usuarios(id, nombre, email)')
         .in('id', ids)
       if (requestId !== adminFacturasSearchRef.current) return
       const relevMap = Object.fromEntries(results.map(r => [r.factura_id, r.relevancia]))
@@ -738,60 +741,36 @@ export function useWallet() {
     else cargarTodasFacturas()
   }, [todasFacturasFiltroUsuario]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Debounced search: comisiones ──────────────────────────────────
+  // ── React to debounced search values ─────────────────────────────
   useEffect(() => {
-    if (comisionesBusquedaTimeout.current) clearTimeout(comisionesBusquedaTimeout.current)
-    comisionesBusquedaTimeout.current = setTimeout(() => {
-      if (!user?.id) return
-      if (comisionesBusqueda.trim()) buscarComisiones(comisionesBusqueda)
-      else cargarComisiones()
-    }, 300)
-    return () => clearTimeout(comisionesBusquedaTimeout.current)
-  }, [comisionesBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!user?.id) return
+    if (comisionesBusquedaDebounced.trim()) buscarComisiones(comisionesBusquedaDebounced)
+    else cargarComisiones()
+  }, [comisionesBusquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Debounced search: retiros ─────────────────────────────────────
   useEffect(() => {
-    if (retirosBusquedaTimeout.current) clearTimeout(retirosBusquedaTimeout.current)
-    retirosBusquedaTimeout.current = setTimeout(() => {
-      if (!user?.id) return
-      if (retirosBusqueda.trim()) buscarRetiros(retirosBusqueda)
-      else cargarRetiros()
-    }, 300)
-    return () => clearTimeout(retirosBusquedaTimeout.current)
-  }, [retirosBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!user?.id) return
+    if (retirosBusquedaDebounced.trim()) buscarRetiros(retirosBusquedaDebounced)
+    else cargarRetiros()
+  }, [retirosBusquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Debounced search: facturas ────────────────────────────────────
   useEffect(() => {
-    if (facturasBusquedaTimeout.current) clearTimeout(facturasBusquedaTimeout.current)
-    facturasBusquedaTimeout.current = setTimeout(() => {
-      if (!user?.id) return
-      if (facturasBusqueda.trim()) buscarFacturas(facturasBusqueda)
-      else cargarFacturas()
-    }, 300)
-    return () => clearTimeout(facturasBusquedaTimeout.current)
-  }, [facturasBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!user?.id) return
+    if (facturasBusquedaDebounced.trim()) buscarFacturas(facturasBusquedaDebounced)
+    else cargarFacturas()
+  }, [facturasBusquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Debounced search: admin retiros ───────────────────────────────
   useEffect(() => {
-    if (adminRetirosBusquedaTimeout.current) clearTimeout(adminRetirosBusquedaTimeout.current)
-    adminRetirosBusquedaTimeout.current = setTimeout(() => {
-      if (!esAdmin) return
-      if (adminRetirosBusqueda.trim()) buscarAdminRetiros(adminRetirosBusqueda)
-      else cargarTodosRetiros()
-    }, 300)
-    return () => clearTimeout(adminRetirosBusquedaTimeout.current)
-  }, [adminRetirosBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!esAdmin) return
+    if (adminRetirosBusquedaDebounced.trim()) buscarAdminRetiros(adminRetirosBusquedaDebounced)
+    else cargarTodosRetiros()
+  }, [adminRetirosBusquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Debounced search: admin facturas ──────────────────────────────
   useEffect(() => {
-    if (adminFacturasBusquedaTimeout.current) clearTimeout(adminFacturasBusquedaTimeout.current)
-    adminFacturasBusquedaTimeout.current = setTimeout(() => {
-      if (!esAdmin) return
-      if (adminFacturasBusqueda.trim()) buscarAdminFacturas(adminFacturasBusqueda)
-      else cargarTodasFacturas()
-    }, 300)
-    return () => clearTimeout(adminFacturasBusquedaTimeout.current)
-  }, [adminFacturasBusqueda]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!esAdmin) return
+    if (adminFacturasBusquedaDebounced.trim()) buscarAdminFacturas(adminFacturasBusquedaDebounced)
+    else cargarTodasFacturas()
+  }, [adminFacturasBusquedaDebounced]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     wallet, saldoDisponible, comisiones, comisionesTotal, comisionesPagina,
@@ -836,4 +815,5 @@ export function useWallet() {
     retirosPageSize: RETIROS_PAGE_SIZE,
     facturasPageSize: FACTURAS_PAGE_SIZE,
   }
+  // PERF: useMemo on return object not needed — hook is only instantiated once (VentasWallet page)
 }

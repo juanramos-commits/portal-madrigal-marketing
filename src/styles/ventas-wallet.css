@@ -63,34 +63,6 @@
 
 .wt-tabs::-webkit-scrollbar { display: none; }
 
-.wt-tab {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  padding: var(--space-1-5) var(--space-3-5);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: var(--font-sm-md);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.wt-tab:hover {
-  background: var(--bg-skeleton);
-  color: var(--text);
-}
-
-.wt-tab.active {
-  background: var(--bg-active);
-  color: var(--text);
-  border-color: var(--border-hover);
-}
-
 .wt-tab-badge {
   display: inline-flex;
   align-items: center;
@@ -1002,27 +974,6 @@
   padding: var(--space-2xl) var(--space-lg);
   color: var(--text-muted);
   font-size: var(--font-base);
-}
-
-.wt-empty {
-  text-align: center;
-  padding: var(--space-2xl) var(--space-lg);
-  color: var(--text-muted);
-  font-size: var(--font-base);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.wt-empty-icon {
-  color: var(--text-tertiary);
-  margin-bottom: var(--space-xs);
-}
-
-.wt-empty-hint {
-  font-size: var(--font-sm);
-  color: var(--text-tertiary);
 }
 
 /* ── Skeleton shimmer ─────────────────────────────────────────────── */

@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
+import { useDebounce } from './useDebounce'
 import { logActividad } from '../lib/logActividad'
 
 const ROLES_VISIBLES = ['setter', 'closer', 'director_ventas', 'super_admin']
@@ -12,13 +13,11 @@ export function useBiblioteca() {
   const [secciones, setSecciones] = useState([])
   const [recursos, setRecursos] = useState([])
   const [busqueda, setBusqueda] = useState('')
-  const [busquedaDebounced, setBusquedaDebounced] = useState('')
+  const busquedaDebounced = useDebounce(busqueda, 300)
   const [modoGestion, setModoGestion] = useState(false)
   const [seccionesAbiertas, setSeccionesAbiertas] = useState(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  const debounceRef = useRef(null)
 
   // Roles
   const esAdmin = usuario?.tipo === 'super_admin'
@@ -40,17 +39,6 @@ export function useBiblioteca() {
   }, [esSetter, esCloser, esDirector, esAdmin])
 
   const rolesLoaded = rolesComerciales.length > 0 || esAdmin
-
-  // Debounce search
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      setBusquedaDebounced(busqueda)
-    }, 300)
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
-  }, [busqueda])
 
   // Auto-expand sections that have matching resources when searching
   useEffect(() => {
@@ -81,7 +69,7 @@ export function useBiblioteca() {
   const cargarSecciones = useCallback(async () => {
     const { data, error: err } = await supabase
       .from('ventas_biblioteca_secciones')
-      .select('*')
+      .select('id, nombre, descripcion, orden, activo')
       .eq('activo', true)
       .order('orden', { ascending: true })
     if (err) { setError('Error al cargar secciones'); return }
@@ -92,7 +80,7 @@ export function useBiblioteca() {
   const cargarRecursos = useCallback(async () => {
     let query = supabase
       .from('ventas_biblioteca_recursos')
-      .select('*')
+      .select('id, seccion_id, nombre, descripcion, url, tipo, visible_para, orden, activo')
       .eq('activo', true)
       .order('orden', { ascending: true })
 

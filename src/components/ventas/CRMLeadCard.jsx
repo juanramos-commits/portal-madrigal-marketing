@@ -36,6 +36,7 @@ function getAvatarColor(name) {
   return `hsl(${hue}, 50%, 40%)`
 }
 
+// PERF: memo prevents re-render of all cards when sibling leads change or column state updates
 export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile, virtualize = false }) {
   const navigate = useNavigate()
   const [isVisible, setIsVisible] = useState(!virtualize)

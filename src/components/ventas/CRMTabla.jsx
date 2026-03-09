@@ -25,6 +25,11 @@ export default memo(function CRMTabla({
   const pageSize = 50
   const totalPages = Math.ceil((totalCount || 0) / pageSize) || 1
 
+  const handlePageChange = (newPage) => {
+    onPageChange(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleSort = (col) => {
     onSortChange({
       col,
@@ -210,10 +215,10 @@ export default memo(function CRMTabla({
             Página {page + 1} de {totalPages} ({totalCount} leads)
           </span>
           <div className="crm-pagination-btns">
-            <button disabled={page === 0} onClick={() => onPageChange(page - 1)}>
+            <button disabled={page === 0} onClick={() => handlePageChange(page - 1)}>
               Anterior
             </button>
-            <button disabled={page >= totalPages - 1} onClick={() => onPageChange(page + 1)}>
+            <button disabled={page >= totalPages - 1} onClick={() => handlePageChange(page + 1)}>
               Siguiente
             </button>
           </div>

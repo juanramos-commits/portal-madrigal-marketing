@@ -92,13 +92,13 @@ export default function Roles() {
     try {
       const { data: rolesData } = await supabase
         .from('roles')
-        .select('*')
+        .select('id, nombre, descripcion, color, nivel, es_sistema')
         .order('nivel', { ascending: false })
       setRoles(rolesData || [])
 
       const { data: permisosData } = await supabase
         .from('permisos')
-        .select('*')
+        .select('id, nombre, descripcion, modulo, codigo, orden')
         .order('orden', { ascending: true })
       setPermisos(permisosData || [])
 

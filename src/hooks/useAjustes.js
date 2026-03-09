@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { logActividad } from '../lib/logActividad'
+import { invalidateCache } from '../lib/cache'
 
 export function useAjustes() {
   const { user, usuario, rolesComerciales, refrescarRolesComerciales } = useAuth()
@@ -174,6 +175,8 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setEtapas(prev => [...prev, data])
+    invalidateCache('etapas')
+    invalidateCache('allEtapas')
     logActividad('ajustes', 'crear', `Etapa creada: ${datos.nombre}`, { entidad: 'etapa', entidad_id: data.id })
     return data
   }, [etapas])
@@ -187,6 +190,8 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setEtapas(prev => prev.map(e => e.id === etapaId ? data : e))
+    invalidateCache('etapas')
+    invalidateCache('allEtapas')
     logActividad('ajustes', 'editar', `Etapa editada: ${data.nombre}`, { entidad: 'etapa', entidad_id: etapaId })
     return data
   }, [])
@@ -206,6 +211,8 @@ export function useAjustes() {
       .eq('id', etapaId)
     if (error) throw error
     setEtapas(prev => prev.filter(e => e.id !== etapaId))
+    invalidateCache('etapas')
+    invalidateCache('allEtapas')
     logActividad('ajustes', 'eliminar', 'Etapa eliminada', { entidad: 'etapa', entidad_id: etapaId })
   }, [])
 
@@ -223,6 +230,8 @@ export function useAjustes() {
         supabase.from('ventas_etapas').update({ orden: i + 1 }).eq('id', id)
       )
       await Promise.all(updates)
+      invalidateCache('etapas')
+      invalidateCache('allEtapas')
     } catch {
       setEtapas(prevEtapas)
     }
@@ -293,6 +302,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setCategorias(prev => [...prev, data])
+    invalidateCache('categorias')
     logActividad('ajustes', 'crear', `Categoría creada: ${datos.nombre}`, { entidad: 'categoria', entidad_id: data.id })
     return data
   }, [categorias])
@@ -306,6 +316,7 @@ export function useAjustes() {
       .single()
     if (error) throw error
     setCategorias(prev => prev.map(c => c.id === id ? data : c))
+    invalidateCache('categorias')
     logActividad('ajustes', 'editar', `Categoría editada: ${data.nombre}`, { entidad: 'categoria', entidad_id: id })
   }, [])
 
@@ -316,6 +327,7 @@ export function useAjustes() {
       .eq('id', id)
     if (error) throw error
     setCategorias(prev => prev.filter(c => c.id !== id))
+    invalidateCache('categorias')
     logActividad('ajustes', 'eliminar', 'Categoría eliminada', { entidad: 'categoria', entidad_id: id })
   }, [])
 
@@ -329,6 +341,7 @@ export function useAjustes() {
       supabase.from('ventas_categorias').update({ orden: i + 1 }).eq('id', id)
     )
     await Promise.all(updates)
+    invalidateCache('categorias')
   }, [categorias])
 
   // ═══ COMISIONES CONFIG ═══
@@ -483,6 +496,10 @@ export function useAjustes() {
       .insert(inserts)
     if (error) throw error
     await Promise.all([cargarEquipo(), refrescarRolesComerciales()])
+    invalidateCache('roles')
+    invalidateCache('rolesBasic')
+    invalidateCache('settersList')
+    invalidateCache('closersList')
     logActividad('ajustes', 'crear', `Rol asignado: ${roles.join(', ')}`, { entidad: 'equipo' })
   }, [cargarEquipo, refrescarRolesComerciales])
 
@@ -504,6 +521,10 @@ export function useAjustes() {
       if (error) throw error
     }
     await Promise.all([cargarEquipo(), refrescarRolesComerciales()])
+    invalidateCache('roles')
+    invalidateCache('rolesBasic')
+    invalidateCache('settersList')
+    invalidateCache('closersList')
     logActividad('ajustes', 'editar', `Roles editados: ${rolesNuevos.join(', ')}`, { entidad: 'equipo' })
   }, [cargarEquipo, refrescarRolesComerciales])
 
@@ -514,6 +535,10 @@ export function useAjustes() {
       .eq('usuario_id', usuarioId)
     if (error) throw error
     await Promise.all([cargarEquipo(), refrescarRolesComerciales()])
+    invalidateCache('roles')
+    invalidateCache('rolesBasic')
+    invalidateCache('settersList')
+    invalidateCache('closersList')
     logActividad('ajustes', 'editar', `Miembro ${activar ? 'activado' : 'desactivado'}`, { entidad: 'equipo' })
   }, [cargarEquipo, refrescarRolesComerciales])
 

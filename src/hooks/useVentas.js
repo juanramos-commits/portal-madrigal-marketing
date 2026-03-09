@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
 import { logActividad } from '../lib/logActividad'
+import { getCached, setCache } from '../lib/cache'
 
 const PAGE_SIZE = 25
 
@@ -48,12 +49,19 @@ export function useVentas() {
   useEffect(() => {
     if (!user?.id) return
     const cargar = async () => {
+      const cached = getCached('rolesBasic')
+      if (cached) {
+        setRolesComerciales(cached)
+        setRolesLoaded(true)
+        return
+      }
       const { data, error } = await supabase
         .from('ventas_roles_comerciales')
-        .select('*')
+        .select('id, usuario_id, rol, activo')
         .eq('activo', true)
       if (error) console.error('Error cargando roles comerciales:', error)
       setRolesComerciales(data || [])
+      setCache('rolesBasic', data || [])
       setRolesLoaded(true)
     }
     cargar()
@@ -63,7 +71,7 @@ export function useVentas() {
   const cargarPaquetes = useCallback(async () => {
     const { data, error } = await supabase
       .from('ventas_paquetes')
-      .select('*')
+      .select('id, nombre, precio, descripcion, orden, activo')
       .eq('activo', true)
       .order('orden')
     if (error) console.error('Error cargando paquetes:', error)
@@ -78,12 +86,21 @@ export function useVentas() {
   useEffect(() => {
     if (!user?.id) return
     const cargar = async () => {
+      const cachedS = getCached('settersList')
+      const cachedC = getCached('closersList')
+      if (cachedS && cachedC) {
+        setSettersList(cachedS)
+        setClosersList(cachedC)
+        return
+      }
       const [{ data: s }, { data: c }] = await Promise.all([
         supabase.from('ventas_roles_comerciales').select('usuario_id, usuario:usuarios(id, nombre, email)').eq('rol', 'setter').eq('activo', true),
         supabase.from('ventas_roles_comerciales').select('usuario_id, usuario:usuarios(id, nombre, email)').eq('rol', 'closer').eq('activo', true),
       ])
       setSettersList(s || [])
       setClosersList(c || [])
+      setCache('settersList', s || [])
+      setCache('closersList', c || [])
     }
     cargar()
   }, [user?.id])
@@ -733,4 +750,6 @@ export function useVentas() {
     refrescar,
     pageSize: PAGE_SIZE,
   }
+  // PERF: useMemo on return object not needed — each page gets its own instance
+  // (VentasVentas, VentasCRM), so no cross-consumer re-render cascade
 }

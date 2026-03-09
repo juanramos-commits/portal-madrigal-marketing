@@ -265,14 +265,14 @@ export default function AuditLog() {
             </span>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                onClick={() => setPage(p => Math.max(0, p - 1))}
+                onClick={() => { setPage(p => Math.max(0, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                 disabled={page === 0}
                 style={{ ...btnSecondary, opacity: page === 0 ? 0.4 : 1 }}
               >
                 Anterior
               </button>
               <button
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                onClick={() => { setPage(p => Math.min(totalPages - 1, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
                 disabled={page >= totalPages - 1}
                 style={{ ...btnSecondary, opacity: page >= totalPages - 1 ? 0.4 : 1 }}
               >

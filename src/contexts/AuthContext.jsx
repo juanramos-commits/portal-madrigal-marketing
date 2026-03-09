@@ -2,6 +2,7 @@ import { logger } from '../lib/logger'
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { supabase } from '../lib/supabase'
 import { logActividad } from '../lib/logActividad'
+import { invalidateAll } from '../lib/cache'
 
 const AuthContext = createContext({})
 
@@ -156,13 +157,19 @@ export function AuthProvider({ children }) {
       setLoading(false)
     })
 
-    // Recover from token refresh failures — check session health periodically
-    const sessionHealthCheck = setInterval(async () => {
-      if (!mounted) return
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [cargarUsuario])
+
+  // Session health check — only runs when a user is logged in
+  useEffect(() => {
+    if (!usuario?.id) return
+    const healthCheck = setInterval(async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        if (!session && usuario) {
-          // Session expired silently — force re-auth
+        if (!session) {
           logger.warn('Session expired, signing out...')
           setUser(null)
           setUsuario(null)
@@ -172,14 +179,9 @@ export function AuthProvider({ children }) {
       } catch {
         // Network error — ignore, will retry next interval
       }
-    }, 5 * 60 * 1000) // Every 5 minutes
-
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-      clearInterval(sessionHealthCheck)
-    }
-  }, [cargarUsuario])
+    }, 5 * 60 * 1000)
+    return () => clearInterval(healthCheck)
+  }, [usuario?.id])
 
   const tienePermiso = useCallback((permiso) => {
     if (usuario?.tipo === 'super_admin') return true
@@ -219,6 +221,7 @@ export function AuthProvider({ children }) {
     refrescarRolesComerciales()
   }, [usuario?.id, refrescarRolesComerciales])
 
+  // PERF: useCallback stabilizes identity so useMemo(value) doesn't invalidate on every render
   const signInWithEmail = useCallback(async (email, password) => {
     isSigningIn.current = true
     try {
@@ -250,33 +253,43 @@ export function AuthProvider({ children }) {
     }
   }, [cargarUsuario])
 
+  // PERF: useCallback stabilizes identity; reads usuario via ref to avoid dep on object
+  const usuarioRef = useRef(usuario)
+  usuarioRef.current = usuario
+
   const signOut = useCallback(async () => {
+    const usr = usuarioRef.current
     // Registrar logout en auditoría antes de cerrar sesión
-    if (usuario?.id) {
+    if (usr?.id) {
       try {
         await supabase.rpc('registrar_auditoria', {
-          p_usuario_id: usuario.id,
+          p_usuario_id: usr.id,
           p_accion: 'LOGOUT',
           p_categoria: 'auth',
-          p_descripcion: `Cierre de sesión: ${usuario.email}`,
+          p_descripcion: `Cierre de sesión: ${usr.email}`,
         })
       } catch (e) {
         logger.error('Error registrando logout en auditoría:', e)
       }
-      logActividad('auth', 'logout', `Cierre de sesión: ${usuario.email}`)
+      logActividad('auth', 'logout', `Cierre de sesión: ${usr.email}`)
     }
     setUser(null)
     setUsuario(null)
     setPermisos([])
     setRolesComerciales([])
+    invalidateAll()
     return supabase.auth.signOut()
-  }, [usuario?.id, usuario?.email])
+  }, [])
 
-  const refrescarUsuario = useCallback(() => {
-    return user?.email && cargarUsuario(user.email)
-  }, [user?.email, cargarUsuario])
+  // PERF: stable callback avoids new function in useMemo value
+  const refrescarUsuario = useCallback(
+    () => user?.email && cargarUsuario(user.email),
+    [user?.email, cargarUsuario]
+  )
 
-  const contextValue = useMemo(() => ({
+  // PERF: memoize Provider value — without this, every AuthProvider render
+  // creates a new object and re-renders ALL useAuth() consumers
+  const value = useMemo(() => ({
     user,
     usuario,
     permisos,
@@ -292,7 +305,7 @@ export function AuthProvider({ children }) {
        signInWithEmail, signOut, refrescarUsuario, refrescarPermisos, refrescarRolesComerciales])
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

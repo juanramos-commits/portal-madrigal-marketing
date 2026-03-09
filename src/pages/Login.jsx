@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
+import { preloadRoutes } from '../config/routePreloads'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -85,6 +86,8 @@ export default function Login() {
     if (data?.user) {
       await registrarIntento(email, true)
       setIntentosFallidos(0)
+      // Prefetch common routes while SmartRedirect resolves
+      preloadRoutes(['/ventas/dashboard', '/ventas/crm', '/ventas/ventas', '/dashboard'])
       navigate('/')
     } else {
       setLoading(false)

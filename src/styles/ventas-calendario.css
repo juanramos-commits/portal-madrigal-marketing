@@ -30,25 +30,6 @@
 }
 .vc-tabs::-webkit-scrollbar { display: none; }
 
-.vc-tab {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  padding: var(--space-1-5) var(--space-3-5);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: var(--font-sm-md);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.vc-tab:hover { background: var(--bg-skeleton); color: var(--text); }
-.vc-tab.active { background: var(--bg-active); color: var(--text); border-color: var(--border-hover); }
-
 /* ── Calendar controls ────────────────────────────────────────────── */
 .vc-controles {
   display: flex;

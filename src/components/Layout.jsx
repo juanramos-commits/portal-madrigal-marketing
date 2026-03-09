@@ -431,7 +431,7 @@ export default function Layout() {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
-    
+
     // Guardar después de 1 segundo de inactividad
     saveTimeoutRef.current = setTimeout(() => {
       saveMenuOrder(newOrder)
@@ -615,20 +615,11 @@ export default function Layout() {
       </aside>
 
       <div className={`sidebar-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} />
-
       <div className="main">
         <div className="page">
           <Outlet />
         </div>
       </div>
-
-      <button
-        className="mobile-menu-btn-float"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        aria-label="Abrir menú"
-      >
-        <Icons.Menu />
-      </button>
     </div>
   )
 }

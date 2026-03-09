@@ -75,8 +75,8 @@ export default function Usuarios() {
     try {
       const [usuariosRes, rolesRes, permisosRes] = await Promise.all([
         supabase.from('usuarios').select('*, rol:roles(id, nombre, color, nivel)').order('created_at', { ascending: false }),
-        supabase.from('roles').select('*').order('nivel', { ascending: false }),
-        supabase.from('permisos').select('*').order('orden', { ascending: true })
+        supabase.from('roles').select('id, nombre, color, nivel, es_sistema').order('nivel', { ascending: false }),
+        supabase.from('permisos').select('id, nombre, descripcion, modulo, codigo, orden').order('orden', { ascending: true })
       ])
       setUsuarios(usuariosRes.data || [])
       setRoles(rolesRes.data || [])

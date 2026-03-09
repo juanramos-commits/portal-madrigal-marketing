@@ -240,7 +240,7 @@ export function useNotificaciones() {
     if (!user?.id) return null
     // Clean up any existing subscription before creating a new one
     if (channelRef.current) {
-      channelRef.current.unsubscribe()
+      supabase.removeChannel(channelRef.current)
       channelRef.current = null
     }
     const channel = supabase
@@ -300,7 +300,7 @@ export function useNotificaciones() {
 
   const desuscribirseRealtime = useCallback(() => {
     if (channelRef.current) {
-      channelRef.current.unsubscribe()
+      supabase.removeChannel(channelRef.current)
       channelRef.current = null
     }
   }, [])

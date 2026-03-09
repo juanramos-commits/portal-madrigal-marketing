@@ -34,7 +34,7 @@ export default function VentasEnlaces() {
 
       const { data, error } = await supabase
         .from('ventas_enlaces_agenda')
-        .select('*')
+        .select('id, nombre, slug, setter_id, fuente, activo, creado_por_id, created_at')
         .order('created_at', { ascending: false })
 
       if (!mountedRef.current) return
@@ -100,7 +100,7 @@ export default function VentasEnlaces() {
         activo: true,
         creado_por_id: user?.id,
       })
-      .select('*')
+      .select('id, nombre, slug, setter_id, fuente, activo, creado_por_id, created_at')
       .single()
     if (error) {
       console.error('Error creating enlace:', error)
@@ -138,7 +138,7 @@ export default function VentasEnlaces() {
       .from('ventas_enlaces_agenda')
       .update({ ...dbCampos, updated_at: new Date().toISOString() })
       .eq('id', enlaceId)
-      .select('*')
+      .select('id, nombre, slug, setter_id, fuente, activo, creado_por_id, created_at')
     if (error) {
       console.error('Error updating enlace:', error)
       throw error

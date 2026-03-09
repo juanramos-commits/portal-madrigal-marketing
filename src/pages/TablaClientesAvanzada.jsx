@@ -88,6 +88,9 @@ const COLUMNAS_DISPONIBLES = [
 
 const DEFAULT_VISIBLE = ['numero_cliente', 'nombre_comercial', 'email_portal', 'telefono', 'estado', 'servicio_contratado', 'facturacion.ciudad']
 
+// NOTE: Virtualización descartada — 51+ columnas configurables con drag-to-reorder, resize y
+// múltiples view modes (tabla/completa/tarjetas/compacta). Windowing manual sin librería dedicada
+// es inviable con esta complejidad de tabla dinámica.
 export default function TablaClientesAvanzada() {
   const navigate = useNavigate()
   const { tienePermiso } = useAuth()
