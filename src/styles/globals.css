@@ -4,6 +4,7 @@
 
 @import './tokens.css';
 @import './ui.css';
+@import './ventas-email.css';
 
 * {
   margin: 0;

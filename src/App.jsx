@@ -6,6 +6,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
 import PermissionRoute from './components/PermissionRoute'
 import Layout from './components/Layout'
+import { preloadRoute } from './config/routePreloads'
 
 // Wraps ErrorBoundary so it resets on navigation (route change)
 function LocationAwareErrorBoundary({ children }) {
@@ -45,6 +46,18 @@ const VentasAjustes = lazy(() => import('./pages/ventas/VentasAjustes'))
 const VentasEnlaces = lazy(() => import('./pages/ventas/VentasEnlaces'))
 const ReservarCita = lazy(() => import('./pages/ReservarCita'))
 
+// Páginas de Email Marketing
+const EmailDashboard = lazy(() => import('./pages/ventas/EmailDashboard'))
+const EmailCampaigns = lazy(() => import('./pages/ventas/EmailCampaigns'))
+const EmailCampaignEditor = lazy(() => import('./pages/ventas/EmailCampaignEditor'))
+const EmailTemplates = lazy(() => import('./pages/ventas/EmailTemplates'))
+const EmailContacts = lazy(() => import('./pages/ventas/EmailContacts'))
+const EmailSegments = lazy(() => import('./pages/ventas/EmailSegments'))
+const EmailAutomations = lazy(() => import('./pages/ventas/EmailAutomations'))
+const EmailAnalytics = lazy(() => import('./pages/ventas/EmailAnalytics'))
+const EmailSettings = lazy(() => import('./pages/ventas/EmailSettings'))
+const EmailPreferences = lazy(() => import('./components/ventas/email/PreferencesForm'))
+
 // Páginas generales
 const Notificaciones = lazy(() => import('./pages/Notificaciones'))
 const CRM = lazy(() => import('./pages/CRM'))
@@ -77,8 +90,14 @@ function SmartRedirect() {
   if (usuario?.tipo === 'cliente') return <Navigate to="/mi-cuenta" replace />
   // Esperar a que los permisos estén cargados antes de decidir
   if (usuario && usuario.tipo !== 'super_admin' && permisos.length === 0) return null
-  if (tienePermiso('ventas.dashboard.ver')) return <Navigate to="/ventas/dashboard" replace />
-  if (tienePermiso('dashboard.ver')) return <Navigate to="/dashboard" replace />
+  if (tienePermiso('ventas.dashboard.ver')) {
+    preloadRoute('/ventas/dashboard')
+    return <Navigate to="/ventas/dashboard" replace />
+  }
+  if (tienePermiso('dashboard.ver')) {
+    preloadRoute('/dashboard')
+    return <Navigate to="/dashboard" replace />
+  }
   return <Navigate to="/mi-seguridad" replace />
 }
 
@@ -97,6 +116,7 @@ function App() {
           <Route path="/activar-cuenta" element={<ActivarCuenta />} />
           <Route path="/privacidad" element={<PoliticaPrivacidad />} />
           <Route path="/reservar/:slug" element={<ReservarCita />} />
+          <Route path="/preferencias-email/:token" element={<EmailPreferences />} />
 
           {/* Rutas protegidas */}
           <Route
@@ -122,6 +142,15 @@ function App() {
             <Route path="ventas/calendario" element={<PermissionRoute permiso="ventas.calendario.ver"><VentasCalendario /></PermissionRoute>} />
             <Route path="ventas/ajustes" element={<PermissionRoute permiso="ventas.ajustes.ver"><VentasAjustes /></PermissionRoute>} />
             <Route path="ventas/enlaces" element={<PermissionRoute permiso="ventas.enlaces.ver"><VentasEnlaces /></PermissionRoute>} />
+            <Route path="ventas/email" element={<PermissionRoute permiso="ventas.email.ver"><EmailDashboard /></PermissionRoute>} />
+            <Route path="ventas/email/campanas" element={<PermissionRoute permiso="ventas.email.campanas.ver"><EmailCampaigns /></PermissionRoute>} />
+            <Route path="ventas/email/campanas/:id" element={<PermissionRoute permiso="ventas.email.campanas.crear"><EmailCampaignEditor /></PermissionRoute>} />
+            <Route path="ventas/email/plantillas" element={<PermissionRoute permiso="ventas.email.plantillas.ver"><EmailTemplates /></PermissionRoute>} />
+            <Route path="ventas/email/contactos" element={<PermissionRoute permiso="ventas.email.contactos.ver"><EmailContacts /></PermissionRoute>} />
+            <Route path="ventas/email/segmentos" element={<PermissionRoute permiso="ventas.email.segmentos.ver"><EmailSegments /></PermissionRoute>} />
+            <Route path="ventas/email/automaciones" element={<PermissionRoute permiso="ventas.email.automaciones.ver"><EmailAutomations /></PermissionRoute>} />
+            <Route path="ventas/email/analytics" element={<PermissionRoute permiso="ventas.email.analytics.ver"><EmailAnalytics /></PermissionRoute>} />
+            <Route path="ventas/email/ajustes" element={<PermissionRoute permiso="ventas.email.ajustes.ver"><EmailSettings /></PermissionRoute>} />
 
             {/* Generales */}
             <Route path="notificaciones" element={<Notificaciones />} />
