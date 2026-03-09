@@ -7,13 +7,13 @@ import { getCampaign, getLists, getInboxes } from '../../lib/coldOutreach'
 import '../../styles/ventas-email.css'
 
 const DAYS_OF_WEEK = [
-  { value: 'mon', label: 'Lun' },
-  { value: 'tue', label: 'Mar' },
-  { value: 'wed', label: 'Mié' },
-  { value: 'thu', label: 'Jue' },
-  { value: 'fri', label: 'Vie' },
-  { value: 'sat', label: 'Sáb' },
-  { value: 'sun', label: 'Dom' },
+  { value: 1, label: 'Lun' },
+  { value: 2, label: 'Mar' },
+  { value: 3, label: 'Mié' },
+  { value: 4, label: 'Jue' },
+  { value: 5, label: 'Vie' },
+  { value: 6, label: 'Sáb' },
+  { value: 7, label: 'Dom' },
 ]
 
 const STEP_TYPES = [
@@ -39,13 +39,13 @@ const emptyForm = () => ({
   timezone: 'Europe/Madrid',
   send_window_start: 9,
   send_window_end: 18,
-  send_days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+  send_days: [1, 2, 3, 4, 5],
   daily_limit: 50,
-  enable_spintax: false,
-  smart_throttle: false,
-  send_time_optimization: false,
+  use_spintax: false,
+  use_smart_throttle: false,
+  use_sto: false,
   ab_testing: false,
-  auto_pause_on_reply: true,
+  auto_pause_enabled: true,
 })
 
 const emptyStep = (stepNumber) => ({
@@ -99,13 +99,13 @@ export default function OutreachCampaignEditor() {
           timezone: data.timezone || 'Europe/Madrid',
           send_window_start: data.send_window_start ?? 9,
           send_window_end: data.send_window_end ?? 18,
-          send_days: data.send_days || ['mon', 'tue', 'wed', 'thu', 'fri'],
+          send_days: data.send_days || [1, 2, 3, 4, 5],
           daily_limit: data.daily_limit ?? 50,
-          enable_spintax: data.enable_spintax ?? false,
-          smart_throttle: data.smart_throttle ?? false,
-          send_time_optimization: data.send_time_optimization ?? false,
+          use_spintax: data.use_spintax ?? false,
+          use_smart_throttle: data.use_smart_throttle ?? false,
+          use_sto: data.use_sto ?? false,
           ab_testing: data.ab_testing ?? false,
-          auto_pause_on_reply: data.auto_pause_on_reply ?? true,
+          auto_pause_enabled: data.auto_pause_enabled ?? true,
         })
         if (data.steps?.length) setSteps(data.steps)
       }
@@ -302,11 +302,11 @@ export default function OutreachCampaignEditor() {
         <h2 className="ve-section-title">Opciones Avanzadas</h2>
         <div className="ve-form-grid">
           {[
-            { field: 'enable_spintax', label: 'Spintax' },
-            { field: 'smart_throttle', label: 'Smart Throttle' },
-            { field: 'send_time_optimization', label: 'STO (Send Time Optimization)' },
+            { field: 'use_spintax', label: 'Spintax' },
+            { field: 'use_smart_throttle', label: 'Smart Throttle' },
+            { field: 'use_sto', label: 'STO (Send Time Optimization)' },
             { field: 'ab_testing', label: 'A/B Testing' },
-            { field: 'auto_pause_on_reply', label: 'Auto-pausa al responder' },
+            { field: 'auto_pause_enabled', label: 'Auto-pausa al responder' },
           ].map(({ field, label }) => (
             <div className="ve-form-group" key={field}>
               <label className="ve-label">
