@@ -110,7 +110,7 @@ export async function cancelCampaign(campaignId) {
 }
 
 export async function getABResults(campaignId) {
-  return supabase.from('ventas_em_ab_results').select('*').eq('campaign_id', campaignId).order('variant_index')
+  return supabase.from('ventas_em_ab_results').select('*').eq('campaign_id', campaignId).order('variant_index').limit(20)
 }
 
 // === TEMPLATES ===
@@ -267,12 +267,12 @@ export async function getOpenHeatmap() {
 
 export async function getReputationLogs(days = 30) {
   const since = new Date(Date.now() - days * 86400000).toISOString().split('T')[0]
-  return supabase.from('ventas_em_reputation_log').select('*').gte('date', since).order('date', { ascending: false })
+  return supabase.from('ventas_em_reputation_log').select('*').gte('date', since).order('date', { ascending: false }).limit(365)
 }
 
 export async function getAnalyticsDaily(campaignId, days = 30) {
   const since = new Date(Date.now() - days * 86400000).toISOString().split('T')[0]
-  let query = supabase.from('ventas_em_analytics_daily').select('*').gte('date', since).order('date')
+  let query = supabase.from('ventas_em_analytics_daily').select('*').gte('date', since).order('date').limit(365)
   if (campaignId) query = query.eq('campaign_id', campaignId)
   return query
 }
@@ -293,5 +293,5 @@ export async function generateSubjects(campaignId) {
 
 // === WARMUP ===
 export async function getWarmupSchedule() {
-  return supabase.from('ventas_em_warmup_schedule').select('*').order('day')
+  return supabase.from('ventas_em_warmup_schedule').select('*').order('day').limit(60)
 }

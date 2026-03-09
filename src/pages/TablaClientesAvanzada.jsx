@@ -1,5 +1,5 @@
 import { logger } from '../lib/logger'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -154,24 +154,28 @@ export default function TablaClientesAvanzada() {
     }
   }
 
-  const clientesFiltrados = clientes.filter(cliente => {
-    if (!busqueda) return true
-    const busquedaNorm = normalizar(busqueda)
-    return normalizar(cliente.nombre_comercial).includes(busquedaNorm) ||
-           normalizar(cliente.email_portal).includes(busquedaNorm) ||
-           normalizar(cliente.telefono).includes(busquedaNorm) ||
-           normalizar(cliente.nombre_pila).includes(busquedaNorm)
-  })
+  const clientesFiltrados = useMemo(() => {
+    return clientes.filter(cliente => {
+      if (!busqueda) return true
+      const busquedaNorm = normalizar(busqueda)
+      return normalizar(cliente.nombre_comercial).includes(busquedaNorm) ||
+             normalizar(cliente.email_portal).includes(busquedaNorm) ||
+             normalizar(cliente.telefono).includes(busquedaNorm) ||
+             normalizar(cliente.nombre_pila).includes(busquedaNorm)
+    })
+  }, [clientes, busqueda])
 
-  const clientesOrdenados = [...clientesFiltrados].sort((a, b) => {
-    if (!sortConfig.key) return 0
-    const aVal = getNestedValue(a, sortConfig.key)
-    const bVal = getNestedValue(b, sortConfig.key)
-    if (aVal === null || aVal === undefined) return 1
-    if (bVal === null || bVal === undefined) return -1
-    const comparison = String(aVal).localeCompare(String(bVal), 'es', { numeric: true })
-    return sortConfig.direction === 'asc' ? comparison : -comparison
-  })
+  const clientesOrdenados = useMemo(() => {
+    if (!sortConfig.key) return clientesFiltrados
+    return [...clientesFiltrados].sort((a, b) => {
+      const aVal = getNestedValue(a, sortConfig.key)
+      const bVal = getNestedValue(b, sortConfig.key)
+      if (aVal === null || aVal === undefined) return 1
+      if (bVal === null || bVal === undefined) return -1
+      const comparison = String(aVal).localeCompare(String(bVal), 'es', { numeric: true })
+      return sortConfig.direction === 'asc' ? comparison : -comparison
+    })
+  }, [clientesFiltrados, sortConfig])
 
   const crearCliente = async () => {
     if (!nuevoCliente.nombre_comercial.trim()) return

@@ -32,7 +32,7 @@ export async function checkDomainHealth(id) {
 export async function getInboxes(domainId) {
   let query = supabase.from('ventas_co_inboxes').select('*, domain:ventas_co_domains(id, domain, status)')
   if (domainId) query = query.eq('domain_id', domainId)
-  return query.order('created_at', { ascending: false })
+  return query.order('created_at', { ascending: false }).limit(200)
 }
 
 export async function getInbox(id) {
@@ -177,7 +177,7 @@ export async function archiveCampaign(id) {
 
 // === STEPS ===
 export async function getSteps(campaignId) {
-  return supabase.from('ventas_co_steps').select('*').eq('campaign_id', campaignId).order('step_number')
+  return supabase.from('ventas_co_steps').select('*').eq('campaign_id', campaignId).order('step_number').limit(50)
 }
 
 export async function createStep(step) {

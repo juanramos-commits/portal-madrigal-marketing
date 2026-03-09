@@ -424,7 +424,7 @@ export default function Layout() {
         <div className="sidebar-header">
           <picture>
             <source srcSet="/logo.webp" type="image/webp" />
-            <img src="/logo.png" alt="Madrigal" />
+            <img src="/logo.png" alt="Madrigal" width="150" height="29" />
           </picture>
         </div>
 

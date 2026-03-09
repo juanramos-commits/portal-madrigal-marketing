@@ -50,8 +50,9 @@ export default function Clientes() {
     try {
       let query = supabase
         .from('clientes')
-        .select('*')
+        .select('id, nombre_comercial, nombre_pila, email_portal, telefono, estado, tipo_servicio, created_at, usuario_asignado_id')
         .order('created_at', { ascending: false })
+        .limit(500)
 
       if (filtroEstado !== 'todos') {
         query = query.eq('estado', filtroEstado)
