@@ -3,12 +3,15 @@ import { useEffect, useRef } from 'react'
 /**
  * Refresca datos cuando el usuario vuelve a la pestaña (visibility change)
  * o cuando la ventana recupera el foco.
- * Incluye un mínimo de 10s entre refrescos para no bombardear la API.
+ * - 30s mínimo entre refrescos para no bombardear la API
+ * - 1.5s delay after focus to let realtime events flush first
+ * - Deduplicates visibilitychange + focus events (fire together)
  * Uses a ref for the callback to avoid re-registering event listeners on every render.
  */
-export function useRefreshOnFocus(refrescarFn, { enabled = true, minInterval = 10_000 } = {}) {
+export function useRefreshOnFocus(refrescarFn, { enabled = true, minInterval = 30_000 } = {}) {
   const lastRefresh = useRef(Date.now())
   const callbackRef = useRef(refrescarFn)
+  const pendingTimerRef = useRef(null)
 
   // Keep callback ref in sync without re-registering listeners
   useEffect(() => {
@@ -18,25 +21,40 @@ export function useRefreshOnFocus(refrescarFn, { enabled = true, minInterval = 1
   useEffect(() => {
     if (!enabled) return
 
-    const handleFocus = () => {
+    const scheduleRefresh = () => {
       const now = Date.now()
       if (now - lastRefresh.current < minInterval) return
-      lastRefresh.current = now
-      callbackRef.current?.()
+
+      // Cancel any pending refresh (deduplicates visibility + focus firing together)
+      if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
+
+      // Delay 1.5s to let realtime events flush first (they debounce at 1.2s)
+      pendingTimerRef.current = setTimeout(() => {
+        pendingTimerRef.current = null
+        lastRefresh.current = Date.now()
+        callbackRef.current?.()
+      }, 1500)
     }
 
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        handleFocus()
+        scheduleRefresh()
+      } else {
+        // Tab hidden — cancel any pending refresh
+        if (pendingTimerRef.current) {
+          clearTimeout(pendingTimerRef.current)
+          pendingTimerRef.current = null
+        }
       }
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
-    window.addEventListener('focus', handleFocus)
+    // Don't listen to 'focus' separately — visibilitychange is sufficient
+    // and avoids double-firing on mobile browsers
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility)
-      window.removeEventListener('focus', handleFocus)
+      if (pendingTimerRef.current) clearTimeout(pendingTimerRef.current)
     }
   }, [enabled, minInterval])
 }

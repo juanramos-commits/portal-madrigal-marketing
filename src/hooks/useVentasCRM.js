@@ -701,14 +701,14 @@ export function useVentasCRM() {
 
   // ── Reload ─────────────────────────────────────────────────────────
   const refrescar = useCallback(() => {
-    // FIX: skip if initial load is still in progress (prevents double-load race)
-    if (initialLoadRef.current) return
+    // Skip if initial load or another load is in progress
+    if (initialLoadRef.current || loading) return
     if (vista === 'kanban') {
       cargarLeads()
     } else {
       cargarLeadsTabla()
     }
-  }, [vista, cargarLeads, cargarLeadsTabla])
+  }, [vista, loading, cargarLeads, cargarLeadsTabla])
 
   // ── Venta popup state ──────────────────────────────────────────────
   const [leadParaVenta, setLeadParaVenta] = useState(null)
