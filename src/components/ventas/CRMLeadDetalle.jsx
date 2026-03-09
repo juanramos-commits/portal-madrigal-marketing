@@ -19,7 +19,9 @@ import '../../styles/ventas-crm.css'
 
 function formatDateTime(d) {
   if (!d) return '-'
-  return new Date(d).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+  const parsed = new Date(d)
+  if (isNaN(parsed.getTime())) return '-'
+  return parsed.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 function formatRelative(d) {

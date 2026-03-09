@@ -1,5 +1,8 @@
 import { supabase } from './supabase'
 
+// Escape SQL LIKE wildcards to prevent pattern injection
+function escSearch(s) { return s.replace(/[%_\\]/g, c => '\\' + c) }
+
 // === DOMAINS ===
 export async function getDomains() {
   return supabase.from('ventas_co_domains').select('*').order('created_at').limit(100)
@@ -93,7 +96,7 @@ export async function getListStats(id) {
 export async function getContacts({ listId, search = '', status = '', page = 0, limit = 50 } = {}) {
   let query = supabase.from('ventas_co_contacts').select('*', { count: 'exact' })
   if (listId) query = query.eq('list_id', listId)
-  if (search) query = query.or(`email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,company.ilike.%${search}%`)
+  if (search) { const s = escSearch(search); query = query.or(`email.ilike.%${s}%,first_name.ilike.%${s}%,last_name.ilike.%${s}%,company.ilike.%${s}%`) }
   if (status) query = query.eq('status', status)
   query = query.order('created_at', { ascending: false }).range(page * limit, (page + 1) * limit - 1)
   return query
@@ -139,7 +142,7 @@ export async function getContactStats() {
 export async function getCampaigns({ status = '', search = '', page = 0, limit = 20 } = {}) {
   let query = supabase.from('ventas_co_campaigns').select('*', { count: 'exact' }).order('created_at', { ascending: false })
   if (status) query = query.eq('status', status)
-  if (search) query = query.ilike('name', `%${search}%`)
+  if (search) query = query.ilike('name', `%${escSearch(search)}%`)
   query = query.range(page * limit, (page + 1) * limit - 1)
   return query
 }
@@ -249,7 +252,7 @@ export async function markReplyActioned(id, userId) {
 // === SUPPRESSIONS ===
 export async function getSuppressions({ search = '', reason = '', page = 0, limit = 50 } = {}) {
   let query = supabase.from('ventas_co_suppressions').select('*', { count: 'exact' })
-  if (search) query = query.ilike('email', `%${search}%`)
+  if (search) query = query.ilike('email', `%${escSearch(search)}%`)
   if (reason) query = query.eq('reason', reason)
   query = query.order('suppressed_at', { ascending: false }).range(page * limit, (page + 1) * limit - 1)
   return query

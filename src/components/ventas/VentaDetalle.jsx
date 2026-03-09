@@ -8,12 +8,16 @@ function formatDate(d) {
     const [y, m, day] = d.split('-')
     return new Date(Number(y), Number(m) - 1, Number(day)).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
   }
-  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
+  const parsed = new Date(d)
+  if (isNaN(parsed.getTime())) return '-'
+  return parsed.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function formatDateTime(d) {
   if (!d) return '-'
-  return new Date(d).toLocaleString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const parsed = new Date(d)
+  if (isNaN(parsed.getTime())) return '-'
+  return parsed.toLocaleString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 function formatImporte(v) {

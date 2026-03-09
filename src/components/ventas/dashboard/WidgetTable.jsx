@@ -3,12 +3,16 @@ import { formatCurrency } from '../../../config/formatters'
 
 function formatDate(d) {
   if (!d) return '-'
-  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+  const parsed = new Date(d)
+  if (isNaN(parsed.getTime())) return '-'
+  return parsed.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
 }
 
 function tiempoRelativo(fecha) {
   if (!fecha) return '-'
-  const diffMs = Date.now() - new Date(fecha).getTime()
+  const parsed = new Date(fecha)
+  if (isNaN(parsed.getTime())) return '-'
+  const diffMs = Date.now() - parsed.getTime()
   const diffMin = Math.floor(diffMs / 60000)
   if (diffMin < 1) return 'Ahora'
   if (diffMin < 60) return `${diffMin}m`
@@ -20,7 +24,9 @@ function tiempoRelativo(fecha) {
 
 function formatDateTime(d) {
   if (!d) return '-'
-  return new Date(d).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const parsed = new Date(d)
+  if (isNaN(parsed.getTime())) return '-'
+  return parsed.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
 const ESTADO_COLORS = {

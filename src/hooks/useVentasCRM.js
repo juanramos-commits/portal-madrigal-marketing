@@ -1289,6 +1289,9 @@ export function useVentasCRM() {
     // Only reload if filtros or vista actually changed (not due to other deps)
     if (prev.filtros === filtros && prev.vista === vista) return
 
+    // Reset pagination when filters change so users don't see empty results
+    if (prev.filtros !== filtros) setTablaPage(0)
+
     if (vista === 'kanban') {
       cargarLeads()
     } else {
@@ -1301,6 +1304,8 @@ export function useVentasCRM() {
     if (busquedaTimeoutRef.current) clearTimeout(busquedaTimeoutRef.current)
     busquedaTimeoutRef.current = setTimeout(() => {
       if (!pipelineActivo || etapas.length === 0) return
+      // Reset pagination when search changes
+      setTablaPage(0)
       if (busqueda.trim()) {
         buscarLeads(busqueda)
       } else {

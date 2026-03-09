@@ -56,7 +56,7 @@ export default function AuditLog() {
 
       if (filtroCategoria) query = query.eq('categoria', filtroCategoria)
       if (filtroAccion) query = query.eq('accion', filtroAccion)
-      if (filtroUsuario) query = query.or(`usuario_email.ilike.%${filtroUsuario}%,usuario_nombre.ilike.%${filtroUsuario}%`)
+      if (filtroUsuario) { const s = filtroUsuario.replace(/[%_\\]/g, c => '\\' + c); query = query.or(`usuario_email.ilike.%${s}%,usuario_nombre.ilike.%${s}%`) }
       if (filtroFechaDesde) query = query.gte('created_at', filtroFechaDesde + 'T00:00:00')
       if (filtroFechaHasta) query = query.lte('created_at', filtroFechaHasta + 'T23:59:59')
 

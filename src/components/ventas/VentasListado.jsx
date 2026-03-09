@@ -11,7 +11,9 @@ function formatDate(d) {
     const [y, m, day] = d.split('-')
     return `${day}/${m}/${y.slice(2)}`
   }
-  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
+  const parsed = new Date(d)
+  if (isNaN(parsed.getTime())) return '-'
+  return parsed.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
 function formatImporte(v) {

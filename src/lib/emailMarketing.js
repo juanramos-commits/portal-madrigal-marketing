@@ -1,9 +1,12 @@
 import { supabase } from './supabase'
 
+// Escape SQL LIKE wildcards to prevent pattern injection
+function escSearch(s) { return s.replace(/[%_\\]/g, c => '\\' + c) }
+
 // === CONTACTS ===
 export async function getEmailContacts({ page = 0, pageSize = 50, search = '', status = '', sortBy = 'created_at', sortDir = 'desc' } = {}) {
   let query = supabase.from('ventas_em_contacts').select('*, lead:ventas_leads(nombre, email, telefono, nombre_negocio, fuente, tags)', { count: 'exact' })
-  if (search) query = query.or(`nombre.ilike.%${search}%,email.ilike.%${search}%,empresa.ilike.%${search}%`)
+  if (search) { const s = escSearch(search); query = query.or(`nombre.ilike.%${s}%,email.ilike.%${s}%,empresa.ilike.%${s}%`) }
   if (status) query = query.eq('status', status)
   query = query.order(sortBy, { ascending: sortDir === 'asc' }).range(page * pageSize, (page + 1) * pageSize - 1)
   return query
@@ -63,7 +66,7 @@ export async function getContactStats() {
 // === CAMPAIGNS ===
 export async function getEmailCampaigns({ page = 0, pageSize = 20, search = '', status = '' } = {}) {
   let query = supabase.from('ventas_em_campaigns').select('*, template:ventas_em_templates(name), segment:ventas_em_segments(name)', { count: 'exact' })
-  if (search) query = query.ilike('name', `%${search}%`)
+  if (search) query = query.ilike('name', `%${escSearch(search)}%`)
   if (status) query = query.eq('status', status)
   query = query.order('created_at', { ascending: false }).range(page * pageSize, (page + 1) * pageSize - 1)
   return query
@@ -113,7 +116,7 @@ export async function getABResults(campaignId) {
 // === TEMPLATES ===
 export async function getEmailTemplates({ search = '', category = '' } = {}) {
   let query = supabase.from('ventas_em_templates').select('*').order('created_at', { ascending: false }).limit(200)
-  if (search) query = query.ilike('name', `%${search}%`)
+  if (search) query = query.ilike('name', `%${escSearch(search)}%`)
   if (category) query = query.eq('category', category)
   return query
 }

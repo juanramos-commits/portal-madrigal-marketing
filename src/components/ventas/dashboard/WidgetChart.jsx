@@ -4,7 +4,9 @@ import { formatCurrency } from '../../../config/formatters'
 
 function formatDate(d) {
   if (!d) return ''
-  return new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+  const parsed = new Date(d)
+  if (isNaN(parsed.getTime())) return ''
+  return parsed.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
 }
 
 function CustomTooltip({ active, payload, label }) {
