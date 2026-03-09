@@ -58,6 +58,18 @@ const EmailAnalytics = lazy(() => import('./pages/ventas/EmailAnalytics'))
 const EmailSettings = lazy(() => import('./pages/ventas/EmailSettings'))
 const EmailPreferences = lazy(() => import('./components/ventas/email/PreferencesForm'))
 
+// Páginas de Outreach
+const OutreachDashboard = lazy(() => import('./pages/ventas/OutreachDashboard'))
+const OutreachDomains = lazy(() => import('./pages/ventas/OutreachDomains'))
+const OutreachInboxes = lazy(() => import('./pages/ventas/OutreachInboxes'))
+const OutreachLists = lazy(() => import('./pages/ventas/OutreachLists'))
+const OutreachListDetail = lazy(() => import('./pages/ventas/OutreachListDetail'))
+const OutreachCampaigns = lazy(() => import('./pages/ventas/OutreachCampaigns'))
+const OutreachCampaignEditor = lazy(() => import('./pages/ventas/OutreachCampaignEditor'))
+const OutreachReplies = lazy(() => import('./pages/ventas/OutreachReplies'))
+const OutreachAnalytics = lazy(() => import('./pages/ventas/OutreachAnalytics'))
+const OutreachSettings = lazy(() => import('./pages/ventas/OutreachSettings'))
+
 // Páginas generales
 const Notificaciones = lazy(() => import('./pages/Notificaciones'))
 const CRM = lazy(() => import('./pages/CRM'))
@@ -151,6 +163,16 @@ function App() {
             <Route path="ventas/email/automaciones" element={<PermissionRoute permiso="ventas.email.automaciones.ver"><EmailAutomations /></PermissionRoute>} />
             <Route path="ventas/email/analytics" element={<PermissionRoute permiso="ventas.email.analytics.ver"><EmailAnalytics /></PermissionRoute>} />
             <Route path="ventas/email/ajustes" element={<PermissionRoute permiso="ventas.email.ajustes.ver"><EmailSettings /></PermissionRoute>} />
+            <Route path="/ventas/outreach" element={<PermissionRoute permiso="ventas.outreach.ver"><OutreachDashboard /></PermissionRoute>} />
+            <Route path="/ventas/outreach/dominios" element={<PermissionRoute permiso="ventas.outreach.dominios.ver"><OutreachDomains /></PermissionRoute>} />
+            <Route path="/ventas/outreach/inboxes" element={<PermissionRoute permiso="ventas.outreach.inboxes.ver"><OutreachInboxes /></PermissionRoute>} />
+            <Route path="/ventas/outreach/listas" element={<PermissionRoute permiso="ventas.outreach.listas.ver"><OutreachLists /></PermissionRoute>} />
+            <Route path="/ventas/outreach/listas/:id" element={<PermissionRoute permiso="ventas.outreach.listas.ver"><OutreachListDetail /></PermissionRoute>} />
+            <Route path="/ventas/outreach/campanas" element={<PermissionRoute permiso="ventas.outreach.campanas.ver"><OutreachCampaigns /></PermissionRoute>} />
+            <Route path="/ventas/outreach/campanas/:id" element={<PermissionRoute permiso="ventas.outreach.campanas.crear"><OutreachCampaignEditor /></PermissionRoute>} />
+            <Route path="/ventas/outreach/respuestas" element={<PermissionRoute permiso="ventas.outreach.respuestas.ver"><OutreachReplies /></PermissionRoute>} />
+            <Route path="/ventas/outreach/analytics" element={<PermissionRoute permiso="ventas.outreach.analytics.ver"><OutreachAnalytics /></PermissionRoute>} />
+            <Route path="/ventas/outreach/ajustes" element={<PermissionRoute permiso="ventas.outreach.ajustes.ver"><OutreachSettings /></PermissionRoute>} />
 
             {/* Generales */}
             <Route path="notificaciones" element={<Notificaciones />} />

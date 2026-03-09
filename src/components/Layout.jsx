@@ -342,6 +342,7 @@ export default function Layout() {
       { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar, permiso: 'ventas.calendario.ver' },
       { name: 'Enlaces', href: '/ventas/enlaces', icon: Icons.Link2, permiso: 'ventas.enlaces.ver' },
       { name: 'Email Marketing', href: '/ventas/email', icon: Icons.Mail, permiso: 'ventas.email.ver' },
+      { name: 'Cold Outreach', href: '/ventas/outreach', icon: Icons.Target, permiso: 'ventas.outreach.ver' },
       { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ajustes.ver' },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [

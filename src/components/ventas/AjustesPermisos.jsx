@@ -14,6 +14,7 @@ const MODULO_LABELS = {
   ventas_enlaces: 'Enlaces de agenda',
   ventas_notificaciones: 'Notificaciones',
   ventas_email: 'Email Marketing',
+  ventas_outreach: 'Cold Outreach',
   ventas_ajustes: 'Ajustes',
 }
 
