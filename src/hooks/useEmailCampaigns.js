@@ -95,6 +95,7 @@ export function useEmailCampaigns() {
   }, [])
 
   useEffect(() => { cargar(true) }, [search, statusFilter])
+  useEffect(() => { cargar(false) }, [page])
 
   return {
     campaigns, loading, error, page, total, search, statusFilter,
@@ -103,7 +104,7 @@ export function useEmailCampaigns() {
     cargar, crear, actualizar, eliminar,
     preparar, iniciar, pausar, reanudar, cancelar,
     obtenerResultadosAB,
-    paginaSiguiente: () => { setPage(p => p + 1); cargar(false) },
-    paginaAnterior: () => { setPage(p => Math.max(0, p - 1)); cargar(false) },
+    paginaSiguiente: () => { setPage(p => p + 1) },
+    paginaAnterior: () => { setPage(p => Math.max(0, p - 1)) },
   }
 }

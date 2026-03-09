@@ -1256,6 +1256,464 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   SEARCH INPUT
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-search-input {
+  width: 100%;
+  max-width: 320px;
+  padding: var(--space-sm) var(--space-3);
+  padding-left: var(--space-xl);
+  font-size: var(--font-sm);
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24' stroke='%23666' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: var(--space-sm) center;
+  transition: border-color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ve-search-input:focus {
+  border-color: var(--border-focus);
+  background-color: var(--bg-input-focus);
+  box-shadow: var(--focus-ring);
+}
+
+.ve-search-input::placeholder {
+  color: var(--text-placeholder);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TABLE WRAPPER & ROWS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-table-wrapper {
+  overflow-x: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.ve-table-row--clickable {
+  cursor: pointer;
+}
+
+.ve-table-row--clickable:hover {
+  background: var(--bg-hover);
+}
+
+.ve-table-row--expanded {
+  background: var(--bg-subtle);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BADGE COLOR VARIANTS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-badge--gray {
+  background: var(--bg-badge);
+  color: var(--text-muted);
+}
+
+.ve-badge--blue {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+.ve-badge--green {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.ve-badge--yellow {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.ve-badge--red {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ACTIONS ROW
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.ve-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-md);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   BUTTON WARNING VARIANT
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-btn--warning {
+  background: var(--warning);
+  color: #000;
+  border-color: var(--warning);
+}
+
+.ve-btn--warning:hover {
+  opacity: 0.9;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   EDITOR LAYOUT (Campaign Editor, Template Editor)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-editor-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--space-lg);
+  flex: 1;
+  min-height: 0;
+}
+
+.ve-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  overflow-y: auto;
+}
+
+.ve-editor-preview {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  max-height: calc(100vh - 120px);
+}
+
+.ve-label {
+  font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-muted);
+  margin-bottom: var(--space-2xs);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CARD GRID & CARD VARIANTS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-md);
+}
+
+.ve-card--clickable {
+  cursor: pointer;
+}
+
+.ve-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.ve-card-title {
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  margin: 0;
+}
+
+.ve-card-meta {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.ve-card-preview {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-xs);
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+  max-height: 80px;
+  overflow: hidden;
+}
+
+.ve-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MODAL PARTS
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-modal--lg {
+  max-width: 800px;
+}
+
+.ve-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.ve-modal-header h2 {
+  margin: 0;
+}
+
+.ve-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  font-size: var(--font-lg);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.ve-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.ve-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.ve-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   STATS BAR (Contacts page)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.ve-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONTACT DETAIL (Expandable row)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-contact-detail {
+  padding: var(--space-md) var(--space-lg);
+  background: var(--bg-subtle);
+  border-top: 1px solid var(--border);
+}
+
+.ve-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PAGINATION
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) 0;
+}
+
+.ve-pagination-info {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LIST (Segments, Automations)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.ve-list-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.ve-list-item:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--border-hover);
+}
+
+.ve-list-item--clickable {
+  cursor: pointer;
+}
+
+.ve-list-item--active {
+  border-color: var(--success);
+  box-shadow: 0 0 0 1px var(--success);
+}
+
+.ve-list-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.ve-list-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.ve-list-item-title {
+  font-size: var(--font-md);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+  margin: 0;
+}
+
+.ve-list-item-desc {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+  line-height: var(--leading-relaxed);
+}
+
+.ve-list-item-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
+
+.ve-list-item-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PREVIEW SECTION (Segments)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-preview-section {
+  padding: var(--space-md);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.ve-preview-count {
+  font-size: var(--font-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--success);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   EXPANDED CONTENT (Automations)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-expanded-content {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TAB ACTIVE VARIANT & TAB CONTENT
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-tab--active {
+  color: var(--text);
+  background: var(--bg-active);
+  font-weight: var(--weight-semibold);
+}
+
+.ve-tab-content {
+  margin-top: var(--space-lg);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ANALYTICS SECTION
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-analytics-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FORM GRID (Settings)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.ve-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-md);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    RESPONSIVE
    ══════════════════════════════════════════════════════════════════════════ */
 
@@ -1332,5 +1790,48 @@
   .ve-segment-condition .ve-select,
   .ve-segment-condition .ve-input {
     min-width: 0;
+  }
+
+  .ve-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ve-editor-preview {
+    position: static;
+    max-height: none;
+  }
+
+  .ve-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ve-stats-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ve-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ve-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ve-list-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ve-modal--lg {
+    max-width: 100%;
+  }
+
+  .ve-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ve-quick-links {
+    flex-direction: column;
   }
 }

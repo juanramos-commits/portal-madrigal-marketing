@@ -255,7 +255,7 @@ export default function EmailCampaignEditor() {
             <div className="ve-section">
               <h2 className="ve-section-title">Estadísticas</h2>
               <CampaignStatsCard campaign={campaign} />
-              <FunnelChart campaignId={campaign.id} />
+              <FunnelChart data={campaign.funnel_data} />
             </div>
           )}
         </div>

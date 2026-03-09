@@ -25,12 +25,12 @@ export default function EmailDashboard() {
   const loading = statsLoading || settingsLoading
 
   const kpis = [
-    { label: 'Contactos totales', value: dashboardStats?.total_contacts ?? 0, format: 'number' },
-    { label: 'Campañas activas', value: dashboardStats?.active_campaigns ?? 0, format: 'number' },
-    { label: 'Emails enviados', value: dashboardStats?.emails_sent ?? 0, format: 'number' },
-    { label: 'Tasa de apertura', value: dashboardStats?.open_rate ?? 0, format: 'percent' },
-    { label: 'Tasa de click', value: dashboardStats?.click_rate ?? 0, format: 'percent' },
-    { label: 'Conversiones', value: dashboardStats?.conversions ?? 0, format: 'number' },
+    { label: 'Contactos totales', value: dashboardStats?.totalContacts ?? 0, format: 'number' },
+    { label: 'Campañas activas', value: dashboardStats?.activeCampaigns ?? 0, format: 'number' },
+    { label: 'Emails enviados', value: dashboardStats?.totalSent ?? 0, format: 'number' },
+    { label: 'Tasa de apertura', value: dashboardStats?.openRate ?? 0, format: 'percent' },
+    { label: 'Tasa de click', value: dashboardStats?.clickRate ?? 0, format: 'percent' },
+    { label: 'Conversiones', value: dashboardStats?.totalConverted ?? 0, format: 'number' },
   ]
 
   const warmupTotalDays = Number(settings?.warmup_days) || 42

@@ -82,7 +82,7 @@ export default function EmailSegments() {
   const handlePreview = async () => {
     try {
       const { data } = await preview(editingSegment === 'nuevo' ? null : editingSegment)
-      setPreviewCount(data)
+      setPreviewCount(data?.count ?? data)
     } catch (err) {
       showToast(err.message || 'Error al previsualizar', 'error')
     }

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import React, { useMemo } from 'react'
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
@@ -50,8 +50,8 @@ export default function OpenHeatmap({ data }) {
 
       {/* Data rows */}
       {(hasDay ? DAYS : ['']).map((dayLabel, dayIdx) => (
-        <>
-          <div key={`day-${dayIdx}`} className="ve-heatmap-label">
+        <React.Fragment key={`row-${dayIdx}`}>
+          <div className="ve-heatmap-label">
             {dayLabel}
           </div>
           {HOURS.map(h => {
@@ -68,7 +68,7 @@ export default function OpenHeatmap({ data }) {
               />
             )
           })}
-        </>
+        </React.Fragment>
       ))}
     </div>
   )

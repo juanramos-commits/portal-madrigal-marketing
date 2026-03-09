@@ -25,30 +25,38 @@ export function useEmailAnalytics() {
   }, [])
 
   const cargarFunnel = useCallback(async (campaignId) => {
+    setLoading(true)
     const { data, error: err } = await getFunnelData(campaignId)
-    if (err) return { error: err }
+    if (err) { setLoading(false); return { error: err } }
     setFunnelData(data)
+    setLoading(false)
     return { data }
   }, [])
 
   const cargarCohort = useCallback(async (days = 90) => {
+    setLoading(true)
     const { data, error: err } = await getCohortData(days)
-    if (err) return { error: err }
+    if (err) { setLoading(false); return { error: err } }
     setCohortData(data)
+    setLoading(false)
     return { data }
   }, [])
 
   const cargarHeatmap = useCallback(async () => {
+    setLoading(true)
     const { data, error: err } = await getOpenHeatmap()
-    if (err) return { error: err }
+    if (err) { setLoading(false); return { error: err } }
     setHeatmapData(data)
+    setLoading(false)
     return { data }
   }, [])
 
   const cargarReputacion = useCallback(async (days = 30) => {
+    setLoading(true)
     const { data, error: err } = await getReputationLogs(days)
-    if (err) return { error: err }
+    if (err) { setLoading(false); return { error: err } }
     setReputationLogs(data || [])
+    setLoading(false)
     return { data }
   }, [])
 

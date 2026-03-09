@@ -116,7 +116,7 @@ export default function TemplateBlockEditor({ blocks = [], onChange, availableBl
 
             {block.type === 'divider' ? (
               <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: 'var(--space-sm) 0' }} />
-            ) : (
+            ) : block.type === 'image' ? null : (
               <textarea
                 className="ve-block-content"
                 value={block.content}

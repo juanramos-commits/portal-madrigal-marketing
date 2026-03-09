@@ -53,6 +53,7 @@ export function useEmailContacts() {
   }, [])
 
   useEffect(() => { cargar(true) }, [search, statusFilter])
+  useEffect(() => { cargar(false) }, [page])
   useEffect(() => { cargarStats() }, [])
 
   return {
@@ -60,7 +61,7 @@ export function useEmailContacts() {
     hayMas: (page + 1) * PAGE_SIZE < total,
     setSearch, setStatusFilter,
     setPage, cargar, cargarStats, actualizar, eliminar,
-    paginaSiguiente: () => { setPage(p => p + 1); cargar(false) },
-    paginaAnterior: () => { setPage(p => Math.max(0, p - 1)); cargar(false) },
+    paginaSiguiente: () => { setPage(p => p + 1) },
+    paginaAnterior: () => { setPage(p => Math.max(0, p - 1)) },
   }
 }

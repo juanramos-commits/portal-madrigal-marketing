@@ -72,9 +72,9 @@ export default function EmailCampaigns() {
         return
       }
       if (action === 'prepare') await preparar(campaign.id)
-      if (action === 'send') await iniciar(campaign.id)
-      if (action === 'pause') await pausar(campaign.id)
-      if (action === 'cancel') await cancelar(campaign.id)
+      else if (action === 'send') await iniciar(campaign.id)
+      else if (action === 'pause') await pausar(campaign.id)
+      else if (action === 'cancel') await cancelar(campaign.id)
       showToast('Acción ejecutada correctamente', 'success')
       cargar()
     } catch (err) {

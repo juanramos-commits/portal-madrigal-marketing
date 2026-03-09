@@ -84,11 +84,11 @@ export default function EmailContacts() {
           </div>
           <div className="ve-stat-item">
             <span className="ve-stat-label">Engagement prom.</span>
-            <span className="ve-stat-value">{stats.avg_engagement?.toFixed(1) ?? '—'}</span>
+            <span className="ve-stat-value">{stats.avgEngagement?.toFixed(1) ?? '—'}</span>
           </div>
           <div className="ve-stat-item">
             <span className="ve-stat-label">Lead Score prom.</span>
-            <span className="ve-stat-value">{stats.avg_lead_score?.toFixed(1) ?? '—'}</span>
+            <span className="ve-stat-value">{stats.avgLeadScore?.toFixed(1) ?? '—'}</span>
           </div>
         </div>
       )}
