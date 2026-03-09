@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useEmailSettings } from '../../hooks/useEmailSettings'
+import { getWarmupSchedule } from '../../lib/emailMarketing'
 import '../../styles/ventas-email.css'
 
 export default function EmailSettings() {
@@ -9,13 +10,12 @@ export default function EmailSettings() {
   const { showToast } = useToast()
   const {
     settings,
-    warmupSchedule,
     loading,
-    loadSettings,
-    saveSettings,
-    getWarmupSchedule,
+    cargar,
+    actualizar,
   } = useEmailSettings()
 
+  const [warmupSchedule, setWarmupSchedule] = useState(null)
   const [form, setForm] = useState({
     from_name: '',
     from_email: '',
@@ -30,9 +30,11 @@ export default function EmailSettings() {
   })
 
   useEffect(() => {
-    loadSettings()
-    getWarmupSchedule()
-  }, [loadSettings, getWarmupSchedule])
+    cargar()
+    getWarmupSchedule().then(({ data }) => {
+      if (data) setWarmupSchedule(data)
+    })
+  }, [cargar])
 
   useEffect(() => {
     if (settings) {
@@ -67,7 +69,11 @@ export default function EmailSettings() {
 
   const handleSave = async () => {
     try {
-      await saveSettings(form)
+      const entries = Object.entries(form)
+      for (const [key, value] of entries) {
+        const result = await actualizar(key, value)
+        if (result?.error) throw result.error
+      }
       showToast('Ajustes guardados correctamente', 'success')
     } catch (err) {
       showToast(err.message || 'Error al guardar los ajustes', 'error')

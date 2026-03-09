@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useEmailContacts } from '../../hooks/useEmailContacts'
 import EngagementBadge from '../../components/ventas/email/EngagementBadge'
@@ -24,6 +24,8 @@ const STATUS_COLORS = {
   bounced: 've-badge--red',
 }
 
+const PAGE_SIZE = 50
+
 export default function EmailContacts() {
   const { tienePermiso } = useAuth()
   const {
@@ -31,19 +33,18 @@ export default function EmailContacts() {
     stats,
     loading,
     page,
-    totalPages,
-    loadContacts,
+    total,
+    hayMas,
+    setSearch,
+    setStatusFilter,
     setPage,
-    importContacts,
+    paginaSiguiente,
+    paginaAnterior,
   } = useEmailContacts()
 
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [searchInput, setSearchInput] = useState('')
+  const [statusInput, setStatusInput] = useState('')
   const [expandedContact, setExpandedContact] = useState(null)
-
-  useEffect(() => {
-    loadContacts({ search, status: statusFilter, page })
-  }, [loadContacts, search, statusFilter, page])
 
   if (!tienePermiso('ventas.email.contactos.ver')) {
     return (
@@ -53,25 +54,13 @@ export default function EmailContacts() {
     )
   }
 
-  const handleImport = () => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.csv,.xlsx'
-    input.onchange = (e) => {
-      if (e.target.files?.[0]) importContacts(e.target.files[0])
-    }
-    input.click()
-  }
+  const totalPages = Math.ceil(total / PAGE_SIZE)
+  const currentPage = page + 1
 
   return (
     <div className="ve-page">
       <div className="ve-header">
         <h1>Contactos</h1>
-        {tienePermiso('ventas.email.contactos.importar') && (
-          <button className="ve-btn ve-btn--primary" onClick={handleImport}>
-            Importar
-          </button>
-        )}
       </div>
 
       {/* Stats Bar */}
@@ -110,13 +99,13 @@ export default function EmailContacts() {
           type="text"
           className="ve-search-input"
           placeholder="Buscar contactos..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          value={searchInput}
+          onChange={(e) => { setSearchInput(e.target.value); setSearch(e.target.value) }}
         />
         <select
           className="ve-select"
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
+          value={statusInput}
+          onChange={(e) => { setStatusInput(e.target.value); setStatusFilter(e.target.value) }}
         >
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -201,18 +190,18 @@ export default function EmailContacts() {
             <div className="ve-pagination">
               <button
                 className="ve-btn ve-btn--sm"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
+                disabled={page <= 0}
+                onClick={() => paginaAnterior()}
               >
                 Anterior
               </button>
               <span className="ve-pagination-info">
-                Página {page} de {totalPages}
+                Página {currentPage} de {totalPages}
               </span>
               <button
                 className="ve-btn ve-btn--sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
+                disabled={!hayMas}
+                onClick={() => paginaSiguiente()}
               >
                 Siguiente
               </button>

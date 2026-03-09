@@ -23,10 +23,12 @@ export default function EmailAutomations() {
   const {
     automations,
     loading,
-    loadAutomations,
-    saveAutomation,
-    toggleAutomation,
-    deleteAutomation,
+    cargar,
+    crear,
+    actualizar,
+    eliminar,
+    activar,
+    desactivar,
   } = useEmailAutomations()
 
   const [expandedId, setExpandedId] = useState(null)
@@ -34,8 +36,8 @@ export default function EmailAutomations() {
   const [form, setForm] = useState({ name: '', trigger_type: '', steps: [] })
 
   useEffect(() => {
-    loadAutomations()
-  }, [loadAutomations])
+    cargar()
+  }, [cargar])
 
   if (!tienePermiso('ventas.email.automaciones.ver')) {
     return (
@@ -64,10 +66,14 @@ export default function EmailAutomations() {
   const handleSave = async () => {
     try {
       const id = editingId === 'nuevo' ? null : editingId
-      await saveAutomation(id, form)
+      if (id) {
+        await actualizar(id, form)
+      } else {
+        await crear(form)
+      }
       showToast('Automatización guardada', 'success')
       closeEditor()
-      loadAutomations()
+      cargar()
     } catch (err) {
       showToast(err.message || 'Error al guardar', 'error')
     }
@@ -76,12 +82,14 @@ export default function EmailAutomations() {
   const handleToggle = async (e, automation) => {
     e.stopPropagation()
     try {
-      await toggleAutomation(automation.id, automation.status !== 'active')
-      showToast(
-        automation.status === 'active' ? 'Automatización pausada' : 'Automatización activada',
-        'success'
-      )
-      loadAutomations()
+      if (automation.status === 'active') {
+        await desactivar(automation.id)
+        showToast('Automatización pausada', 'success')
+      } else {
+        await activar(automation.id)
+        showToast('Automatización activada', 'success')
+      }
+      cargar()
     } catch (err) {
       showToast(err.message || 'Error al cambiar estado', 'error')
     }
@@ -91,9 +99,9 @@ export default function EmailAutomations() {
     e.stopPropagation()
     if (!window.confirm(`¿Eliminar "${automation.name}"?`)) return
     try {
-      await deleteAutomation(automation.id)
+      await eliminar(automation.id)
       showToast('Automatización eliminada', 'success')
-      loadAutomations()
+      cargar()
     } catch (err) {
       showToast(err.message || 'Error al eliminar', 'error')
     }

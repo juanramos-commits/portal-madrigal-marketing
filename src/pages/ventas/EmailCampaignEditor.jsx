@@ -5,6 +5,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { useEmailCampaigns } from '../../hooks/useEmailCampaigns'
 import { useEmailTemplates } from '../../hooks/useEmailTemplates'
 import { useEmailSegments } from '../../hooks/useEmailSegments'
+import { getEmailCampaign } from '../../lib/emailMarketing'
 import ABTestPanel from '../../components/ventas/email/ABTestPanel'
 import TemplatePreview from '../../components/ventas/email/TemplatePreview'
 import CampaignStatsCard from '../../components/ventas/email/CampaignStatsCard'
@@ -17,20 +18,21 @@ export default function EmailCampaignEditor() {
   const { tienePermiso } = useAuth()
   const { showToast } = useToast()
   const {
-    campaign,
-    loading,
-    loadCampaign,
-    saveCampaign,
-    prepareCampaign,
-    startCampaign,
-    pauseCampaign,
-    cancelCampaign,
+    crear,
+    actualizar,
+    preparar,
+    iniciar,
+    pausar,
+    cancelar,
+    obtenerResultadosAB,
   } = useEmailCampaigns()
-  const { templates, loadTemplates } = useEmailTemplates()
-  const { segments, loadSegments } = useEmailSegments()
+  const { templates, cargar: cargarTemplates } = useEmailTemplates()
+  const { segments, cargar: cargarSegments } = useEmailSegments()
 
   const isNew = id === 'nuevo'
 
+  const [campaign, setCampaign] = useState(null)
+  const [loading, setLoading] = useState(!isNew)
   const [form, setForm] = useState({
     name: '',
     subject: '',
@@ -42,11 +44,18 @@ export default function EmailCampaignEditor() {
     ab_duration_hours: 4,
   })
 
+  const loadCampaign = useCallback(async (campaignId) => {
+    setLoading(true)
+    const { data, error } = await getEmailCampaign(campaignId)
+    if (!error && data) setCampaign(data)
+    setLoading(false)
+  }, [])
+
   useEffect(() => {
-    loadTemplates()
-    loadSegments()
+    cargarTemplates()
+    cargarSegments()
     if (!isNew) loadCampaign(id)
-  }, [id, isNew, loadCampaign, loadTemplates, loadSegments])
+  }, [id, isNew, loadCampaign, cargarTemplates, cargarSegments])
 
   useEffect(() => {
     if (campaign && !isNew) {
@@ -77,7 +86,11 @@ export default function EmailCampaignEditor() {
 
   const handleSave = async () => {
     try {
-      await saveCampaign(isNew ? null : id, form)
+      if (isNew) {
+        await crear(form)
+      } else {
+        await actualizar(id, form)
+      }
       showToast('Campaña guardada correctamente', 'success')
       if (isNew) navigate('/ventas/email/campanas')
     } catch (err) {
@@ -87,7 +100,7 @@ export default function EmailCampaignEditor() {
 
   const handlePrepare = async () => {
     try {
-      await prepareCampaign(id)
+      await preparar(id)
       showToast('Campaña preparada', 'success')
       loadCampaign(id)
     } catch (err) {
@@ -97,7 +110,7 @@ export default function EmailCampaignEditor() {
 
   const handleSend = async () => {
     try {
-      await startCampaign(id)
+      await iniciar(id)
       showToast('Campaña iniciada', 'success')
       loadCampaign(id)
     } catch (err) {
@@ -107,7 +120,7 @@ export default function EmailCampaignEditor() {
 
   const handlePause = async () => {
     try {
-      await pauseCampaign(id)
+      await pausar(id)
       showToast('Campaña pausada', 'success')
       loadCampaign(id)
     } catch (err) {
@@ -117,7 +130,7 @@ export default function EmailCampaignEditor() {
 
   const handleCancel = async () => {
     try {
-      await cancelCampaign(id)
+      await cancelar(id)
       showToast('Campaña cancelada', 'success')
       loadCampaign(id)
     } catch (err) {
@@ -202,14 +215,12 @@ export default function EmailCampaignEditor() {
 
           {/* A/B Testing */}
           <ABTestPanel
-            enabled={form.ab_testing}
-            onToggle={(val) => handleChange('ab_testing', val)}
+            campaign={{
+              ab_enabled: form.ab_testing,
+              ab_test_size: form.ab_test_size,
+              ab_duration: `${form.ab_duration_hours}h`,
+            }}
             variants={form.ab_variants}
-            onVariantsChange={(val) => handleChange('ab_variants', val)}
-            testSize={form.ab_test_size}
-            onTestSizeChange={(val) => handleChange('ab_test_size', val)}
-            duration={form.ab_duration_hours}
-            onDurationChange={(val) => handleChange('ab_duration_hours', val)}
           />
 
           {/* Action Buttons */}
@@ -235,7 +246,7 @@ export default function EmailCampaignEditor() {
           {selectedTemplate && (
             <div className="ve-section">
               <h2 className="ve-section-title">Vista previa</h2>
-              <TemplatePreview template={selectedTemplate} />
+              <TemplatePreview blocks={selectedTemplate.blocks} subject={selectedTemplate.subject} />
             </div>
           )}
 

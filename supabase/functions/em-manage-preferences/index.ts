@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         email: contact?.email || null,
         nombre: contact?.nombre || null,
         categories: preferences?.categories || [],
-        frequency: preferences?.frequency || 'normal',
+        frequency: preferences?.frequency || 'weekly',
         status: contact?.status || 'active',
       })
     }
@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
           {
             contact_id: decoded.contact_id,
             categories: categories || [],
-            frequency: frequency || 'normal',
+            frequency: frequency || 'weekly',
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'contact_id' },
@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
               {
                 email: contact.email,
                 reason: 'unsubscribed',
-                created_at: new Date().toISOString(),
+                suppressed_at: new Date().toISOString(),
               },
               { onConflict: 'email' },
             )

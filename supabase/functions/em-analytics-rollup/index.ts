@@ -140,8 +140,6 @@ Deno.serve(async (req) => {
             date: today,
             provider,
             ...stats,
-            bounce_rate: Math.round(bounceRate * 10000) / 100,
-            complaint_rate: Math.round(complaintRate * 10000) / 100,
             health_status: healthStatus,
           },
           { onConflict: 'date,provider' },

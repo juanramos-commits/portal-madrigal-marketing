@@ -157,8 +157,7 @@ Deno.serve(async (req) => {
 
       const aiCampaigns = (campaigns || []).filter((c: Record<string, unknown>) => {
         const subject = (c.subject as string) || ''
-        const config = (c.config || {}) as Record<string, unknown>
-        return subject.startsWith('[AI]') || config.ai_generate_subjects === true
+        return subject.startsWith('[AI]')
       })
 
       let generated = 0

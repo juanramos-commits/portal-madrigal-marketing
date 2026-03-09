@@ -12,10 +12,11 @@ export default function EmailTemplates() {
   const {
     templates,
     loading,
-    loadTemplates,
-    saveTemplate,
-    duplicateTemplate,
-    deleteTemplate,
+    cargar,
+    crear,
+    actualizar,
+    duplicar,
+    eliminar,
   } = useEmailTemplates()
 
   const [search, setSearch] = useState('')
@@ -23,8 +24,8 @@ export default function EmailTemplates() {
   const [form, setForm] = useState({ name: '', subject: '', category: '', blocks: [] })
 
   useEffect(() => {
-    loadTemplates()
-  }, [loadTemplates])
+    cargar()
+  }, [cargar])
 
   if (!tienePermiso('ventas.email.plantillas.ver')) {
     return (
@@ -56,10 +57,14 @@ export default function EmailTemplates() {
   const handleSave = async () => {
     try {
       const id = editingTemplate === 'nuevo' ? null : editingTemplate
-      await saveTemplate(id, form)
+      if (id) {
+        await actualizar(id, form)
+      } else {
+        await crear(form)
+      }
       showToast('Plantilla guardada', 'success')
       closeEditor()
-      loadTemplates()
+      cargar()
     } catch (err) {
       showToast(err.message || 'Error al guardar', 'error')
     }
@@ -68,9 +73,9 @@ export default function EmailTemplates() {
   const handleDuplicate = async (e, template) => {
     e.stopPropagation()
     try {
-      await duplicateTemplate(template.id)
+      await duplicar(template.id)
       showToast('Plantilla duplicada', 'success')
-      loadTemplates()
+      cargar()
     } catch (err) {
       showToast(err.message || 'Error al duplicar', 'error')
     }
@@ -80,9 +85,9 @@ export default function EmailTemplates() {
     e.stopPropagation()
     if (!window.confirm(`¿Eliminar la plantilla "${template.name}"?`)) return
     try {
-      await deleteTemplate(template.id)
+      await eliminar(template.id)
       showToast('Plantilla eliminada', 'success')
-      loadTemplates()
+      cargar()
     } catch (err) {
       showToast(err.message || 'Error al eliminar', 'error')
     }
@@ -134,7 +139,7 @@ export default function EmailTemplates() {
                 <span className="ve-card-meta">{t.blocks?.length ?? 0} bloques</span>
               </div>
               <div className="ve-card-preview">
-                <TemplatePreview template={t} miniature />
+                <TemplatePreview blocks={t.blocks} subject={t.subject} miniature />
               </div>
               <div className="ve-card-actions" onClick={(e) => e.stopPropagation()}>
                 <button className="ve-btn ve-btn--sm" onClick={(e) => { e.stopPropagation(); openEditor(t) }}>Editar</button>
@@ -191,7 +196,7 @@ export default function EmailTemplates() {
                 </div>
                 <div className="ve-editor-preview">
                   <h3 className="ve-section-title">Vista previa</h3>
-                  <TemplatePreview template={form} />
+                  <TemplatePreview blocks={form.blocks} subject={form.subject} />
                 </div>
               </div>
             </div>

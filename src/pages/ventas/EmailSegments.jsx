@@ -11,10 +11,11 @@ export default function EmailSegments() {
   const {
     segments,
     loading,
-    loadSegments,
-    saveSegment,
-    deleteSegment,
-    previewSegment,
+    cargar,
+    crear,
+    actualizar,
+    eliminar,
+    preview,
   } = useEmailSegments()
 
   const [editingSegment, setEditingSegment] = useState(null)
@@ -22,8 +23,8 @@ export default function EmailSegments() {
   const [previewCount, setPreviewCount] = useState(null)
 
   useEffect(() => {
-    loadSegments()
-  }, [loadSegments])
+    cargar()
+  }, [cargar])
 
   if (!tienePermiso('ventas.email.segmentos.ver')) {
     return (
@@ -52,10 +53,14 @@ export default function EmailSegments() {
   const handleSave = async () => {
     try {
       const id = editingSegment === 'nuevo' ? null : editingSegment
-      await saveSegment(id, form)
+      if (id) {
+        await actualizar(id, form)
+      } else {
+        await crear(form)
+      }
       showToast('Segmento guardado', 'success')
       closeEditor()
-      loadSegments()
+      cargar()
     } catch (err) {
       showToast(err.message || 'Error al guardar', 'error')
     }
@@ -66,9 +71,9 @@ export default function EmailSegments() {
     if (segment.is_system) return
     if (!window.confirm(`¿Eliminar el segmento "${segment.name}"?`)) return
     try {
-      await deleteSegment(segment.id)
+      await eliminar(segment.id)
       showToast('Segmento eliminado', 'success')
-      loadSegments()
+      cargar()
     } catch (err) {
       showToast(err.message || 'Error al eliminar', 'error')
     }
@@ -76,8 +81,8 @@ export default function EmailSegments() {
 
   const handlePreview = async () => {
     try {
-      const count = await previewSegment(form.rules)
-      setPreviewCount(count)
+      const { data } = await preview(editingSegment === 'nuevo' ? null : editingSegment)
+      setPreviewCount(data)
     } catch (err) {
       showToast(err.message || 'Error al previsualizar', 'error')
     }

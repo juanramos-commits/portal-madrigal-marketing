@@ -37,19 +37,19 @@ export default function EmailCampaigns() {
   const {
     campaigns,
     loading,
-    loadCampaigns,
-    prepareCampaign,
-    startCampaign,
-    pauseCampaign,
-    cancelCampaign,
+    cargar,
+    preparar,
+    iniciar,
+    pausar,
+    cancelar,
   } = useEmailCampaigns()
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
   useEffect(() => {
-    loadCampaigns()
-  }, [loadCampaigns])
+    cargar()
+  }, [cargar])
 
   if (!tienePermiso('ventas.email.campanas.ver')) {
     return (
@@ -71,12 +71,12 @@ export default function EmailCampaigns() {
         navigate(`/ventas/email/campanas/${campaign.id}`)
         return
       }
-      if (action === 'prepare') await prepareCampaign(campaign.id)
-      if (action === 'send') await startCampaign(campaign.id)
-      if (action === 'pause') await pauseCampaign(campaign.id)
-      if (action === 'cancel') await cancelCampaign(campaign.id)
+      if (action === 'prepare') await preparar(campaign.id)
+      if (action === 'send') await iniciar(campaign.id)
+      if (action === 'pause') await pausar(campaign.id)
+      if (action === 'cancel') await cancelar(campaign.id)
       showToast('Acción ejecutada correctamente', 'success')
-      loadCampaigns()
+      cargar()
     } catch (err) {
       showToast(err.message || 'Error al ejecutar la acción', 'error')
     }

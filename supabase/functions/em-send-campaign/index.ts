@@ -157,7 +157,7 @@ Deno.serve(async (req) => {
           contact_id: contact.id,
           variant_index: variantIndex,
           scheduled_for: scheduledFor,
-          priority: contact.is_seed ? 0 : 1,
+          priority: 1,
           status: 'queued',
         }
       })
@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
           (contacts || []).map((c: { id: string }) => [c.id, c])
         )
 
-        const templateHtml = campaign.template?.html || ''
+        const templateHtml = campaign.template?.html_body || ''
         const fromAddress = campaign.from_email || Deno.env.get('RESEND_FROM_EMAIL') || 'noreply@example.com'
 
         for (const send of claimed) {
@@ -295,10 +295,7 @@ Deno.serve(async (req) => {
               .update({ status: 'failed', error_message: errMsg })
               .eq('id', send.id)
 
-            await supabase
-              .from('ventas_em_campaigns')
-              .update({ total_failed: (campaign.total_failed || 0) + 1 })
-              .eq('id', campaign.id)
+            // Failed send — already marked on the send record above
           }
         }
 
@@ -320,7 +317,10 @@ Deno.serve(async (req) => {
         const variants = campaign.subject_variants as string[] | null
         if (variants && variants.length > 0 && campaign.ab_test_duration && campaign.started_at) {
           const startedAt = new Date(campaign.started_at as string)
-          const durationHours = campaign.ab_test_duration as number
+          // ab_test_duration is an INTERVAL type (e.g. "04:00:00"), parse hours
+          const durationStr = String(campaign.ab_test_duration || '04:00:00')
+          const hoursMatch = durationStr.match(/^(\d+)/)
+          const durationHours = hoursMatch ? parseInt(hoursMatch[1], 10) : 4
           const cutoff = new Date(startedAt.getTime() + durationHours * 60 * 60 * 1000)
 
           if (new Date() >= cutoff) {

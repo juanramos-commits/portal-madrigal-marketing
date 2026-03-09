@@ -111,7 +111,7 @@ Reply ONLY with: {"category": "...", "confidence": 0.0-1.0}`,
       await supabase
         .from('ventas_em_suppressions')
         .upsert(
-          { email: fromEmail, reason: 'reply_unsubscribe', created_at: new Date().toISOString() },
+          { email: fromEmail, reason: 'unsubscribe', source: 'inbound_reply', suppressed_at: new Date().toISOString() },
           { onConflict: 'email' },
         )
 
@@ -135,7 +135,7 @@ Reply ONLY with: {"category": "...", "confidence": 0.0-1.0}`,
     // ── Log to audit ─────────────────────────────────────────────────
     await supabase.from('ventas_em_audit_log').insert({
       action: 'inbound_reply',
-      contact_id: contact?.id || null,
+      entity_id: contact?.id || null,
       details: {
         from: fromEmail,
         subject,
@@ -143,7 +143,7 @@ Reply ONLY with: {"category": "...", "confidence": 0.0-1.0}`,
         confidence,
         body_preview: bodyText.substring(0, 200),
       },
-      created_at: new Date().toISOString(),
+      performed_at: new Date().toISOString(),
     })
 
     return jsonResponse({

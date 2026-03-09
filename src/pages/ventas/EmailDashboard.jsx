@@ -7,12 +7,12 @@ import '../../styles/ventas-email.css'
 
 export default function EmailDashboard() {
   const { tienePermiso } = useAuth()
-  const { dashboardStats, loading: statsLoading, loadDashboardStats } = useEmailAnalytics()
+  const { dashboardStats, loading: statsLoading, cargarDashboard } = useEmailAnalytics()
   const { settings, loading: settingsLoading } = useEmailSettings()
 
   useEffect(() => {
-    loadDashboardStats()
-  }, [loadDashboardStats])
+    cargarDashboard()
+  }, [cargarDashboard])
 
   if (!tienePermiso('ventas.email.ver')) {
     return (

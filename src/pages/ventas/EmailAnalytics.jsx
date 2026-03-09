@@ -28,27 +28,27 @@ export default function EmailAnalytics() {
     heatmapData,
     reputationLogs,
     loading,
-    loadFunnel,
-    loadCohorts,
-    loadHeatmap,
-    loadReputationLogs,
+    cargarFunnel,
+    cargarCohort,
+    cargarHeatmap,
+    cargarReputacion,
   } = useEmailAnalytics()
-  const { campaigns, loadCampaigns } = useEmailCampaigns()
+  const { campaigns, cargar: cargarCampaigns } = useEmailCampaigns()
 
   const [activeTab, setActiveTab] = useState('funnel')
   const [selectedCampaignId, setSelectedCampaignId] = useState('')
   const [cohortDays, setCohortDays] = useState(30)
 
   useEffect(() => {
-    loadCampaigns()
-  }, [loadCampaigns])
+    cargarCampaigns()
+  }, [cargarCampaigns])
 
   const loadTabData = useCallback(() => {
-    if (activeTab === 'funnel') loadFunnel(selectedCampaignId || undefined)
-    if (activeTab === 'cohorts') loadCohorts(cohortDays)
-    if (activeTab === 'heatmap') loadHeatmap()
-    if (activeTab === 'reputation') loadReputationLogs()
-  }, [activeTab, selectedCampaignId, cohortDays, loadFunnel, loadCohorts, loadHeatmap, loadReputationLogs])
+    if (activeTab === 'funnel') cargarFunnel(selectedCampaignId || undefined)
+    if (activeTab === 'cohorts') cargarCohort(cohortDays)
+    if (activeTab === 'heatmap') cargarHeatmap()
+    if (activeTab === 'reputation') cargarReputacion()
+  }, [activeTab, selectedCampaignId, cohortDays, cargarFunnel, cargarCohort, cargarHeatmap, cargarReputacion])
 
   useEffect(() => {
     loadTabData()

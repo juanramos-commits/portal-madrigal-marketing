@@ -116,8 +116,6 @@ Deno.serve(async (req) => {
       // Insert click record
       await supabase.from('ventas_em_clicks').insert({
         send_id: send.id,
-        campaign_id: campaignId,
-        contact_id: contactId,
         url: clickUrl || null,
         clicked_at: now,
       })
@@ -160,7 +158,7 @@ Deno.serve(async (req) => {
         await supabase
           .from('ventas_em_suppressions')
           .upsert(
-            { email: contactEmail, reason: 'hard_bounce', created_at: now },
+            { email: contactEmail, reason: 'hard_bounce', suppressed_at: now },
             { onConflict: 'email' },
           )
 
@@ -182,7 +180,7 @@ Deno.serve(async (req) => {
           await supabase
             .from('ventas_em_suppressions')
             .upsert(
-              { email: contactEmail, reason: 'soft_bounce', created_at: now },
+              { email: contactEmail, reason: 'soft_bounce', suppressed_at: now },
               { onConflict: 'email' },
             )
         }
@@ -213,7 +211,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('ventas_em_suppressions')
         .upsert(
-          { email: contactEmail, reason: 'complaint', created_at: now },
+          { email: contactEmail, reason: 'complaint', suppressed_at: now },
           { onConflict: 'email' },
         )
 

@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     const { data: automations, error: autoErr } = await supabase
       .from('ventas_em_automations')
       .select('*, steps:ventas_em_automation_steps(*, template:ventas_em_templates(*))')
-      .eq('active', true)
+      .eq('status', 'active')
       .order('step_order', { referencedTable: 'ventas_em_automation_steps' })
 
     if (autoErr || !automations || automations.length === 0) {
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
 
       // Find active enrollments for this automation
       const { data: enrollments, error: enrErr } = await supabase
-        .from('ventas_em_enrollments')
+        .from('ventas_em_automation_enrollments')
         .select('*, contact:ventas_em_contacts(*)')
         .eq('automation_id', automation.id)
         .eq('status', 'active')
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
         // If current_step exceeds steps_count, mark as completed
         if (currentStepIndex >= stepsCount) {
           await supabase
-            .from('ventas_em_enrollments')
+            .from('ventas_em_automation_enrollments')
             .update({ status: 'completed', completed_at: new Date().toISOString() })
             .eq('id', enrollment.id)
           totalProcessed++
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
         const step = steps[currentStepIndex] as Record<string, unknown>
         if (!step) {
           await supabase
-            .from('ventas_em_enrollments')
+            .from('ventas_em_automation_enrollments')
             .update({ status: 'completed', completed_at: new Date().toISOString() })
             .eq('id', enrollment.id)
           totalProcessed++
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
         const stepConfig = (step.config || {}) as Record<string, unknown>
         const lastStepAt = enrollment.last_step_at
           ? new Date(enrollment.last_step_at as string)
-          : new Date(enrollment.enrolled_at as string || enrollment.created_at as string)
+          : new Date(enrollment.enrolled_at as string)
         const now = new Date()
 
         // ── WAIT step ────────────────────────────────────────────────
@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
           }
           // Wait is over, advance to next step
           await supabase
-            .from('ventas_em_enrollments')
+            .from('ventas_em_automation_enrollments')
             .update({
               current_step: currentStepIndex + 1,
               last_step_at: now.toISOString(),
@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
           const contact = enrollment.contact as Record<string, unknown>
           if (!contact || !contact.email) {
             await supabase
-              .from('ventas_em_enrollments')
+              .from('ventas_em_automation_enrollments')
               .update({
                 current_step: currentStepIndex + 1,
                 last_step_at: now.toISOString(),
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
 
           const template = step.template as Record<string, unknown> | null
           const subject = (stepConfig.subject as string) || (template?.subject as string) || 'No subject'
-          let html = (template?.html as string) || (stepConfig.html as string) || ''
+          let html = (template?.html_body as string) || (stepConfig.html as string) || ''
           const fromAddress = (stepConfig.from_email as string) || Deno.env.get('RESEND_FROM_EMAIL') || 'noreply@example.com'
 
           // Personalize
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
           const { data: sendRecord } = await supabase
             .from('ventas_em_sends')
             .insert({
-              automation_id: automation.id,
+              campaign_id: null,
               contact_id: contact.id,
               status: 'queued',
               scheduled_for: now.toISOString(),
@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
 
           // Advance to next step regardless of send outcome
           await supabase
-            .from('ventas_em_enrollments')
+            .from('ventas_em_automation_enrollments')
             .update({
               current_step: currentStepIndex + 1,
               last_step_at: now.toISOString(),
@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
           if (conditionMet) {
             // Advance to next step
             await supabase
-              .from('ventas_em_enrollments')
+              .from('ventas_em_automation_enrollments')
               .update({
                 current_step: currentStepIndex + 1,
                 last_step_at: now.toISOString(),
@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
             // Go to exit step or skip (jump to end)
             const exitStep = stepConfig.else_step as number | undefined
             await supabase
-              .from('ventas_em_enrollments')
+              .from('ventas_em_automation_enrollments')
               .update({
                 current_step: exitStep !== undefined ? exitStep : stepsCount,
                 last_step_at: now.toISOString(),
@@ -255,7 +255,7 @@ Deno.serve(async (req) => {
         // ── EXIT step ────────────────────────────────────────────────
         else if (stepType === 'exit') {
           await supabase
-            .from('ventas_em_enrollments')
+            .from('ventas_em_automation_enrollments')
             .update({ status: 'completed', completed_at: now.toISOString() })
             .eq('id', enrollment.id)
           totalProcessed++
@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
           }
 
           await supabase
-            .from('ventas_em_enrollments')
+            .from('ventas_em_automation_enrollments')
             .update({
               current_step: currentStepIndex + 1,
               last_step_at: now.toISOString(),
@@ -284,7 +284,7 @@ Deno.serve(async (req) => {
         // ── Unknown step type — skip ─────────────────────────────────
         else {
           await supabase
-            .from('ventas_em_enrollments')
+            .from('ventas_em_automation_enrollments')
             .update({
               current_step: currentStepIndex + 1,
               last_step_at: now.toISOString(),
