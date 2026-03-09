@@ -578,12 +578,12 @@ export function useCalendario() {
   const cargarGoogleEventsRef = useRef(cargarGoogleEvents)
   useEffect(() => { cargarGoogleEventsRef.current = cargarGoogleEvents }, [cargarGoogleEvents])
 
-  // Realtime: listen to citas changes (stable subscription — no churn on filter changes)
+  // Realtime: listen to citas + google events changes in a single channel
   useEffect(() => {
     if (!user?.id) return
 
     const channel = supabase
-      .channel(`calendario-citas-${user.id}`)
+      .channel(`calendario-all-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
@@ -591,17 +591,6 @@ export function useCalendario() {
       }, () => {
         cargarCitasRef.current?.()
       })
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [user?.id])
-
-  // Realtime: listen to google events changes (stable subscription)
-  useEffect(() => {
-    if (!user?.id) return
-
-    const channel = supabase
-      .channel(`calendario-google-events-${user.id}`)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',

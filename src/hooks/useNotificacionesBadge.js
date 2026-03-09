@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 export function useNotificacionesBadge() {
   const { user } = useAuth()
   const [contador, setContador] = useState(0)
-  const channelRef = useRef(null)
+  const intervalRef = useRef(null)
 
   const cargarConteo = useCallback(async () => {
     if (!user?.id) return
@@ -26,41 +26,12 @@ export function useNotificacionesBadge() {
 
     cargarConteo()
 
-    const channel = supabase
-      .channel(`notif-badge-${user.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'ventas_notificaciones',
-        filter: `usuario_id=eq.${user.id}`,
-      }, (payload) => {
-        if (!payload.new.leida) setContador(prev => prev + 1)
-      })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'ventas_notificaciones',
-        filter: `usuario_id=eq.${user.id}`,
-      }, () => {
-        cargarConteo()
-      })
-      .on('postgres_changes', {
-        event: 'DELETE',
-        schema: 'public',
-        table: 'ventas_notificaciones',
-        filter: `usuario_id=eq.${user.id}`,
-      }, () => {
-        cargarConteo()
-      })
-      .subscribe()
-
-    channelRef.current = channel
+    // Poll every 30s instead of maintaining a separate realtime channel
+    // (the useNotificaciones hook already has a realtime subscription for the same table)
+    intervalRef.current = setInterval(cargarConteo, 30000)
 
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current)
-        channelRef.current = null
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current)
     }
   }, [user?.id, cargarConteo])
 
