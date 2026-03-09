@@ -33,9 +33,9 @@ export default function EmailDashboard() {
     { label: 'Conversiones', value: dashboardStats?.conversions ?? 0, format: 'number' },
   ]
 
-  const warmupDays = settings?.warmup_days ?? 0
-  const warmupMax = 30
-  const warmupPercent = Math.min((warmupDays / warmupMax) * 100, 100)
+  const warmupTotalDays = Number(settings?.warmup_days) || 42
+  const warmupCurrentDay = dashboardStats?.warmup_current_day ?? warmupTotalDays
+  const warmupPercent = warmupTotalDays > 0 ? Math.min((warmupCurrentDay / warmupTotalDays) * 100, 100) : 0
 
   const quickLinks = [
     { label: 'Campañas', to: '/ventas/email/campanas' },
@@ -81,7 +81,7 @@ export default function EmailDashboard() {
               <div className="ve-warmup-fill" style={{ width: `${warmupPercent}%` }} />
             </div>
             <span className="ve-warmup-label">
-              Día {warmupDays} de {warmupMax}
+              Día {warmupCurrentDay} de {warmupTotalDays}
             </span>
           </div>
 
