@@ -12,27 +12,29 @@ export function useOutreachSettings() {
   const cargar = useCallback(async () => {
     setLoading(true)
     setError(null)
+    try {
+      const { data, error: err } = await getSettings()
+      if (err) { setError(err.message); return }
+      // Convert array of { key, value } rows to a key-value map
+      const map = {}
+      ;(data || []).forEach(row => { map[row.key] = row.value })
+      setSettings(map)
 
-    const { data, error: err } = await getSettings()
+      // Load warmup schedule
+      const { data: warmup } = await supabase
+        .from('ventas_co_warmup_schedule')
+        .select('*')
+        .order('day')
+      setWarmupSchedule(warmup || [])
 
-    if (err) { setError(err.message); setLoading(false); return }
-    // Convert array of { key, value } rows to a key-value map
-    const map = {}
-    ;(data || []).forEach(row => { map[row.key] = row.value })
-    setSettings(map)
-
-    // Load warmup schedule
-    const { data: warmup } = await supabase
-      .from('ventas_co_warmup_schedule')
-      .select('*')
-      .order('day')
-    setWarmupSchedule(warmup || [])
-
-    // Load suppression count
-    const { count } = await supabase.from('ventas_co_suppressions').select('*', { count: 'exact', head: true })
-    setSuppressionCount(count ?? 0)
-
-    setLoading(false)
+      // Load suppression count
+      const { count } = await supabase.from('ventas_co_suppressions').select('*', { count: 'exact', head: true })
+      setSuppressionCount(count ?? 0)
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const actualizar = useCallback(async (key, value) => {
@@ -62,7 +64,7 @@ export function useOutreachSettings() {
     const { error: err } = await supabase
       .from('ventas_co_warmup_schedule')
       .update({ max_sends: maxSends })
-      .eq('id', row.id)
+      .eq('day', row.day)
 
     if (err) {
       cargar()

@@ -11,14 +11,17 @@ export function useOutreachReplies() {
   const cargar = useCallback(async ({ campaignId, classification, requiresAction, page, limit } = {}) => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getReplies({
-      campaignId, classification, requiresAction, page, limit
-    })
-
-    if (err) { setError(err.message); setLoading(false); return }
-    setReplies(data || [])
-    setLoading(false)
+    try {
+      const { data, error: err } = await getReplies({
+        campaignId, classification, requiresAction, page, limit
+      })
+      if (err) { setError(err.message); return }
+      setReplies(data || [])
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const clasificar = useCallback(async (id, { classification, sentiment }) => {

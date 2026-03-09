@@ -143,13 +143,13 @@ export default function ClienteDetalleAvanzado() {
         cargarOpcional(() => supabase.from('clientes_info_adicional').select('*').eq('cliente_id', id).maybeSingle(), setInfoAdicional),
         cargarOpcional(() => supabase.from('clientes_urls').select('*').eq('cliente_id', id).maybeSingle(), setUrls),
         cargarOpcional(() => supabase.from('clientes_socios').select('*').eq('cliente_id', id).order('numero_socio'), setSocios, []),
-        cargarOpcional(() => supabase.from('campanas').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setCampanas, []),
-        cargarOpcional(() => supabase.from('facturas').select('*').eq('cliente_id', id).order('fecha', { ascending: false }), setFacturas, []),
-        cargarOpcional(() => supabase.from('reuniones').select('*').eq('cliente_id', id).order('fecha', { ascending: false }), setReuniones, []),
-        cargarOpcional(() => supabase.from('paquetes_leads').select('*').eq('cliente_id', id).order('fecha_compra', { ascending: false }), setPaquetes, []),
-        cargarOpcional(() => supabase.from('leads').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setLeads, []),
+        cargarOpcional(() => supabase.from('campanas').select('*').eq('cliente_id', id).order('created_at', { ascending: false }).limit(50), setCampanas, []),
+        cargarOpcional(() => supabase.from('facturas').select('*').eq('cliente_id', id).order('fecha', { ascending: false }).limit(50), setFacturas, []),
+        cargarOpcional(() => supabase.from('reuniones').select('*').eq('cliente_id', id).order('fecha', { ascending: false }).limit(50), setReuniones, []),
+        cargarOpcional(() => supabase.from('paquetes_leads').select('*').eq('cliente_id', id).order('fecha_compra', { ascending: false }).limit(50), setPaquetes, []),
+        cargarOpcional(() => supabase.from('leads').select('*').eq('cliente_id', id).order('created_at', { ascending: false }).limit(50), setLeads, []),
         cargarOpcional(() => supabase.from('cliente_historial').select('*').eq('cliente_id', id).order('fecha', { ascending: false }).limit(100), setHistorial, []),
-        cargarOpcional(() => supabase.from('cliente_notas').select('*').eq('cliente_id', id).order('created_at', { ascending: false }), setNotas, []),
+        cargarOpcional(() => supabase.from('cliente_notas').select('*').eq('cliente_id', id).order('created_at', { ascending: false }).limit(50), setNotas, []),
         cargarOpcional(() => supabase.from('clientes_lanzamiento').select('*').eq('cliente_id', id).maybeSingle(), setLanzamiento)
       ])
 

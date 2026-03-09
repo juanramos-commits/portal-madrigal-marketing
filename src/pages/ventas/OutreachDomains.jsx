@@ -132,9 +132,9 @@ export default function OutreachDomains() {
                           onChange={(e) => setEditForm({ ...editForm, daily_limit: Number(e.target.value) })}
                         />
                       </td>
-                      <td>{d.spf ? '\u2713' : '\u2717'}</td>
-                      <td>{d.dkim ? '\u2713' : '\u2717'}</td>
-                      <td>{d.dmarc ? '\u2713' : '\u2717'}</td>
+                      <td>{d.spf_verified ? '\u2713' : '\u2717'}</td>
+                      <td>{d.dkim_verified ? '\u2713' : '\u2717'}</td>
+                      <td>{d.dmarc_verified ? '\u2713' : '\u2717'}</td>
                       <td>
                         <div className="ve-actions">
                           <button className="ve-btn ve-btn--sm ve-btn--primary" onClick={() => handleSaveEdit(d.id)}>Guardar</button>
@@ -153,9 +153,9 @@ export default function OutreachDomains() {
                       </td>
                       <td>Día {d.warmup_day ?? 0} / 60</td>
                       <td>{d.daily_limit ?? '—'}</td>
-                      <td>{d.spf ? '\u2713' : '\u2717'}</td>
-                      <td>{d.dkim ? '\u2713' : '\u2717'}</td>
-                      <td>{d.dmarc ? '\u2713' : '\u2717'}</td>
+                      <td>{d.spf_verified ? '\u2713' : '\u2717'}</td>
+                      <td>{d.dkim_verified ? '\u2713' : '\u2717'}</td>
+                      <td>{d.dmarc_verified ? '\u2713' : '\u2717'}</td>
                       <td>
                         <div className="ve-actions">
                           {tienePermiso('ventas.outreach.dominios.editar') && (

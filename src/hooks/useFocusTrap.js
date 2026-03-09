@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
 
@@ -8,6 +8,9 @@ const FOCUSABLE = 'a[href], button:not(:disabled), input:not(:disabled), select:
  * @param {boolean} active — whether the trap is active
  */
 export function useFocusTrap(ref, active = true) {
+  // Stable callback ref to avoid registering duplicate listeners
+  const handlerRef = useRef(null)
+
   useEffect(() => {
     if (!active || !ref.current) return
 
@@ -40,9 +43,16 @@ export function useFocusTrap(ref, active = true) {
       }
     }
 
+    // Remove any previous handler before adding new one
+    if (handlerRef.current) {
+      document.removeEventListener('keydown', handlerRef.current)
+    }
+    handlerRef.current = handleKeyDown
     document.addEventListener('keydown', handleKeyDown)
+
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
+      handlerRef.current = null
       // Restore focus
       if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
         previouslyFocused.focus()

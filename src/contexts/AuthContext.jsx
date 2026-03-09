@@ -12,6 +12,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [usuario, setUsuario] = useState(null)
   const [permisos, setPermisos] = useState([])
+  const [permisosLoaded, setPermisosLoaded] = useState(false)
+  const [permisosError, setPermisosError] = useState(null)
   const [rolesComerciales, setRolesComerciales] = useState([])
   const [loading, setLoading] = useState(true)
   const isSigningIn = useRef(false)
@@ -42,18 +44,31 @@ export function AuthProvider({ children }) {
       setUsuario(usuarioData)
 
       // Cargar permisos
-      if (usuarioData.tipo === 'super_admin') {
-        const { data: todosPermisos } = await supabase.from('permisos').select('codigo')
-        setPermisos(todosPermisos?.map(p => p.codigo) || [])
-      } else {
-        // Cargar permisos base del rol + permisos ventas comerciales en paralelo
-        const [{ data: permisosData }, { data: ventasPermisos }] = await Promise.all([
-          supabase.rpc('obtener_permisos_usuario', { p_usuario_id: usuarioData.id }),
-          supabase.rpc('obtener_permisos_ventas_usuario', { p_usuario_id: usuarioData.id }),
-        ])
-        const base = permisosData?.map(p => p.codigo) || []
-        const ventas = ventasPermisos?.map(p => p.codigo) || []
-        setPermisos([...new Set([...base, ...ventas])])
+      setPermisosError(null)
+      try {
+        if (usuarioData.tipo === 'super_admin') {
+          const { data: todosPermisos, error: permErr } = await supabase.from('permisos').select('codigo')
+          if (permErr) throw permErr
+          setPermisos(todosPermisos?.map(p => p.codigo) || [])
+        } else {
+          // Cargar permisos base del rol + permisos ventas comerciales en paralelo
+          const [permisosRes, ventasRes] = await Promise.all([
+            supabase.rpc('obtener_permisos_usuario', { p_usuario_id: usuarioData.id }),
+            supabase.rpc('obtener_permisos_ventas_usuario', { p_usuario_id: usuarioData.id }),
+          ])
+          if (permisosRes.error) logger.error('Error cargando permisos base:', permisosRes.error)
+          if (ventasRes.error) logger.error('Error cargando permisos ventas:', ventasRes.error)
+          // If BOTH fail, throw so user sees error + retry
+          if (permisosRes.error && ventasRes.error) throw permisosRes.error
+          const base = permisosRes.data?.map(p => p.codigo) || []
+          const ventas = ventasRes.data?.map(p => p.codigo) || []
+          setPermisos([...new Set([...base, ...ventas])])
+        }
+        setPermisosLoaded(true)
+      } catch (permError) {
+        logger.error('Error crítico cargando permisos:', permError)
+        setPermisosError(permError.message || 'Error cargando permisos')
+        setPermisosLoaded(true) // Mark as loaded so SmartRedirect doesn't hang
       }
 
       // Actualizar ultimo acceso solo en login fresco (evita PATCH 400 por JWT en refresh)
@@ -114,6 +129,8 @@ export function AuthProvider({ children }) {
         setUser(null)
         setUsuario(null)
         setPermisos([])
+        setPermisosLoaded(false)
+        setPermisosError(null)
         setRolesComerciales([])
         setLoading(false)
       }
@@ -152,6 +169,8 @@ export function AuthProvider({ children }) {
         setUser(null)
         setUsuario(null)
         setPermisos([])
+        setPermisosLoaded(false)
+        setPermisosError(null)
         setRolesComerciales([])
       }
       setLoading(false)
@@ -174,6 +193,8 @@ export function AuthProvider({ children }) {
           setUser(null)
           setUsuario(null)
           setPermisos([])
+          setPermisosLoaded(false)
+          setPermisosError(null)
           setRolesComerciales([])
         }
       } catch {
@@ -191,17 +212,25 @@ export function AuthProvider({ children }) {
   // Refrescar permisos sin logout (tras cambios de admin)
   const refrescarPermisos = useCallback(async () => {
     if (!usuario?.id) return
-    if (usuario.tipo === 'super_admin') {
-      const { data: todosPermisos } = await supabase.from('permisos').select('codigo')
-      setPermisos(todosPermisos?.map(p => p.codigo) || [])
-    } else {
-      const [{ data: permisosData }, { data: ventasPermisos }] = await Promise.all([
-        supabase.rpc('obtener_permisos_usuario', { p_usuario_id: usuario.id }),
-        supabase.rpc('obtener_permisos_ventas_usuario', { p_usuario_id: usuario.id }),
-      ])
-      const base = permisosData?.map(p => p.codigo) || []
-      const ventas = ventasPermisos?.map(p => p.codigo) || []
-      setPermisos([...new Set([...base, ...ventas])])
+    setPermisosError(null)
+    try {
+      if (usuario.tipo === 'super_admin') {
+        const { data: todosPermisos, error: permErr } = await supabase.from('permisos').select('codigo')
+        if (permErr) throw permErr
+        setPermisos(todosPermisos?.map(p => p.codigo) || [])
+      } else {
+        const [permisosRes, ventasRes] = await Promise.all([
+          supabase.rpc('obtener_permisos_usuario', { p_usuario_id: usuario.id }),
+          supabase.rpc('obtener_permisos_ventas_usuario', { p_usuario_id: usuario.id }),
+        ])
+        if (permisosRes.error && ventasRes.error) throw permisosRes.error
+        const base = permisosRes.data?.map(p => p.codigo) || []
+        const ventas = ventasRes.data?.map(p => p.codigo) || []
+        setPermisos([...new Set([...base, ...ventas])])
+      }
+    } catch (err) {
+      logger.error('Error refrescando permisos:', err)
+      setPermisosError(err.message || 'Error refrescando permisos')
     }
   }, [usuario?.id, usuario?.tipo])
 
@@ -276,6 +305,8 @@ export function AuthProvider({ children }) {
     setUser(null)
     setUsuario(null)
     setPermisos([])
+    setPermisosLoaded(false)
+    setPermisosError(null)
     setRolesComerciales([])
     invalidateAll()
     return supabase.auth.signOut()
@@ -293,6 +324,8 @@ export function AuthProvider({ children }) {
     user,
     usuario,
     permisos,
+    permisosLoaded,
+    permisosError,
     rolesComerciales,
     loading,
     tienePermiso,
@@ -301,7 +334,7 @@ export function AuthProvider({ children }) {
     refrescarUsuario,
     refrescarPermisos,
     refrescarRolesComerciales,
-  }), [user, usuario, permisos, rolesComerciales, loading, tienePermiso,
+  }), [user, usuario, permisos, permisosLoaded, permisosError, rolesComerciales, loading, tienePermiso,
        signInWithEmail, signOut, refrescarUsuario, refrescarPermisos, refrescarRolesComerciales])
 
   return (

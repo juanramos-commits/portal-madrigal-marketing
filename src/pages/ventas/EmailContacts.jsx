@@ -145,9 +145,9 @@ export default function EmailContacts() {
                     className={`ve-table-row ve-table-row--clickable${expandedContact === c.id ? ' ve-table-row--expanded' : ''}`}
                     onClick={() => setExpandedContact(expandedContact === c.id ? null : c.id)}
                   >
-                    <td>{c.name || '—'}</td>
+                    <td>{c.nombre || '—'}</td>
                     <td>{c.email}</td>
-                    <td>{c.company || '—'}</td>
+                    <td>{c.empresa || '—'}</td>
                     <td>
                       <span className={`ve-badge ${STATUS_COLORS[c.status] || ''}`}>
                         {STATUS_LABELS[c.status] || c.status}
@@ -170,10 +170,10 @@ export default function EmailContacts() {
             if (!contact) return null
             return (
               <div className="ve-contact-detail">
-                <h3>{contact.name || contact.email}</h3>
+                <h3>{contact.nombre || contact.email}</h3>
                 <div className="ve-detail-grid">
                   <div><strong>Email:</strong> {contact.email}</div>
-                  <div><strong>Empresa:</strong> {contact.company || '—'}</div>
+                  <div><strong>Empresa:</strong> {contact.empresa || '—'}</div>
                   <div><strong>Estado:</strong> {STATUS_LABELS[contact.status] || contact.status}</div>
                   <div><strong>Engagement:</strong> {contact.engagement_score ?? '—'}</div>
                   <div><strong>Lead Score:</strong> {contact.lead_score ?? '—'}</div>

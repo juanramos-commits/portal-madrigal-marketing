@@ -11,13 +11,26 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(msg)
 }
 
-// Custom fetch with automatic retry on transient network errors
-const fetchWithRetry = (url, options = {}) => {
-  const maxRetries = 2
-  const retryDelay = 1000
+// Custom fetch with automatic retry on transient network errors + timeout
+const FETCH_TIMEOUT = 10000 // 10 seconds
 
-  const attempt = (retryCount) =>
-    fetch(url, options).then((response) => {
+const fetchWithRetry = (url, options = {}) => {
+  const maxRetries = 1
+  const retryDelay = 1500
+
+  const attempt = (retryCount) => {
+    // Add timeout via AbortController (unless caller already provided a signal)
+    let controller
+    let timeoutId
+    const fetchOptions = { ...options }
+    if (!fetchOptions.signal) {
+      controller = new AbortController()
+      fetchOptions.signal = controller.signal
+      timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT)
+    }
+
+    return fetch(url, fetchOptions).then((response) => {
+      if (timeoutId) clearTimeout(timeoutId)
       // Retry on 502/503/504 (server temporarily down)
       if (retryCount < maxRetries && response.status >= 502 && response.status <= 504) {
         return new Promise((resolve) =>
@@ -26,15 +39,17 @@ const fetchWithRetry = (url, options = {}) => {
       }
       return response
     }).catch((err) => {
-      // Retry on network errors (offline, DNS failure, connection reset)
-      // Never retry AbortError — it means the request was intentionally cancelled (e.g. navigation)
-      if (retryCount < maxRetries && err.name === 'TypeError') {
+      if (timeoutId) clearTimeout(timeoutId)
+      // Retry on network errors (offline, DNS failure, connection reset) or timeouts
+      // Never retry AbortError from caller's signal
+      if (retryCount < maxRetries && (err.name === 'TypeError' || (err.name === 'AbortError' && controller))) {
         return new Promise((resolve, reject) =>
           setTimeout(() => attempt(retryCount + 1).then(resolve, reject), retryDelay * (retryCount + 1))
         )
       }
       throw err
     })
+  }
 
   return attempt(0)
 }

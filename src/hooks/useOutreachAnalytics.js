@@ -13,36 +13,47 @@ export function useOutreachAnalytics() {
   const cargarDashboard = useCallback(async () => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getDashboardStats()
-
-    if (err) { setError(err.message); setLoading(false); return }
-    setDashboardStats(data)
-    setLoading(false)
+    try {
+      const { data, error: err } = await getDashboardStats()
+      if (err) { setError(err.message); return }
+      setDashboardStats(data)
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const cargarReputacion = useCallback(async (domainId, days = 30) => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getReputationSummary(domainId, days)
-
-    if (err) { setError(err.message); setLoading(false); return { error: err } }
-    setReputationData(data)
-    setLoading(false)
-    return { data }
+    try {
+      const { data, error: err } = await getReputationSummary(domainId, days)
+      if (err) { setError(err.message); return { error: err } }
+      setReputationData(data)
+      return { data }
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+      return { error: e }
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const cargarCampaignAnalytics = useCallback(async (campaignId) => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getCampaignAnalytics(campaignId)
-
-    if (err) { setError(err.message); setLoading(false); return { error: err } }
-    setCampaignAnalytics(data)
-    setLoading(false)
-    return { data }
+    try {
+      const { data, error: err } = await getCampaignAnalytics(campaignId)
+      if (err) { setError(err.message); return { error: err } }
+      setCampaignAnalytics(data)
+      return { data }
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+      return { error: e }
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { cargarDashboard() }, [])

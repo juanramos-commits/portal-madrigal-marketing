@@ -13,12 +13,15 @@ export function useEmailTemplates() {
   const cargar = useCallback(async () => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getEmailTemplates({ search })
-
-    if (err) { setError(err.message); setLoading(false); return }
-    setTemplates(data || [])
-    setLoading(false)
+    try {
+      const { data, error: err } = await getEmailTemplates({ search })
+      if (err) { setError(err.message); return }
+      setTemplates(data || [])
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [search])
 
   const crear = useCallback(async (datos) => {

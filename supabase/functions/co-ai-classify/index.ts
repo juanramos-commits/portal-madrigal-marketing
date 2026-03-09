@@ -148,11 +148,11 @@ Deno.serve(async (req) => {
       if (updateErr) continue
 
       // Handle unsubscribe: auto-suppress the contact email
-      if (result.classification === 'unsubscribe' && reply.contact_email) {
+      if (result.classification === 'unsubscribe' && reply.from_email) {
         await supabase
           .from('ventas_co_suppressions')
           .upsert(
-            { email: (reply.contact_email as string).toLowerCase(), reason: 'unsubscribed', created_at: new Date().toISOString() },
+            { email: (reply.from_email as string).toLowerCase(), reason: 'unsubscribed', suppressed_at: new Date().toISOString() },
             { onConflict: 'email' },
           )
 

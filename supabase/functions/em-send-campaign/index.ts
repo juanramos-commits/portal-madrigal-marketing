@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
 
       // Evaluate segment to get contact IDs
       const { data: segmentContacts, error: segErr } = await supabase
-        .rpc('em_evaluate_segment', { segment_id: campaign.segment_id })
+        .rpc('em_evaluate_segment', { p_segment_id: campaign.segment_id })
 
       if (segErr) {
         return jsonResponse({ error: 'Failed to evaluate segment', detail: segErr.message }, 500)
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       const freqChecked: typeof eligible = []
       for (const contact of eligible) {
         const { data: capOk } = await supabase
-          .rpc('em_check_frequency_cap', { contact_id: contact.id })
+          .rpc('em_check_frequency_cap', { p_contact_id: contact.id, p_hours: 72 })
         if (capOk !== false) {
           freqChecked.push(contact)
         }
@@ -200,7 +200,7 @@ Deno.serve(async (req) => {
       for (const campaign of campaigns) {
         // Claim next batch of sends
         const { data: claimed, error: claimErr } = await supabase
-          .rpc('em_claim_next_send', { campaign_id: campaign.id, batch_size: 50 })
+          .rpc('em_claim_next_send', { p_campaign_id: campaign.id, p_limit: 50 })
 
         if (claimErr || !claimed || claimed.length === 0) {
           // No more sends — check if campaign is done
@@ -324,8 +324,26 @@ Deno.serve(async (req) => {
           const cutoff = new Date(startedAt.getTime() + durationHours * 60 * 60 * 1000)
 
           if (new Date() >= cutoff) {
-            const { data: abResults } = await supabase
-              .rpc('em_ab_results', { campaign_id: campaign.id })
+            // Get A/B results by querying sends directly
+            const { data: abSends } = await supabase
+              .from('ventas_em_sends')
+              .select('variant_index, status')
+              .eq('campaign_id', campaign.id)
+
+            // Aggregate A/B results
+            const variantMap = new Map<number, { sends: number; opens: number; clicks: number }>()
+            for (const s of (abSends || [])) {
+              const vi = (s.variant_index as number) || 0
+              if (!variantMap.has(vi)) variantMap.set(vi, { sends: 0, opens: 0, clicks: 0 })
+              const entry = variantMap.get(vi)!
+              entry.sends++
+              if (['opened', 'clicked'].includes(s.status as string)) entry.opens++
+              if (s.status === 'clicked') entry.clicks++
+            }
+            const abResults = Array.from(variantMap.entries()).map(([vi, stats]) => ({
+              variant_index: vi,
+              open_rate: stats.sends > 0 ? stats.opens / stats.sends : 0,
+            }))
 
             if (abResults && abResults.length > 0) {
               const winner = abResults.reduce(

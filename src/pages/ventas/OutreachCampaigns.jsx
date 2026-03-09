@@ -158,10 +158,10 @@ export default function OutreachCampaigns() {
                       {STATUS_LABELS[c.status] || c.status}
                     </span>
                   </td>
-                  <td>{c.sent_count ?? 0}</td>
-                  <td>{c.opened_count ?? 0}</td>
-                  <td>{c.clicked_count ?? 0}</td>
-                  <td>{c.replied_count ?? 0}</td>
+                  <td>{c.total_sent ?? 0}</td>
+                  <td>{c.total_opened ?? 0}</td>
+                  <td>{c.total_clicked ?? 0}</td>
+                  <td>{c.total_replied ?? 0}</td>
                   <td>{c.created_at ? new Date(c.created_at).toLocaleDateString('es-ES') : '—'}</td>
                   <td>
                     <div className="ve-actions" onClick={(e) => e.stopPropagation()}>

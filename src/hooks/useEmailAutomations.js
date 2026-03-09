@@ -12,12 +12,15 @@ export function useEmailAutomations() {
   const cargar = useCallback(async () => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getEmailAutomations()
-
-    if (err) { setError(err.message); setLoading(false); return }
-    setAutomations(data || [])
-    setLoading(false)
+    try {
+      const { data, error: err } = await getEmailAutomations()
+      if (err) { setError(err.message); return }
+      setAutomations(data || [])
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const crear = useCallback(async (datos) => {

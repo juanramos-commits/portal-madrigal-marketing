@@ -69,10 +69,7 @@ Deno.serve(async (req) => {
         .eq('id', send.id)
 
       if (campaignId) {
-        await supabase.rpc('em_increment_campaign_counter', {
-          campaign_id: campaignId,
-          counter_name: 'total_delivered',
-        })
+        await supabase.rpc('em_increment_campaign_counter', { p_campaign_id: campaignId, p_counter: 'total_delivered' })
       }
 
       return jsonResponse({ success: true, event: 'delivered' })
@@ -90,18 +87,12 @@ Deno.serve(async (req) => {
 
       // Increment campaign total_opened
       if (campaignId) {
-        await supabase.rpc('em_increment_campaign_counter', {
-          campaign_id: campaignId,
-          counter_name: 'total_opened',
-        })
+        await supabase.rpc('em_increment_campaign_counter', { p_campaign_id: campaignId, p_counter: 'total_opened' })
       }
 
       // Increment contact total_opened
       if (contactId) {
-        await supabase
-          .from('ventas_em_contacts')
-          .update({ total_opened: ((send.contact as Record<string, unknown>)?.total_opened as number || 0) + 1 })
-          .eq('id', contactId)
+        await supabase.rpc('em_increment_contact_counter', { p_contact_id: contactId, p_counter: 'total_opened' })
       }
 
       // Note: open_hours trigger fires automatically via DB trigger
@@ -128,18 +119,12 @@ Deno.serve(async (req) => {
 
       // Increment campaign total_clicked
       if (campaignId) {
-        await supabase.rpc('em_increment_campaign_counter', {
-          campaign_id: campaignId,
-          counter_name: 'total_clicked',
-        })
+        await supabase.rpc('em_increment_campaign_counter', { p_campaign_id: campaignId, p_counter: 'total_clicked' })
       }
 
       // Increment contact total_clicked
       if (contactId) {
-        await supabase
-          .from('ventas_em_contacts')
-          .update({ total_clicked: ((send.contact as Record<string, unknown>)?.total_clicked as number || 0) + 1 })
-          .eq('id', contactId)
+        await supabase.rpc('em_increment_contact_counter', { p_contact_id: contactId, p_counter: 'total_clicked' })
       }
 
       return jsonResponse({ success: true, event: 'clicked' })
@@ -158,7 +143,7 @@ Deno.serve(async (req) => {
         await supabase
           .from('ventas_em_suppressions')
           .upsert(
-            { email: contactEmail, reason: 'hard_bounce', suppressed_at: now },
+            { email: contactEmail, reason: 'bounce', suppressed_at: now, bounce_type: 'hard' },
             { onConflict: 'email' },
           )
 
@@ -180,7 +165,7 @@ Deno.serve(async (req) => {
           await supabase
             .from('ventas_em_suppressions')
             .upsert(
-              { email: contactEmail, reason: 'soft_bounce', suppressed_at: now },
+              { email: contactEmail, reason: 'bounce', suppressed_at: now, bounce_type: 'soft' },
               { onConflict: 'email' },
             )
         }
@@ -194,10 +179,7 @@ Deno.serve(async (req) => {
 
       // Increment campaign total_bounced
       if (campaignId) {
-        await supabase.rpc('em_increment_campaign_counter', {
-          campaign_id: campaignId,
-          counter_name: 'total_bounced',
-        })
+        await supabase.rpc('em_increment_campaign_counter', { p_campaign_id: campaignId, p_counter: 'total_bounced' })
       }
 
       return jsonResponse({ success: true, event: 'bounced', bounce_type: bounceType })
@@ -229,10 +211,7 @@ Deno.serve(async (req) => {
 
       // Increment campaign total_complained
       if (campaignId) {
-        await supabase.rpc('em_increment_campaign_counter', {
-          campaign_id: campaignId,
-          counter_name: 'total_complained',
-        })
+        await supabase.rpc('em_increment_campaign_counter', { p_campaign_id: campaignId, p_counter: 'total_complained' })
       }
 
       return jsonResponse({ success: true, event: 'complained' })

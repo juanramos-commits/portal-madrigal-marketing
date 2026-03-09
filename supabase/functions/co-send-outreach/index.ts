@@ -456,17 +456,10 @@ Deno.serve(async (req) => {
             })
             .eq('id', send.send_id)
 
-          // Increment inbox sent_today
+          // Increment inbox sent_today (atomic to avoid race conditions)
           if (send.inbox_id) {
-            const { data: inbox } = await supabase
-              .from('ventas_co_inboxes')
-              .select('sent_today')
-              .eq('id', send.inbox_id)
-              .single()
-            await supabase
-              .from('ventas_co_inboxes')
-              .update({ sent_today: ((inbox?.sent_today as number) || 0) + 1 })
-              .eq('id', send.inbox_id)
+            await supabase.rpc('co_increment_inbox_sent_today', { p_inbox_id: send.inbox_id })
+              .then(({ error }) => { if (error) console.error('Error incrementing sent_today:', error) })
           }
 
           // Increment campaign total_sent

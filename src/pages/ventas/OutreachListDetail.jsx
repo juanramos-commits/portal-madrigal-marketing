@@ -129,10 +129,7 @@ export default function OutreachListDetail() {
   }
 
   const stats = [
-    { label: 'Total', value: listInfo?.total_contacts ?? totalCount ?? 0, },
-    { label: 'Verificados', value: listInfo?.verified_count ?? 0 },
-    { label: 'Contactados', value: listInfo?.contacted_count ?? 0 },
-    { label: 'Respondidos', value: listInfo?.replied_count ?? 0 },
+    { label: 'Total', value: listInfo?.total_contacts ?? totalCount ?? 0 },
   ]
 
   return (

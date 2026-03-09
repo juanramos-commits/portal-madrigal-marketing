@@ -48,24 +48,24 @@ Deno.serve(async (req) => {
       if (!cid) continue
       if (!campaignStats.has(cid)) {
         campaignStats.set(cid, {
-          total_sent: 0,
-          total_delivered: 0,
-          total_opened: 0,
-          total_clicked: 0,
-          total_bounced: 0,
-          total_failed: 0,
-          total_complained: 0,
+          sent: 0,
+          delivered: 0,
+          opened: 0,
+          clicked: 0,
+          bounced: 0,
+          complained: 0,
+          unsubscribed: 0,
+          converted: 0,
         })
       }
       const stats = campaignStats.get(cid)!
-      stats.total_sent++
+      stats.sent++
       const status = send.status as string
-      if (status === 'delivered') stats.total_delivered++
-      else if (status === 'opened') { stats.total_delivered++; stats.total_opened++ }
-      else if (status === 'clicked') { stats.total_delivered++; stats.total_opened++; stats.total_clicked++ }
-      else if (status === 'bounced') stats.total_bounced++
-      else if (status === 'failed') stats.total_failed++
-      else if (status === 'complained') { stats.total_delivered++; stats.total_complained++ }
+      if (status === 'delivered') stats.delivered++
+      else if (status === 'opened') { stats.delivered++; stats.opened++ }
+      else if (status === 'clicked') { stats.delivered++; stats.opened++; stats.clicked++ }
+      else if (status === 'bounced') stats.bounced++
+      else if (status === 'complained') { stats.delivered++; stats.complained++ }
     }
 
     let campaignsRolled = 0
@@ -92,11 +92,11 @@ Deno.serve(async (req) => {
       .lte('sent_at', `${today}T23:59:59Z`)
 
     const providerStats = new Map<string, {
-      total_sent: number
-      total_delivered: number
-      total_bounced: number
-      total_complained: number
-      total_opened: number
+      sent: number
+      delivered: number
+      bounced: number
+      complained: number
+      opened: number
     }>()
 
     for (const send of (sendsWithContact || [])) {
@@ -104,27 +104,27 @@ Deno.serve(async (req) => {
       const provider = (contact?.provider as string) || 'unknown'
       if (!providerStats.has(provider)) {
         providerStats.set(provider, {
-          total_sent: 0,
-          total_delivered: 0,
-          total_bounced: 0,
-          total_complained: 0,
-          total_opened: 0,
+          sent: 0,
+          delivered: 0,
+          bounced: 0,
+          complained: 0,
+          opened: 0,
         })
       }
       const stats = providerStats.get(provider)!
-      stats.total_sent++
+      stats.sent++
       const status = send.status as string
-      if (['delivered', 'opened', 'clicked'].includes(status)) stats.total_delivered++
-      if (['opened', 'clicked'].includes(status)) stats.total_opened++
-      if (status === 'bounced') stats.total_bounced++
-      if (status === 'complained') stats.total_complained++
+      if (['delivered', 'opened', 'clicked'].includes(status)) stats.delivered++
+      if (['opened', 'clicked'].includes(status)) stats.opened++
+      if (status === 'bounced') stats.bounced++
+      if (status === 'complained') stats.complained++
     }
 
     let providersRolled = 0
     for (const [provider, stats] of providerStats) {
       // Calculate health_status
-      const bounceRate = stats.total_sent > 0 ? stats.total_bounced / stats.total_sent : 0
-      const complaintRate = stats.total_sent > 0 ? stats.total_complained / stats.total_sent : 0
+      const bounceRate = stats.sent > 0 ? stats.bounced / stats.sent : 0
+      const complaintRate = stats.sent > 0 ? stats.complained / stats.sent : 0
 
       let healthStatus = 'good'
       if (bounceRate >= 0.05 || complaintRate >= 0.001) {

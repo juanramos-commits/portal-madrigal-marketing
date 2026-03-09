@@ -22,17 +22,42 @@ export async function deleteEmailContact(id) {
 }
 
 export async function getContactStats() {
-  const { data, error } = await supabase.from('ventas_em_contacts').select('status, engagement_score, lead_score')
-  if (error) return { error }
-  const stats = {
-    total: data.length,
-    active: data.filter(c => c.status === 'active').length,
-    unsubscribed: data.filter(c => c.status === 'unsubscribed').length,
-    bounced: data.filter(c => c.status === 'bounced').length,
-    avgEngagement: data.length ? Math.round(data.reduce((s, c) => s + (c.engagement_score || 0), 0) / data.length) : 0,
-    avgLeadScore: data.length ? Math.round(data.reduce((s, c) => s + (c.lead_score || 0), 0) / data.length) : 0,
+  const [countRes, avgRes] = await Promise.all([
+    supabase.from('ventas_em_contacts').select('status', { count: 'exact', head: true }),
+    supabase.rpc('em_contact_stats_agg'),
+  ])
+
+  // Fallback: if RPC doesn't exist, use simple counts
+  if (avgRes.error) {
+    const [totalRes, activeRes, unsubRes, bouncedRes] = await Promise.all([
+      supabase.from('ventas_em_contacts').select('*', { count: 'exact', head: true }),
+      supabase.from('ventas_em_contacts').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+      supabase.from('ventas_em_contacts').select('*', { count: 'exact', head: true }).eq('status', 'unsubscribed'),
+      supabase.from('ventas_em_contacts').select('*', { count: 'exact', head: true }).eq('status', 'bounced'),
+    ])
+    return {
+      data: {
+        total: totalRes.count || 0,
+        active: activeRes.count || 0,
+        unsubscribed: unsubRes.count || 0,
+        bounced: bouncedRes.count || 0,
+        avgEngagement: 0,
+        avgLeadScore: 0,
+      }
+    }
   }
-  return { data: stats }
+
+  const agg = avgRes.data?.[0] || avgRes.data || {}
+  return {
+    data: {
+      total: agg.total || countRes.count || 0,
+      active: agg.active || 0,
+      unsubscribed: agg.unsubscribed || 0,
+      bounced: agg.bounced || 0,
+      avgEngagement: Math.round(agg.avg_engagement || 0),
+      avgLeadScore: Math.round(agg.avg_lead_score || 0),
+    }
+  }
 }
 
 // === CAMPAIGNS ===
@@ -87,7 +112,7 @@ export async function getABResults(campaignId) {
 
 // === TEMPLATES ===
 export async function getEmailTemplates({ search = '', category = '' } = {}) {
-  let query = supabase.from('ventas_em_templates').select('*').order('created_at', { ascending: false })
+  let query = supabase.from('ventas_em_templates').select('*').order('created_at', { ascending: false }).limit(200)
   if (search) query = query.ilike('name', `%${search}%`)
   if (category) query = query.eq('category', category)
   return query
@@ -136,14 +161,14 @@ function styleString(styles = {}) {
 
 // === TEMPLATE BLOCKS ===
 export async function getTemplateBlocks({ category = '' } = {}) {
-  let query = supabase.from('ventas_em_template_blocks').select('*').order('name')
+  let query = supabase.from('ventas_em_template_blocks').select('*').order('name').limit(200)
   if (category) query = query.eq('category', category)
   return query
 }
 
 // === SEGMENTS ===
 export async function getEmailSegments() {
-  return supabase.from('ventas_em_segments').select('*').order('is_system', { ascending: false }).order('name')
+  return supabase.from('ventas_em_segments').select('*').order('is_system', { ascending: false }).order('name').limit(200)
 }
 
 export async function getEmailSegment(id) {
@@ -170,7 +195,7 @@ export async function previewSegment(segmentId) {
 
 // === AUTOMATIONS ===
 export async function getEmailAutomations() {
-  return supabase.from('ventas_em_automations').select('*').order('created_at', { ascending: false })
+  return supabase.from('ventas_em_automations').select('*').order('created_at', { ascending: false }).limit(100)
 }
 
 export async function getEmailAutomation(id) {
@@ -199,14 +224,14 @@ export async function deactivateAutomation(id) {
 
 // === ANALYTICS ===
 export async function getDashboardStats() {
-  const [contactsRes, campaignsRes, sendsRes] = await Promise.all([
-    supabase.from('ventas_em_contacts').select('status, engagement_score', { count: 'exact' }),
-    supabase.from('ventas_em_campaigns').select('status, total_sent, total_opened, total_clicked, total_converted'),
-    supabase.from('ventas_em_sends').select('status', { count: 'exact' }).eq('status', 'delivered'),
+  const [totalContactsRes, activeContactsRes, activeCampaignsRes, campaignTotalsRes] = await Promise.all([
+    supabase.from('ventas_em_contacts').select('*', { count: 'exact', head: true }),
+    supabase.from('ventas_em_contacts').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('ventas_em_campaigns').select('*', { count: 'exact', head: true }).eq('status', 'sending'),
+    supabase.from('ventas_em_campaigns').select('total_sent, total_opened, total_clicked, total_converted').limit(500),
   ])
 
-  const contacts = contactsRes.data || []
-  const campaigns = campaignsRes.data || []
+  const campaigns = campaignTotalsRes.data || []
   const totalSent = campaigns.reduce((s, c) => s + (c.total_sent || 0), 0)
   const totalOpened = campaigns.reduce((s, c) => s + (c.total_opened || 0), 0)
   const totalClicked = campaigns.reduce((s, c) => s + (c.total_clicked || 0), 0)
@@ -214,9 +239,9 @@ export async function getDashboardStats() {
 
   return {
     data: {
-      totalContacts: contactsRes.count || 0,
-      activeContacts: contacts.filter(c => c.status === 'active').length,
-      activeCampaigns: campaigns.filter(c => c.status === 'sending').length,
+      totalContacts: totalContactsRes.count || 0,
+      activeContacts: activeContactsRes.count || 0,
+      activeCampaigns: activeCampaignsRes.count || 0,
       totalSent,
       openRate: totalSent ? ((totalOpened / totalSent) * 100).toFixed(1) : '0.0',
       clickRate: totalSent ? ((totalClicked / totalSent) * 100).toFixed(1) : '0.0',
@@ -255,7 +280,7 @@ export async function getEmailSettings() {
 }
 
 export async function updateEmailSetting(key, value) {
-  return supabase.from('ventas_em_settings').update({ value, updated_at: new Date().toISOString() }).eq('key', key)
+  return supabase.from('ventas_em_settings').update({ value }).eq('key', key)
 }
 
 // === AI ===

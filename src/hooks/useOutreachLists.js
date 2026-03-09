@@ -12,12 +12,15 @@ export function useOutreachLists() {
   const cargar = useCallback(async () => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getLists()
-
-    if (err) { setError(err.message); setLoading(false); return }
-    setLists(data || [])
-    setLoading(false)
+    try {
+      const { data, error: err } = await getLists()
+      if (err) { setError(err.message); return }
+      setLists(data || [])
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const crear = useCallback(async (list) => {

@@ -12,12 +12,15 @@ export function useEmailSegments() {
   const cargar = useCallback(async () => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getEmailSegments()
-
-    if (err) { setError(err.message); setLoading(false); return }
-    setSegments(data || [])
-    setLoading(false)
+    try {
+      const { data, error: err } = await getEmailSegments()
+      if (err) { setError(err.message); return }
+      setSegments(data || [])
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const crear = useCallback(async (datos) => {

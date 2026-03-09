@@ -15,6 +15,7 @@ const TABS = [
 ]
 
 const HEALTH_COLORS = {
+  good: 've-badge--green',
   healthy: 've-badge--green',
   warning: 've-badge--yellow',
   critical: 've-badge--red',
@@ -165,8 +166,8 @@ export default function EmailAnalytics() {
                             <td>{log.delivered ?? 0}</td>
                             <td>{log.bounced ?? 0}</td>
                             <td>
-                              <span className={`ve-badge ${HEALTH_COLORS[log.health] || ''}`}>
-                                {log.health || '—'}
+                              <span className={`ve-badge ${HEALTH_COLORS[log.health_status] || ''}`}>
+                                {log.health_status || '—'}
                               </span>
                             </td>
                           </tr>

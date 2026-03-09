@@ -153,11 +153,11 @@ export default function EmailCampaigns() {
                       {STATUS_LABELS[c.status] || c.status}
                     </span>
                   </td>
-                  <td>{c.template_name || '—'}</td>
-                  <td>{c.segment_name || '—'}</td>
-                  <td>{c.sent_count ?? 0}</td>
-                  <td>{c.opened_count ?? 0}</td>
-                  <td>{c.clicked_count ?? 0}</td>
+                  <td>{c.template?.name || '—'}</td>
+                  <td>{c.segment?.name || '—'}</td>
+                  <td>{c.total_sent ?? 0}</td>
+                  <td>{c.total_opened ?? 0}</td>
+                  <td>{c.total_clicked ?? 0}</td>
                   <td>{c.created_at ? new Date(c.created_at).toLocaleDateString('es-ES') : '—'}</td>
                   <td>
                     <div className="ve-actions" onClick={(e) => e.stopPropagation()}>

@@ -97,11 +97,30 @@ function PageLoader() {
 
 // Redirige al primer dashboard accesible según permisos del usuario
 function SmartRedirect() {
-  const { usuario, permisos, tienePermiso, loading } = useAuth()
-  if (loading) return null
+  const { usuario, permisos, permisosLoaded, permisosError, tienePermiso, loading, refrescarPermisos } = useAuth()
+  if (loading) return <PageLoader />
   if (usuario?.tipo === 'cliente') return <Navigate to="/mi-cuenta" replace />
+
   // Esperar a que los permisos estén cargados antes de decidir
-  if (usuario && usuario.tipo !== 'super_admin' && permisos.length === 0) return null
+  if (usuario && usuario.tipo !== 'super_admin' && !permisosLoaded) return <PageLoader />
+
+  // Si hubo error cargando permisos, mostrar mensaje con retry
+  if (permisosError && permisos.length === 0) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', fontFamily: 'system-ui' }}>
+        <div style={{ textAlign: 'center', maxWidth: 400, padding: 32 }}>
+          <p style={{ color: '#ef4444', fontSize: 16, marginBottom: 16 }}>Error cargando permisos. Verifica tu conexión.</p>
+          <button
+            onClick={() => refrescarPermisos()}
+            style={{ padding: '10px 24px', background: '#2ee59d', color: '#000', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14 }}
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (tienePermiso('ventas.dashboard.ver')) {
     preloadRoute('/ventas/dashboard')
     return <Navigate to="/ventas/dashboard" replace />

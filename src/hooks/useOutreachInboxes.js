@@ -11,12 +11,15 @@ export function useOutreachInboxes() {
   const cargar = useCallback(async (domainId) => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getInboxes(domainId)
-
-    if (err) { setError(err.message); setLoading(false); return }
-    setInboxes(data || [])
-    setLoading(false)
+    try {
+      const { data, error: err } = await getInboxes(domainId)
+      if (err) { setError(err.message); return }
+      setInboxes(data || [])
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const crear = useCallback(async (inbox) => {

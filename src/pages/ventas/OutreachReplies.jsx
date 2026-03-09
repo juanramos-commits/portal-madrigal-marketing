@@ -11,7 +11,8 @@ const CLASSIFICATION_OPTIONS = [
   { value: 'not_interested', label: 'No interesado' },
   { value: 'out_of_office', label: 'Fuera de oficina' },
   { value: 'unsubscribe', label: 'Baja' },
-  { value: 'bounce', label: 'Rebote' },
+  { value: 'question', label: 'Pregunta' },
+  { value: 'referral', label: 'Referido' },
   { value: 'other', label: 'Otro' },
 ]
 
@@ -20,7 +21,8 @@ const CLASSIFICATION_COLORS = {
   not_interested: 've-badge--red',
   out_of_office: 've-badge--yellow',
   unsubscribe: 've-badge--red',
-  bounce: 've-badge--gray',
+  question: 've-badge--blue',
+  referral: 've-badge--green',
   other: 've-badge--gray',
 }
 
@@ -29,7 +31,8 @@ const CLASSIFICATION_LABELS = {
   not_interested: 'No interesado',
   out_of_office: 'Fuera de oficina',
   unsubscribe: 'Baja',
-  bounce: 'Rebote',
+  question: 'Pregunta',
+  referral: 'Referido',
   other: 'Otro',
 }
 

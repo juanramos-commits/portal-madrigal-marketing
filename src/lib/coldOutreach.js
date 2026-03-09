@@ -2,7 +2,7 @@ import { supabase } from './supabase'
 
 // === DOMAINS ===
 export async function getDomains() {
-  return supabase.from('ventas_co_domains').select('*').order('created_at')
+  return supabase.from('ventas_co_domains').select('*').order('created_at').limit(100)
 }
 
 export async function getDomain(id) {
@@ -55,7 +55,7 @@ export async function resetInboxDailyCounts() {
 
 // === LISTS ===
 export async function getLists() {
-  return supabase.from('ventas_co_lists').select('*').order('created_at', { ascending: false })
+  return supabase.from('ventas_co_lists').select('*').order('created_at', { ascending: false }).limit(200)
 }
 
 export async function getList(id) {
@@ -75,15 +75,17 @@ export async function deleteList(id) {
 }
 
 export async function getListStats(id) {
-  const { data, error } = await supabase.from('ventas_co_contacts').select('status').eq('list_id', id)
-  if (error) return { error }
-  const stats = {
-    total: data.length,
-    active: data.filter(c => c.status === 'active').length,
-    bounced: data.filter(c => c.status === 'bounced').length,
-    replied: data.filter(c => c.status === 'replied').length,
-    unsubscribed: data.filter(c => c.status === 'unsubscribed').length,
-  }
+  const statuses = ['new', 'verified', 'contacted', 'replied', 'bounced', 'unsubscribed']
+  const queries = [
+    supabase.from('ventas_co_contacts').select('*', { count: 'exact', head: true }).eq('list_id', id),
+    ...statuses.map(s =>
+      supabase.from('ventas_co_contacts').select('*', { count: 'exact', head: true }).eq('list_id', id).eq('status', s)
+    ),
+  ]
+  const results = await Promise.all(queries)
+  if (results[0].error) return { error: results[0].error }
+  const stats = { total: results[0].count || 0 }
+  statuses.forEach((s, i) => { stats[s] = results[i + 1].count || 0 })
   return { data: stats }
 }
 
@@ -119,15 +121,17 @@ export async function importContacts(listId, contacts) {
 }
 
 export async function getContactStats() {
-  const { data, error } = await supabase.from('ventas_co_contacts').select('status')
-  if (error) return { error }
-  const stats = {
-    total: data.length,
-    active: data.filter(c => c.status === 'active').length,
-    bounced: data.filter(c => c.status === 'bounced').length,
-    replied: data.filter(c => c.status === 'replied').length,
-    unsubscribed: data.filter(c => c.status === 'unsubscribed').length,
-  }
+  const statuses = ['new', 'verified', 'contacted', 'replied', 'bounced', 'unsubscribed']
+  const queries = [
+    supabase.from('ventas_co_contacts').select('*', { count: 'exact', head: true }),
+    ...statuses.map(s =>
+      supabase.from('ventas_co_contacts').select('*', { count: 'exact', head: true }).eq('status', s)
+    ),
+  ]
+  const results = await Promise.all(queries)
+  if (results[0].error) return { error: results[0].error }
+  const stats = { total: results[0].count || 0 }
+  statuses.forEach((s, i) => { stats[s] = results[i + 1].count || 0 })
   return { data: stats }
 }
 
@@ -186,10 +190,12 @@ export async function deleteStep(id) {
 }
 
 export async function reorderSteps(campaignId, stepIds) {
-  const updates = stepIds.map((id, index) =>
-    supabase.from('ventas_co_steps').update({ step_number: index + 1 }).eq('id', id).eq('campaign_id', campaignId)
+  // Batch all updates in parallel (they're independent rows)
+  return Promise.all(
+    stepIds.map((id, index) =>
+      supabase.from('ventas_co_steps').update({ step_number: index + 1 }).eq('id', id).eq('campaign_id', campaignId)
+    )
   )
-  return Promise.all(updates)
 }
 
 // === ENROLLMENTS ===
@@ -237,7 +243,7 @@ export async function classifyReply(id, { classification, sentiment }) {
 }
 
 export async function markReplyActioned(id, userId) {
-  return supabase.from('ventas_co_replies').update({ requires_action: false, actioned_by: userId, actioned_at: new Date().toISOString() }).eq('id', id).select().single()
+  return supabase.from('ventas_co_replies').update({ requires_action: false, actioned_by: userId, actioned: true }).eq('id', id).select().single()
 }
 
 // === SUPPRESSIONS ===
@@ -245,12 +251,12 @@ export async function getSuppressions({ search = '', reason = '', page = 0, limi
   let query = supabase.from('ventas_co_suppressions').select('*', { count: 'exact' })
   if (search) query = query.ilike('email', `%${search}%`)
   if (reason) query = query.eq('reason', reason)
-  query = query.order('created_at', { ascending: false }).range(page * limit, (page + 1) * limit - 1)
+  query = query.order('suppressed_at', { ascending: false }).range(page * limit, (page + 1) * limit - 1)
   return query
 }
 
 export async function addSuppression(email, reason, notes) {
-  return supabase.from('ventas_co_suppressions').insert({ email, reason, notes }).select().single()
+  return supabase.from('ventas_co_suppressions').insert({ email, reason, notes, suppressed_at: new Date().toISOString() }).select().single()
 }
 
 export async function removeSuppression(id) {
@@ -276,5 +282,5 @@ export async function getSettings() {
 }
 
 export async function updateSetting(key, value) {
-  return supabase.from('ventas_co_settings').update({ value, updated_at: new Date().toISOString() }).eq('key', key)
+  return supabase.from('ventas_co_settings').update({ value }).eq('key', key)
 }

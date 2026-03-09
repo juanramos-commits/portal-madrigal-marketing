@@ -21,14 +21,19 @@ export function useOutreachContacts() {
     const p = resetPage ? 0 : page
     if (resetPage) setPage(0)
 
-    const { data, count, error: err } = await getContacts({
-      page: p, limit: PAGE_SIZE, search, status: statusFilter
-    })
+    try {
+      const { data, count, error: err } = await getContacts({
+        page: p, limit: PAGE_SIZE, search, status: statusFilter
+      })
 
-    if (err) { setError(err.message); setLoading(false); return }
-    setContacts(data || [])
-    setTotal(count || 0)
-    setLoading(false)
+      if (err) { setError(err.message); return }
+      setContacts(data || [])
+      setTotal(count || 0)
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [page, search, statusFilter])
 
   const cargarStats = useCallback(async () => {

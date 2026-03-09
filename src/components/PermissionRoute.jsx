@@ -2,14 +2,14 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function PermissionRoute({ permiso, children }) {
-  const { tienePermiso, permisos, loading } = useAuth()
+  const { tienePermiso, permisosLoaded, permisosError, loading, refrescarPermisos } = useAuth()
   const navigate = useNavigate()
 
   // Si no se especifica permiso, funciona como wrapper transparente
   if (!permiso) return children
 
   // Mientras se cargan los permisos, mostrar spinner (NO la página de sin acceso)
-  if (loading || permisos.length === 0) {
+  if (loading || !permisosLoaded) {
     return (
       <div style={{
         display: 'flex',
@@ -18,6 +18,18 @@ export default function PermissionRoute({ permiso, children }) {
         minHeight: '300px'
       }}>
         <div className="spinner" />
+      </div>
+    )
+  }
+
+  // Error cargando permisos — mostrar retry
+  if (permisosError) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '300px' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: '#ef4444', marginBottom: 12 }}>Error cargando permisos</p>
+          <button onClick={() => refrescarPermisos()} className="btn primary">Reintentar</button>
+        </div>
       </div>
     )
   }

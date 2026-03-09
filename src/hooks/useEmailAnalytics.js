@@ -16,48 +16,71 @@ export function useEmailAnalytics() {
   const cargarDashboard = useCallback(async () => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getDashboardStats()
-
-    if (err) { setError(err.message); setLoading(false); return }
-    setDashboardStats(data)
-    setLoading(false)
+    try {
+      const { data, error: err } = await getDashboardStats()
+      if (err) { setError(err.message); return }
+      setDashboardStats(data)
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const cargarFunnel = useCallback(async (campaignId) => {
     setLoading(true)
-    const { data, error: err } = await getFunnelData(campaignId)
-    if (err) { setLoading(false); return { error: err } }
-    setFunnelData(data)
-    setLoading(false)
-    return { data }
+    try {
+      const { data, error: err } = await getFunnelData(campaignId)
+      if (err) return { error: err }
+      setFunnelData(data)
+      return { data }
+    } catch (e) {
+      return { error: e }
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const cargarCohort = useCallback(async (days = 90) => {
     setLoading(true)
-    const { data, error: err } = await getCohortData(days)
-    if (err) { setLoading(false); return { error: err } }
-    setCohortData(data)
-    setLoading(false)
-    return { data }
+    try {
+      const { data, error: err } = await getCohortData(days)
+      if (err) return { error: err }
+      setCohortData(data)
+      return { data }
+    } catch (e) {
+      return { error: e }
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const cargarHeatmap = useCallback(async () => {
     setLoading(true)
-    const { data, error: err } = await getOpenHeatmap()
-    if (err) { setLoading(false); return { error: err } }
-    setHeatmapData(data)
-    setLoading(false)
-    return { data }
+    try {
+      const { data, error: err } = await getOpenHeatmap()
+      if (err) return { error: err }
+      setHeatmapData(data)
+      return { data }
+    } catch (e) {
+      return { error: e }
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const cargarReputacion = useCallback(async (days = 30) => {
     setLoading(true)
-    const { data, error: err } = await getReputationLogs(days)
-    if (err) { setLoading(false); return { error: err } }
-    setReputationLogs(data || [])
-    setLoading(false)
-    return { data }
+    try {
+      const { data, error: err } = await getReputationLogs(days)
+      if (err) return { error: err }
+      setReputationLogs(data || [])
+      return { data }
+    } catch (e) {
+      return { error: e }
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { cargarDashboard() }, [])

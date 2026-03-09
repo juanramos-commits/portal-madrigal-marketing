@@ -9,15 +9,18 @@ export function useEmailSettings() {
   const cargar = useCallback(async () => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getEmailSettings()
-
-    if (err) { setError(err.message); setLoading(false); return }
-    // Convert array of { key, value } rows to a key-value map
-    const map = {}
-    ;(data || []).forEach(row => { map[row.key] = row.value })
-    setSettings(map)
-    setLoading(false)
+    try {
+      const { data, error: err } = await getEmailSettings()
+      if (err) { setError(err.message); return }
+      // Convert array of { key, value } rows to a key-value map
+      const map = {}
+      ;(data || []).forEach(row => { map[row.key] = row.value })
+      setSettings(map)
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const actualizar = useCallback(async (key, value) => {

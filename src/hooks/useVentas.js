@@ -550,26 +550,30 @@ export function useVentas() {
     if (otherErr) throw otherErr
 
     if (otherPipelines && otherPipelines.length > 0) {
-      for (const entry of otherPipelines) {
-        const { data: etapaVenta, error: etapaErr } = await supabase
-          .from('ventas_etapas')
-          .select('id')
-          .eq('pipeline_id', entry.pipeline_id)
-          .eq('tipo', 'venta')
-          .eq('activo', true)
-          .limit(1)
-          .single()
+      // Batch fetch all venta stages in one query instead of N+1
+      const pipelineIds = otherPipelines.map(e => e.pipeline_id)
+      const { data: etapasVenta } = await supabase
+        .from('ventas_etapas')
+        .select('id, pipeline_id')
+        .in('pipeline_id', pipelineIds)
+        .eq('tipo', 'venta')
+        .eq('activo', true)
 
-        if (etapaErr) console.warn('Error buscando etapa venta:', etapaErr.message)
-
-        if (etapaVenta) {
-          const { error: moveOtherErr } = await supabase
-            .from('ventas_lead_pipeline')
-            .update({ etapa_id: etapaVenta.id, fecha_entrada: new Date().toISOString() })
-            .eq('lead_id', leadId)
-            .eq('pipeline_id', entry.pipeline_id)
-
-          if (moveOtherErr) console.warn('Error moviendo lead en pipeline secundario:', moveOtherErr.message)
+      if (etapasVenta && etapasVenta.length > 0) {
+        const etapaMap = new Map()
+        for (const e of etapasVenta) {
+          if (!etapaMap.has(e.pipeline_id)) etapaMap.set(e.pipeline_id, e.id)
+        }
+        for (const entry of otherPipelines) {
+          const etapaId = etapaMap.get(entry.pipeline_id)
+          if (etapaId) {
+            const { error: moveOtherErr } = await supabase
+              .from('ventas_lead_pipeline')
+              .update({ etapa_id: etapaId, fecha_entrada: new Date().toISOString() })
+              .eq('lead_id', leadId)
+              .eq('pipeline_id', entry.pipeline_id)
+            if (moveOtherErr) console.warn('Error moviendo lead en pipeline secundario:', moveOtherErr.message)
+          }
         }
       }
     }

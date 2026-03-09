@@ -11,12 +11,15 @@ export function useOutreachDomains() {
   const cargar = useCallback(async () => {
     setLoading(true)
     setError(null)
-
-    const { data, error: err } = await getDomains()
-
-    if (err) { setError(err.message); setLoading(false); return }
-    setDomains(data || [])
-    setLoading(false)
+    try {
+      const { data, error: err } = await getDomains()
+      if (err) { setError(err.message); return }
+      setDomains(data || [])
+    } catch (e) {
+      setError(e.message || 'Error de conexión')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const crear = useCallback(async (domain) => {
