@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  getOutreachDomains, createOutreachDomain, updateOutreachDomain, deleteOutreachDomain
+  getDomains, createDomain, updateDomain, deleteDomain
 } from '../lib/coldOutreach'
 
 export function useOutreachDomains() {
@@ -12,7 +12,7 @@ export function useOutreachDomains() {
     setLoading(true)
     setError(null)
 
-    const { data, error: err } = await getOutreachDomains()
+    const { data, error: err } = await getDomains()
 
     if (err) { setError(err.message); setLoading(false); return }
     setDomains(data || [])
@@ -20,21 +20,21 @@ export function useOutreachDomains() {
   }, [])
 
   const crear = useCallback(async (domain) => {
-    const { data, error: err } = await createOutreachDomain(domain)
+    const { data, error: err } = await createDomain(domain)
     if (err) return { error: err }
     setDomains(prev => [data, ...prev])
     return { data }
   }, [])
 
   const actualizar = useCallback(async (id, updates) => {
-    const { data, error: err } = await updateOutreachDomain(id, updates)
+    const { data, error: err } = await updateDomain(id, updates)
     if (err) return { error: err }
     setDomains(prev => prev.map(d => d.id === id ? { ...d, ...data } : d))
     return { data }
   }, [])
 
   const eliminar = useCallback(async (id) => {
-    const { error: err } = await deleteOutreachDomain(id)
+    const { error: err } = await deleteDomain(id)
     if (err) return { error: err }
     setDomains(prev => prev.filter(d => d.id !== id))
     return {}

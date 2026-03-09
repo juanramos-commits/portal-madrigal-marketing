@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useOutreachAnalytics } from '../../hooks/useOutreachAnalytics'
+import { getCampaigns } from '../../lib/coldOutreach'
 import '../../styles/ventas-email.css'
 
 const TABS = [
@@ -20,24 +21,42 @@ export default function OutreachAnalytics() {
   const { tienePermiso } = useAuth()
   const { showToast } = useToast()
   const {
-    overview,
-    domains,
+    dashboardStats,
     reputationData,
-    campaigns,
-    funnelData,
+    campaignAnalytics,
     loading,
-    cargarResumen,
+    cargarDashboard,
     cargarReputacion,
-    cargarRendimiento,
+    cargarCampaignAnalytics,
   } = useOutreachAnalytics()
 
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedDomain, setSelectedDomain] = useState('')
   const [selectedCampaign, setSelectedCampaign] = useState('')
+  const [domainsList, setDomainsList] = useState([])
+  const [campaignsList, setCampaignsList] = useState([])
 
   useEffect(() => {
-    cargarResumen()
-  }, [cargarResumen])
+    cargarDashboard()
+  }, [cargarDashboard])
+
+  useEffect(() => {
+    // Extract domain list from dashboardStats
+    if (dashboardStats?.domainsHealth) {
+      setDomainsList(dashboardStats.domainsHealth.map((d) => d.domain).filter(Boolean))
+    }
+  }, [dashboardStats])
+
+  useEffect(() => {
+    // Load campaigns list for the performance tab
+    const loadCampaigns = async () => {
+      const { data } = await getCampaigns()
+      if (data) setCampaignsList(data)
+    }
+    if (activeTab === 'performance' && campaignsList.length === 0) {
+      loadCampaigns()
+    }
+  }, [activeTab])
 
   useEffect(() => {
     if (activeTab === 'reputation' && selectedDomain) {
@@ -47,9 +66,9 @@ export default function OutreachAnalytics() {
 
   useEffect(() => {
     if (activeTab === 'performance' && selectedCampaign) {
-      cargarRendimiento(selectedCampaign)
+      cargarCampaignAnalytics(selectedCampaign)
     }
-  }, [activeTab, selectedCampaign, cargarRendimiento])
+  }, [activeTab, selectedCampaign, cargarCampaignAnalytics])
 
   if (!tienePermiso('ventas.outreach.analytics.ver')) {
     return (
@@ -90,19 +109,19 @@ export default function OutreachAnalytics() {
       </div>
 
       {/* Overview Tab */}
-      {activeTab === 'overview' && overview && (
+      {activeTab === 'overview' && dashboardStats && (
         <div className="ve-section">
           <h2 className="ve-section-title">Resumen General</h2>
           <div className="ve-form-grid">
             {[
-              { label: 'Campañas activas', value: overview.active_campaigns ?? 0 },
-              { label: 'Total enviados', value: overview.total_sent ?? 0 },
-              { label: 'Total abiertos', value: overview.total_opened ?? 0 },
-              { label: 'Total clicks', value: overview.total_clicked ?? 0 },
-              { label: 'Total respuestas', value: overview.total_replied ?? 0 },
-              { label: 'Tasa de apertura', value: `${overview.open_rate ?? 0}%` },
-              { label: 'Tasa de respuesta', value: `${overview.reply_rate ?? 0}%` },
-              { label: 'Tasa de rebote', value: `${overview.bounce_rate ?? 0}%` },
+              { label: 'Campañas activas', value: dashboardStats.activeCampaigns ?? 0 },
+              { label: 'Total enviados', value: dashboardStats.totalSent ?? 0 },
+              { label: 'Total abiertos', value: dashboardStats.totalOpened ?? 0 },
+              { label: 'Total clicks', value: dashboardStats.totalClicked ?? 0 },
+              { label: 'Total respuestas', value: dashboardStats.totalReplied ?? 0 },
+              { label: 'Tasa de apertura', value: `${dashboardStats.openRate ?? 0}%` },
+              { label: 'Tasa de respuesta', value: `${dashboardStats.replyRate ?? 0}%` },
+              { label: 'Tasa de rebote', value: `${dashboardStats.bounceRate ?? 0}%` },
             ].map(({ label, value }) => (
               <div className="ve-form-group" key={label}>
                 <label className="ve-label">{label}</label>
@@ -126,12 +145,12 @@ export default function OutreachAnalytics() {
               onChange={(e) => setSelectedDomain(e.target.value)}
             >
               <option value="">Seleccionar dominio...</option>
-              {domains.map((d) => (
+              {domainsList.map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
           </div>
-          {reputationData.length > 0 ? (
+          {reputationData && reputationData.length > 0 ? (
             <div className="ve-table-wrapper">
               <table className="ve-table">
                 <thead>
@@ -179,12 +198,12 @@ export default function OutreachAnalytics() {
               onChange={(e) => setSelectedCampaign(e.target.value)}
             >
               <option value="">Seleccionar campaña...</option>
-              {campaigns.map((c) => (
+              {campaignsList.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
-          {funnelData.length > 0 ? (
+          {campaignAnalytics ? (
             <div className="ve-table-wrapper">
               <table className="ve-table">
                 <thead>
@@ -200,9 +219,9 @@ export default function OutreachAnalytics() {
                   </tr>
                 </thead>
                 <tbody>
-                  {funnelData.map((step, idx) => (
+                  {(Array.isArray(campaignAnalytics) ? campaignAnalytics : [campaignAnalytics]).map((step, idx) => (
                     <tr key={idx} className="ve-table-row">
-                      <td>Paso {step.step_number}</td>
+                      <td>Paso {step.step_number ?? idx + 1}</td>
                       <td>{step.type || '—'}</td>
                       <td>{step.sent ?? 0}</td>
                       <td>{step.opened ?? 0}</td>

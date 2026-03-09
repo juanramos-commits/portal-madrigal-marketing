@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useOutreachReplies } from '../../hooks/useOutreachReplies'
+import { getCampaigns } from '../../lib/coldOutreach'
 import '../../styles/ventas-email.css'
 
 const CLASSIFICATION_OPTIONS = [
@@ -43,13 +44,13 @@ export default function OutreachReplies() {
   const { showToast } = useToast()
   const {
     replies,
-    campaigns,
     loading,
     cargar,
     clasificar,
-    marcarAccionada,
+    marcarGestionada,
   } = useOutreachReplies()
 
+  const [campaigns, setCampaigns] = useState([])
   const [campaignFilter, setCampaignFilter] = useState('')
   const [classificationFilter, setClassificationFilter] = useState('')
   const [requiresActionFilter, setRequiresActionFilter] = useState(false)
@@ -57,6 +58,11 @@ export default function OutreachReplies() {
 
   useEffect(() => {
     cargar()
+    const loadCampaigns = async () => {
+      const { data } = await getCampaigns()
+      if (data) setCampaigns(data)
+    }
+    loadCampaigns()
   }, [cargar])
 
   if (!tienePermiso('ventas.outreach.respuestas.ver')) {
@@ -76,7 +82,7 @@ export default function OutreachReplies() {
 
   const handleClasificar = async (replyId, classification) => {
     try {
-      await clasificar(replyId, classification)
+      await clasificar(replyId, { classification, sentiment: null })
       showToast('Respuesta clasificada correctamente', 'success')
       cargar()
     } catch (err) {
@@ -86,7 +92,7 @@ export default function OutreachReplies() {
 
   const handleMarcarAccionada = async (replyId) => {
     try {
-      await marcarAccionada(replyId)
+      await marcarGestionada(replyId)
       showToast('Respuesta marcada como accionada', 'success')
       cargar()
     } catch (err) {

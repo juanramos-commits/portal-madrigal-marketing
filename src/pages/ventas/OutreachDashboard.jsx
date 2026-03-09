@@ -19,7 +19,7 @@ const STATUS_COLORS = {
 
 export default function OutreachDashboard() {
   const { tienePermiso } = useAuth()
-  const { dashboardStats, domains, loading, cargarDashboard } = useOutreachAnalytics()
+  const { dashboardStats, loading, cargarDashboard } = useOutreachAnalytics()
 
   useEffect(() => {
     cargarDashboard()
@@ -99,7 +99,7 @@ export default function OutreachDashboard() {
           <div className="ve-section">
             <h2 className="ve-section-title">Salud de dominios</h2>
             <div className="ve-kpi-grid">
-              {(domains ?? []).map((d) => (
+              {(dashboardStats?.domainsHealth ?? []).map((d) => (
                 <div key={d.id} className="ve-kpi-card">
                   <span className="ve-kpi-label">{d.domain}</span>
                   <span className={`ve-badge ${HEALTH_COLOR(d.health_score ?? 0)}`}>

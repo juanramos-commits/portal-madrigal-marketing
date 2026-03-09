@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  getOutreachInboxes, createOutreachInbox, updateOutreachInbox, deleteOutreachInbox
+  getInboxes, createInbox, updateInbox, deleteInbox
 } from '../lib/coldOutreach'
 
 export function useOutreachInboxes() {
@@ -12,7 +12,7 @@ export function useOutreachInboxes() {
     setLoading(true)
     setError(null)
 
-    const { data, error: err } = await getOutreachInboxes({ domainId })
+    const { data, error: err } = await getInboxes({ domainId })
 
     if (err) { setError(err.message); setLoading(false); return }
     setInboxes(data || [])
@@ -20,21 +20,21 @@ export function useOutreachInboxes() {
   }, [])
 
   const crear = useCallback(async (inbox) => {
-    const { data, error: err } = await createOutreachInbox(inbox)
+    const { data, error: err } = await createInbox(inbox)
     if (err) return { error: err }
     setInboxes(prev => [data, ...prev])
     return { data }
   }, [])
 
   const actualizar = useCallback(async (id, updates) => {
-    const { data, error: err } = await updateOutreachInbox(id, updates)
+    const { data, error: err } = await updateInbox(id, updates)
     if (err) return { error: err }
     setInboxes(prev => prev.map(i => i.id === id ? { ...i, ...data } : i))
     return { data }
   }, [])
 
   const eliminar = useCallback(async (id) => {
-    const { error: err } = await deleteOutreachInbox(id)
+    const { error: err } = await deleteInbox(id)
     if (err) return { error: err }
     setInboxes(prev => prev.filter(i => i.id !== id))
     return {}

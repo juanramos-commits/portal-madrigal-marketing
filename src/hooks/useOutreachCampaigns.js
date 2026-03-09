@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  getOutreachCampaigns, createOutreachCampaign, updateOutreachCampaign, deleteOutreachCampaign,
-  activateOutreachCampaign, pauseOutreachCampaign, archiveOutreachCampaign
+  getCampaigns, createCampaign, updateCampaign, deleteCampaign,
+  activateCampaign, pauseCampaign, archiveCampaign
 } from '../lib/coldOutreach'
 
 const PAGE_SIZE = 20
@@ -21,7 +21,7 @@ export function useOutreachCampaigns() {
     const p = resetPage ? 0 : page
     if (resetPage) setPage(0)
 
-    const { data, count, error: err } = await getOutreachCampaigns({
+    const { data, count, error: err } = await getCampaigns({
       page: p, pageSize: PAGE_SIZE, search, status: statusFilter
     })
 
@@ -32,7 +32,7 @@ export function useOutreachCampaigns() {
   }, [page, search, statusFilter])
 
   const crear = useCallback(async (datos) => {
-    const { data, error: err } = await createOutreachCampaign(datos)
+    const { data, error: err } = await createCampaign(datos)
     if (err) return { error: err }
     setCampaigns(prev => [data, ...prev])
     setTotal(prev => prev + 1)
@@ -40,14 +40,14 @@ export function useOutreachCampaigns() {
   }, [])
 
   const actualizar = useCallback(async (id, updates) => {
-    const { data, error: err } = await updateOutreachCampaign(id, updates)
+    const { data, error: err } = await updateCampaign(id, updates)
     if (err) return { error: err }
     setCampaigns(prev => prev.map(c => c.id === id ? { ...c, ...data } : c))
     return { data }
   }, [])
 
   const eliminar = useCallback(async (id) => {
-    const { error: err } = await deleteOutreachCampaign(id)
+    const { error: err } = await deleteCampaign(id)
     if (err) return { error: err }
     setCampaigns(prev => prev.filter(c => c.id !== id))
     setTotal(prev => prev - 1)
@@ -55,21 +55,21 @@ export function useOutreachCampaigns() {
   }, [])
 
   const activar = useCallback(async (id) => {
-    const { data, error: err } = await activateOutreachCampaign(id)
+    const { data, error: err } = await activateCampaign(id)
     if (err) return { error: err }
     setCampaigns(prev => prev.map(c => c.id === id ? { ...c, ...data } : c))
     return { data }
   }, [])
 
   const pausar = useCallback(async (id) => {
-    const { data, error: err } = await pauseOutreachCampaign(id)
+    const { data, error: err } = await pauseCampaign(id)
     if (err) return { error: err }
     setCampaigns(prev => prev.map(c => c.id === id ? { ...c, ...data } : c))
     return { data }
   }, [])
 
   const archivar = useCallback(async (id) => {
-    const { data, error: err } = await archiveOutreachCampaign(id)
+    const { data, error: err } = await archiveCampaign(id)
     if (err) return { error: err }
     setCampaigns(prev => prev.map(c => c.id === id ? { ...c, ...data } : c))
     return { data }

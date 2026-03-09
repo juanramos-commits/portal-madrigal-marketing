@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useOutreachContacts } from '../../hooks/useOutreachContacts'
+import { getList, getContacts as getContactsDirect } from '../../lib/coldOutreach'
 import '../../styles/ventas-email.css'
 
 const STATUS_COLORS = {
@@ -49,8 +50,12 @@ export default function OutreachListDetail() {
   const navigate = useNavigate()
   const { tienePermiso } = useAuth()
   const { showToast } = useToast()
-  const { contacts, listInfo, totalCount, loading, cargar, importar } = useOutreachContacts()
+  const { contacts: hookContacts, total, loading: hookLoading, importar } = useOutreachContacts()
 
+  const [listInfo, setListInfo] = useState(null)
+  const [contactsList, setContactsList] = useState([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(0)
@@ -58,8 +63,29 @@ export default function OutreachListDetail() {
   const [importData, setImportData] = useState('')
 
   useEffect(() => {
-    cargar({ listId, search, status: statusFilter, offset: page * PAGE_SIZE, limit: PAGE_SIZE })
-  }, [cargar, listId, search, statusFilter, page])
+    const fetchList = async () => {
+      const { data } = await getList(listId)
+      if (data) setListInfo(data)
+    }
+    if (listId) fetchList()
+  }, [listId])
+
+  useEffect(() => {
+    const fetchContacts = async () => {
+      setLoading(true)
+      const { data, count } = await getContactsDirect({
+        listId,
+        search,
+        status: statusFilter,
+        page,
+        limit: PAGE_SIZE,
+      })
+      setContactsList(data || [])
+      setTotalCount(count || 0)
+      setLoading(false)
+    }
+    if (listId) fetchContacts()
+  }, [listId, search, statusFilter, page])
 
   if (!tienePermiso('ventas.outreach.listas.ver')) {
     return (
@@ -92,15 +118,18 @@ export default function OutreachListDetail() {
       showToast(`${parsed.length} contactos importados`, 'success')
       setShowImport(false)
       setImportData('')
-      cargar({ listId, search, status: statusFilter, offset: 0, limit: PAGE_SIZE })
       setPage(0)
+      // Re-fetch contacts after import
+      const { data, count } = await getContactsDirect({ listId, search, status: statusFilter, page: 0, limit: PAGE_SIZE })
+      setContactsList(data || [])
+      setTotalCount(count || 0)
     } catch (err) {
       showToast(err.message || 'Error al importar contactos', 'error')
     }
   }
 
   const stats = [
-    { label: 'Total', value: listInfo?.total_contacts ?? totalCount ?? 0 },
+    { label: 'Total', value: listInfo?.total_contacts ?? totalCount ?? 0, },
     { label: 'Verificados', value: listInfo?.verified_count ?? 0 },
     { label: 'Contactados', value: listInfo?.contacted_count ?? 0 },
     { label: 'Respondidos', value: listInfo?.replied_count ?? 0 },
@@ -161,7 +190,7 @@ export default function OutreachListDetail() {
           <div className="ve-spinner" aria-hidden="true" />
           <span>Cargando contactos...</span>
         </div>
-      ) : contacts.length === 0 ? (
+      ) : contactsList.length === 0 ? (
         <div className="ve-empty">No se encontraron contactos.</div>
       ) : (
         <>
@@ -177,7 +206,7 @@ export default function OutreachListDetail() {
                 </tr>
               </thead>
               <tbody>
-                {contacts.map((c) => (
+                {contactsList.map((c) => (
                   <tr key={c.id} className="ve-table-row">
                     <td>{c.email}</td>
                     <td>{c.first_name || c.last_name ? `${c.first_name ?? ''} ${c.last_name ?? ''}`.trim() : '—'}</td>

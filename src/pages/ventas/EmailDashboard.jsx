@@ -34,7 +34,7 @@ export default function EmailDashboard() {
   ]
 
   const warmupTotalDays = Number(settings?.warmup_days) || 42
-  const warmupCurrentDay = dashboardStats?.warmup_current_day ?? warmupTotalDays
+  const warmupCurrentDay = Number(settings?.warmup_current_day) || 0
   const warmupPercent = warmupTotalDays > 0 ? Math.min((warmupCurrentDay / warmupTotalDays) * 100, 100) : 0
 
   const quickLinks = [

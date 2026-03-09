@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useOutreachCampaigns } from '../../hooks/useOutreachCampaigns'
+import { getCampaign } from '../../lib/coldOutreach'
 import '../../styles/ventas-email.css'
 
 const DAYS_OF_WEEK = [
@@ -63,7 +64,7 @@ export default function OutreachCampaignEditor() {
   const navigate = useNavigate()
   const { tienePermiso } = useAuth()
   const { showToast } = useToast()
-  const { obtenerPorId, guardar, activar } = useOutreachCampaigns()
+  const { crear, actualizar, activar } = useOutreachCampaigns()
 
   const isNew = !id || id === 'nuevo'
   const [form, setForm] = useState(emptyForm())
@@ -81,7 +82,7 @@ export default function OutreachCampaignEditor() {
   const cargarCampana = async () => {
     try {
       setLoading(true)
-      const data = await obtenerPorId(id)
+      const { data } = await getCampaign(id)
       if (data) {
         setForm({
           name: data.name || '',
@@ -153,7 +154,13 @@ export default function OutreachCampaignEditor() {
 
   const handleGuardar = async () => {
     try {
-      await guardar({ ...form, steps }, isNew ? null : id)
+      if (isNew) {
+        const result = await crear({ ...form, steps })
+        if (result?.error) throw result.error
+      } else {
+        const result = await actualizar(id, { ...form, steps })
+        if (result?.error) throw result.error
+      }
       showToast('Campaña guardada correctamente', 'success')
       if (isNew) navigate('/ventas/outreach/campanas')
     } catch (err) {
@@ -163,8 +170,14 @@ export default function OutreachCampaignEditor() {
 
   const handleActivar = async () => {
     try {
-      await guardar({ ...form, steps }, isNew ? null : id)
-      if (!isNew) await activar(id)
+      if (isNew) {
+        const result = await crear({ ...form, steps })
+        if (result?.error) throw result.error
+      } else {
+        const result = await actualizar(id, { ...form, steps })
+        if (result?.error) throw result.error
+        await activar(id)
+      }
       showToast('Campaña activada correctamente', 'success')
       navigate('/ventas/outreach/campanas')
     } catch (err) {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  getOutreachContacts, getOutreachContactStats, importOutreachContacts
+  getContacts, getContactStats, importContacts
 } from '../lib/coldOutreach'
 
 const PAGE_SIZE = 50
@@ -21,7 +21,7 @@ export function useOutreachContacts() {
     const p = resetPage ? 0 : page
     if (resetPage) setPage(0)
 
-    const { data, count, error: err } = await getOutreachContacts({
+    const { data, count, error: err } = await getContacts({
       page: p, pageSize: PAGE_SIZE, search, status: statusFilter
     })
 
@@ -32,12 +32,12 @@ export function useOutreachContacts() {
   }, [page, search, statusFilter])
 
   const cargarStats = useCallback(async () => {
-    const { data, error: err } = await getOutreachContactStats()
+    const { data, error: err } = await getContactStats()
     if (!err && data) setStats(data)
   }, [])
 
   const importar = useCallback(async (listId, contactsData) => {
-    const { data, error: err } = await importOutreachContacts(listId, contactsData)
+    const { data, error: err } = await importContacts(listId, contactsData)
     if (err) return { error: err }
     return { data }
   }, [])

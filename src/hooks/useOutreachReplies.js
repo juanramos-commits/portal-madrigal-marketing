@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import {
-  getOutreachReplies, classifyOutreachReply, markReplyHandled
+  getReplies, classifyReply, markReplyActioned
 } from '../lib/coldOutreach'
 
 export function useOutreachReplies() {
@@ -12,7 +12,7 @@ export function useOutreachReplies() {
     setLoading(true)
     setError(null)
 
-    const { data, error: err } = await getOutreachReplies({
+    const { data, error: err } = await getReplies({
       campaignId, classification, requiresAction, page, limit
     })
 
@@ -22,14 +22,14 @@ export function useOutreachReplies() {
   }, [])
 
   const clasificar = useCallback(async (id, { classification, sentiment }) => {
-    const { data, error: err } = await classifyOutreachReply(id, { classification, sentiment })
+    const { data, error: err } = await classifyReply(id, { classification, sentiment })
     if (err) return { error: err }
     setReplies(prev => prev.map(r => r.id === id ? { ...r, ...data } : r))
     return { data }
   }, [])
 
   const marcarGestionada = useCallback(async (id, userId) => {
-    const { data, error: err } = await markReplyHandled(id, userId)
+    const { data, error: err } = await markReplyActioned(id, userId)
     if (err) return { error: err }
     setReplies(prev => prev.map(r => r.id === id ? { ...r, ...data } : r))
     return { data }

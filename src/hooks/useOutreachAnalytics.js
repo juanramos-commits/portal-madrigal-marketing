@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  getOutreachDashboardStats, getOutreachReputationData, getOutreachCampaignAnalytics
+  getDashboardStats, getReputationSummary, getCampaignAnalytics
 } from '../lib/coldOutreach'
 
 export function useOutreachAnalytics() {
@@ -14,7 +14,7 @@ export function useOutreachAnalytics() {
     setLoading(true)
     setError(null)
 
-    const { data, error: err } = await getOutreachDashboardStats()
+    const { data, error: err } = await getDashboardStats()
 
     if (err) { setError(err.message); setLoading(false); return }
     setDashboardStats(data)
@@ -25,7 +25,7 @@ export function useOutreachAnalytics() {
     setLoading(true)
     setError(null)
 
-    const { data, error: err } = await getOutreachReputationData(domainId, days)
+    const { data, error: err } = await getReputationSummary(domainId, days)
 
     if (err) { setError(err.message); setLoading(false); return { error: err } }
     setReputationData(data)
@@ -37,7 +37,7 @@ export function useOutreachAnalytics() {
     setLoading(true)
     setError(null)
 
-    const { data, error: err } = await getOutreachCampaignAnalytics(campaignId)
+    const { data, error: err } = await getCampaignAnalytics(campaignId)
 
     if (err) { setError(err.message); setLoading(false); return { error: err } }
     setCampaignAnalytics(data)

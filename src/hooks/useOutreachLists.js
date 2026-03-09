@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
-  getOutreachLists, createOutreachList, updateOutreachList, deleteOutreachList,
-  getOutreachListStats
+  getLists, createList, updateList, deleteList,
+  getListStats
 } from '../lib/coldOutreach'
 
 export function useOutreachLists() {
@@ -13,7 +13,7 @@ export function useOutreachLists() {
     setLoading(true)
     setError(null)
 
-    const { data, error: err } = await getOutreachLists()
+    const { data, error: err } = await getLists()
 
     if (err) { setError(err.message); setLoading(false); return }
     setLists(data || [])
@@ -21,28 +21,28 @@ export function useOutreachLists() {
   }, [])
 
   const crear = useCallback(async (list) => {
-    const { data, error: err } = await createOutreachList(list)
+    const { data, error: err } = await createList(list)
     if (err) return { error: err }
     setLists(prev => [data, ...prev])
     return { data }
   }, [])
 
   const actualizar = useCallback(async (id, updates) => {
-    const { data, error: err } = await updateOutreachList(id, updates)
+    const { data, error: err } = await updateList(id, updates)
     if (err) return { error: err }
     setLists(prev => prev.map(l => l.id === id ? { ...l, ...data } : l))
     return { data }
   }, [])
 
   const eliminar = useCallback(async (id) => {
-    const { error: err } = await deleteOutreachList(id)
+    const { error: err } = await deleteList(id)
     if (err) return { error: err }
     setLists(prev => prev.filter(l => l.id !== id))
     return {}
   }, [])
 
   const cargarStats = useCallback(async (listId) => {
-    const { data, error: err } = await getOutreachListStats(listId)
+    const { data, error: err } = await getListStats(listId)
     if (err) return { error: err }
     return { data }
   }, [])
