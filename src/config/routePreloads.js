@@ -13,12 +13,17 @@ const preloads = {
   '/ventas/notificaciones': () => import('../pages/ventas/VentasNotificaciones'),
   '/ventas/ajustes': () => import('../pages/ventas/VentasAjustes'),
   '/ventas/enlaces': () => import('../pages/ventas/VentasEnlaces'),
+  '/ventas/email': () => import('../pages/ventas/EmailDashboard'),
+  '/ventas/outreach': () => import('../pages/ventas/OutreachDashboard'),
 
   // Admin / general
   '/dashboard': () => import('../pages/Dashboard'),
   '/clientes': () => import('../pages/TablaClientesAvanzada'),
   '/usuarios': () => import('../pages/Usuarios'),
   '/roles': () => import('../pages/Roles'),
+  '/notificaciones': () => import('../pages/Notificaciones'),
+  '/audit-log': () => import('../pages/AuditLog'),
+  '/mi-seguridad': () => import('../pages/Seguridad'),
 }
 
 // Set of already-preloaded paths to avoid duplicate fetches

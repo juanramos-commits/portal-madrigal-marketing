@@ -1,19 +1,15 @@
 import { logger } from '../lib/logger'
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react'
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
 import { useNotificacionesBadge } from '../hooks/useNotificacionesBadge'
 import NotificacionesBadge from './ventas/NotificacionesBadge'
+import { preloadRoute } from '../config/routePreloads'
 
-// Modifier para restringir movimiento vertical
-const restrictToVerticalAxis = ({ transform }) => ({
-  ...transform,
-  x: 0,
-})
+// Lazy load dnd-kit — only needed when sidebar has multiple sections (rare for most users)
+// Saves ~49KB from initial bundle
+const SortableSidebar = lazy(() => import('./SortableSidebar'))
 
 const Icons = {
   Dashboard: () => (
@@ -168,112 +164,6 @@ const Icons = {
   )
 }
 
-function SortableMenuItem({ item, isActive, onNavigate }) {
-  const [isHovered, setIsHovered] = useState(false)
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
-  const Icon = item.icon
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div
-        className={`nav-item ${isActive ? 'active' : ''}`}
-        style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }}
-      >
-        <div
-          onClick={() => onNavigate(item.href)}
-          style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, cursor: 'pointer' }}
-        >
-          <Icon />
-          <span className="nav-label">{item.name}</span>
-        </div>
-        <div
-          {...attributes}
-          {...listeners}
-          style={{
-            cursor: 'grab',
-            display: 'flex',
-            alignItems: 'center',
-            opacity: isHovered ? 0.6 : 0,
-            transition: 'opacity 0.2s',
-            padding: '4px'
-          }}
-        >
-          <Icons.GripVertical />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function SortableDocMenuItem({ item, isActive, onClick }) {
-  const [isHovered, setIsHovered] = useState(false)
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  }
-
-  const Icon = item.icon
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <div
-        className={`nav-item ${isActive ? 'active' : ''}`}
-        style={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}
-      >
-        <div
-          onClick={onClick}
-          style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, cursor: 'pointer' }}
-        >
-          <Icon />
-          <span className="nav-label">{item.name}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div
-            onClick={onClick}
-            style={{ transform: item.isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', cursor: 'pointer' }}
-          >
-            <Icons.ChevronDown />
-          </div>
-          <div
-            {...attributes}
-            {...listeners}
-            style={{
-              cursor: 'grab',
-              display: 'flex',
-              alignItems: 'center',
-              opacity: isHovered ? 0.6 : 0,
-              transition: 'opacity 0.2s',
-              padding: '4px'
-            }}
-          >
-            <Icons.GripVertical />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function ConnectionBanner() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [wasOffline, setWasOffline] = useState(false)
@@ -324,13 +214,6 @@ export default function Layout() {
     navigate(href)
   }, [navigate])
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  )
-
   const defaultNavigation = [
     { id: 'ventas', name: 'Ventas', href: '/ventas', icon: Icons.ShoppingCart, permiso: null, type: 'submenu', children: [
       { name: 'Dashboard', href: '/ventas/dashboard', icon: Icons.TrendingUp, permiso: 'ventas.dashboard.ver' },
@@ -367,57 +250,64 @@ export default function Layout() {
     ]}
   ]
 
-  useEffect(() => {
-    if (usuario?.id) {
-      loadMenuOrder()
-    }
-  }, [usuario?.id])
-
-  const loadMenuOrder = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('usuarios_menu_order')
-        .select('menu_order')
-        .eq('usuario_id', usuario.id)
-        .maybeSingle()
-
-      if (error) {
-        logger.error('Error loading menu order:', error)
-        setMenuItems(defaultNavigation.filter(shouldShowItem))
-        return
-      }
-
-      if (data?.menu_order) {
-        const savedOrder = data.menu_order
-        const orderedItems = savedOrder
-          .map(id => defaultNavigation.find(item => item.id === id))
-          .filter(item => item && shouldShowItem(item))
-
-        const newItems = defaultNavigation.filter(
-          item => !savedOrder.includes(item.id) && shouldShowItem(item)
-        )
-
-        setMenuItems([...orderedItems, ...newItems])
-      } else {
-        setMenuItems(defaultNavigation.filter(shouldShowItem))
-      }
-    } catch (error) {
-      logger.error('Error loading menu order:', error)
+  const applyMenuOrder = useCallback((savedOrder) => {
+    if (!savedOrder) {
       setMenuItems(defaultNavigation.filter(shouldShowItem))
+      return
     }
-  }
+    const orderedItems = savedOrder
+      .map(id => defaultNavigation.find(item => item.id === id))
+      .filter(item => item && shouldShowItem(item))
+    const newItems = defaultNavigation.filter(
+      item => !savedOrder.includes(item.id) && shouldShowItem(item)
+    )
+    setMenuItems([...orderedItems, ...newItems])
+  }, [usuario, permisos])
+
+  useEffect(() => {
+    if (!usuario?.id) return
+
+    // 1) Instant render from localStorage cache (no network wait)
+    const CACHE_KEY = `menu-order-${usuario.id}`
+    try {
+      const cached = localStorage.getItem(CACHE_KEY)
+      if (cached) {
+        applyMenuOrder(JSON.parse(cached))
+      } else {
+        applyMenuOrder(null)
+      }
+    } catch {
+      applyMenuOrder(null)
+    }
+
+    // 2) Background sync from DB (only updates if different)
+    supabase
+      .from('usuarios_menu_order')
+      .select('menu_order')
+      .eq('usuario_id', usuario.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) return
+        if (data?.menu_order) {
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify(data.menu_order)) } catch {}
+          applyMenuOrder(data.menu_order)
+        }
+      })
+  }, [usuario?.id, applyMenuOrder])
 
   const saveMenuOrder = async (newOrder) => {
     try {
       const menuOrder = newOrder.map(item => item.id)
 
-      // Primero eliminar el registro existente
+      // Persist to localStorage first (instant on next load)
+      try { localStorage.setItem(`menu-order-${usuario.id}`, JSON.stringify(menuOrder)) } catch {}
+
+      // Then sync to DB
       await supabase
         .from('usuarios_menu_order')
         .delete()
         .eq('usuario_id', usuario.id)
 
-      // Luego insertar el nuevo
       const { error } = await supabase
         .from('usuarios_menu_order')
         .insert({
@@ -547,6 +437,7 @@ export default function Layout() {
                   key={child.href}
                   to={child.href}
                   onClick={() => setMobileMenuOpen(false)}
+                  onMouseEnter={() => preloadRoute(child.href)}
                   className={`nav-item ${isActive(child.href) ? 'active' : ''}`}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
                 >
@@ -557,50 +448,48 @@ export default function Layout() {
               )
             })
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
-              <SortableContext items={visibleSections.map(item => item.id)} strategy={verticalListSortingStrategy}>
-                {visibleSections.map((item) => {
-                  if (item.type === 'submenu') {
-                    const isOpen = item.id === 'ventas' ? ventasMenuOpen
-                      : item.id === 'por-organizar' ? porOrganizarMenuOpen
-                      : false
-                    const toggleOpen = item.id === 'ventas' ? () => setVentasMenuOpen(!ventasMenuOpen)
-                      : item.id === 'por-organizar' ? () => setPorOrganizarMenuOpen(!porOrganizarMenuOpen)
-                      : () => {}
-
-                    return (
-                      <div key={item.id}>
-                        <SortableDocMenuItem
-                          item={{ ...item, isOpen }}
-                          isActive={false}
-                          onClick={toggleOpen}
-                        />
-                        {isOpen && item.children && (
-                          <div style={{ paddingLeft: '32px', marginTop: '2px' }}>
-                            {item.children.map(child => (
-                              <Link key={child.href} to={child.href} className={`nav-item ${isActive(child.href) ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <child.icon />
-                                <span className="nav-label" style={{ flex: 1 }}>{child.name}</span>
-                                {child.href === '/ventas/notificaciones' && <NotificacionesBadge contador={notifContador} />}
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  }
-
+            <Suspense fallback={
+              /* Render non-sortable fallback while dnd-kit loads */
+              visibleSections.map((item) => {
+                if (item.type === 'submenu') {
+                  const isOpen = item.id === 'ventas' ? ventasMenuOpen
+                    : item.id === 'por-organizar' ? porOrganizarMenuOpen
+                    : false
+                  const Icon = item.icon
                   return (
-                    <SortableMenuItem
-                      key={item.id}
-                      item={item}
-                      isActive={isActive(item.href)}
-                      onNavigate={handleNavigate}
-                    />
+                    <div key={item.id}>
+                      <div className="nav-item" style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                        <Icon /><span className="nav-label">{item.name}</span>
+                      </div>
+                      {isOpen && item.children && (
+                        <div style={{ paddingLeft: '32px', marginTop: '2px' }}>
+                          {item.children.map(child => (
+                            <Link key={child.href} to={child.href} onMouseEnter={() => preloadRoute(child.href)} className={`nav-item ${isActive(child.href) ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <child.icon /><span className="nav-label" style={{ flex: 1 }}>{child.name}</span>
+                              {child.href === '/ventas/notificaciones' && <NotificacionesBadge contador={notifContador} />}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )
-                })}
-              </SortableContext>
-            </DndContext>
+                }
+                return null
+              })
+            }>
+              <SortableSidebar
+                visibleSections={visibleSections}
+                ventasMenuOpen={ventasMenuOpen}
+                setVentasMenuOpen={setVentasMenuOpen}
+                porOrganizarMenuOpen={porOrganizarMenuOpen}
+                setPorOrganizarMenuOpen={setPorOrganizarMenuOpen}
+                isActive={isActive}
+                handleNavigate={handleNavigate}
+                handleDragEnd={handleDragEnd}
+                notifContador={notifContador}
+                Icons={Icons}
+              />
+            </Suspense>
           )}
         </nav>
 

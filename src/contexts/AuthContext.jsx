@@ -18,61 +18,85 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
   const isSigningIn = useRef(false)
 
+  // Fast path: single RPC returns user + permissions in 1 round-trip
+  // Fallback: 3-query flow if the RPC doesn't exist yet (pre-migration)
   const cargarUsuario = useCallback(async (email, { esLoginFresco = false, _retry = 0 } = {}) => {
     try {
-      const { data: usuarioData, error: usuarioError } = await supabase
-        .from('usuarios')
-        .select('*, rol:roles(id, nombre, nivel, color)')
-        .eq('email', email)
-        .single()
+      // Try the fast single-RPC path first
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('obtener_usuario_completo', { p_email: email })
 
-      if (usuarioError) {
-        logger.error('Error cargando usuario:', usuarioError)
-        // Retry once on transient errors (AbortError, network issues)
-        if (_retry < 1) {
-          logger.warn('Reintentando cargarUsuario...')
-          await new Promise(r => setTimeout(r, 1000))
-          return cargarUsuario(email, { esLoginFresco, _retry: _retry + 1 })
+      let usuarioData = null
+
+      if (!rpcError && rpcResult?.usuario) {
+        // Fast path succeeded — 1 round-trip for user + permisos
+        usuarioData = rpcResult.usuario
+        if (!usuarioData.activo) {
+          return { ...usuarioData, desactivado: true }
         }
-        return null
-      }
-
-      if (!usuarioData.activo) {
-        return { ...usuarioData, desactivado: true }
-      }
-
-      setUsuario(usuarioData)
-
-      // Cargar permisos
-      setPermisosError(null)
-      try {
-        if (usuarioData.tipo === 'super_admin') {
-          const { data: todosPermisos, error: permErr } = await supabase.from('permisos').select('codigo')
-          if (permErr) throw permErr
-          setPermisos(todosPermisos?.map(p => p.codigo) || [])
-        } else {
-          // Cargar permisos base del rol + permisos ventas comerciales en paralelo
-          const [permisosRes, ventasRes] = await Promise.all([
-            supabase.rpc('obtener_permisos_usuario', { p_usuario_id: usuarioData.id }),
-            supabase.rpc('obtener_permisos_ventas_usuario', { p_usuario_id: usuarioData.id }),
-          ])
-          if (permisosRes.error) logger.error('Error cargando permisos base:', permisosRes.error)
-          if (ventasRes.error) logger.error('Error cargando permisos ventas:', ventasRes.error)
-          // If BOTH fail, throw so user sees error + retry
-          if (permisosRes.error && ventasRes.error) throw permisosRes.error
-          const base = permisosRes.data?.map(p => p.codigo) || []
-          const ventas = ventasRes.data?.map(p => p.codigo) || []
-          setPermisos([...new Set([...base, ...ventas])])
-        }
+        setUsuario(usuarioData)
+        setPermisosError(null)
+        setPermisos(rpcResult.permisos || [])
         setPermisosLoaded(true)
-      } catch (permError) {
-        logger.error('Error crítico cargando permisos:', permError)
-        setPermisosError(permError.message || 'Error cargando permisos')
-        setPermisosLoaded(true) // Mark as loaded so SmartRedirect doesn't hang
+      } else {
+        // Fallback: legacy 3-query flow (RPC not deployed yet)
+        if (rpcError) logger.warn('obtener_usuario_completo not available, using fallback:', rpcError.message)
+
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('*, rol:roles(id, nombre, nivel, color)')
+          .eq('email', email)
+          .single()
+
+        if (userError) {
+          logger.error('Error cargando usuario:', userError)
+          if (_retry < 1) {
+            await new Promise(r => setTimeout(r, 1000))
+            return cargarUsuario(email, { esLoginFresco, _retry: _retry + 1 })
+          }
+          return null
+        }
+
+        usuarioData = userData
+        if (!usuarioData.activo) {
+          return { ...usuarioData, desactivado: true }
+        }
+        setUsuario(usuarioData)
+
+        // Load permissions (legacy flow)
+        setPermisosError(null)
+        try {
+          if (usuarioData.tipo === 'super_admin') {
+            const { data: todosPermisos, error: permErr } = await supabase.from('permisos').select('codigo')
+            if (permErr) throw permErr
+            setPermisos(todosPermisos?.map(p => p.codigo) || [])
+          } else {
+            const [permisosRes, ventasRes] = await Promise.all([
+              supabase.rpc('obtener_permisos_usuario', { p_usuario_id: usuarioData.id }),
+              supabase.rpc('obtener_permisos_ventas_usuario', { p_usuario_id: usuarioData.id }),
+            ])
+            if (permisosRes.error && ventasRes.error) throw permisosRes.error
+            const base = permisosRes.data?.map(p => p.codigo) || []
+            const ventas = ventasRes.data?.map(p => p.codigo) || []
+            setPermisos([...new Set([...base, ...ventas])])
+          }
+          setPermisosLoaded(true)
+        } catch (permError) {
+          logger.error('Error crítico cargando permisos:', permError)
+          setPermisosError(permError.message || 'Error cargando permisos')
+          setPermisosLoaded(true)
+        }
       }
 
-      // Actualizar ultimo acceso solo en login fresco (evita PATCH 400 por JWT en refresh)
-      if (esLoginFresco) {
+      // Load roles comerciales in background (non-blocking)
+      supabase
+        .from('ventas_roles_comerciales')
+        .select('*, usuario:usuarios(id, nombre, email, avatar_url)')
+        .eq('activo', true)
+        .then(({ data }) => setRolesComerciales(data || []))
+        .catch(() => {})
+
+      // Actualizar ultimo acceso solo en login fresco
+      if (esLoginFresco && usuarioData?.id) {
         supabase.from('usuarios').update({ ultimo_acceso: new Date().toISOString() }).eq('id', usuarioData.id).then(
           ({ error }) => { if (error) logger.error('Error actualizando ultimo_acceso:', error) },
           (err) => logger.error('Error de red actualizando ultimo_acceso:', err)
@@ -82,9 +106,7 @@ export function AuthProvider({ children }) {
       return usuarioData
     } catch (error) {
       logger.error('Error en cargarUsuario:', error)
-      // Retry once on transient errors (AbortError, network issues)
       if (_retry < 1) {
-        logger.warn('Reintentando cargarUsuario tras excepción...')
         await new Promise(r => setTimeout(r, 1000))
         return cargarUsuario(email, { esLoginFresco, _retry: _retry + 1 })
       }
@@ -244,11 +266,7 @@ export function AuthProvider({ children }) {
     setRolesComerciales(data || [])
   }, [user?.id])
 
-  // Trigger: usuario.id (stable primitive) avoids re-firing on object reference changes
-  useEffect(() => {
-    if (!usuario?.id) return
-    refrescarRolesComerciales()
-  }, [usuario?.id, refrescarRolesComerciales])
+  // rolesComerciales now loaded inside cargarUsuario (no separate effect needed)
 
   // PERF: useCallback stabilizes identity so useMemo(value) doesn't invalidate on every render
   const signInWithEmail = useCallback(async (email, password) => {
