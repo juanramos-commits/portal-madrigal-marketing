@@ -89,7 +89,7 @@ function VistaMensual({ fechaActual, citas, bloqueos, onClickDia, onClickCita, e
           const hoy = esHoy(dia.date)
           return (
             <div
-              key={i}
+              key={key}
               className={`vc-mes-celda${dia.esOtroMes ? ' vc-otro-mes' : ''}${hoy ? ' vc-hoy' : ''}`}
               role="button"
               tabIndex={0}

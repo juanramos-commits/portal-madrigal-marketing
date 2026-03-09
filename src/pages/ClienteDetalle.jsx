@@ -93,10 +93,10 @@ export default function ClienteDetalle() {
         supabase.from('clientes_socios').select('*').eq('cliente_id', id).order('numero_socio')
       ])
 
-      setFacturacion(facturacionRes.data)
-      setUrls(urlsRes.data)
-      setBranding(brandingRes.data)
-      setSocios(sociosRes.data || [])
+      setFacturacion(facturacionRes.error ? null : facturacionRes.data)
+      setUrls(urlsRes.error ? null : urlsRes.data)
+      setBranding(brandingRes.error ? null : brandingRes.data)
+      setSocios(sociosRes.error ? [] : sociosRes.data || [])
     } catch (error) {
       logger.error('Error cargando cliente:', error)
     } finally {
