@@ -101,15 +101,15 @@ export default function OutreachInboxes() {
                 <tr key={inbox.id} className="ve-table-row">
                   <td>{inbox.email}</td>
                   <td>{inbox.display_name || '—'}</td>
-                  <td>{inbox.domain_name || '—'}</td>
+                  <td>{inbox.domain?.domain || '—'}</td>
                   <td>{inbox.daily_limit ?? '—'}</td>
                   <td>{inbox.sent_today ?? 0}</td>
                   <td>
                     <button
-                      className={`ve-badge ${inbox.active ? 've-badge--green' : 've-badge--gray'}`}
-                      onClick={() => tienePermiso('ventas.outreach.inboxes.editar') && handleToggle(inbox, 'active')}
+                      className={`ve-badge ${inbox.is_active ? 've-badge--green' : 've-badge--gray'}`}
+                      onClick={() => tienePermiso('ventas.outreach.inboxes.editar') && handleToggle(inbox, 'is_active')}
                     >
-                      {inbox.active ? 'Sí' : 'No'}
+                      {inbox.is_active ? 'Sí' : 'No'}
                     </button>
                   </td>
                   <td>
