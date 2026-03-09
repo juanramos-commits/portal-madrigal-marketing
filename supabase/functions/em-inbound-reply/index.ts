@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
   const fromEmail = (body.from as string || '').trim().toLowerCase()
   const subject = (body.subject as string) || ''
-  const bodyText = (body.body as string || body.text as string) || ''
+  const bodyText = (body.body as string) || (body.text as string) || ''
 
   if (!fromEmail) {
     return jsonResponse({ error: 'from email is required' }, 400)

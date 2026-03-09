@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
       await supabase
         .from('ventas_co_suppressions')
         .upsert(
-          { email: (contact.email as string).toLowerCase(), reason: 'unsubscribed', created_at: new Date().toISOString() },
+          { email: (contact.email as string).toLowerCase(), reason: 'unsubscribed', suppressed_at: new Date().toISOString() },
           { onConflict: 'email' },
         )
 
