@@ -160,6 +160,11 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M15 7h3a5 5 0 0 1 0 10h-3m-6 0H6A5 5 0 0 1 6 7h3"/><line x1="8" y1="12" x2="16" y2="12"/>
     </svg>
+  ),
+  Mail: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+    </svg>
   )
 }
 
@@ -336,6 +341,7 @@ export default function Layout() {
       { name: 'Wallet', href: '/ventas/wallet', icon: Icons.Wallet, permiso: 'ventas.wallet.ver' },
       { name: 'Calendario', href: '/ventas/calendario', icon: Icons.Calendar, permiso: 'ventas.calendario.ver' },
       { name: 'Enlaces', href: '/ventas/enlaces', icon: Icons.Link2, permiso: 'ventas.enlaces.ver' },
+      { name: 'Email Marketing', href: '/ventas/email', icon: Icons.Mail, permiso: 'ventas.email.ver' },
       { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ajustes.ver' },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [
