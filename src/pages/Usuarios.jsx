@@ -1,5 +1,5 @@
 import { logger } from '../lib/logger'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
 import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
@@ -60,6 +60,12 @@ export default function Usuarios() {
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteError, setInviteError] = useState('')
   const [inviteSuccess, setInviteSuccess] = useState('')
+  const dismissTimerRef = useRef(null)
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => { if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current) }
+  }, [])
 
   const [permisosUsuario, setPermisosUsuario] = useState([])
   const [permisosRol, setPermisosRol] = useState([])
@@ -140,7 +146,7 @@ export default function Usuarios() {
       }
 
       setInviteSuccess('¡Invitación enviada!')
-      setTimeout(() => {
+      dismissTimerRef.current = setTimeout(() => {
         setModalInvitar(false)
         setInviteForm({ email: '', nombre: '', tipo: 'equipo', rol_id: '' })
         setInviteSuccess('')
@@ -304,7 +310,7 @@ export default function Usuarios() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Error al cambiar la contraseña')
       setPasswordSuccess('Contraseña actualizada correctamente')
-      setTimeout(() => {
+      dismissTimerRef.current = setTimeout(() => {
         setModalPassword(null)
         setNuevaPassword('')
         setPasswordSuccess('')

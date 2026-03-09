@@ -61,29 +61,43 @@ export default function OutreachListDetail() {
   const [page, setPage] = useState(0)
   const [showImport, setShowImport] = useState(false)
   const [importData, setImportData] = useState('')
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     const fetchList = async () => {
-      const { data } = await getList(listId)
-      if (data) setListInfo(data)
+      try {
+        const { data, error: err } = await getList(listId)
+        if (err) throw err
+        if (data) setListInfo(data)
+      } catch (e) {
+        console.error('Error cargando lista:', e)
+      }
     }
     if (listId) fetchList()
   }, [listId])
 
-  useEffect(() => {
-    const fetchContacts = async () => {
-      setLoading(true)
-      const { data, count } = await getContactsDirect({
+  const fetchContacts = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const { data, count, error: err } = await getContactsDirect({
         listId,
         search,
         status: statusFilter,
         page,
         limit: PAGE_SIZE,
       })
+      if (err) throw err
       setContactsList(data || [])
       setTotalCount(count || 0)
+    } catch (e) {
+      setError(e.message || 'Error cargando contactos')
+    } finally {
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
     if (listId) fetchContacts()
   }, [listId, search, statusFilter, page])
 
@@ -182,7 +196,12 @@ export default function OutreachListDetail() {
       </div>
 
       {/* Contacts Table */}
-      {loading ? (
+      {error ? (
+        <div className="ve-error" role="alert" style={{ textAlign: 'center', padding: 24 }}>
+          <p style={{ marginBottom: 12 }}>{error}</p>
+          <button onClick={fetchContacts} className="btn primary">Reintentar</button>
+        </div>
+      ) : loading ? (
         <div className="ve-loading" role="status">
           <div className="ve-spinner" aria-hidden="true" />
           <span>Cargando contactos...</span>

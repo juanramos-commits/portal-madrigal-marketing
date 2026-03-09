@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 export default function ClienteDashboard() {
   const { usuario } = useAuth()
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [cliente, setCliente] = useState(null)
   const [stats, setStats] = useState({ campanasActivas: 0, leadsDelMes: 0, facturasPendientes: 0 })
 
@@ -19,6 +20,7 @@ export default function ClienteDashboard() {
       return
     }
 
+    setError(null)
     try {
       // Cargar datos del cliente
       const { data: clienteData } = await supabase
@@ -52,6 +54,7 @@ export default function ClienteDashboard() {
       })
     } catch (e) {
       logger.error('Error loading client dashboard:', e)
+      setError(e.message || 'Error cargando datos')
     } finally {
       setLoading(false)
     }
@@ -61,6 +64,17 @@ export default function ClienteDashboard() {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: '60px' }}>
         <div className="spinner" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '60px' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ color: '#ef4444', marginBottom: 12 }}>{error}</p>
+          <button onClick={loadClienteData} className="btn primary">Reintentar</button>
+        </div>
       </div>
     )
   }
