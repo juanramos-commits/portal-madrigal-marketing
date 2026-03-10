@@ -340,16 +340,22 @@ export default function CRMLeadDetalle() {
     cargarLead()
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Safety net: force loading=false after timeout ──────────────────
+  // ── Safety net: force loading=false after timeout + auto-retry once ──
+  const retryCountRef = useRef(0)
   useEffect(() => {
-    if (!loading) return
+    if (!loading) { retryCountRef.current = 0; return }
     const timeout = setTimeout(() => {
       console.error('[CRM Detail] Loading timeout — forcing loading=false')
       setLoading(false)
-      setError('La carga tardó demasiado. Intenta refrescar.')
+      if (retryCountRef.current < 1) {
+        retryCountRef.current++
+        cargarLead()
+      } else {
+        setError('La carga tardó demasiado. Intenta refrescar.')
+      }
     }, 15000)
     return () => clearTimeout(timeout)
-  }, [loading])
+  }, [loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Snapshot for activity tracking ────────────────────────────────
   useEffect(() => {
