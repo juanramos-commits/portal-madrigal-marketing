@@ -119,6 +119,10 @@ export function useVentasCRM() {
   const initialLoadRef = useRef(false)
   // FIX: separate request ID for initial load — immune to other functions incrementing loadRequestRef
   const initialLoadRequestRef = useRef(0)
+  // FIX: ref for cargarDatosIniciales — avoids effect re-firing when callback identity changes
+  const cargarDatosInicialesRef = useRef(null)
+  // FIX: guard against concurrent cargarDatosIniciales calls
+  const initialLoadRunningRef = useRef(false)
   const [searchResultCount, setSearchResultCount] = useState(null)
   // FIX: ref for roles so buildLeadQuery always reads fresh data (not stale state)
   const rolesRef = useRef([])
@@ -324,9 +328,11 @@ export function useVentasCRM() {
 
   // ── Load initial data + default pipeline ──────────────────────────────
   const cargarDatosIniciales = useCallback(async () => {
+    // Guard: prevent concurrent executions (caused by effect re-firing when usuario loads)
+    if (initialLoadRunningRef.current) return
+    initialLoadRunningRef.current = true
     // Signal that initial load is in progress — blocks all other loading functions
     initialLoadRef.current = true
-
 
     try {
       // Only show full loading skeleton if we have no cached data to display
@@ -455,9 +461,9 @@ export function useVentasCRM() {
       }
     } finally {
       initialLoadRef.current = false
+      initialLoadRunningRef.current = false
       // ALWAYS clear loading — no requestId guard, no race possible
       if (mountedRef.current) {
-
         setLoading(false)
       }
     }
@@ -1214,10 +1220,15 @@ export function useVentasCRM() {
   // ── Refresh on tab focus ───────────────────────────────────────────
   useRefreshOnFocus(refrescar, { enabled: !!pipelineActivo })
 
-  // ── Initial load ───────────────────────────────────────────────────
+  // Keep ref in sync so effect always calls latest version
+  useEffect(() => { cargarDatosInicialesRef.current = cargarDatosIniciales }, [cargarDatosIniciales])
+
+  // ── Initial load — fires ONCE when user.id is available ───────────
+  // Uses ref to avoid re-firing when cargarDatosIniciales identity changes
+  // (e.g. when usuario?.tipo goes from undefined → 'equipo' after auth loads)
   useEffect(() => {
-    if (user?.id) cargarDatosIniciales()
-  }, [user?.id, cargarDatosIniciales])
+    if (user?.id) cargarDatosInicialesRef.current?.()
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Realtime: granular updates — only fetch the lead that changed ──
   const pendingRealtimeRef = useRef(new Set())
