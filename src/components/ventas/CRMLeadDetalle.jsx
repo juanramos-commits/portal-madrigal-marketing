@@ -106,7 +106,10 @@ function fetchLeadDetail(leadId) {
       etiqueta:ventas_etiquetas(id, nombre, color)
     )
   `).eq('id', leadId).single().then(({ data, error }) => {
-    if (error) throw error
+    if (error) {
+      console.error(`[Lead] Supabase error for id=${leadId}:`, error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint)
+      throw error
+    }
     if (!data) return null
     // Normalize: extract etiqueta objects from lead_etiquetas join
     return {
