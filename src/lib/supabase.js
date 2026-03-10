@@ -73,16 +73,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 export { supabaseUrl, supabaseAnonKey }
 
-// ── smartRpc: ALWAYS bypasses supabase-js for RPC calls ──
-// supabase.rpc() internally calls getSession() which can hang on initializePromise
-// or have stale internal state. Instead, we ALWAYS read the fresh access_token
-// from localStorage (supabase-js updates it there on token refresh) and call
-// PostgREST directly via fetch(). Zero supabase-js overhead, zero lock contention.
-// If the token is expired, PostgREST returns 401 and we throw TOKEN_EXPIRED.
-
-export function markSupabaseReady() { /* kept for backward compat, no-op now */ }
-export function clearCachedAccessToken() { /* kept for backward compat, no-op now */ }
-
+// ── Read access token from localStorage (instant, no supabase-js involvement) ──
+// supabase-js updates this key on every token refresh, so it's always fresh.
 function getAccessTokenFromStorage() {
   try {
     const raw = localStorage.getItem('madrigal-auth')
@@ -94,6 +86,24 @@ function getAccessTokenFromStorage() {
   } catch (_) { /* ignore */ }
   return null
 }
+
+// ── GLOBAL FIX: Bypass supabase-js session lock for ALL REST calls ──
+// supabase.from() → PostgREST → fetchWithAuth → _getAccessToken() → getSession()
+// getSession() blocks on initializePromise (token refresh). If slow → app hangs.
+// Fix: replace supabase.rest.fetch to read token from localStorage directly.
+const directAuthFetch = (input, init) => {
+  const token = getAccessTokenFromStorage()
+  const headers = new Headers(init?.headers)
+  if (!headers.has('apikey')) headers.set('apikey', supabaseAnonKey)
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  else if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${supabaseAnonKey}`)
+  return fetchWithRetry(input, { ...init, headers })
+}
+supabase.rest.fetch = directAuthFetch
+
+// Backward compat — no-ops
+export function markSupabaseReady() {}
+export function clearCachedAccessToken() {}
 
 export async function smartRpc(rpcName, params, signal) {
   const token = getAccessTokenFromStorage()
