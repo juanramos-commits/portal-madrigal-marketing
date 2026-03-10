@@ -88,7 +88,7 @@ function mapLeadItems(data) {
 }
 
 // RPC: fetch etapas + leads for a pipeline in 1 SQL roundtrip
-async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda) {
+async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda, signal) {
   // PostgREST requires ALL params explicitly (won't match with defaults for missing params)
   let sanitizedSearch = null
   if (busqueda && busqueda.trim()) {
@@ -96,7 +96,7 @@ async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda) 
     if (s) sanitizedSearch = s
   }
 
-  const { data, error } = await supabase.rpc('obtener_crm_completo', {
+  let query = supabase.rpc('obtener_crm_completo', {
     p_pipeline_id: pipelineId,
     p_user_id: userId || null,
     p_es_admin: esAdmin,
@@ -110,6 +110,8 @@ async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda) 
     p_busqueda: sanitizedSearch,
     p_limit: 500,
   })
+  if (signal) query = query.abortSignal(signal)
+  const { data, error } = await query
   if (error) throw error
   if (data?.error) throw new Error(data.error)
   return data
@@ -176,9 +178,15 @@ export function useVentasCRM() {
 
   // FIX: mounted guard prevents setState on unmounted hook (fast navigation)
   const mountedRef = useRef(true)
+  // FIX: AbortController kills pending HTTP requests on unmount — frees connection pool for next page
+  const abortControllerRef = useRef(new AbortController())
   useEffect(() => {
     mountedRef.current = true
-    return () => { mountedRef.current = false }
+    abortControllerRef.current = new AbortController()
+    return () => {
+      mountedRef.current = false
+      abortControllerRef.current.abort()
+    }
   }, [])
 
   const loadRequestRef = useRef(0)
@@ -324,7 +332,7 @@ export function useVentasCRM() {
         let rpcData = getLeadsCacheIfFresh(pipeline.id)
         if (!rpcData) {
           const isAdmin = tienePermiso('ventas.crm.ver_todos')
-          rpcData = await fetchCrmCompleto(pipeline.id, user?.id, isAdmin, filtros, busqueda)
+          rpcData = await fetchCrmCompleto(pipeline.id, user?.id, isAdmin, filtros, busqueda, abortControllerRef.current.signal)
           saveLeadsCache(pipeline.id, rpcData)
         }
         if (requestId !== loadRequestRef.current || !mountedRef.current) { setLoading(false); return }
@@ -469,7 +477,7 @@ export function useVentasCRM() {
         etapasData = rpcData.etapas || []
       } else {
         const isAdmin = tienePermiso('ventas.crm.ver_todos')
-        rpcData = await fetchCrmCompleto(defaultPipeline.id, user?.id, isAdmin, {}, '')
+        rpcData = await fetchCrmCompleto(defaultPipeline.id, user?.id, isAdmin, {}, '', abortControllerRef.current.signal)
         etapasData = rpcData.etapas || []
         saveLeadsCache(defaultPipeline.id, rpcData)
       }
@@ -536,7 +544,7 @@ export function useVentasCRM() {
 
       // RPC: 1 SQL roundtrip for etapas + leads (always fresh — no cache on manual refresh)
       const isAdmin = tienePermiso('ventas.crm.ver_todos')
-      const rpcData = await fetchCrmCompleto(pipelineActivo.id, user?.id, isAdmin, filtros, busqueda)
+      const rpcData = await fetchCrmCompleto(pipelineActivo.id, user?.id, isAdmin, filtros, busqueda, abortControllerRef.current.signal)
       saveLeadsCache(pipelineActivo.id, rpcData)
 
       const etapasFromRpc = rpcData.etapas || []

@@ -235,22 +235,18 @@ export default function CRMLeadDetalle() {
     setError(null)
     setLoading(prev => _lastLeadCache?.id === id ? false : true)
 
-    console.log(`[Lead] useEffect fired for id=${id}, cached=${_lastLeadCache?.id === id}`)
-
-    // Catalogs in background (module-level cache — fires once)
-    cargarCatalogos()
-
     // Safety timeout: if fetch hangs despite abort (shouldn't happen, but defensive)
     const timeoutId = setTimeout(() => {
       if (!signal.aborted) {
-        console.warn(`[Lead] fetchLeadDetail timeout for id=${id}`)
         controller.abort()
         setLoading(false)
         setError('Tiempo de espera agotado. Pulsa para reintentar.')
       }
     }, 10000)
 
-    // Fetch lead + actividad in 1 RPC call — signal aborts the HTTP connection on cleanup
+    // RPC FIRST — catalogs AFTER. This prevents catalog requests (5 HTTP) from
+    // saturating the browser's 6-connection-per-domain limit before the critical
+    // lead data RPC can start. Catalogs are non-blocking and cached at module level.
     fetchLeadDetail(id, signal).then(leadResult => {
       clearTimeout(timeoutId)
       if (signal.aborted || !isMountedRef.current) return
@@ -266,12 +262,13 @@ export default function CRMLeadDetalle() {
         setHasMoreActividad(actData.length >= 20)
       }
       setLoading(false)
+      // Load catalogs AFTER lead data — non-blocking, module-level cached
+      cargarCatalogos()
     }).catch(err => {
       clearTimeout(timeoutId)
       // AbortError is expected on navigation — don't show error
       if (err?.name === 'AbortError' || signal.aborted) return
       if (!isMountedRef.current) return
-      console.log(`[Lead] fetchLeadDetail error, err=${err.message}, id=${id}`)
       setError(err.message || 'Error al cargar el lead')
       setLoading(false)
     })
