@@ -3,12 +3,12 @@ import { useEffect, useRef } from 'react'
 /**
  * Refresca datos cuando el usuario vuelve a la pestaña (visibility change)
  * o cuando la ventana recupera el foco.
- * - 30s mínimo entre refrescos para no bombardear la API
+ * - 2 min mínimo entre refrescos para no bombardear la API (free tier Supabase)
  * - 1.5s delay after focus to let realtime events flush first
  * - Deduplicates visibilitychange + focus events (fire together)
  * Uses a ref for the callback to avoid re-registering event listeners on every render.
  */
-export function useRefreshOnFocus(refrescarFn, { enabled = true, minInterval = 30_000 } = {}) {
+export function useRefreshOnFocus(refrescarFn, { enabled = true, minInterval = 120_000 } = {}) {
   const lastRefresh = useRef(Date.now())
   const callbackRef = useRef(refrescarFn)
   const pendingTimerRef = useRef(null)
