@@ -1,3 +1,31 @@
+// ============================================================
+// EXPIRED SESSION GUARD — runs BEFORE React/Supabase initialize
+// If there's a stale auth token in localStorage with expires_at
+// in the past, clean it up and redirect to /login immediately.
+// ============================================================
+;(() => {
+  try {
+    const raw = localStorage.getItem('sb-ootncgtcvwnrskqtamak-auth-token')
+    if (!raw) return
+    const stored = JSON.parse(raw)
+    const expiresAt = stored?.expires_at || stored?.session?.expires_at
+    if (expiresAt && expiresAt < Date.now() / 1000) {
+      console.warn('[Portal] Token expirado detectado, limpiando y redirigiendo a /login...')
+      localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
+      localStorage.removeItem('madrigal-auth')
+      if (!window.location.pathname.startsWith('/login') &&
+          !window.location.pathname.startsWith('/activar-cuenta') &&
+          !window.location.pathname.startsWith('/reset-password')) {
+        window.location.href = '/login'
+      }
+    }
+  } catch (_) {
+    // Corrupted JSON — remove it
+    localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
+    localStorage.removeItem('madrigal-auth')
+  }
+})()
+
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
