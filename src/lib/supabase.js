@@ -73,57 +73,44 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 export { supabaseUrl, supabaseAnonKey }
 
-// ── Direct RPC: bypasses supabase-js session lock ──
-// On page reload, supabase-js blocks ALL operations (rpc, from, etc.) behind
-// getSession() → initializePromise → navigator.locks → token refresh network call.
-// If the network is slow, this blocks for 20+ seconds.
-// directRpc() reads the cached access_token from localStorage and calls PostgREST
-// directly via fetch(), with no locks and no session management overhead.
+// ── smartRpc: ALWAYS bypasses supabase-js for RPC calls ──
+// supabase.rpc() internally calls getSession() which can hang on initializePromise
+// or have stale internal state. Instead, we ALWAYS read the fresh access_token
+// from localStorage (supabase-js updates it there on token refresh) and call
+// PostgREST directly via fetch(). Zero supabase-js overhead, zero lock contention.
 // If the token is expired, PostgREST returns 401 and we throw TOKEN_EXPIRED.
-let _cachedAccessToken = null
-let _supabaseReady = false
 
-// Mark supabase-js as ready once getSession() resolves (called from AuthContext)
-export function markSupabaseReady() { _supabaseReady = true }
-export function isSupabaseReady() { return _supabaseReady }
+export function markSupabaseReady() { /* kept for backward compat, no-op now */ }
+export function clearCachedAccessToken() { /* kept for backward compat, no-op now */ }
 
-function getCachedAccessToken() {
-  if (_cachedAccessToken) return _cachedAccessToken
+function getAccessTokenFromStorage() {
   try {
     const raw = localStorage.getItem('madrigal-auth')
     if (raw) {
       const parsed = JSON.parse(raw)
       const session = parsed?.session || parsed
-      if (session?.access_token) {
-        _cachedAccessToken = session.access_token
-        return _cachedAccessToken
-      }
+      if (session?.access_token) return session.access_token
     }
   } catch (_) { /* ignore */ }
   return null
 }
 
-// Clear cached token (on logout or token refresh)
-export function clearCachedAccessToken() { _cachedAccessToken = null }
-
-// Direct RPC call — bypasses supabase-js entirely.
-// Falls back to supabase.rpc() if supabase-js is ready or no cached token.
 export async function smartRpc(rpcName, params, signal) {
-  const token = getCachedAccessToken()
-  // If supabase-js is ready, use normal client (properly refreshed token)
-  if (_supabaseReady || !token) {
+  const token = getAccessTokenFromStorage()
+  if (!token) {
+    // No token at all — fall back to supabase.rpc() (will trigger auth flow)
     let query = supabase.rpc(rpcName, params)
     if (signal) query = query.abortSignal(signal)
     const { data, error } = await query
     if (error) throw error
     return data
   }
-  // Direct fetch — no locks, no session management
+  // Direct fetch — always, no supabase-js involvement
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 10000)
-  // If caller provided signal, abort on their signal too
   if (signal) {
-    signal.addEventListener('abort', () => controller.abort(), { once: true })
+    if (signal.aborted) { clearTimeout(timeoutId); controller.abort() }
+    else signal.addEventListener('abort', () => controller.abort(), { once: true })
   }
   try {
     const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${rpcName}`, {
@@ -139,7 +126,6 @@ export async function smartRpc(rpcName, params, signal) {
     })
     clearTimeout(timeoutId)
     if (response.status === 401) {
-      _cachedAccessToken = null
       throw new Error('TOKEN_EXPIRED')
     }
     if (!response.ok) {

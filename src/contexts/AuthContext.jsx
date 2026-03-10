@@ -1,6 +1,6 @@
 import { logger } from '../lib/logger'
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
-import { supabase, smartRpc, markSupabaseReady, clearCachedAccessToken } from '../lib/supabase'
+import { supabase, smartRpc } from '../lib/supabase'
 import { logActividad } from '../lib/logActividad'
 import { invalidateAll } from '../lib/cache'
 
@@ -169,7 +169,7 @@ export function AuthProvider({ children }) {
             new Promise((_, reject) => setTimeout(() => reject(new Error('FALLBACK_TIMEOUT')), 10000)),
           ]).then(async ({ data: { session } }) => {
             if (!mounted) return
-            markSupabaseReady()
+    
             if (session?.user) {
               setUser(session.user)
               try {
@@ -199,8 +199,8 @@ export function AuthProvider({ children }) {
 
       // Background: let supabase-js initialize (token refresh) — marks ready when done
       supabase.auth.getSession().then(({ data: { session } }) => {
-        markSupabaseReady()
-        clearCachedAccessToken() // force smartRpc to use supabase.rpc() from now on
+
+
         if (!mounted) return
         if (session?.user) {
           setUser(session.user) // update with fresh token data
@@ -223,7 +223,7 @@ export function AuthProvider({ children }) {
           .catch(() => {})
       }).catch((err) => {
         logger.error('Background getSession error:', err?.message)
-        markSupabaseReady()
+
       })
     } else {
       // ── SLOW PATH: No cached session or auth page ──
@@ -233,7 +233,7 @@ export function AuthProvider({ children }) {
         new Promise((_, reject) => setTimeout(() => reject(new Error('AUTH_TIMEOUT')), AUTH_TIMEOUT)),
       ]).then(async ({ data: { session } }) => {
         if (!mounted) return
-        markSupabaseReady()
+
         if (session?.user) {
           setUser(session.user)
           if (!isAuthPage()) {
@@ -251,7 +251,7 @@ export function AuthProvider({ children }) {
         if (mounted) setLoading(false)
       }).catch((err) => {
         logger.error('getSession error:', err?.message)
-        markSupabaseReady()
+
         localStorage.removeItem('madrigal-auth')
         localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
         if (mounted) {
