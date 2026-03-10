@@ -684,6 +684,30 @@ export default function CRMLeadDetalle() {
         datos: { etiqueta_id: etiquetaId, accion: 'añadir' },
       }).then(() => {})
       logActividad('crm', 'etiqueta', `Etiqueta añadida: ${etiqueta.nombre}`, { entidad: 'lead', entidad_id: id })
+
+      // Auto-move to "lost" stage when "No Lead" tag is added
+      if (etiqueta.nombre === 'No Lead') {
+        const pipelineStates = lead.pipeline_states || []
+        for (const ps of pipelineStates) {
+          if (ps.etapa?.tipo === 'lost') continue // already in lost
+          const lostEtapa = allEtapas.find(e => e.pipeline?.id === ps.pipeline_id && e.tipo === 'lost')
+          if (lostEtapa) {
+            await supabase.from('ventas_lead_pipeline')
+              .update({ etapa_id: lostEtapa.id, fecha_entrada: new Date().toISOString() })
+              .eq('lead_id', id)
+              .eq('pipeline_id', ps.pipeline_id)
+            await supabase.from('ventas_actividad').insert({
+              lead_id: id, usuario_id: user.id, tipo: 'cambio_etapa',
+              descripcion: `${ps.pipeline?.nombre}: ${ps.etapa?.nombre} → ${lostEtapa.nombre} (auto: No Lead)`,
+              datos: { pipeline_id: ps.pipeline_id, etapa_anterior_id: ps.etapa_id, etapa_nueva_id: lostEtapa.id, auto: 'no_lead' },
+            })
+          }
+        }
+        if (isMountedRef.current) {
+          showToast('Lead movido a Lost automáticamente', 'info')
+          await refrescarLead()
+        }
+      }
     } catch (err) {
       // Rollback
       if (isMountedRef.current) {
