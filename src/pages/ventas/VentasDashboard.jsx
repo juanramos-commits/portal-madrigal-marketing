@@ -100,7 +100,7 @@ export default function VentasDashboard() {
     db.onLayoutChange(allLayouts.lg || layout)
   }, [db.onLayoutChange])
 
-  if (db.layoutLoading) {
+  if (db.layoutLoading && db.layout.length === 0) {
     return (
       <div className="db-page">
         <div className="db-loading" role="status" aria-label="Cargando dashboard"><span aria-hidden="true">Cargando dashboard...</span></div>

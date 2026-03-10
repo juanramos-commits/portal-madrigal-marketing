@@ -823,7 +823,9 @@ export default function CRMLeadDetalle() {
   }, [showTagPicker])
 
   // ── Loading / Error states ─────────────────────────────────────────
-  if (loading) {
+  // Only show skeleton when there's no lead data at all (first load)
+  // If we have data, show the content while refreshing silently in background
+  if (loading && !lead) {
     return (
       <div className="crm-detail">
         <div className="crm-skeleton" style={{ width: 80, height: 16, marginBottom: 16 }} />

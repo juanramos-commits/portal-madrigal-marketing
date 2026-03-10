@@ -90,7 +90,7 @@ export default function Dashboard() {
     }
   }
 
-  if (loading) {
+  if (loading && stats.totalClientes === 0 && tareasRecientes.length === 0) {
     return (
       <div className="flex items-center justify-center" style={{ height: '300px' }}>
         <div className="spinner"></div>

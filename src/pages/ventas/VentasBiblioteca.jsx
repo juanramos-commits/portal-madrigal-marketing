@@ -82,7 +82,7 @@ export default function VentasBiblioteca() {
       {bib.error && <div className="bib-error-msg">{bib.error}</div>}
 
       {/* Main content */}
-      {bib.loading ? (
+      {bib.loading && bib.secciones.length === 0 ? (
         <div className="bib-skeleton-list" aria-busy="true" aria-label="Cargando biblioteca">
           {[0, 1, 2].map(i => (
             <div key={i} className="bib-skeleton-card" style={{ '--anim-delay': `${i * 100}ms` }}>
