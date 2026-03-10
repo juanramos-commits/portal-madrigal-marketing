@@ -116,133 +116,125 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true
-    let initialSessionHandled = false
 
     const isAuthPage = () => ['/activar-cuenta', '/reset-password'].some(p => window.location.pathname.startsWith(p))
 
-    // Race getSession against a timeout — if auth hangs (token refresh on slow network),
-    // we don't want the app stuck on loading forever
-    const AUTH_TIMEOUT = 8000
-    const getSessionWithTimeout = () => Promise.race([
-      supabase.auth.getSession(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('AUTH_TIMEOUT')), AUTH_TIMEOUT)),
-    ])
-
-    // Obtener sesión inicial primero
-    getSessionWithTimeout().then(async ({ data: { session } }) => {
-      if (!mounted) return
-      initialSessionHandled = true
-
-      // Check if session token is already expired (session still returned)
-      if (session?.expires_at && session.expires_at < Date.now() / 1000) {
-        logger.warn('Sesión expirada al iniciar (expires_at en el pasado), forzando re-login...')
-        try { await supabase.auth.signOut() } catch (_) { /* ignore */ }
-        localStorage.removeItem('madrigal-auth')
-        localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
-        if (mounted) { setUser(null); setUsuario(null); setLoading(false) }
-        window.location.href = '/login'
-        return
-      }
-
-      // getSession() returns null when refresh token failed — check if there's
-      // a stale token in localStorage (means user HAD a session that expired)
-      if (!session) {
-        try {
-          const raw = localStorage.getItem('sb-ootncgtcvwnrskqtamak-auth-token')
-          if (raw) {
-            const stored = JSON.parse(raw)
-            const expiresAt = stored?.expires_at || stored?.session?.expires_at
-            if (expiresAt && expiresAt < Date.now() / 1000) {
-              logger.warn('Token expirado en localStorage, limpiando y redirigiendo a login...')
-              localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
-              localStorage.removeItem('madrigal-auth')
-              if (mounted) { setUser(null); setUsuario(null); setLoading(false) }
-              if (!isAuthPage() && !window.location.pathname.startsWith('/login')) {
-                window.location.href = '/login'
-              }
-              return
-            }
-            // Token exists but not expired — might be corrupted, clean it up
-            logger.warn('getSession devolvió null pero hay token en localStorage sin expirar, limpiando...')
-            localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
-            localStorage.removeItem('madrigal-auth')
-          }
-        } catch (_) {
-          // JSON parse error — corrupted token, clean up
-          localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
-          localStorage.removeItem('madrigal-auth')
-        }
-      }
-
-      if (session?.user) {
-        setUser(session.user)
-        if (!isAuthPage()) {
-          try {
-            // Timeout cargarUsuario — if Supabase queries hang, don't block the app
-            const resultado = await Promise.race([
-              cargarUsuario(session.user.email),
-              new Promise((_, reject) => setTimeout(() => reject(new Error('LOAD_USER_TIMEOUT')), 12000)),
-            ])
-            // Handle deactivated account on session restore
-            if (resultado?.desactivado) {
-              logger.warn('Cuenta desactivada, cerrando sesión...')
-              await supabase.auth.signOut()
-              if (mounted) { setUser(null); setUsuario(null) }
-            } else if (!resultado) {
-              // No user row found — session exists but no usuarios record
-              logger.warn('No se pudo cargar usuario, verificando sesión...')
-              const { data: { user: validUser }, error: userError } = await supabase.auth.getUser()
-              if (userError || !validUser) {
-                logger.warn('Sesión inválida, limpiando...')
-                await supabase.auth.signOut()
-                if (mounted) setUser(null)
-              }
-            }
-          } catch (loadErr) {
-            logger.error('Error cargando usuario en sesión inicial:', loadErr?.message)
-            // user is already set from session — app will load, permissions may be incomplete
+    // ── STEP 1: Read cached session from localStorage (instant, no network) ──
+    // This avoids blocking on getSession() which can hang 20s+ if the token
+    // refresh network request is slow (navigator.locks + fetchWithRetry timeout).
+    let cachedUser = null
+    try {
+      const raw = localStorage.getItem('madrigal-auth')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        // Supabase stores { access_token, refresh_token, user, expires_at, ... }
+        const session = parsed?.session || parsed
+        if (session?.user?.email) {
+          // Check if refresh_token exists (if not, session is useless)
+          if (session.refresh_token) {
+            cachedUser = session.user
+          } else {
+            logger.warn('Cached session has no refresh_token, ignoring')
           }
         }
       }
+    } catch (_) {
+      // Corrupted localStorage — ignore, will be cleaned up below
+    }
+
+    if (cachedUser && !isAuthPage()) {
+      // ── FAST PATH: Use cached user immediately ──
+      // Set user NOW so downstream hooks (CRM, etc.) can start loading
+      setUser(cachedUser)
       setLoading(false)
-    }).catch(async (err) => {
-      logger.error('Error en getSession:', err?.message || err)
-      // If auth timed out, the network is likely unreliable — don't try signOut (it would also hang).
-      // Just clean up locally and let the user land on login.
-      if (err?.message === 'AUTH_TIMEOUT') {
-        logger.warn('getSession timed out after ' + AUTH_TIMEOUT + 'ms — cleaning up locally')
+
+      // Load usuario/permisos in background — doesn't block the UI
+      cargarUsuario(cachedUser.email).then((resultado) => {
+        if (!mounted) return
+        if (resultado?.desactivado) {
+          logger.warn('Cuenta desactivada, cerrando sesión...')
+          supabase.auth.signOut().catch(() => {})
+          setUser(null)
+          setUsuario(null)
+          setLoading(false)
+        }
+      }).catch((err) => {
+        logger.error('Error cargando usuario (background):', err?.message)
+        // user is set, app works — permisos might be missing until retry
+      })
+
+      // Let getSession() run in background for token refresh — don't await it
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!mounted) return
+        if (session?.user) {
+          // Update user with fresh data (new access_token, etc.)
+          setUser(session.user)
+        } else {
+          // Token refresh failed — session is dead, force re-login
+          logger.warn('Background getSession returned null — session expired')
+          localStorage.removeItem('madrigal-auth')
+          setUser(null)
+          setUsuario(null)
+          setPermisos([])
+          setPermisosLoaded(false)
+          setLoading(false)
+          if (!window.location.pathname.startsWith('/login')) {
+            window.location.href = '/login'
+          }
+        }
+      }).catch((err) => {
+        logger.error('Background getSession error:', err?.message)
+        // Don't blow up — cached session might still work for a bit
+      })
+    } else {
+      // ── SLOW PATH: No cached session or auth page — must wait for getSession ──
+      const AUTH_TIMEOUT = 8000
+      Promise.race([
+        supabase.auth.getSession(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('AUTH_TIMEOUT')), AUTH_TIMEOUT)),
+      ]).then(async ({ data: { session } }) => {
+        if (!mounted) return
+        if (session?.user) {
+          setUser(session.user)
+          if (!isAuthPage()) {
+            try {
+              const resultado = await cargarUsuario(session.user.email)
+              if (resultado?.desactivado) {
+                await supabase.auth.signOut()
+                if (mounted) { setUser(null); setUsuario(null) }
+              }
+            } catch (loadErr) {
+              logger.error('Error cargando usuario:', loadErr?.message)
+            }
+          }
+        }
+        if (mounted) setLoading(false)
+      }).catch((err) => {
+        logger.error('getSession error:', err?.message)
+        // Clean up stale tokens
         localStorage.removeItem('madrigal-auth')
         localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
-      } else {
-        // Sesión corrupta (AbortError, etc.) — try signOut but don't hang on it
-        try {
-          await Promise.race([
-            supabase.auth.signOut(),
-            new Promise(r => setTimeout(r, 3000)),
-          ])
-        } catch (_) { /* ignore */ }
-      }
-      if (mounted) {
-        setUser(null)
-        setUsuario(null)
-        setPermisos([])
-        setPermisosLoaded(false)
-        setPermisosError(null)
-        setRolesComerciales([])
-        setLoading(false)
-      }
-    })
+        if (mounted) {
+          setUser(null)
+          setUsuario(null)
+          setPermisos([])
+          setPermisosLoaded(false)
+          setPermisosError(null)
+          setRolesComerciales([])
+          setLoading(false)
+        }
+      })
+    }
 
-    // Escuchar cambios de auth posteriores (login, logout, token refresh)
+    // ── STEP 2: Listen for auth changes (token refresh, sign out, etc.) ──
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
       logger.log('Auth event:', event)
 
-      // Ignorar el INITIAL_SESSION ya que lo manejamos con getSession
+      // Skip INITIAL_SESSION — we handle it above with localStorage fast path
       if (event === 'INITIAL_SESSION') return
 
-      // Token refresh: if session is present, update user; if not, refresh failed → force re-login
       if (event === 'TOKEN_REFRESHED') {
         if (session?.user) {
           setUser(session.user)
@@ -271,7 +263,6 @@ export function AuthProvider({ children }) {
         setLoading(false)
         localStorage.removeItem('madrigal-auth')
         localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
-        // Redirect to login if not already there
         if (!window.location.pathname.startsWith('/login')) {
           window.location.href = '/login'
         }
