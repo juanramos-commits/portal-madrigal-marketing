@@ -145,6 +145,8 @@ export function useVentasCRM() {
   useEffect(() => { rolesRef.current = rolesComerciales }, [rolesComerciales])
 
   // ── Build query (explicit pipeline params — reads roles from ref for freshness) ────────
+  // When etapaId is provided, adds { count: 'exact' } for per-column counts (used by cargarMasLeads).
+  // When etapaId is null, skips count to save overhead (counts derived from data or RPC).
   const buildLeadQuery = useCallback((pipelineId, pipelineNombre, etapaId = null) => {
     // Read roles from ref — always current, even during initial load before state updates
     const currentRoles = rolesRef.current
@@ -171,7 +173,7 @@ export function useVentasCRM() {
           closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email),
           lead_etiquetas:ventas_lead_etiquetas(etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color))
         )
-      `, { count: 'exact' })
+      `, { count: etapaId ? 'exact' : undefined })
       .eq('pipeline_id', pipelineId)
 
     if (etapaId) {
@@ -270,34 +272,31 @@ export function useVentasCRM() {
         const newCounts = {}
         let total = 0
 
-        // Optimization: when no filters/search, get all column counts in 1 query via RPC
-        const hasFilters = Object.values(filtros).some(v => v != null && v !== '' && !(Array.isArray(v) && v.length === 0))
-        const hasBusqueda = busqueda.trim() !== ''
-        let rpcCounts = null
-        if (!hasFilters && !hasBusqueda) {
-          const { data: countData } = await supabase.rpc('ventas_contar_leads_por_etapa', { p_pipeline_id: pipeline.id }).then(r => r, () => ({ data: null }))
-          if (countData) {
-            rpcCounts = {}
-            for (const row of countData) rpcCounts[row.etapa_id] = Number(row.lead_count)
-          }
+        // OPTIMIZATION: 1 single query for ALL etapas instead of N parallel queries.
+        // This prevents HTTP connection pool exhaustion (browser limit: 6 per domain).
+        const { data: allData, error: allErr } = await queryFn(pipeline.id, pipeline.nombre)
+          .order('fecha_entrada', { ascending: false })
+          .limit(500)
+
+        if (allErr) throw allErr
+
+        // Group by etapa_id in frontend
+        const grouped = {}
+        for (const etapa of (etapasData || [])) { grouped[etapa.id] = [] }
+        for (const item of (allData || [])) {
+          if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
         }
 
-        await Promise.all((etapasData || []).map(async (etapa) => {
-          const query = queryFn(pipeline.id, pipeline.nombre, etapa.id)
-            .order('fecha_entrada', { ascending: false })
-            .range(0, LEADS_PER_BATCH - 1)
-
-          // If RPC counts available, skip per-column count
-          const { data, count, error: err } = await query
-          if (err) throw err
-
-          const effectiveCount = rpcCounts ? (rpcCounts[etapa.id] || 0) : (count || 0)
-          newLeads[etapa.id] = mapLeadItems(data)
-          newCounts[etapa.id] = effectiveCount
-          total += effectiveCount
-          hasMoreRef.current[etapa.id] = effectiveCount > LEADS_PER_BATCH
-          leadsOffsetRef.current[etapa.id] = (data || []).length
-        }))
+        for (const etapa of (etapasData || [])) {
+          const etapaItems = grouped[etapa.id] || []
+          const totalInEtapa = etapaItems.length
+          // Show first LEADS_PER_BATCH items, track if there are more
+          newLeads[etapa.id] = mapLeadItems(etapaItems.slice(0, LEADS_PER_BATCH))
+          newCounts[etapa.id] = totalInEtapa
+          total += totalInEtapa
+          hasMoreRef.current[etapa.id] = totalInEtapa > LEADS_PER_BATCH
+          leadsOffsetRef.current[etapa.id] = Math.min(totalInEtapa, LEADS_PER_BATCH)
+        }
 
         if (requestId !== loadRequestRef.current || !mountedRef.current) return
         setLeads(newLeads)
@@ -428,27 +427,35 @@ export function useVentasCRM() {
         return
       }
 
-      // Load kanban leads
+      // Load kanban leads — 1 single query for ALL etapas (not N parallel queries)
       const newLeads = {}
       const newCounts = {}
       let total = 0
 
       const queryFn = buildLeadQueryRef.current || buildLeadQuery
 
-      await Promise.all((etapasData || []).map(async (etapa) => {
-        const query = queryFn(defaultPipeline.id, defaultPipeline.nombre, etapa.id)
-          .order('fecha_entrada', { ascending: false })
-          .range(0, LEADS_PER_BATCH - 1)
+      const { data: allData, error: allErr } = await queryFn(defaultPipeline.id, defaultPipeline.nombre)
+        .order('fecha_entrada', { ascending: false })
+        .limit(500)
 
-        const { data, count, error: err } = await query
-        if (err) throw err
+      if (allErr) throw allErr
 
-        newLeads[etapa.id] = mapLeadItems(data)
-        newCounts[etapa.id] = count || 0
-        total += count || 0
-        hasMoreRef.current[etapa.id] = (count || 0) > LEADS_PER_BATCH
-        leadsOffsetRef.current[etapa.id] = (data || []).length
-      }))
+      // Group by etapa_id in frontend
+      const grouped = {}
+      for (const etapa of (etapasData || [])) { grouped[etapa.id] = [] }
+      for (const item of (allData || [])) {
+        if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
+      }
+
+      for (const etapa of (etapasData || [])) {
+        const etapaItems = grouped[etapa.id] || []
+        const totalInEtapa = etapaItems.length
+        newLeads[etapa.id] = mapLeadItems(etapaItems.slice(0, LEADS_PER_BATCH))
+        newCounts[etapa.id] = totalInEtapa
+        total += totalInEtapa
+        hasMoreRef.current[etapa.id] = totalInEtapa > LEADS_PER_BATCH
+        leadsOffsetRef.current[etapa.id] = Math.min(totalInEtapa, LEADS_PER_BATCH)
+      }
 
       if (!mountedRef.current) return
 
@@ -500,20 +507,29 @@ export function useVentasCRM() {
       const newCounts = {}
       let total = 0
 
-      await Promise.all(etapas.map(async (etapa) => {
-        const query = buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre, etapa.id)
-          .order('fecha_entrada', { ascending: false })
-          .range(0, LEADS_PER_BATCH - 1)
+      // 1 single query for ALL etapas (not N parallel queries)
+      const { data: allData, error: allErr } = await buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre)
+        .order('fecha_entrada', { ascending: false })
+        .limit(500)
 
-        const { data, count, error: err } = await query
-        if (err) throw err
+      if (allErr) throw allErr
 
-        newLeads[etapa.id] = mapLeadItems(data)
-        newCounts[etapa.id] = count || 0
-        total += count || 0
-        hasMoreRef.current[etapa.id] = (count || 0) > LEADS_PER_BATCH
-        leadsOffsetRef.current[etapa.id] = (data || []).length
-      }))
+      // Group by etapa_id in frontend
+      const grouped = {}
+      for (const etapa of etapas) { grouped[etapa.id] = [] }
+      for (const item of (allData || [])) {
+        if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
+      }
+
+      for (const etapa of etapas) {
+        const etapaItems = grouped[etapa.id] || []
+        const totalInEtapa = etapaItems.length
+        newLeads[etapa.id] = mapLeadItems(etapaItems.slice(0, LEADS_PER_BATCH))
+        newCounts[etapa.id] = totalInEtapa
+        total += totalInEtapa
+        hasMoreRef.current[etapa.id] = totalInEtapa > LEADS_PER_BATCH
+        leadsOffsetRef.current[etapa.id] = Math.min(totalInEtapa, LEADS_PER_BATCH)
+      }
 
       if (requestId !== loadRequestRef.current || !mountedRef.current) return
       setLeads(newLeads)

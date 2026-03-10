@@ -47,24 +47,29 @@ export function useVentas() {
   const esSetter = misRoles.some(r => r.rol === 'setter')
   const esAdminODirector = tienePermiso('ventas.ventas.ver_todos')
 
-  // ── Load roles ─────────────────────────────────────────────────────
+  // ── Load roles + setters/closers — 1 query instead of 3 ───────────
   const [rolesLoaded, setRolesLoaded] = useState(false)
   useEffect(() => {
     if (!user?.id) return
     const cargar = async () => {
-      const cached = getCached('rolesBasic')
-      if (cached) {
-        setRolesComerciales(cached)
+      const cachedRoles = getCached('rolesAll')
+      if (cachedRoles) {
+        setRolesComerciales(cachedRoles)
+        setSettersList(cachedRoles.filter(r => r.rol === 'setter'))
+        setClosersList(cachedRoles.filter(r => r.rol === 'closer'))
         setRolesLoaded(true)
         return
       }
       const { data, error } = await supabase
         .from('ventas_roles_comerciales')
-        .select('id, usuario_id, rol, activo')
+        .select('id, usuario_id, rol, activo, usuario:usuarios(id, nombre, email)')
         .eq('activo', true)
       if (error) console.error('Error cargando roles comerciales:', error)
-      setRolesComerciales(data || [])
-      setCache('rolesBasic', data || [])
+      const roles = data || []
+      setRolesComerciales(roles)
+      setSettersList(roles.filter(r => r.rol === 'setter'))
+      setClosersList(roles.filter(r => r.rol === 'closer'))
+      setCache('rolesAll', roles)
       setRolesLoaded(true)
     }
     cargar()
@@ -85,29 +90,6 @@ export function useVentas() {
   useEffect(() => {
     cargarPaquetes()
   }, [cargarPaquetes])
-
-  // ── Load setters/closers for filter selects ───────────────────────
-  useEffect(() => {
-    if (!user?.id) return
-    const cargar = async () => {
-      const cachedS = getCached('settersList')
-      const cachedC = getCached('closersList')
-      if (cachedS && cachedC) {
-        setSettersList(cachedS)
-        setClosersList(cachedC)
-        return
-      }
-      const [{ data: s }, { data: c }] = await Promise.all([
-        supabase.from('ventas_roles_comerciales').select('usuario_id, usuario:usuarios(id, nombre, email)').eq('rol', 'setter').eq('activo', true),
-        supabase.from('ventas_roles_comerciales').select('usuario_id, usuario:usuarios(id, nombre, email)').eq('rol', 'closer').eq('activo', true),
-      ])
-      setSettersList(s || [])
-      setClosersList(c || [])
-      setCache('settersList', s || [])
-      setCache('closersList', c || [])
-    }
-    cargar()
-  }, [user?.id])
 
   // ── Build query (non-search only) ──────────────────────────────────
   const buildQuery = useCallback(() => {
@@ -186,52 +168,41 @@ export function useVentas() {
     }
   }, [buildQuery, paginaActual])
 
-  // ── Load counters ──────────────────────────────────────────────────
+  // ── Load counters — 1 query instead of 5 ──────────────────────────
   const cargarContadores = useCallback(async () => {
     try {
-      const baseFilter = (q) => {
-        if (!esAdminODirector) {
-          if (esCloser && !esSetter) {
-            q = q.eq('closer_id', user.id)
-          } else if (esSetter && !esCloser) {
-            q = q.eq('setter_id', user.id)
-          } else if (esSetter && esCloser) {
-            q = q.or(`closer_id.eq.${user.id},setter_id.eq.${user.id}`)
-          }
+      // Fetch only estado + es_devolucion for all matching rows (no joins, minimal data)
+      let q = supabase.from('ventas_ventas').select('estado, es_devolucion')
+      if (!esAdminODirector) {
+        if (esCloser && !esSetter) {
+          q = q.eq('closer_id', user.id)
+        } else if (esSetter && !esCloser) {
+          q = q.eq('setter_id', user.id)
+        } else if (esSetter && esCloser) {
+          q = q.or(`closer_id.eq.${user.id},setter_id.eq.${user.id}`)
         }
-        // Advanced filters
-        if (filtros.setter_id) q = q.eq('setter_id', filtros.setter_id)
-        if (filtros.closer_id) q = q.eq('closer_id', filtros.closer_id)
-        if (filtros.paquete_id) q = q.eq('paquete_id', filtros.paquete_id)
-        if (filtros.metodo_pago) q = q.eq('metodo_pago', filtros.metodo_pago)
-        if (filtros.es_pago_unico !== '') q = q.eq('es_pago_unico', filtros.es_pago_unico === 'true')
-        if (filtros.importe_min) q = q.gte('importe', parseFloat(filtros.importe_min))
-        if (filtros.importe_max) q = q.lte('importe', parseFloat(filtros.importe_max))
-        if (filtros.fecha_desde) q = q.gte('fecha_venta', filtros.fecha_desde)
-        if (filtros.fecha_hasta) q = q.lte('fecha_venta', filtros.fecha_hasta)
-        return q
       }
+      // Advanced filters
+      if (filtros.setter_id) q = q.eq('setter_id', filtros.setter_id)
+      if (filtros.closer_id) q = q.eq('closer_id', filtros.closer_id)
+      if (filtros.paquete_id) q = q.eq('paquete_id', filtros.paquete_id)
+      if (filtros.metodo_pago) q = q.eq('metodo_pago', filtros.metodo_pago)
+      if (filtros.es_pago_unico !== '') q = q.eq('es_pago_unico', filtros.es_pago_unico === 'true')
+      if (filtros.importe_min) q = q.gte('importe', parseFloat(filtros.importe_min))
+      if (filtros.importe_max) q = q.lte('importe', parseFloat(filtros.importe_max))
+      if (filtros.fecha_desde) q = q.gte('fecha_venta', filtros.fecha_desde)
+      if (filtros.fecha_hasta) q = q.lte('fecha_venta', filtros.fecha_hasta)
 
-      const [
-        { count: todas },
-        { count: pendiente },
-        { count: aprobada },
-        { count: rechazada },
-        { count: devolucion },
-      ] = await Promise.all([
-        baseFilter(supabase.from('ventas_ventas').select('id', { count: 'exact', head: true })),
-        baseFilter(supabase.from('ventas_ventas').select('id', { count: 'exact', head: true }).eq('estado', 'pendiente').eq('es_devolucion', false)),
-        baseFilter(supabase.from('ventas_ventas').select('id', { count: 'exact', head: true }).eq('estado', 'aprobada').eq('es_devolucion', false)),
-        baseFilter(supabase.from('ventas_ventas').select('id', { count: 'exact', head: true }).eq('estado', 'rechazada').eq('es_devolucion', false)),
-        baseFilter(supabase.from('ventas_ventas').select('id', { count: 'exact', head: true }).eq('es_devolucion', true)),
-      ])
+      const { data, error } = await q
+      if (error) throw error
 
+      const rows = data || []
       const newContadores = {
-        todas: todas || 0,
-        pendiente: pendiente || 0,
-        aprobada: aprobada || 0,
-        rechazada: rechazada || 0,
-        devolucion: devolucion || 0,
+        todas: rows.length,
+        pendiente: rows.filter(v => v.estado === 'pendiente' && !v.es_devolucion).length,
+        aprobada: rows.filter(v => v.estado === 'aprobada' && !v.es_devolucion).length,
+        rechazada: rows.filter(v => v.estado === 'rechazada' && !v.es_devolucion).length,
+        devolucion: rows.filter(v => v.es_devolucion).length,
       }
       setContadores(newContadores)
       _ventasCache = { ...(_ventasCache || {}), contadores: newContadores }
