@@ -19,6 +19,9 @@ const REALTIME_DEBOUNCE_MS = 1200
 let _crmCatalogCache = null
 let _crmCatalogPromise = null
 
+// Module-level cache for pipeline data — survives route changes so remount doesn't show skeleton
+let _pipelineStateCache = null
+
 function loadCRMCatalogs(force = false) {
   if (_crmCatalogCache && !force) return Promise.resolve(_crmCatalogCache)
   if (_crmCatalogPromise) return _crmCatalogPromise
@@ -65,27 +68,31 @@ function mapLeadItems(data) {
 export function useVentasCRM() {
   const { user, usuario, tienePermiso } = useAuth()
 
-  const [pipelines, setPipelines] = useState([])
-  const [pipelineActivo, setPipelineActivoState] = useState(null)
-  const [etapas, setEtapas] = useState([])
-  const [categorias, setCategorias] = useState([])
-  const [etiquetas, setEtiquetas] = useState([])
-  const [rolesComerciales, setRolesComerciales] = useState([])
-  const [setters, setSetters] = useState([])
-  const [closers, setClosers] = useState([])
+  // Initialize from module cache if available — prevents skeleton flash on remount
+  const cached = _pipelineStateCache
 
-  const [leads, setLeads] = useState({})
-  const [leadCounts, setLeadCounts] = useState({})
-  const [totalLeads, setTotalLeads] = useState(0)
+  const [pipelines, setPipelines] = useState(cached?.pipelines || [])
+  const [pipelineActivo, setPipelineActivoState] = useState(cached?.pipelineActivo || null)
+  const [etapas, setEtapas] = useState(cached?.etapas || [])
+  const [categorias, setCategorias] = useState(cached?.categorias || [])
+  const [etiquetas, setEtiquetas] = useState(cached?.etiquetas || [])
+  const [rolesComerciales, setRolesComerciales] = useState(cached?.rolesComerciales || [])
+  const [setters, setSetters] = useState(cached?.setters || [])
+  const [closers, setClosers] = useState(cached?.closers || [])
+
+  const [leads, setLeads] = useState(cached?.leads || {})
+  const [leadCounts, setLeadCounts] = useState(cached?.leadCounts || {})
+  const [totalLeads, setTotalLeads] = useState(cached?.totalLeads || 0)
   const [leadsTabla, setLeadsTabla] = useState([])
   const [tablaTotalCount, setTablaTotalCount] = useState(0)
   const [tablaPage, setTablaPage] = useState(0)
   const [tablaSort, setTablaSort] = useState({ col: 'created_at', dir: 'desc' })
 
-  const [vista, setVista] = useState('kanban')
+  const [vista, setVista] = useState(cached?.vista || 'kanban')
   const [filtros, setFiltros] = useState({})
   const [busqueda, setBusqueda] = useState('')
-  const [loading, setLoading] = useState(true)
+  // Start as loading only if we have no cached data to show
+  const [loading, setLoading] = useState(!cached)
   const [loadingMore, setLoadingMore] = useState({})
   const [error, setError] = useState(null)
 
@@ -217,7 +224,9 @@ export function useVentasCRM() {
     if (initialLoadRef.current) return
 
     const requestId = ++loadRequestRef.current
-    setLoading(true)
+    // Only show skeleton if no leads cached
+    const hasCachedLeads = Object.keys(leads).length > 0
+    if (!hasCachedLeads) setLoading(true)
     setError(null)
 
     try {
@@ -317,17 +326,19 @@ export function useVentasCRM() {
   const cargarDatosIniciales = useCallback(async () => {
     // Signal that initial load is in progress — blocks all other loading functions
     initialLoadRef.current = true
-    console.log('[CRM] cargarDatosIniciales START')
+
 
     try {
-      setLoading(true)
+      // Only show full loading skeleton if we have no cached data to display
+      const hasCachedData = Object.keys(leads).length > 0 || _pipelineStateCache
+      if (!hasCachedData) setLoading(true)
       setError(null)
 
-      console.log('[CRM] loading catalogs...')
-      const cache = await loadCRMCatalogsWithOffline()
-      console.log('[CRM] catalogs loaded:', cache.pipelines?.length, 'pipelines,', cache.roles?.length, 'roles')
 
-      if (!mountedRef.current) { console.log('[CRM] BAIL: unmounted after catalogs'); return }
+      const cache = await loadCRMCatalogsWithOffline()
+
+
+      if (!mountedRef.current) return
 
       const pipelinesData = cache.pipelines
       const rolesData = cache.roles
@@ -366,7 +377,7 @@ export function useVentasCRM() {
         }
       }
 
-      console.log('[CRM] defaultPipeline:', defaultPipeline?.nombre || 'NONE')
+
 
       if (!defaultPipeline) {
         return
@@ -377,7 +388,7 @@ export function useVentasCRM() {
       // Load etapas
       let etapasData = getCached(`etapas:${defaultPipeline.id}`)
       if (!etapasData) {
-        console.log('[CRM] loading etapas from DB...')
+
         const { data, error: etapasErr } = await supabase
           .from('ventas_etapas')
           .select('id, pipeline_id, nombre, orden, activo, color, tipo, max_intentos')
@@ -388,15 +399,15 @@ export function useVentasCRM() {
         etapasData = data
         setCache(`etapas:${defaultPipeline.id}`, etapasData)
       } else {
-        console.log('[CRM] etapas from cache')
-      }
-      if (!mountedRef.current) { console.log('[CRM] BAIL: unmounted after etapas'); return }
 
-      console.log('[CRM] etapas:', etapasData?.length)
+      }
+      if (!mountedRef.current) return
+
+
       setEtapas(etapasData || [])
 
       if ((etapasData || []).length === 0) {
-        console.log('[CRM] no etapas, done')
+
         return
       }
 
@@ -406,7 +417,7 @@ export function useVentasCRM() {
       let total = 0
 
       const queryFn = buildLeadQueryRef.current || buildLeadQuery
-      console.log('[CRM] loading leads for', etapasData.length, 'etapas...')
+
       await Promise.all((etapasData || []).map(async (etapa) => {
         const query = queryFn(defaultPipeline.id, defaultPipeline.nombre, etapa.id)
           .order('fecha_entrada', { ascending: false })
@@ -422,11 +433,21 @@ export function useVentasCRM() {
         leadsOffsetRef.current[etapa.id] = (data || []).length
       }))
 
-      if (!mountedRef.current) { console.log('[CRM] BAIL: unmounted after leads'); return }
-      console.log('[CRM] leads loaded, total:', total)
+      if (!mountedRef.current) return
+
       setLeads(newLeads)
       setLeadCounts(newCounts)
       setTotalLeads(total)
+
+      // Cache pipeline state at module level — survives route changes
+      _pipelineStateCache = {
+        pipelines: pipelinesData, pipelineActivo: defaultPipeline,
+        etapas: etapasData, categorias: cache.categorias,
+        etiquetas: cache.etiquetas, rolesComerciales: rolesData,
+        setters: settersList, closers: closersList,
+        leads: newLeads, leadCounts: newCounts, totalLeads: total,
+        vista,
+      }
     } catch (err) {
       console.error('[CRM] cargarDatosIniciales ERROR:', err)
       if (mountedRef.current) {
@@ -436,7 +457,7 @@ export function useVentasCRM() {
       initialLoadRef.current = false
       // ALWAYS clear loading — no requestId guard, no race possible
       if (mountedRef.current) {
-        console.log('[CRM] cargarDatosIniciales DONE, clearing loading')
+
         setLoading(false)
       }
     }
@@ -451,7 +472,9 @@ export function useVentasCRM() {
     const requestId = ++loadRequestRef.current
 
     try {
-      setLoading(true)
+      // Only show skeleton if no leads cached — otherwise refresh silently
+      const hasCachedLeads = Object.keys(leads).length > 0
+      if (!hasCachedLeads) setLoading(true)
       setError(null)
       const newLeads = {}
       const newCounts = {}
@@ -476,6 +499,10 @@ export function useVentasCRM() {
       setLeads(newLeads)
       setLeadCounts(newCounts)
       setTotalLeads(total)
+      // Update module cache
+      if (_pipelineStateCache) {
+        _pipelineStateCache = { ..._pipelineStateCache, leads: newLeads, leadCounts: newCounts, totalLeads: total }
+      }
     } catch (err) {
       if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       if (requestId === loadRequestRef.current && mountedRef.current) {
@@ -533,7 +560,8 @@ export function useVentasCRM() {
     const requestId = ++loadRequestRef.current
 
     try {
-      setLoading(true)
+      // Only show skeleton if no data cached
+      if (leadsTabla.length === 0) setLoading(true)
       // Map table column keys to actual sortable fields
       const sortCol = tablaSort.col
       const ascending = tablaSort.dir === 'asc'
@@ -724,14 +752,14 @@ export function useVentasCRM() {
 
   // ── Reload ─────────────────────────────────────────────────────────
   const refrescar = useCallback(() => {
-    // Skip if initial load or another load is in progress
-    if (initialLoadRef.current || loading) return
+    // Skip if initial load is in progress
+    if (initialLoadRef.current) return
     if (vista === 'kanban') {
       cargarLeads()
     } else {
       cargarLeadsTabla()
     }
-  }, [vista, loading, cargarLeads, cargarLeadsTabla])
+  }, [vista, cargarLeads, cargarLeadsTabla])
 
   // ── Venta popup state ──────────────────────────────────────────────
   const [leadParaVenta, setLeadParaVenta] = useState(null)
@@ -1174,6 +1202,8 @@ export function useVentasCRM() {
     setLeads({})
     setLeadCounts({})
     setTablaPage(0)
+    // Clear module cache — new pipeline data will replace it
+    _pipelineStateCache = null
     // Load etapas + leads directly — no reliance on chained useEffects
     cargarPipelineCompleto(pipeline, vista)
   }, [cargarPipelineCompleto, vista])
@@ -1354,26 +1384,19 @@ export function useVentasCRM() {
     if (vista === 'tabla' && pipelineActivo) cargarLeadsTabla()
   }, [tablaPage, tablaSort]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Safety net: force retry after timeout ──────────────────────────
-  const loadingRetryRef = useRef(0)
+  // ── Safety net: force clear loading after timeout ──────────────────
   useEffect(() => {
-    if (!loading) { loadingRetryRef.current = 0; return }
+    if (!loading) return
+    // If loading is stuck for 15s, force clear it — data may be stale but usable
     const timeout = setTimeout(() => {
-      console.error('[CRM] Loading timeout after', LOADING_TIMEOUT_MS, 'ms. Retry:', loadingRetryRef.current)
-      if (loadingRetryRef.current < 2) {
-        // Auto-retry: clear state and re-run initial load
-        loadingRetryRef.current++
-        initialLoadRef.current = false
-        _crmCatalogCache = null // Force fresh catalog load
-        cargarDatosIniciales()
-      } else {
-        // Give up after 2 retries
-        setLoading(false)
-        setError('La carga tardó demasiado. Intenta refrescar.')
-      }
-    }, LOADING_TIMEOUT_MS)
+      console.error('[CRM] Loading timeout after 15s, force clearing')
+      initialLoadRef.current = false
+      setLoading(false)
+      // Don't retry — just let the user see whatever data we have (possibly cached)
+      // They can manually refresh if needed
+    }, 15000)
     return () => clearTimeout(timeout)
-  }, [loading, cargarDatosIniciales])
+  }, [loading])
 
   // ── Pipelines visible to user ──────────────────────────────────────
   const pipelinesVisibles = pipelines.filter(p => {

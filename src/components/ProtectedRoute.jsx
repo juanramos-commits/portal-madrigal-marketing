@@ -69,7 +69,7 @@ export default function ProtectedRoute({ children }) {
             marginBottom: '16px',
             lineHeight: 1.5
           }}>
-            Hubo un problema al cargar los datos de tu cuenta. Puede ser un error temporal de conexión.
+            Tu email está autenticado pero no se encontró una cuenta de usuario asociada. Contacta con el administrador para que verifique tu cuenta.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button

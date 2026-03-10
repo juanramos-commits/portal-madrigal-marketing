@@ -128,15 +128,22 @@ export function AuthProvider({ children }) {
         setUser(session.user)
         if (!isAuthPage()) {
           const resultado = await cargarUsuario(session.user.email)
-          // Si no se pudo cargar el usuario, la sesión puede estar corrupta
-          if (!resultado) {
+          // Handle deactivated account on session restore
+          if (resultado?.desactivado) {
+            logger.warn('Cuenta desactivada, cerrando sesión...')
+            await supabase.auth.signOut()
+            if (mounted) { setUser(null); setUsuario(null) }
+          } else if (!resultado) {
+            // No user row found — session exists but no usuarios record
             logger.warn('No se pudo cargar usuario, verificando sesión...')
             const { data: { user: validUser }, error: userError } = await supabase.auth.getUser()
             if (userError || !validUser) {
               logger.warn('Sesión inválida, limpiando...')
               await supabase.auth.signOut()
-              setUser(null)
+              if (mounted) setUser(null)
             }
+            // If session is valid but no usuarios row, user stays on error screen
+            // (this is correct — admin needs to create the account)
           }
         }
       }
