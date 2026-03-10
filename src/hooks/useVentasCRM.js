@@ -325,7 +325,10 @@ export function useVentasCRM() {
         setError(err.message || 'Error al cargar pipeline')
       }
     } finally {
-      if (requestId === loadRequestRef.current && mountedRef.current) {
+      // FIX: always clear loading if mounted — don't guard with requestId
+      // The requestId check caused loading to get stuck when multiple functions
+      // share loadRequestRef and increment it (e.g. during cargarDatosIniciales)
+      if (mountedRef.current) {
         setLoading(false)
       }
     }
@@ -520,7 +523,7 @@ export function useVentasCRM() {
         setError('Error al cargar leads')
       }
     } finally {
-      if (requestId === loadRequestRef.current && mountedRef.current) {
+      if (mountedRef.current) {
         setLoading(false)
       }
     }
@@ -611,7 +614,7 @@ export function useVentasCRM() {
         setError('Error al cargar leads')
       }
     } finally {
-      if (requestId === loadRequestRef.current && mountedRef.current) {
+      if (mountedRef.current) {
         setLoading(false)
       }
     }

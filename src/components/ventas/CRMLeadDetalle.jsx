@@ -303,7 +303,9 @@ export default function CRMLeadDetalle() {
         setError(err.message || 'Error al cargar el lead')
       }
     } finally {
-      if (requestId === loadDetailRef.current && isMountedRef.current) {
+      // FIX: always clear loading if mounted — requestId guard caused loading
+      // to get stuck when refrescarLead incremented loadDetailRef during cargarLead
+      if (isMountedRef.current) {
         setLoading(false)
       }
     }
