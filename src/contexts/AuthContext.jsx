@@ -1,8 +1,33 @@
 import { logger } from '../lib/logger'
 import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseUrl, supabaseAnonKey } from '../lib/supabase'
 import { logActividad } from '../lib/logActividad'
 import { invalidateAll } from '../lib/cache'
+
+// Direct RPC call that bypasses supabase-js session management.
+// Used on page reload to avoid blocking on getSession() → initializePromise → token refresh.
+// supabase.rpc() internally awaits getSession() which holds a navigator.locks lock
+// until token refresh completes — if the network is slow this hangs for 20+ seconds.
+async function directRpc(rpcName, params, accessToken) {
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${rpcName}`, {
+    method: 'POST',
+    headers: {
+      'apikey': supabaseAnonKey,
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify(params),
+  })
+  if (response.status === 401) {
+    throw new Error('TOKEN_EXPIRED')
+  }
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(`RPC ${rpcName} failed (${response.status}): ${text}`)
+  }
+  return response.json()
+}
 
 const AuthContext = createContext({})
 
@@ -123,68 +148,104 @@ export function AuthProvider({ children }) {
     // This avoids blocking on getSession() which can hang 20s+ if the token
     // refresh network request is slow (navigator.locks + fetchWithRetry timeout).
     let cachedUser = null
+    let cachedAccessToken = null
     try {
       const raw = localStorage.getItem('madrigal-auth')
       if (raw) {
         const parsed = JSON.parse(raw)
         // Supabase stores { access_token, refresh_token, user, expires_at, ... }
         const session = parsed?.session || parsed
-        if (session?.user?.email) {
-          // Check if refresh_token exists (if not, session is useless)
-          if (session.refresh_token) {
-            cachedUser = session.user
-          } else {
-            logger.warn('Cached session has no refresh_token, ignoring')
-          }
+        if (session?.user?.email && session?.access_token) {
+          cachedUser = session.user
+          cachedAccessToken = session.access_token
         }
       }
     } catch (_) {
       // Corrupted localStorage — ignore, will be cleaned up below
     }
 
-    if (cachedUser && !isAuthPage()) {
-      // ── FAST PATH: Use cached user immediately ──
-      // Set user NOW so downstream hooks (CRM, etc.) can start loading
-      setUser(cachedUser)
-      setLoading(false)
+    if (cachedUser && cachedAccessToken && !isAuthPage()) {
+      // ── FAST PATH: Direct fetch with cached access_token ──
+      // Bypasses supabase-js entirely — no getSession(), no navigator.locks, no token refresh wait.
+      // If token is expired we get 401 → fall through to slow path.
+      directRpc('obtener_usuario_completo', { p_email: cachedUser.email }, cachedAccessToken)
+        .then((rpcResult) => {
+          if (!mounted) return
+          if (rpcResult?.usuario) {
+            const usuarioData = rpcResult.usuario
+            if (!usuarioData.activo) {
+              logger.warn('Cuenta desactivada, cerrando sesión...')
+              supabase.auth.signOut().catch(() => {})
+              setUser(null)
+              setUsuario(null)
+              setLoading(false)
+              return
+            }
+            setUser(cachedUser)
+            setUsuario(usuarioData)
+            setPermisosError(null)
+            setPermisos(rpcResult.permisos || [])
+            setPermisosLoaded(true)
+            setLoading(false)
 
-      // Load usuario/permisos in background — doesn't block the UI
-      cargarUsuario(cachedUser.email).then((resultado) => {
-        if (!mounted) return
-        if (resultado?.desactivado) {
-          logger.warn('Cuenta desactivada, cerrando sesión...')
-          supabase.auth.signOut().catch(() => {})
-          setUser(null)
-          setUsuario(null)
-          setLoading(false)
-        }
-      }).catch((err) => {
-        logger.error('Error cargando usuario (background):', err?.message)
-        // user is set, app works — permisos might be missing until retry
-      })
+            // Load roles comerciales in background
+            supabase.auth.getSession().then(() => {
+              // Now that supabase-js has initialized, load roles via normal client
+              supabase
+                .from('ventas_roles_comerciales')
+                .select('*, usuario:usuarios(id, nombre, email, avatar_url)')
+                .eq('activo', true)
+                .then(({ data }) => mounted && setRolesComerciales(data || []))
+                .catch(() => {})
+            }).catch(() => {})
+          } else {
+            // RPC returned unexpected result — fall back to normal flow
+            throw new Error('RPC returned no usuario')
+          }
+        })
+        .catch((err) => {
+          if (!mounted) return
+          logger.warn('Fast path failed:', err?.message, '— falling back to getSession()')
+          // Token expired or RPC failed — wait for proper supabase-js flow
+          // Set user from cache so ProtectedRoute doesn't redirect to login
+          setUser(cachedUser)
+          Promise.race([
+            supabase.auth.getSession(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('FALLBACK_TIMEOUT')), 10000)),
+          ]).then(async ({ data: { session } }) => {
+            if (!mounted) return
+            if (session?.user) {
+              setUser(session.user)
+              try {
+                const resultado = await cargarUsuario(session.user.email)
+                if (resultado?.desactivado) {
+                  await supabase.auth.signOut()
+                  if (mounted) { setUser(null); setUsuario(null) }
+                }
+              } catch (loadErr) {
+                logger.error('Fallback cargarUsuario failed:', loadErr?.message)
+              }
+            } else {
+              // No session — redirect to login
+              localStorage.removeItem('madrigal-auth')
+              setUser(null)
+              setUsuario(null)
+            }
+            if (mounted) setLoading(false)
+          }).catch(() => {
+            if (mounted) {
+              localStorage.removeItem('madrigal-auth')
+              setUser(null)
+              setUsuario(null)
+              setLoading(false)
+            }
+          })
+        })
 
       // Let getSession() run in background for token refresh — don't await it
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!mounted) return
-        if (session?.user) {
-          // Update user with fresh data (new access_token, etc.)
-          setUser(session.user)
-        } else {
-          // Token refresh failed — session is dead, force re-login
-          logger.warn('Background getSession returned null — session expired')
-          localStorage.removeItem('madrigal-auth')
-          setUser(null)
-          setUsuario(null)
-          setPermisos([])
-          setPermisosLoaded(false)
-          setLoading(false)
-          if (!window.location.pathname.startsWith('/login')) {
-            window.location.href = '/login'
-          }
-        }
-      }).catch((err) => {
+      // This ensures supabase-js internal state is up to date for subsequent API calls
+      supabase.auth.getSession().catch((err) => {
         logger.error('Background getSession error:', err?.message)
-        // Don't blow up — cached session might still work for a bit
       })
     } else {
       // ── SLOW PATH: No cached session or auth page — must wait for getSession ──
