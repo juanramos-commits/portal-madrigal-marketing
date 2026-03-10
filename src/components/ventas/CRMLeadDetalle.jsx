@@ -11,7 +11,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { supabase } from '../../lib/supabase'
 import { logActividad } from '../../lib/logActividad'
-import { cacheGet, cacheSet } from '../../lib/offlineCache'
+// offlineCache removed — was causing stale data bugs
 import Select from '../ui/Select'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import WhatsAppIcon from '../icons/WhatsAppIcon'
@@ -81,6 +81,9 @@ let _catalogPromise = null
 // ── Prefetch cache: load lead data on hover so detail opens instantly ──
 const _prefetchCache = new Map() // Map<leadId, { promise, data, ts }>
 const PREFETCH_TTL = 30_000 // 30 seconds
+
+// Module-level cache for last loaded lead — prevents skeleton flash on remount
+let _lastLeadCache = null // { id, data }
 
 function fetchLeadDetail(leadId) {
   return Promise.all([
@@ -153,7 +156,6 @@ function loadCatalogs() {
       reunionEstados: reunionEstadosData.data || [],
     }
     _catalogPromise = null
-    cacheSet('lead_detail_catalogs', _catalogCache).catch(() => {})
     return _catalogCache
   }).catch(err => {
     _catalogPromise = null
@@ -162,14 +164,9 @@ function loadCatalogs() {
   return _catalogPromise
 }
 
+// Simple: use module cache if available, otherwise fetch from network
+// No IndexedDB — it caused stale data bugs that required clearing browser data
 async function loadCatalogsWithOffline() {
-  if (_catalogCache) return _catalogCache
-  const cached = await cacheGet('lead_detail_catalogs').catch(() => null)
-  if (cached?.categorias?.length > 0) {
-    _catalogCache = cached
-    loadCatalogs().catch(() => {})
-    return cached
-  }
   return loadCatalogs()
 }
 
@@ -178,18 +175,22 @@ export default function CRMLeadDetalle() {
   const navigate = useNavigate()
   const { user, usuario, tienePermiso } = useAuth()
 
-  const [lead, setLead] = useState(null)
-  const [categorias, setCategorias] = useState([])
-  const [etiquetasDisponibles, setEtiquetasDisponibles] = useState([])
+  // Initialize from module cache if same lead — prevents skeleton flash on remount
+  const cachedLead = _lastLeadCache?.id === id ? _lastLeadCache.data : null
+
+  const [lead, setLead] = useState(cachedLead)
+  const [categorias, setCategorias] = useState(_catalogCache?.categorias || [])
+  const [etiquetasDisponibles, setEtiquetasDisponibles] = useState(_catalogCache?.etiquetas || [])
   const [actividad, setActividad] = useState([])
   const [actividadOffset, setActividadOffset] = useState(0)
   const [hasMoreActividad, setHasMoreActividad] = useState(true)
   const [loadingMoreActividad, setLoadingMoreActividad] = useState(false)
-  const [rolesComerciales, setRolesComerciales] = useState([])
-  const [allEtapas, setAllEtapas] = useState([])
-  const [setters, setSetters] = useState([])
-  const [closers, setClosers] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [rolesComerciales, setRolesComerciales] = useState(_catalogCache?.roles || [])
+  const [allEtapas, setAllEtapas] = useState(_catalogCache?.etapas || [])
+  const [setters, setSetters] = useState(_catalogCache?.roles?.filter(r => r.rol === 'setter' && r.activo) || [])
+  const [closers, setClosers] = useState(_catalogCache?.roles?.filter(r => r.rol === 'closer' && r.activo) || [])
+  // Start as loading only if no cached lead data
+  const [loading, setLoading] = useState(!cachedLead)
   const [error, setError] = useState(null)
   const [showMenu, setShowMenu] = useState(false)
   const [showEtapaDropdown, setShowEtapaDropdown] = useState(null)
@@ -265,7 +266,8 @@ export default function CRMLeadDetalle() {
     const requestId = ++loadDetailRef.current
 
     try {
-      setLoading(true)
+      // Only show skeleton if no cached data to display
+      if (!lead) setLoading(true)
       setError(null)
 
       // Start catalogs in background — don't block lead rendering
@@ -277,6 +279,8 @@ export default function CRMLeadDetalle() {
 
       setLead(leadResult)
       snapshotRef.current = null
+      // Save to module cache for instant display on remount
+      _lastLeadCache = { id, data: leadResult }
 
       // Load activity in background — don't block the lead from rendering
       supabase.from('ventas_actividad')
@@ -325,8 +329,11 @@ export default function CRMLeadDetalle() {
   // FIX: depend on id directly — reset state on lead change to avoid stale data
   useEffect(() => {
     if (!id) return
-    setLead(null)
-    setActividad([])
+    // Only clear lead if navigating to a different lead (not same lead remount)
+    if (_lastLeadCache?.id !== id) {
+      setLead(null)
+      setActividad([])
+    }
     setError(null)
     cargarLead()
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
