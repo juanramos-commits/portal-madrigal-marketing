@@ -249,18 +249,25 @@ export default function CRMLeadDetalle() {
     setError(null)
     setLoading(prev => _lastLeadCache?.id === id ? false : true)
 
+    console.log(`[Lead] useEffect fired for id=${id}, cancelled=${cancelled}, cached=${_lastLeadCache?.id === id}`)
+
     // Catalogs in background (module-level cache — fires once)
     cargarCatalogos()
 
     // Fetch lead data
     fetchLeadDetail(id).then(leadResult => {
+      console.log(`[Lead] fetchLeadDetail resolved, cancelled=${cancelled}, mounted=${isMountedRef.current}, hasData=${!!leadResult}, id=${id}`)
       if (cancelled || !isMountedRef.current) return
       if (leadResult) {
         setLead(leadResult)
         snapshotRef.current = null
         _lastLeadCache = { id, data: leadResult }
+        console.log(`[Lead] setLead called with data for id=${id}`)
+      } else {
+        console.warn(`[Lead] fetchLeadDetail returned null for id=${id}`)
       }
       setLoading(false)
+      console.log(`[Lead] setLoading(false) called for id=${id}`)
 
       // Activity in background (non-blocking)
       supabase.from('ventas_actividad')
@@ -276,12 +283,16 @@ export default function CRMLeadDetalle() {
         })
         .catch(() => {})
     }).catch(err => {
+      console.log(`[Lead] fetchLeadDetail error, cancelled=${cancelled}, mounted=${isMountedRef.current}, err=${err.message}, id=${id}`)
       if (cancelled || !isMountedRef.current) return
       setError(err.message || 'Error al cargar el lead')
       setLoading(false)
     })
 
-    return () => { cancelled = true }
+    return () => {
+      console.log(`[Lead] useEffect cleanup for id=${id}, setting cancelled=true`)
+      cancelled = true
+    }
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Snapshot for activity tracking ────────────────────────────────
