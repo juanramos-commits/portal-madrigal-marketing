@@ -172,7 +172,6 @@ export default function CRMLeadDetalle() {
   const [allEtapas, setAllEtapas] = useState(_catalogCache?.etapas || [])
   const [setters, setSetters] = useState(_catalogCache?.roles?.filter(r => r.rol === 'setter' && r.activo) || [])
   const [closers, setClosers] = useState(_catalogCache?.roles?.filter(r => r.rol === 'closer' && r.activo) || [])
-  // Start as loading only if no cached lead data
   const [loading, setLoading] = useState(!cachedLead)
   const [error, setError] = useState(null)
   const [showMenu, setShowMenu] = useState(false)
@@ -192,8 +191,6 @@ export default function CRMLeadDetalle() {
   const pendingFieldUpdatesRef = useRef({})
   const snapshotRef = useRef(null)
   const registroTimeoutRef = useRef(null)
-  const loadDetailRef = useRef(0)
-  // FIX: mounted guard prevents setState on unmounted component (fast navigation)
   const mountedRef = useRef(true)
   useEffect(() => {
     mountedRef.current = true
@@ -225,97 +222,67 @@ export default function CRMLeadDetalle() {
     }
   }, [])
 
-  // ── Full load (initial) ──────────────────────────────────────────
+  // ── Simple load: fetch lead data, always update state, no race complexity ──
   const cargarLead = useCallback(async () => {
-    const requestId = ++loadDetailRef.current
-
     try {
       if (!lead) setLoading(true)
       setError(null)
-
-      // Start catalogs in background — don't block lead rendering
       cargarCatalogos()
 
       const leadResult = await fetchLeadDetail(id)
+      if (!isMountedRef.current) return
 
-      if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
+      if (leadResult) {
+        setLead(leadResult)
+        snapshotRef.current = null
+        _lastLeadCache = { id, data: leadResult }
+      }
 
-      setLead(leadResult)
-      snapshotRef.current = null
-      // Save to module cache for instant display on remount
-      _lastLeadCache = { id, data: leadResult }
-
-      // Load activity in background — don't block the lead from rendering
+      // Activity in background
       supabase.from('ventas_actividad')
         .select('id, lead_id, tipo, descripcion, created_at, usuario:usuarios(id, nombre)')
         .eq('lead_id', id)
         .order('created_at', { ascending: false })
         .range(0, 19)
         .then(({ data: actData }) => {
-          if (requestId !== loadDetailRef.current || !isMountedRef.current) return
+          if (!isMountedRef.current) return
           setActividad(actData || [])
           setActividadOffset(20)
           setHasMoreActividad((actData || []).length >= 20)
         })
-        .catch(() => {}) // non-critical
+        .catch(() => {})
     } catch (err) {
-      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       if (!isMountedRef.current) return
-      if (requestId === loadDetailRef.current) {
-        setError(err.message || 'Error al cargar el lead')
-      }
+      setError(err.message || 'Error al cargar el lead')
     } finally {
-      if (isMountedRef.current) {
-        setLoading(false)
-      }
+      if (isMountedRef.current) setLoading(false)
     }
   }, [id, cargarCatalogos]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Refresh lead only (after actions like cambiarEtapa) ──────────
   const refrescarLead = useCallback(async () => {
-    const requestId = ++loadDetailRef.current
     try {
       const leadResult = await fetchLeadDetail(id)
-      if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
+      if (!isMountedRef.current || !leadResult) return
       setLead(leadResult)
       snapshotRef.current = null
+      _lastLeadCache = { id, data: leadResult }
     } catch (err) {
-      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       if (!isMountedRef.current) return
-      if (requestId === loadDetailRef.current) {
-        showToast(err.message || 'Error al refrescar', 'error')
-      }
+      showToast(err.message || 'Error al refrescar', 'error')
     }
   }, [id, showToast])
 
-  // FIX: depend on id directly — reset state on lead change to avoid stale data
+  // ── Load on mount / id change ──────────────────────────────────────
   useEffect(() => {
     if (!id) return
-    // Only clear lead if navigating to a different lead (not same lead remount)
     if (_lastLeadCache?.id !== id) {
       setLead(null)
       setActividad([])
     }
     setError(null)
     cargarLead()
-  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Safety net: force loading=false after timeout + auto-retry once ──
-  const retryCountRef = useRef(0)
-  useEffect(() => {
-    if (!loading) { retryCountRef.current = 0; return }
-    const timeout = setTimeout(() => {
-      console.error('[CRM Detail] Loading timeout — forcing loading=false')
-      setLoading(false)
-      if (retryCountRef.current < 1) {
-        retryCountRef.current++
-        cargarLead()
-      } else {
-        setError('La carga tardó demasiado. Intenta refrescar.')
-      }
-    }, 15000)
-    return () => clearTimeout(timeout)
-  }, [loading]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, cargarLead])
 
   // ── Snapshot for activity tracking ────────────────────────────────
   useEffect(() => {
