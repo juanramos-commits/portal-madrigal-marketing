@@ -222,43 +222,6 @@ export default function CRMLeadDetalle() {
     }
   }, [])
 
-  // ── Simple load: fetch lead data, always update state, no race complexity ──
-  const cargarLead = useCallback(async () => {
-    try {
-      if (!lead) setLoading(true)
-      setError(null)
-      cargarCatalogos()
-
-      const leadResult = await fetchLeadDetail(id)
-      if (!isMountedRef.current) return
-
-      if (leadResult) {
-        setLead(leadResult)
-        snapshotRef.current = null
-        _lastLeadCache = { id, data: leadResult }
-      }
-
-      // Activity in background
-      supabase.from('ventas_actividad')
-        .select('id, lead_id, tipo, descripcion, created_at, usuario:usuarios(id, nombre)')
-        .eq('lead_id', id)
-        .order('created_at', { ascending: false })
-        .range(0, 19)
-        .then(({ data: actData }) => {
-          if (!isMountedRef.current) return
-          setActividad(actData || [])
-          setActividadOffset(20)
-          setHasMoreActividad((actData || []).length >= 20)
-        })
-        .catch(() => {})
-    } catch (err) {
-      if (!isMountedRef.current) return
-      setError(err.message || 'Error al cargar el lead')
-    } finally {
-      if (isMountedRef.current) setLoading(false)
-    }
-  }, [id, cargarCatalogos]) // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Refresh lead only (after actions like cambiarEtapa) ──────────
   const refrescarLead = useCallback(async () => {
     try {
@@ -273,16 +236,53 @@ export default function CRMLeadDetalle() {
     }
   }, [id, showToast])
 
-  // ── Load on mount / id change ──────────────────────────────────────
+  // ── Load on mount / id change — cancelled flag prevents stale data ──
   useEffect(() => {
     if (!id) return
+    let cancelled = false
+
+    // Reset state if navigating to a different lead
     if (_lastLeadCache?.id !== id) {
       setLead(null)
       setActividad([])
     }
     setError(null)
-    cargarLead()
-  }, [id, cargarLead])
+    setLoading(prev => _lastLeadCache?.id === id ? false : true)
+
+    // Catalogs in background (module-level cache — fires once)
+    cargarCatalogos()
+
+    // Fetch lead data
+    fetchLeadDetail(id).then(leadResult => {
+      if (cancelled || !isMountedRef.current) return
+      if (leadResult) {
+        setLead(leadResult)
+        snapshotRef.current = null
+        _lastLeadCache = { id, data: leadResult }
+      }
+      setLoading(false)
+
+      // Activity in background (non-blocking)
+      supabase.from('ventas_actividad')
+        .select('id, lead_id, tipo, descripcion, created_at, usuario:usuarios(id, nombre)')
+        .eq('lead_id', id)
+        .order('created_at', { ascending: false })
+        .range(0, 19)
+        .then(({ data: actData }) => {
+          if (cancelled || !isMountedRef.current) return
+          setActividad(actData || [])
+          setActividadOffset(20)
+          setHasMoreActividad((actData || []).length >= 20)
+        })
+        .catch(() => {})
+    }).catch(err => {
+      if (cancelled || !isMountedRef.current) return
+      setError(err.message || 'Error al cargar el lead')
+      setLoading(false)
+    })
+
+    return () => { cancelled = true }
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Snapshot for activity tracking ────────────────────────────────
   useEffect(() => {
