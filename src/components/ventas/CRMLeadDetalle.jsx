@@ -82,8 +82,9 @@ let _catalogPromise = null
 let _lastLeadCache = null // { id, data }
 
 // Single query with nested selects — 1 HTTP request instead of 4
-function fetchLeadDetail(leadId) {
-  return supabase.from('ventas_leads').select(`
+// Accepts optional AbortSignal to kill the HTTP request on navigation (frees connection pool)
+function fetchLeadDetail(leadId, signal) {
+  let query = supabase.from('ventas_leads').select(`
     id, nombre, email, telefono, nombre_negocio, categoria_id, fuente,
     contactos_adicionales, notas, resumen_setter, resumen_closer,
     enlace_grabacion, setter_asignado_id, closer_asignado_id, tags, created_at, updated_at,
@@ -105,13 +106,16 @@ function fetchLeadDetail(leadId) {
       etiqueta_id,
       etiqueta:ventas_etiquetas(id, nombre, color)
     )
-  `).eq('id', leadId).single().then(({ data, error }) => {
+  `).eq('id', leadId).single()
+
+  if (signal) query = query.abortSignal(signal)
+
+  return query.then(({ data, error }) => {
     if (error) {
       console.error(`[Lead] Supabase error for id=${leadId}:`, error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint)
       throw error
     }
     if (!data) return null
-    // Normalize: extract etiqueta objects from lead_etiquetas join
     return {
       ...data,
       pipeline_states: data.pipeline_states || [],
@@ -239,10 +243,11 @@ export default function CRMLeadDetalle() {
     }
   }, [id, showToast])
 
-  // ── Load on mount / id change — cancelled flag prevents stale data ──
+  // ── Load on mount / id change — AbortController kills HTTP requests on navigation ──
   useEffect(() => {
     if (!id) return
-    let cancelled = false
+    const controller = new AbortController()
+    const { signal } = controller
 
     // Reset state if navigating to a different lead
     if (_lastLeadCache?.id !== id) {
@@ -252,43 +257,41 @@ export default function CRMLeadDetalle() {
     setError(null)
     setLoading(prev => _lastLeadCache?.id === id ? false : true)
 
-    console.log(`[Lead] useEffect fired for id=${id}, cancelled=${cancelled}, cached=${_lastLeadCache?.id === id}`)
+    console.log(`[Lead] useEffect fired for id=${id}, cached=${_lastLeadCache?.id === id}`)
 
     // Catalogs in background (module-level cache — fires once)
     cargarCatalogos()
 
-    // Safety timeout: if fetchLeadDetail never resolves (connection pool exhausted),
-    // stop loading and show retry instead of permanent skeleton
+    // Safety timeout: if fetch hangs despite abort (shouldn't happen, but defensive)
     const timeoutId = setTimeout(() => {
-      if (!cancelled) {
+      if (!signal.aborted) {
         console.warn(`[Lead] fetchLeadDetail timeout for id=${id}`)
+        controller.abort()
         setLoading(false)
         setError('Tiempo de espera agotado. Pulsa para reintentar.')
       }
     }, 10000)
 
-    // Fetch lead data
-    fetchLeadDetail(id).then(leadResult => {
+    // Fetch lead data — signal aborts the real HTTP connection on cleanup
+    fetchLeadDetail(id, signal).then(leadResult => {
       clearTimeout(timeoutId)
-      console.log(`[Lead] fetchLeadDetail resolved, cancelled=${cancelled}, mounted=${isMountedRef.current}, hasData=${!!leadResult}, id=${id}`)
-      if (cancelled || !isMountedRef.current) return
+      if (signal.aborted || !isMountedRef.current) return
       if (leadResult) {
         setLead(leadResult)
         snapshotRef.current = null
         _lastLeadCache = { id, data: leadResult }
-      } else {
-        console.warn(`[Lead] fetchLeadDetail returned null for id=${id}`)
       }
       setLoading(false)
 
-      // Activity in background (non-blocking)
+      // Activity in background (non-blocking, also abortable)
       supabase.from('ventas_actividad')
         .select('id, lead_id, tipo, descripcion, created_at, usuario:usuarios(id, nombre)')
         .eq('lead_id', id)
         .order('created_at', { ascending: false })
         .range(0, 19)
+        .abortSignal(signal)
         .then(({ data: actData }) => {
-          if (cancelled || !isMountedRef.current) return
+          if (signal.aborted || !isMountedRef.current) return
           setActividad(actData || [])
           setActividadOffset(20)
           setHasMoreActividad((actData || []).length >= 20)
@@ -296,15 +299,17 @@ export default function CRMLeadDetalle() {
         .catch(() => {})
     }).catch(err => {
       clearTimeout(timeoutId)
-      console.log(`[Lead] fetchLeadDetail error, cancelled=${cancelled}, mounted=${isMountedRef.current}, err=${err.message}, id=${id}`)
-      if (cancelled || !isMountedRef.current) return
+      // AbortError is expected on navigation — don't show error
+      if (err?.name === 'AbortError' || signal.aborted) return
+      if (!isMountedRef.current) return
+      console.log(`[Lead] fetchLeadDetail error, err=${err.message}, id=${id}`)
       setError(err.message || 'Error al cargar el lead')
       setLoading(false)
     })
 
     return () => {
-      console.log(`[Lead] useEffect cleanup for id=${id}, setting cancelled=true`)
-      cancelled = true
+      console.log(`[Lead] useEffect cleanup for id=${id}, aborting`)
+      controller.abort()
       clearTimeout(timeoutId)
     }
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
