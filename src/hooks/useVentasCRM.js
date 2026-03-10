@@ -22,9 +22,14 @@ let _crmCatalogPromise = null
 // Module-level cache for pipeline data — survives route changes so remount doesn't show skeleton
 let _pipelineStateCache = null
 
+// Time-based cache for leads query data — prevents re-fetching 287KB on every CRM remount
+const LEADS_CACHE_TTL = 30000 // 30 seconds
+let _leadsQueryCache = { timestamp: 0, pipelineId: null, data: null }
+
 // Exported: invalidate pipeline cache (called from lead detail after edits)
 export function invalidatePipelineCache() {
   _pipelineStateCache = null
+  _leadsQueryCache = { timestamp: 0, pipelineId: null, data: null }
 }
 
 function loadCRMCatalogs(force = false) {
@@ -56,6 +61,18 @@ function loadCRMCatalogs(force = false) {
 // No IndexedDB — it caused stale data bugs that required clearing browser data
 function loadCRMCatalogsWithOffline() {
   return loadCRMCatalogs()
+}
+
+// Helper: check if leads cache is fresh for a given pipeline
+function getLeadsCacheIfFresh(pipelineId) {
+  if (_leadsQueryCache.pipelineId === pipelineId && Date.now() - _leadsQueryCache.timestamp < LEADS_CACHE_TTL) {
+    return _leadsQueryCache.data
+  }
+  return null
+}
+
+function saveLeadsCache(pipelineId, data) {
+  _leadsQueryCache = { timestamp: Date.now(), pipelineId, data }
 }
 
 // Helper: map lead pipeline join data to flat lead objects
@@ -272,25 +289,27 @@ export function useVentasCRM() {
         const newCounts = {}
         let total = 0
 
-        // OPTIMIZATION: 1 single query for ALL etapas instead of N parallel queries.
-        // This prevents HTTP connection pool exhaustion (browser limit: 6 per domain).
-        const { data: allData, error: allErr } = await queryFn(pipeline.id, pipeline.nombre)
-          .order('fecha_entrada', { ascending: false })
-          .limit(500)
-
-        if (allErr) throw allErr
+        // Use cached data if fresh (< 30s) — prevents 287KB re-fetch on CRM remount
+        let allData = getLeadsCacheIfFresh(pipeline.id)
+        if (!allData) {
+          const { data, error: allErr } = await queryFn(pipeline.id, pipeline.nombre)
+            .order('fecha_entrada', { ascending: false })
+            .limit(500)
+          if (allErr) throw allErr
+          allData = data || []
+          saveLeadsCache(pipeline.id, allData)
+        }
 
         // Group by etapa_id in frontend
         const grouped = {}
         for (const etapa of (etapasData || [])) { grouped[etapa.id] = [] }
-        for (const item of (allData || [])) {
+        for (const item of allData) {
           if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
         }
 
         for (const etapa of (etapasData || [])) {
           const etapaItems = grouped[etapa.id] || []
           const totalInEtapa = etapaItems.length
-          // Show first LEADS_PER_BATCH items, track if there are more
           newLeads[etapa.id] = mapLeadItems(etapaItems.slice(0, LEADS_PER_BATCH))
           newCounts[etapa.id] = totalInEtapa
           total += totalInEtapa
@@ -434,16 +453,21 @@ export function useVentasCRM() {
 
       const queryFn = buildLeadQueryRef.current || buildLeadQuery
 
-      const { data: allData, error: allErr } = await queryFn(defaultPipeline.id, defaultPipeline.nombre)
-        .order('fecha_entrada', { ascending: false })
-        .limit(500)
-
-      if (allErr) throw allErr
+      // Use cached data if fresh (< 30s) — prevents 287KB re-fetch on CRM remount
+      let allData = getLeadsCacheIfFresh(defaultPipeline.id)
+      if (!allData) {
+        const { data, error: allErr } = await queryFn(defaultPipeline.id, defaultPipeline.nombre)
+          .order('fecha_entrada', { ascending: false })
+          .limit(500)
+        if (allErr) throw allErr
+        allData = data || []
+        saveLeadsCache(defaultPipeline.id, allData)
+      }
 
       // Group by etapa_id in frontend
       const grouped = {}
       for (const etapa of (etapasData || [])) { grouped[etapa.id] = [] }
-      for (const item of (allData || [])) {
+      for (const item of allData) {
         if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
       }
 
@@ -508,16 +532,19 @@ export function useVentasCRM() {
       let total = 0
 
       // 1 single query for ALL etapas (not N parallel queries)
-      const { data: allData, error: allErr } = await buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre)
+      const { data: freshData, error: allErr } = await buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre)
         .order('fecha_entrada', { ascending: false })
         .limit(500)
 
       if (allErr) throw allErr
+      const allData = freshData || []
+      // Update cache with fresh data
+      saveLeadsCache(pipelineActivo.id, allData)
 
       // Group by etapa_id in frontend
       const grouped = {}
       for (const etapa of etapas) { grouped[etapa.id] = [] }
-      for (const item of (allData || [])) {
+      for (const item of allData) {
         if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
       }
 
