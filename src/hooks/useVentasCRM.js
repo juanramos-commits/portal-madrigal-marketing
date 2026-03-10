@@ -591,7 +591,7 @@ export function useVentasCRM() {
       })
 
       if (rpcErr) throw rpcErr
-      if (requestId !== searchRequestRef.current || !mountedRef.current) return
+      if (requestId !== searchRequestRef.current || !mountedRef.current) { setLoading(false); return }
 
       // No results
       if (!results || results.length === 0) {
@@ -607,6 +607,7 @@ export function useVentasCRM() {
           setTablaTotalCount(0)
         }
         setSearchResultCount(0)
+        setLoading(false)
         return
       }
 
@@ -647,7 +648,7 @@ export function useVentasCRM() {
 
       const { data: pipelineData, error: pipeErr } = await dataQuery
       if (pipeErr) throw pipeErr
-      if (requestId !== searchRequestRef.current) return
+      if (requestId !== searchRequestRef.current) { setLoading(false); return }
 
       // Map results with relevance
       const mapped = (pipelineData || []).map(item => ({
@@ -693,7 +694,7 @@ export function useVentasCRM() {
 
       setSearchResultCount(mapped.length)
     } catch (err) {
-      if (requestId !== searchRequestRef.current || !mountedRef.current) return
+      if (requestId !== searchRequestRef.current || !mountedRef.current) { setLoading(false); return }
       // Fallback: use the old simple search (buildLeadQuery with ilike)
       console.warn('RPC ventas_buscar_leads no disponible, usando búsqueda simple:', err.message)
       setSearchResultCount(null)
