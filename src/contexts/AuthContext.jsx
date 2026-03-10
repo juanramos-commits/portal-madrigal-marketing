@@ -120,8 +120,16 @@ export function AuthProvider({ children }) {
 
     const isAuthPage = () => ['/activar-cuenta', '/reset-password'].some(p => window.location.pathname.startsWith(p))
 
+    // Race getSession against a timeout — if auth hangs (token refresh on slow network),
+    // we don't want the app stuck on loading forever
+    const AUTH_TIMEOUT = 8000
+    const getSessionWithTimeout = () => Promise.race([
+      supabase.auth.getSession(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('AUTH_TIMEOUT')), AUTH_TIMEOUT)),
+    ])
+
     // Obtener sesión inicial primero
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    getSessionWithTimeout().then(async ({ data: { session } }) => {
       if (!mounted) return
       initialSessionHandled = true
 
@@ -169,33 +177,51 @@ export function AuthProvider({ children }) {
       if (session?.user) {
         setUser(session.user)
         if (!isAuthPage()) {
-          const resultado = await cargarUsuario(session.user.email)
-          // Handle deactivated account on session restore
-          if (resultado?.desactivado) {
-            logger.warn('Cuenta desactivada, cerrando sesión...')
-            await supabase.auth.signOut()
-            if (mounted) { setUser(null); setUsuario(null) }
-          } else if (!resultado) {
-            // No user row found — session exists but no usuarios record
-            logger.warn('No se pudo cargar usuario, verificando sesión...')
-            const { data: { user: validUser }, error: userError } = await supabase.auth.getUser()
-            if (userError || !validUser) {
-              logger.warn('Sesión inválida, limpiando...')
+          try {
+            // Timeout cargarUsuario — if Supabase queries hang, don't block the app
+            const resultado = await Promise.race([
+              cargarUsuario(session.user.email),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('LOAD_USER_TIMEOUT')), 12000)),
+            ])
+            // Handle deactivated account on session restore
+            if (resultado?.desactivado) {
+              logger.warn('Cuenta desactivada, cerrando sesión...')
               await supabase.auth.signOut()
-              if (mounted) setUser(null)
+              if (mounted) { setUser(null); setUsuario(null) }
+            } else if (!resultado) {
+              // No user row found — session exists but no usuarios record
+              logger.warn('No se pudo cargar usuario, verificando sesión...')
+              const { data: { user: validUser }, error: userError } = await supabase.auth.getUser()
+              if (userError || !validUser) {
+                logger.warn('Sesión inválida, limpiando...')
+                await supabase.auth.signOut()
+                if (mounted) setUser(null)
+              }
             }
-            // If session is valid but no usuarios row, user stays on error screen
-            // (this is correct — admin needs to create the account)
+          } catch (loadErr) {
+            logger.error('Error cargando usuario en sesión inicial:', loadErr?.message)
+            // user is already set from session — app will load, permissions may be incomplete
           }
         }
       }
       setLoading(false)
     }).catch(async (err) => {
-      logger.error('Error en getSession:', err)
-      // Sesión corrupta (AbortError, etc.) — limpiar para evitar bucle infinito
-      try {
-        await supabase.auth.signOut()
-      } catch (_) { /* ignore */ }
+      logger.error('Error en getSession:', err?.message || err)
+      // If auth timed out, the network is likely unreliable — don't try signOut (it would also hang).
+      // Just clean up locally and let the user land on login.
+      if (err?.message === 'AUTH_TIMEOUT') {
+        logger.warn('getSession timed out after ' + AUTH_TIMEOUT + 'ms — cleaning up locally')
+        localStorage.removeItem('madrigal-auth')
+        localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
+      } else {
+        // Sesión corrupta (AbortError, etc.) — try signOut but don't hang on it
+        try {
+          await Promise.race([
+            supabase.auth.signOut(),
+            new Promise(r => setTimeout(r, 3000)),
+          ])
+        } catch (_) { /* ignore */ }
+      }
       if (mounted) {
         setUser(null)
         setUsuario(null)
