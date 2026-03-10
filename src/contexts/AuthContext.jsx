@@ -223,6 +223,7 @@ export function AuthProvider({ children }) {
         } else {
           logger.warn('TOKEN_REFRESHED sin sesión — token expirado, forzando re-login...')
           localStorage.removeItem('madrigal-auth')
+          localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
           setUser(null)
           setUsuario(null)
           setPermisos([])
@@ -243,6 +244,7 @@ export function AuthProvider({ children }) {
         setRolesComerciales([])
         setLoading(false)
         localStorage.removeItem('madrigal-auth')
+        localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
         // Redirect to login if not already there
         if (!window.location.pathname.startsWith('/login')) {
           window.location.href = '/login'

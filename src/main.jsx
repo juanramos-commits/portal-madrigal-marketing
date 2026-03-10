@@ -4,25 +4,29 @@
 // in the past, clean it up and redirect to /login immediately.
 // ============================================================
 ;(() => {
+  const AUTH_KEYS = ['madrigal-auth', 'sb-ootncgtcvwnrskqtamak-auth-token']
+  const clearAll = () => AUTH_KEYS.forEach(k => localStorage.removeItem(k))
+  const isPublicPage = () =>
+    window.location.pathname.startsWith('/login') ||
+    window.location.pathname.startsWith('/activar-cuenta') ||
+    window.location.pathname.startsWith('/reset-password')
+
   try {
-    const raw = localStorage.getItem('sb-ootncgtcvwnrskqtamak-auth-token')
-    if (!raw) return
-    const stored = JSON.parse(raw)
-    const expiresAt = stored?.expires_at || stored?.session?.expires_at
-    if (expiresAt && expiresAt < Date.now() / 1000) {
-      console.warn('[Portal] Token expirado detectado, limpiando y redirigiendo a /login...')
-      localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
-      localStorage.removeItem('madrigal-auth')
-      if (!window.location.pathname.startsWith('/login') &&
-          !window.location.pathname.startsWith('/activar-cuenta') &&
-          !window.location.pathname.startsWith('/reset-password')) {
-        window.location.href = '/login'
+    for (const key of AUTH_KEYS) {
+      const raw = localStorage.getItem(key)
+      if (!raw) continue
+      const stored = JSON.parse(raw)
+      const expiresAt = stored?.expires_at || stored?.session?.expires_at
+      if (expiresAt && expiresAt < Date.now() / 1000) {
+        console.warn(`[Portal] Token expirado en ${key}, limpiando y redirigiendo a /login...`)
+        clearAll()
+        if (!isPublicPage()) window.location.href = '/login'
+        return
       }
     }
   } catch (_) {
-    // Corrupted JSON — remove it
-    localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
-    localStorage.removeItem('madrigal-auth')
+    // Corrupted JSON — remove all auth keys
+    clearAll()
   }
 })()
 
