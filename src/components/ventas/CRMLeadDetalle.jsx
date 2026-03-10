@@ -81,43 +81,45 @@ let _catalogPromise = null
 // Module-level cache for last loaded lead — prevents skeleton flash on remount
 let _lastLeadCache = null // { id, data }
 
+// Single query with nested selects — 1 HTTP request instead of 4
 function fetchLeadDetail(leadId) {
-  return Promise.all([
-    supabase.from('ventas_leads').select(`
-      id, nombre, email, telefono, nombre_negocio, categoria_id, fuente,
-      contactos_adicionales, notas, resumen_setter, resumen_closer,
-      enlace_grabacion, setter_asignado_id, closer_asignado_id, tags, created_at, updated_at,
-      categoria:ventas_categorias(id, nombre),
-      setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
-      closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
-    `).eq('id', leadId).single(),
-    supabase.from('ventas_lead_pipeline').select(`
+  return supabase.from('ventas_leads').select(`
+    id, nombre, email, telefono, nombre_negocio, categoria_id, fuente,
+    contactos_adicionales, notas, resumen_setter, resumen_closer,
+    enlace_grabacion, setter_asignado_id, closer_asignado_id, tags, created_at, updated_at,
+    categoria:ventas_categorias(id, nombre),
+    setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
+    closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email),
+    pipeline_states:ventas_lead_pipeline(
       id, lead_id, pipeline_id, etapa_id, contador_intentos, fecha_entrada,
       pipeline:ventas_pipelines(id, nombre),
       etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
-    `).eq('lead_id', leadId).limit(20),
-    supabase.from('ventas_citas').select(`
+    ),
+    citas:ventas_citas(
       id, lead_id, fecha_hora, estado, notas_closer, google_meet_url, origen_agendacion,
       estado_reunion_id,
       closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
       estado_reunion:ventas_reunion_estados(id, nombre, color)
-    `).eq('lead_id', leadId).order('fecha_hora', { ascending: false }).limit(50),
-    supabase.from('ventas_lead_etiquetas').select('lead_id, etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color)').eq('lead_id', leadId).limit(50),
-  ]).then(([leadRes, pipelineRes, citasRes, etiquetasRes]) => {
-    if (leadRes.error) throw leadRes.error
+    ),
+    lead_etiquetas:ventas_lead_etiquetas(
+      etiqueta_id,
+      etiqueta:ventas_etiquetas(id, nombre, color)
+    )
+  `).eq('id', leadId).single().then(({ data, error }) => {
+    if (error) throw error
+    if (!data) return null
+    // Normalize: extract etiqueta objects from lead_etiquetas join
     return {
-      ...leadRes.data,
-      pipeline_states: pipelineRes.data || [],
-      citas: citasRes.data || [],
-      lead_etiquetas: (etiquetasRes.data || []).map(le => le.etiqueta),
+      ...data,
+      pipeline_states: data.pipeline_states || [],
+      citas: (data.citas || []).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)),
+      lead_etiquetas: (data.lead_etiquetas || []).map(le => le.etiqueta).filter(Boolean),
     }
   })
 }
 
 // Prefetch disabled — was causing connection exhaustion on rapid navigation
-export function prefetchLeadDetail() {
-  // no-op: removed to avoid stacking HTTP requests
-}
+export function prefetchLeadDetail() {}
 
 function loadCatalogs() {
   if (_catalogCache) return Promise.resolve(_catalogCache)
@@ -226,10 +228,8 @@ export default function CRMLeadDetalle() {
   // ── Full load (initial) ──────────────────────────────────────────
   const cargarLead = useCallback(async () => {
     const requestId = ++loadDetailRef.current
-    console.log('[LeadDetail] cargarLead START', { id, requestId, mounted: isMountedRef.current })
 
     try {
-      // Only show skeleton if no cached data to display
       if (!lead) setLoading(true)
       setError(null)
 
@@ -237,7 +237,6 @@ export default function CRMLeadDetalle() {
       cargarCatalogos()
 
       const leadResult = await fetchLeadDetail(id)
-      console.log('[LeadDetail] fetchLeadDetail DONE', { hasResult: !!leadResult, requestId, currentRef: loadDetailRef.current })
 
       if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
 
@@ -260,14 +259,12 @@ export default function CRMLeadDetalle() {
         })
         .catch(() => {}) // non-critical
     } catch (err) {
-      console.error('[LeadDetail] cargarLead ERROR', err?.message || err)
       if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       if (!isMountedRef.current) return
       if (requestId === loadDetailRef.current) {
         setError(err.message || 'Error al cargar el lead')
       }
     } finally {
-      console.log('[LeadDetail] cargarLead FINALLY', { mounted: isMountedRef.current, requestId })
       if (isMountedRef.current) {
         setLoading(false)
       }
