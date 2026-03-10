@@ -117,6 +117,8 @@ export function useVentasCRM() {
   const lastCitasProcesadasRef = useRef(0)
   // FIX: prevent useRefreshOnFocus from competing with cargarDatosIniciales
   const initialLoadRef = useRef(false)
+  // FIX: separate request ID for initial load — immune to other functions incrementing loadRequestRef
+  const initialLoadRequestRef = useRef(0)
   const [searchResultCount, setSearchResultCount] = useState(null)
   // FIX: ref for roles so buildLeadQuery always reads fresh data (not stale state)
   const rolesRef = useRef([])
@@ -218,6 +220,8 @@ export function useVentasCRM() {
   // ── Core: load etapas + leads for a pipeline (sequential, no useEffect chain) ──
   const cargarPipelineCompleto = useCallback(async (pipeline, vistaActual) => {
     if (!pipeline) return
+    // FIX: don't race with initial load — it manages its own pipeline loading
+    if (initialLoadRef.current) return
 
     const requestId = ++loadRequestRef.current
     setLoading(true)
@@ -317,9 +321,13 @@ export function useVentasCRM() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load initial data + default pipeline ──────────────────────────────
+  // Uses its OWN request ID ref (initialLoadRequestRef) — immune to other
+  // functions (cargarLeads, cargarLeadsTabla, etc.) incrementing loadRequestRef.
   const cargarDatosIniciales = useCallback(async () => {
-    const requestId = ++loadRequestRef.current
-    // FIX: signal that initial load is in progress (prevents useRefreshOnFocus race)
+    const requestId = ++initialLoadRequestRef.current
+    // Also bump shared ref so any stale in-flight queries from previous mount are cancelled
+    ++loadRequestRef.current
+    // Signal that initial load is in progress — blocks all other loading functions
     initialLoadRef.current = true
 
     try {
@@ -333,18 +341,18 @@ export function useVentasCRM() {
       const etiquetasData = cache.etiquetas
       const rolesData = cache.roles
 
-      // FIX: throttle RPC to max once per 60s — no await (fire-and-forget)
+      // Throttle RPC to max once per 60s — no await (fire-and-forget)
       if (Date.now() - lastCitasProcesadasRef.current > 60000) {
         lastCitasProcesadasRef.current = Date.now()
         supabase.rpc('ventas_procesar_citas_pasadas').then(() => {}, () => {})
       }
 
-      if (requestId !== loadRequestRef.current || !mountedRef.current) { setLoading(false); return }
+      if (requestId !== initialLoadRequestRef.current || !mountedRef.current) return
 
       setPipelines(pipelinesData || [])
       setCategorias(categoriasData || [])
       setEtiquetas(etiquetasData || [])
-      // FIX: update ref BEFORE state so buildLeadQuery reads fresh roles immediately
+      // Update ref BEFORE state so buildLeadQuery reads fresh roles immediately
       rolesRef.current = rolesData || []
       setRolesComerciales(rolesData || [])
 
@@ -371,14 +379,12 @@ export function useVentasCRM() {
       }
 
       if (!defaultPipeline) {
-        // No pipelines — nothing more to load
-        setLoading(false)
         return
       }
 
       setPipelineActivoState(defaultPipeline)
 
-      // Load etapas + leads in sequence (same requestId — single flow)
+      // Load etapas + leads in sequence
       let etapasData = getCached(`etapas:${defaultPipeline.id}`)
       if (!etapasData) {
         const { data, error: etapasErr } = await supabase
@@ -391,7 +397,7 @@ export function useVentasCRM() {
         etapasData = data
         setCache(`etapas:${defaultPipeline.id}`, etapasData)
       }
-      if (requestId !== loadRequestRef.current || !mountedRef.current) return
+      if (requestId !== initialLoadRequestRef.current || !mountedRef.current) return
 
       setEtapas(etapasData || [])
 
@@ -418,21 +424,20 @@ export function useVentasCRM() {
         leadsOffsetRef.current[etapa.id] = (data || []).length
       }))
 
-      if (requestId !== loadRequestRef.current || !mountedRef.current) return
+      if (requestId !== initialLoadRequestRef.current || !mountedRef.current) return
       setLeads(newLeads)
       setLeadCounts(newCounts)
       setTotalLeads(total)
     } catch (err) {
-      // Ignore AbortError / network errors from cancelled requests (navigation away)
       if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       console.error('CRM cargarDatosIniciales error:', err)
-      if (requestId === loadRequestRef.current && mountedRef.current) {
+      if (requestId === initialLoadRequestRef.current && mountedRef.current) {
         setError('Error al cargar datos iniciales')
       }
     } finally {
-      // FIX: track initial load completion for useRefreshOnFocus guard
       initialLoadRef.current = false
-      if (requestId === loadRequestRef.current && mountedRef.current) {
+      // Use OWN ref — never staled by other functions
+      if (requestId === initialLoadRequestRef.current && mountedRef.current) {
         setLoading(false)
       }
     }
@@ -441,6 +446,8 @@ export function useVentasCRM() {
   // ── Load leads for Kanban (used by refrescar, filter/search changes) ──
   const cargarLeads = useCallback(async () => {
     if (!pipelineActivo || etapas.length === 0) return
+    // FIX: don't race with initial load
+    if (initialLoadRef.current) return
 
     const requestId = ++loadRequestRef.current
 
@@ -521,6 +528,8 @@ export function useVentasCRM() {
   // ── Load leads for Table view ──────────────────────────────────────
   const cargarLeadsTabla = useCallback(async () => {
     if (!pipelineActivo) return
+    // FIX: don't race with initial load
+    if (initialLoadRef.current) return
 
     const requestId = ++loadRequestRef.current
 
