@@ -125,18 +125,45 @@ export function AuthProvider({ children }) {
       if (!mounted) return
       initialSessionHandled = true
 
-      // Check if session token is already expired
+      // Check if session token is already expired (session still returned)
       if (session?.expires_at && session.expires_at < Date.now() / 1000) {
         logger.warn('Sesión expirada al iniciar (expires_at en el pasado), forzando re-login...')
         try { await supabase.auth.signOut() } catch (_) { /* ignore */ }
         localStorage.removeItem('madrigal-auth')
-        if (mounted) {
-          setUser(null)
-          setUsuario(null)
-          setLoading(false)
-        }
+        localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
+        if (mounted) { setUser(null); setUsuario(null); setLoading(false) }
         window.location.href = '/login'
         return
+      }
+
+      // getSession() returns null when refresh token failed — check if there's
+      // a stale token in localStorage (means user HAD a session that expired)
+      if (!session) {
+        try {
+          const raw = localStorage.getItem('sb-ootncgtcvwnrskqtamak-auth-token')
+          if (raw) {
+            const stored = JSON.parse(raw)
+            const expiresAt = stored?.expires_at || stored?.session?.expires_at
+            if (expiresAt && expiresAt < Date.now() / 1000) {
+              logger.warn('Token expirado en localStorage, limpiando y redirigiendo a login...')
+              localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
+              localStorage.removeItem('madrigal-auth')
+              if (mounted) { setUser(null); setUsuario(null); setLoading(false) }
+              if (!isAuthPage() && !window.location.pathname.startsWith('/login')) {
+                window.location.href = '/login'
+              }
+              return
+            }
+            // Token exists but not expired — might be corrupted, clean it up
+            logger.warn('getSession devolvió null pero hay token en localStorage sin expirar, limpiando...')
+            localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
+            localStorage.removeItem('madrigal-auth')
+          }
+        } catch (_) {
+          // JSON parse error — corrupted token, clean up
+          localStorage.removeItem('sb-ootncgtcvwnrskqtamak-auth-token')
+          localStorage.removeItem('madrigal-auth')
+        }
       }
 
       if (session?.user) {
