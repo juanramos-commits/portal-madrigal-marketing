@@ -87,6 +87,60 @@ function mapLeadItems(data) {
   }))
 }
 
+// RPC: fetch etapas + leads for a pipeline in 1 SQL roundtrip
+async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda) {
+  const params = {
+    p_pipeline_id: pipelineId,
+    p_user_id: userId || null,
+    p_es_admin: esAdmin,
+    p_limit: 500,
+  }
+  if (filtros.setter_id) params.p_filtro_setter_id = filtros.setter_id
+  if (filtros.closer_id) params.p_filtro_closer_id = filtros.closer_id
+  if (filtros.categoria_id) params.p_filtro_categoria_id = filtros.categoria_id
+  if (filtros.fuente) params.p_filtro_fuente = filtros.fuente
+  if (filtros.fecha_desde) params.p_filtro_fecha_desde = filtros.fecha_desde
+  if (filtros.fecha_hasta) params.p_filtro_fecha_hasta = filtros.fecha_hasta + 'T23:59:59'
+  if (filtros.etapa_ids && filtros.etapa_ids.length > 0) params.p_filtro_etapa_ids = filtros.etapa_ids
+  if (busqueda && busqueda.trim()) {
+    const sanitized = busqueda.trim().replace(/[%_\\,()]/g, '')
+    if (sanitized) params.p_busqueda = sanitized
+  }
+
+  const { data, error } = await supabase.rpc('obtener_crm_completo', params)
+  if (error) throw error
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
+// Process RPC result into the state format expected by kanban
+function processRpcResult(rpcData, etapasData) {
+  const allData = rpcData.leads || []
+  const newLeads = {}
+  const newCounts = {}
+  let total = 0
+  const hasMore = {}
+  const offsets = {}
+
+  const grouped = {}
+  for (const etapa of etapasData) { grouped[etapa.id] = [] }
+  for (const item of allData) {
+    if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
+  }
+
+  for (const etapa of etapasData) {
+    const etapaItems = grouped[etapa.id] || []
+    const totalInEtapa = etapaItems.length
+    newLeads[etapa.id] = mapLeadItems(etapaItems.slice(0, LEADS_PER_BATCH))
+    newCounts[etapa.id] = totalInEtapa
+    total += totalInEtapa
+    hasMore[etapa.id] = totalInEtapa > LEADS_PER_BATCH
+    offsets[etapa.id] = Math.min(totalInEtapa, LEADS_PER_BATCH)
+  }
+
+  return { newLeads, newCounts, total, hasMore, offsets, allData }
+}
+
 export function useVentasCRM() {
   const { user, usuario, tienePermiso } = useAuth()
 
@@ -263,65 +317,50 @@ export function useVentasCRM() {
     setError(null)
 
     try {
-      // Step 1: Load etapas (cached per pipeline)
-      let etapasData = getCached(`etapas:${pipeline.id}`)
-      if (!etapasData) {
-        const { data, error: etapasErr } = await supabase
-          .from('ventas_etapas')
-          .select('id, pipeline_id, nombre, orden, activo, color, tipo, max_intentos')
-          .eq('pipeline_id', pipeline.id)
-          .eq('activo', true)
-          .order('orden')
-        if (etapasErr) throw etapasErr
-        etapasData = data
-        setCache(`etapas:${pipeline.id}`, etapasData)
-      }
-      if (requestId !== loadRequestRef.current || !mountedRef.current) { setLoading(false); return }
-
-      setEtapas(etapasData || [])
-
-      if ((etapasData || []).length === 0) { setLoading(false); return }
-
-      // Step 2: Load leads using the etapas we just fetched (no stale state)
-      const queryFn = buildLeadQueryRef.current || buildLeadQuery
       if (vistaActual === 'kanban') {
-        const newLeads = {}
-        const newCounts = {}
-        let total = 0
-
-        // Use cached data if fresh (< 30s) — prevents 287KB re-fetch on CRM remount
-        let allData = getLeadsCacheIfFresh(pipeline.id)
-        if (!allData) {
-          const { data, error: allErr } = await queryFn(pipeline.id, pipeline.nombre)
-            .order('fecha_entrada', { ascending: false })
-            .limit(500)
-          if (allErr) throw allErr
-          allData = data || []
-          saveLeadsCache(pipeline.id, allData)
+        // RPC: 1 SQL roundtrip for etapas + leads
+        let rpcData = getLeadsCacheIfFresh(pipeline.id)
+        if (!rpcData) {
+          const isAdmin = tienePermiso('ventas.crm.ver_todos')
+          rpcData = await fetchCrmCompleto(pipeline.id, user?.id, isAdmin, filtros, busqueda)
+          saveLeadsCache(pipeline.id, rpcData)
         }
+        if (requestId !== loadRequestRef.current || !mountedRef.current) { setLoading(false); return }
 
-        // Group by etapa_id in frontend
-        const grouped = {}
-        for (const etapa of (etapasData || [])) { grouped[etapa.id] = [] }
-        for (const item of allData) {
-          if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
-        }
+        const etapasData = rpcData.etapas || []
+        setCache(`etapas:${pipeline.id}`, etapasData)
+        setEtapas(etapasData)
 
-        for (const etapa of (etapasData || [])) {
-          const etapaItems = grouped[etapa.id] || []
-          const totalInEtapa = etapaItems.length
-          newLeads[etapa.id] = mapLeadItems(etapaItems.slice(0, LEADS_PER_BATCH))
-          newCounts[etapa.id] = totalInEtapa
-          total += totalInEtapa
-          hasMoreRef.current[etapa.id] = totalInEtapa > LEADS_PER_BATCH
-          leadsOffsetRef.current[etapa.id] = Math.min(totalInEtapa, LEADS_PER_BATCH)
-        }
+        if (etapasData.length === 0) { setLoading(false); return }
+
+        const { newLeads, newCounts, total, hasMore, offsets } = processRpcResult(rpcData, etapasData)
 
         if (requestId !== loadRequestRef.current || !mountedRef.current) return
+        for (const etapaId of Object.keys(hasMore)) {
+          hasMoreRef.current[etapaId] = hasMore[etapaId]
+          leadsOffsetRef.current[etapaId] = offsets[etapaId]
+        }
         setLeads(newLeads)
         setLeadCounts(newCounts)
         setTotalLeads(total)
       } else {
+        // Table view: still uses buildLeadQuery (needs count: exact for pagination)
+        const queryFn = buildLeadQueryRef.current || buildLeadQuery
+        // Load etapas for table row display
+        let etapasData = getCached(`etapas:${pipeline.id}`)
+        if (!etapasData) {
+          const { data, error: etapasErr } = await supabase
+            .from('ventas_etapas')
+            .select('id, pipeline_id, nombre, orden, activo, color, tipo, max_intentos')
+            .eq('pipeline_id', pipeline.id)
+            .eq('activo', true)
+            .order('orden')
+          if (etapasErr) throw etapasErr
+          etapasData = data
+          setCache(`etapas:${pipeline.id}`, etapasData)
+        }
+        setEtapas(etapasData || [])
+
         const query = queryFn(pipeline.id, pipeline.nombre)
           .order('fecha_entrada', { ascending: false })
           .range(0, TABLE_PAGE_SIZE - 1)
@@ -420,68 +459,33 @@ export function useVentasCRM() {
 
       setPipelineActivoState(defaultPipeline)
 
-      // Load etapas
-      let etapasData = getCached(`etapas:${defaultPipeline.id}`)
-      if (!etapasData) {
-
-        const { data, error: etapasErr } = await supabase
-          .from('ventas_etapas')
-          .select('id, pipeline_id, nombre, orden, activo, color, tipo, max_intentos')
-          .eq('pipeline_id', defaultPipeline.id)
-          .eq('activo', true)
-          .order('orden')
-        if (etapasErr) throw etapasErr
-        etapasData = data
-        setCache(`etapas:${defaultPipeline.id}`, etapasData)
+      // RPC: 1 SQL roundtrip for etapas + leads (replaces etapas query + buildLeadQuery)
+      let rpcData = getLeadsCacheIfFresh(defaultPipeline.id)
+      let etapasData
+      if (rpcData) {
+        // Use cached RPC result
+        etapasData = rpcData.etapas || []
       } else {
-
+        const isAdmin = tienePermiso('ventas.crm.ver_todos')
+        rpcData = await fetchCrmCompleto(defaultPipeline.id, user?.id, isAdmin, {}, '')
+        etapasData = rpcData.etapas || []
+        saveLeadsCache(defaultPipeline.id, rpcData)
       }
       if (!mountedRef.current) return
 
+      setCache(`etapas:${defaultPipeline.id}`, etapasData)
+      setEtapas(etapasData)
 
-      setEtapas(etapasData || [])
+      if (etapasData.length === 0) return
 
-      if ((etapasData || []).length === 0) {
-
-        return
-      }
-
-      // Load kanban leads — 1 single query for ALL etapas (not N parallel queries)
-      const newLeads = {}
-      const newCounts = {}
-      let total = 0
-
-      const queryFn = buildLeadQueryRef.current || buildLeadQuery
-
-      // Use cached data if fresh (< 30s) — prevents 287KB re-fetch on CRM remount
-      let allData = getLeadsCacheIfFresh(defaultPipeline.id)
-      if (!allData) {
-        const { data, error: allErr } = await queryFn(defaultPipeline.id, defaultPipeline.nombre)
-          .order('fecha_entrada', { ascending: false })
-          .limit(500)
-        if (allErr) throw allErr
-        allData = data || []
-        saveLeadsCache(defaultPipeline.id, allData)
-      }
-
-      // Group by etapa_id in frontend
-      const grouped = {}
-      for (const etapa of (etapasData || [])) { grouped[etapa.id] = [] }
-      for (const item of allData) {
-        if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
-      }
-
-      for (const etapa of (etapasData || [])) {
-        const etapaItems = grouped[etapa.id] || []
-        const totalInEtapa = etapaItems.length
-        newLeads[etapa.id] = mapLeadItems(etapaItems.slice(0, LEADS_PER_BATCH))
-        newCounts[etapa.id] = totalInEtapa
-        total += totalInEtapa
-        hasMoreRef.current[etapa.id] = totalInEtapa > LEADS_PER_BATCH
-        leadsOffsetRef.current[etapa.id] = Math.min(totalInEtapa, LEADS_PER_BATCH)
-      }
+      const { newLeads, newCounts, total, hasMore, offsets } = processRpcResult(rpcData, etapasData)
 
       if (!mountedRef.current) return
+
+      for (const etapaId of Object.keys(hasMore)) {
+        hasMoreRef.current[etapaId] = hasMore[etapaId]
+        leadsOffsetRef.current[etapaId] = offsets[etapaId]
+      }
 
       setLeads(newLeads)
       setLeadCounts(newCounts)
@@ -527,38 +531,25 @@ export function useVentasCRM() {
       const hasCachedLeads = Object.keys(leads).length > 0
       if (!hasCachedLeads) setLoading(true)
       setError(null)
-      const newLeads = {}
-      const newCounts = {}
-      let total = 0
 
-      // 1 single query for ALL etapas (not N parallel queries)
-      const { data: freshData, error: allErr } = await buildLeadQuery(pipelineActivo.id, pipelineActivo.nombre)
-        .order('fecha_entrada', { ascending: false })
-        .limit(500)
+      // RPC: 1 SQL roundtrip for etapas + leads (always fresh — no cache on manual refresh)
+      const isAdmin = tienePermiso('ventas.crm.ver_todos')
+      const rpcData = await fetchCrmCompleto(pipelineActivo.id, user?.id, isAdmin, filtros, busqueda)
+      saveLeadsCache(pipelineActivo.id, rpcData)
 
-      if (allErr) throw allErr
-      const allData = freshData || []
-      // Update cache with fresh data
-      saveLeadsCache(pipelineActivo.id, allData)
-
-      // Group by etapa_id in frontend
-      const grouped = {}
-      for (const etapa of etapas) { grouped[etapa.id] = [] }
-      for (const item of allData) {
-        if (grouped[item.etapa_id]) grouped[item.etapa_id].push(item)
+      const etapasFromRpc = rpcData.etapas || []
+      if (etapasFromRpc.length > 0) {
+        setCache(`etapas:${pipelineActivo.id}`, etapasFromRpc)
+        setEtapas(etapasFromRpc)
       }
 
-      for (const etapa of etapas) {
-        const etapaItems = grouped[etapa.id] || []
-        const totalInEtapa = etapaItems.length
-        newLeads[etapa.id] = mapLeadItems(etapaItems.slice(0, LEADS_PER_BATCH))
-        newCounts[etapa.id] = totalInEtapa
-        total += totalInEtapa
-        hasMoreRef.current[etapa.id] = totalInEtapa > LEADS_PER_BATCH
-        leadsOffsetRef.current[etapa.id] = Math.min(totalInEtapa, LEADS_PER_BATCH)
-      }
+      const { newLeads, newCounts, total, hasMore, offsets } = processRpcResult(rpcData, etapas.length > 0 ? etapas : etapasFromRpc)
 
       if (requestId !== loadRequestRef.current || !mountedRef.current) return
+      for (const etapaId of Object.keys(hasMore)) {
+        hasMoreRef.current[etapaId] = hasMore[etapaId]
+        leadsOffsetRef.current[etapaId] = offsets[etapaId]
+      }
       setLeads(newLeads)
       setLeadCounts(newCounts)
       setTotalLeads(total)

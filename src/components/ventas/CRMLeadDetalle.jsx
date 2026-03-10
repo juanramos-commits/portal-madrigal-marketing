@@ -81,46 +81,24 @@ let _catalogPromise = null
 // Module-level cache for last loaded lead — prevents skeleton flash on remount
 let _lastLeadCache = null // { id, data }
 
-// Single query with nested selects — 1 HTTP request instead of 4
+// RPC: 1 single SQL roundtrip for lead + pipeline_states + citas + etiquetas + actividad
 // Accepts optional AbortSignal to kill the HTTP request on navigation (frees connection pool)
 function fetchLeadDetail(leadId, signal) {
-  let query = supabase.from('ventas_leads').select(`
-    id, nombre, email, telefono, nombre_negocio, categoria_id, fuente,
-    contactos_adicionales, notas, resumen_setter, resumen_closer,
-    enlace_grabacion, setter_asignado_id, closer_asignado_id, tags, created_at, updated_at,
-    categoria:ventas_categorias(id, nombre),
-    setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
-    closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email),
-    pipeline_states:ventas_lead_pipeline(
-      id, lead_id, pipeline_id, etapa_id, contador_intentos, fecha_entrada,
-      pipeline:ventas_pipelines(id, nombre),
-      etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
-    ),
-    citas:ventas_citas(
-      id, lead_id, fecha_hora, estado, notas_closer, google_meet_url, origen_agendacion,
-      estado_reunion_id,
-      closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
-      estado_reunion:ventas_reunion_estados(id, nombre, color)
-    ),
-    lead_etiquetas:ventas_lead_etiquetas(
-      etiqueta_id,
-      etiqueta:ventas_etiquetas(id, nombre, color)
-    )
-  `).eq('id', leadId).single()
-
+  let query = supabase.rpc('obtener_lead_detalle', { p_lead_id: leadId })
   if (signal) query = query.abortSignal(signal)
 
   return query.then(({ data, error }) => {
     if (error) {
-      console.error(`[Lead] Supabase error for id=${leadId}:`, error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint)
+      console.error(`[Lead] RPC error for id=${leadId}:`, error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint)
       throw error
     }
     if (!data) return null
     return {
       ...data,
       pipeline_states: data.pipeline_states || [],
-      citas: (data.citas || []).sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora)),
+      citas: data.citas || [], // Already sorted DESC by RPC
       lead_etiquetas: (data.lead_etiquetas || []).map(le => le.etiqueta).filter(Boolean),
+      actividad: data.actividad || [],
     }
   })
 }
@@ -272,31 +250,22 @@ export default function CRMLeadDetalle() {
       }
     }, 10000)
 
-    // Fetch lead data — signal aborts the real HTTP connection on cleanup
+    // Fetch lead + actividad in 1 RPC call — signal aborts the HTTP connection on cleanup
     fetchLeadDetail(id, signal).then(leadResult => {
       clearTimeout(timeoutId)
       if (signal.aborted || !isMountedRef.current) return
       if (leadResult) {
+        // Extract actividad from RPC result, set separately
+        const actData = leadResult.actividad || []
+        delete leadResult.actividad
         setLead(leadResult)
         snapshotRef.current = null
         _lastLeadCache = { id, data: leadResult }
+        setActividad(actData)
+        setActividadOffset(20)
+        setHasMoreActividad(actData.length >= 20)
       }
       setLoading(false)
-
-      // Activity in background (non-blocking, also abortable)
-      supabase.from('ventas_actividad')
-        .select('id, lead_id, tipo, descripcion, created_at, usuario:usuarios(id, nombre)')
-        .eq('lead_id', id)
-        .order('created_at', { ascending: false })
-        .range(0, 19)
-        .abortSignal(signal)
-        .then(({ data: actData }) => {
-          if (signal.aborted || !isMountedRef.current) return
-          setActividad(actData || [])
-          setActividadOffset(20)
-          setHasMoreActividad((actData || []).length >= 20)
-        })
-        .catch(() => {})
     }).catch(err => {
       clearTimeout(timeoutId)
       // AbortError is expected on navigation — don't show error
