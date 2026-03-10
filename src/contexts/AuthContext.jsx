@@ -124,6 +124,21 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return
       initialSessionHandled = true
+
+      // Check if session token is already expired
+      if (session?.expires_at && session.expires_at < Date.now() / 1000) {
+        logger.warn('Sesión expirada al iniciar (expires_at en el pasado), forzando re-login...')
+        try { await supabase.auth.signOut() } catch (_) { /* ignore */ }
+        localStorage.removeItem('madrigal-auth')
+        if (mounted) {
+          setUser(null)
+          setUsuario(null)
+          setLoading(false)
+        }
+        window.location.href = '/login'
+        return
+      }
+
       if (session?.user) {
         setUser(session.user)
         if (!isAuthPage()) {
@@ -174,9 +189,21 @@ export function AuthProvider({ children }) {
       // Ignorar el INITIAL_SESSION ya que lo manejamos con getSession
       if (event === 'INITIAL_SESSION') return
 
-      // En token refresh solo actualizar el user, no recargar todo
+      // Token refresh: if session is present, update user; if not, refresh failed → force re-login
       if (event === 'TOKEN_REFRESHED') {
-        if (session?.user) setUser(session.user)
+        if (session?.user) {
+          setUser(session.user)
+        } else {
+          logger.warn('TOKEN_REFRESHED sin sesión — token expirado, forzando re-login...')
+          localStorage.removeItem('madrigal-auth')
+          setUser(null)
+          setUsuario(null)
+          setPermisos([])
+          setPermisosLoaded(false)
+          setPermisosError(null)
+          setRolesComerciales([])
+          window.location.href = '/login'
+        }
         return
       }
 
@@ -184,8 +211,15 @@ export function AuthProvider({ children }) {
         setUser(null)
         setUsuario(null)
         setPermisos([])
+        setPermisosLoaded(false)
+        setPermisosError(null)
         setRolesComerciales([])
         setLoading(false)
+        localStorage.removeItem('madrigal-auth')
+        // Redirect to login if not already there
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login'
+        }
         return
       }
 
