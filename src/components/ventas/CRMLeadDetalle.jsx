@@ -11,7 +11,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { supabase } from '../../lib/supabase'
 import { logActividad } from '../../lib/logActividad'
-// offlineCache removed — was causing stale data bugs
+import { invalidatePipelineCache } from '../../hooks/useVentasCRM'
 import Select from '../ui/Select'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import WhatsAppIcon from '../icons/WhatsAppIcon'
@@ -387,7 +387,12 @@ export default function CRMLeadDetalle() {
     const canEditResumen = (field === 'resumen_setter' && esMiLeadSetter) || (field === 'resumen_closer' && esMiLeadCloser)
     if (!puedeEditar && !canEditResumen) return
     const prevValue = lead?.[field]
-    setLead(prev => ({ ...prev, [field]: value }))
+    setLead(prev => {
+      const updated = { ...prev, [field]: value }
+      // Keep module cache in sync with optimistic edits
+      if (_lastLeadCache?.id === id) _lastLeadCache.data = updated
+      return updated
+    })
     pendingFieldUpdatesRef.current[field] = value
 
     if (debounceRefs.current[field]) clearTimeout(debounceRefs.current[field])
@@ -502,6 +507,8 @@ export default function CRMLeadDetalle() {
       const pending = { ...pendingFieldUpdatesRef.current }
       pendingFieldUpdatesRef.current = {}
       if (Object.keys(pending).length > 0) {
+        // Invalidate CRM cache so returning to kanban fetches fresh data
+        invalidatePipelineCache()
         supabase.from('ventas_leads').update(pending).eq('id', id)
           .then(({ error }) => { if (error) console.error('[CRM Detail] Unmount flush failed:', error) })
           .catch(() => {}) // swallow network errors on unmount

@@ -22,6 +22,11 @@ let _crmCatalogPromise = null
 // Module-level cache for pipeline data — survives route changes so remount doesn't show skeleton
 let _pipelineStateCache = null
 
+// Exported: invalidate pipeline cache (called from lead detail after edits)
+export function invalidatePipelineCache() {
+  _pipelineStateCache = null
+}
+
 function loadCRMCatalogs(force = false) {
   if (_crmCatalogCache && !force) return Promise.resolve(_crmCatalogCache)
   if (_crmCatalogPromise) return _crmCatalogPromise
