@@ -3,8 +3,11 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
 import { logActividad } from '../lib/logActividad'
-import { cacheGet, cacheSet } from '../lib/offlineCache'
+import { cacheClear } from '../lib/offlineCache'
 import { getCached, setCache } from '../lib/cache'
+
+// One-time cleanup: remove stale IndexedDB CRM cache that caused loading bugs
+cacheClear('crm_catalogs').catch(() => {})
 
 const LEADS_PER_BATCH = 20
 const TABLE_PAGE_SIZE = 50
@@ -16,8 +19,8 @@ const REALTIME_DEBOUNCE_MS = 1200
 let _crmCatalogCache = null
 let _crmCatalogPromise = null
 
-function loadCRMCatalogs() {
-  if (_crmCatalogCache) return Promise.resolve(_crmCatalogCache)
+function loadCRMCatalogs(force = false) {
+  if (_crmCatalogCache && !force) return Promise.resolve(_crmCatalogCache)
   if (_crmCatalogPromise) return _crmCatalogPromise
   _crmCatalogPromise = Promise.all([
     supabase.from('ventas_pipelines').select('*').eq('activo', true).order('orden'),
@@ -33,8 +36,6 @@ function loadCRMCatalogs() {
       roles: results[3].data || [],
     }
     _crmCatalogPromise = null
-    // Persist to IndexedDB for offline / instant next-session load
-    cacheSet('crm_catalogs', _crmCatalogCache).catch(() => {})
     return _crmCatalogCache
   }).catch(err => {
     _crmCatalogPromise = null
@@ -43,17 +44,9 @@ function loadCRMCatalogs() {
   return _crmCatalogPromise
 }
 
-// Try IndexedDB first for instant startup, then refresh from network
-async function loadCRMCatalogsWithOffline() {
-  if (_crmCatalogCache) return _crmCatalogCache
-  // Try IndexedDB cache for instant load
-  const cached = await cacheGet('crm_catalogs').catch(() => null)
-  if (cached?.pipelines?.length > 0) {
-    _crmCatalogCache = cached
-    // Refresh in background (stale-while-revalidate)
-    loadCRMCatalogs().catch(() => {})
-    return cached
-  }
+// Simple: use module cache if available, otherwise fetch from network
+// No IndexedDB — it caused stale data bugs that required clearing browser data
+function loadCRMCatalogsWithOffline() {
   return loadCRMCatalogs()
 }
 
