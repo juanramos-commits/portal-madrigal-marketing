@@ -1315,9 +1315,18 @@ export function useVentasCRM() {
   }, [filtros, vista, pipelineActivo, etapas.length, cargarLeads, cargarLeadsTabla])
 
   // ── Debounced search ───────────────────────────────────────────────
+  const prevBusquedaRef = useRef(busqueda)
   useEffect(() => {
+    // FIX: skip first render (mount) — avoids race with cargarDatosIniciales
+    if (prevBusquedaRef.current === busqueda && !busqueda.trim()) {
+      return
+    }
+    prevBusquedaRef.current = busqueda
+
     if (busquedaTimeoutRef.current) clearTimeout(busquedaTimeoutRef.current)
     busquedaTimeoutRef.current = setTimeout(() => {
+      // FIX: don't race with initial load
+      if (initialLoadRef.current) return
       if (!pipelineActivo || etapas.length === 0) return
       // Reset pagination when search changes
       setTablaPage(0)
