@@ -427,11 +427,9 @@ export function useVentasCRM() {
       const pipelinesData = cache.pipelines
       const rolesData = cache.roles
 
-      // Throttle RPC to max once per 60s — no await (fire-and-forget)
-      if (Date.now() - lastCitasProcesadasRef.current > 60000) {
-        lastCitasProcesadasRef.current = Date.now()
-        supabase.rpc('ventas_procesar_citas_pasadas').then(() => {}, () => {})
-      }
+      // Throttle RPC to max once per 60s — deferred to avoid competing for connections
+      // Runs AFTER initial load completes (see finally block)
+
 
       setPipelines(pipelinesData || [])
       setCategorias(cache.categorias || [])
@@ -521,6 +519,11 @@ export function useVentasCRM() {
       // ALWAYS clear loading — no requestId guard, no race possible
       if (mountedRef.current) {
         setLoading(false)
+        // Deferred: process past appointments (fire-and-forget, after load completes)
+        if (Date.now() - lastCitasProcesadasRef.current > 60000) {
+          lastCitasProcesadasRef.current = Date.now()
+          supabase.rpc('ventas_procesar_citas_pasadas').then(() => {}, () => {})
+        }
       }
     }
   }, [user?.id, usuario?.tipo]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1290,7 +1293,18 @@ export function useVentasCRM() {
   // Uses ref to avoid re-firing when cargarDatosIniciales identity changes
   // (e.g. when usuario?.tipo goes from undefined → 'equipo' after auth loads)
   useEffect(() => {
-    if (user?.id) cargarDatosInicialesRef.current?.()
+    if (!user?.id) return
+    cargarDatosInicialesRef.current?.()
+    // Safety: if loading is still true after 15s, force stop (prevents infinite loading)
+    const safetyTimeout = setTimeout(() => {
+      if (mountedRef.current) {
+        initialLoadRef.current = false
+        initialLoadRunningRef.current = false
+        refreshRunningRef.current = false
+        setLoading(false)
+      }
+    }, 15000)
+    return () => clearTimeout(safetyTimeout)
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Realtime: granular updates — only fetch the lead that changed ──
