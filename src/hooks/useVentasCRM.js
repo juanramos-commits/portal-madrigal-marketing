@@ -89,25 +89,27 @@ function mapLeadItems(data) {
 
 // RPC: fetch etapas + leads for a pipeline in 1 SQL roundtrip
 async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda) {
-  const params = {
+  // PostgREST requires ALL params explicitly (won't match with defaults for missing params)
+  let sanitizedSearch = null
+  if (busqueda && busqueda.trim()) {
+    const s = busqueda.trim().replace(/[%_\\,()]/g, '')
+    if (s) sanitizedSearch = s
+  }
+
+  const { data, error } = await supabase.rpc('obtener_crm_completo', {
     p_pipeline_id: pipelineId,
     p_user_id: userId || null,
     p_es_admin: esAdmin,
+    p_filtro_setter_id: filtros.setter_id || null,
+    p_filtro_closer_id: filtros.closer_id || null,
+    p_filtro_categoria_id: filtros.categoria_id || null,
+    p_filtro_fuente: filtros.fuente || null,
+    p_filtro_fecha_desde: filtros.fecha_desde || null,
+    p_filtro_fecha_hasta: filtros.fecha_hasta ? filtros.fecha_hasta + 'T23:59:59' : null,
+    p_filtro_etapa_ids: (filtros.etapa_ids && filtros.etapa_ids.length > 0) ? filtros.etapa_ids : null,
+    p_busqueda: sanitizedSearch,
     p_limit: 500,
-  }
-  if (filtros.setter_id) params.p_filtro_setter_id = filtros.setter_id
-  if (filtros.closer_id) params.p_filtro_closer_id = filtros.closer_id
-  if (filtros.categoria_id) params.p_filtro_categoria_id = filtros.categoria_id
-  if (filtros.fuente) params.p_filtro_fuente = filtros.fuente
-  if (filtros.fecha_desde) params.p_filtro_fecha_desde = filtros.fecha_desde
-  if (filtros.fecha_hasta) params.p_filtro_fecha_hasta = filtros.fecha_hasta + 'T23:59:59'
-  if (filtros.etapa_ids && filtros.etapa_ids.length > 0) params.p_filtro_etapa_ids = filtros.etapa_ids
-  if (busqueda && busqueda.trim()) {
-    const sanitized = busqueda.trim().replace(/[%_\\,()]/g, '')
-    if (sanitized) params.p_busqueda = sanitized
-  }
-
-  const { data, error } = await supabase.rpc('obtener_crm_completo', params)
+  })
   if (error) throw error
   if (data?.error) throw new Error(data.error)
   return data
