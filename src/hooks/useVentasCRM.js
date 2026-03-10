@@ -128,6 +128,8 @@ export function useVentasCRM() {
   const cargarDatosInicialesRef = useRef(null)
   // FIX: guard against concurrent cargarDatosIniciales calls
   const initialLoadRunningRef = useRef(false)
+  // FIX: guard against concurrent cargarLeads/cargarLeadsTabla calls (tab switch spam)
+  const refreshRunningRef = useRef(false)
   const [searchResultCount, setSearchResultCount] = useState(null)
   // FIX: ref for roles so buildLeadQuery always reads fresh data (not stale state)
   const rolesRef = useRef([])
@@ -231,6 +233,9 @@ export function useVentasCRM() {
     if (!pipeline) return
     // FIX: don't race with initial load — it manages its own pipeline loading
     if (initialLoadRef.current) return
+    // FIX: skip if a refresh is already in progress
+    if (refreshRunningRef.current) return
+    refreshRunningRef.current = true
 
     const requestId = ++loadRequestRef.current
     // Only show skeleton if no leads cached
@@ -325,9 +330,7 @@ export function useVentasCRM() {
         setError(err.message || 'Error al cargar pipeline')
       }
     } finally {
-      // FIX: always clear loading if mounted — don't guard with requestId
-      // The requestId check caused loading to get stuck when multiple functions
-      // share loadRequestRef and increment it (e.g. during cargarDatosIniciales)
+      refreshRunningRef.current = false
       if (mountedRef.current) {
         setLoading(false)
       }
@@ -482,6 +485,9 @@ export function useVentasCRM() {
     if (!pipelineActivo || etapas.length === 0) return
     // FIX: don't race with initial load
     if (initialLoadRef.current) return
+    // FIX: skip if a refresh is already in progress (tab switch spam)
+    if (refreshRunningRef.current) return
+    refreshRunningRef.current = true
 
     const requestId = ++loadRequestRef.current
 
@@ -523,6 +529,7 @@ export function useVentasCRM() {
         setError('Error al cargar leads')
       }
     } finally {
+      refreshRunningRef.current = false
       if (mountedRef.current) {
         setLoading(false)
       }
@@ -570,6 +577,9 @@ export function useVentasCRM() {
     if (!pipelineActivo) return
     // FIX: don't race with initial load
     if (initialLoadRef.current) return
+    // FIX: skip if a refresh is already in progress (tab switch spam)
+    if (refreshRunningRef.current) return
+    refreshRunningRef.current = true
 
     const requestId = ++loadRequestRef.current
 
@@ -614,6 +624,7 @@ export function useVentasCRM() {
         setError('Error al cargar leads')
       }
     } finally {
+      refreshRunningRef.current = false
       if (mountedRef.current) {
         setLoading(false)
       }

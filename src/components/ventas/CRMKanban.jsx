@@ -135,7 +135,10 @@ export default function CRMKanban({
     } catch { /* ignore quota errors */ }
   }, [loading, etapas, leads])
 
-  if (loading) {
+  // FIX: only show skeleton if loading AND no data exists
+  // When refreshing on tab switch, we have cached data — show it, don't flash skeleton
+  const hasData = etapas.length > 0 && Object.keys(leads).some(k => (leads[k] || []).length > 0)
+  if (loading && !hasData) {
     let skeleton = [1, 2, 3, 4].map(i => ({ nombre: null, color: null, count: 3 }))
     try {
       const cached = sessionStorage.getItem('crm_skeleton')
