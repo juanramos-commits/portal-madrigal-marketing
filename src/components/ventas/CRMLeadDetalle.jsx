@@ -81,10 +81,7 @@ let _catalogPromise = null
 // Module-level cache for last loaded lead — prevents skeleton flash on remount
 let _lastLeadCache = null // { id, data }
 
-// Abort controller for in-flight fetch — cancel previous when navigating to new lead
-let _fetchAbortController = null
-
-function fetchLeadDetail(leadId, signal) {
+function fetchLeadDetail(leadId) {
   return Promise.all([
     supabase.from('ventas_leads').select(`
       id, nombre, email, telefono, nombre_negocio, categoria_id, fuente,
@@ -93,19 +90,19 @@ function fetchLeadDetail(leadId, signal) {
       categoria:ventas_categorias(id, nombre),
       setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
       closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
-    `).eq('id', leadId).single().abortSignal(signal),
+    `).eq('id', leadId).single(),
     supabase.from('ventas_lead_pipeline').select(`
       id, lead_id, pipeline_id, etapa_id, contador_intentos, fecha_entrada,
       pipeline:ventas_pipelines(id, nombre),
       etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
-    `).eq('lead_id', leadId).limit(20).abortSignal(signal),
+    `).eq('lead_id', leadId).limit(20),
     supabase.from('ventas_citas').select(`
       id, lead_id, fecha_hora, estado, notas_closer, google_meet_url, origen_agendacion,
       estado_reunion_id,
       closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
       estado_reunion:ventas_reunion_estados(id, nombre, color)
-    `).eq('lead_id', leadId).order('fecha_hora', { ascending: false }).limit(50).abortSignal(signal),
-    supabase.from('ventas_lead_etiquetas').select('lead_id, etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color)').eq('lead_id', leadId).limit(50).abortSignal(signal),
+    `).eq('lead_id', leadId).order('fecha_hora', { ascending: false }).limit(50),
+    supabase.from('ventas_lead_etiquetas').select('lead_id, etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color)').eq('lead_id', leadId).limit(50),
   ]).then(([leadRes, pipelineRes, citasRes, etiquetasRes]) => {
     if (leadRes.error) throw leadRes.error
     return {
@@ -119,7 +116,7 @@ function fetchLeadDetail(leadId, signal) {
 
 // Prefetch disabled — was causing connection exhaustion on rapid navigation
 export function prefetchLeadDetail() {
-  // no-op: prefetch removed to avoid stacking HTTP requests
+  // no-op: removed to avoid stacking HTTP requests
 }
 
 function loadCatalogs() {
@@ -198,11 +195,7 @@ export default function CRMLeadDetalle() {
   const mountedRef = useRef(true)
   useEffect(() => {
     mountedRef.current = true
-    return () => {
-      mountedRef.current = false
-      // Cancel any in-flight fetch on unmount — frees up connections
-      if (_fetchAbortController) { _fetchAbortController.abort(); _fetchAbortController = null }
-    }
+    return () => { mountedRef.current = false }
   }, [])
 
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
@@ -232,12 +225,8 @@ export default function CRMLeadDetalle() {
 
   // ── Full load (initial) ──────────────────────────────────────────
   const cargarLead = useCallback(async () => {
-    // Cancel any previous in-flight fetch (prevents connection exhaustion on rapid navigation)
-    if (_fetchAbortController) _fetchAbortController.abort()
-    _fetchAbortController = new AbortController()
-    const signal = _fetchAbortController.signal
-
     const requestId = ++loadDetailRef.current
+    console.log('[LeadDetail] cargarLead START', { id, requestId, mounted: isMountedRef.current })
 
     try {
       // Only show skeleton if no cached data to display
@@ -247,7 +236,8 @@ export default function CRMLeadDetalle() {
       // Start catalogs in background — don't block lead rendering
       cargarCatalogos()
 
-      const leadResult = await fetchLeadDetail(id, signal)
+      const leadResult = await fetchLeadDetail(id)
+      console.log('[LeadDetail] fetchLeadDetail DONE', { hasResult: !!leadResult, requestId, currentRef: loadDetailRef.current })
 
       if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
 
@@ -270,15 +260,14 @@ export default function CRMLeadDetalle() {
         })
         .catch(() => {}) // non-critical
     } catch (err) {
-      // Ignore cancelled requests from rapid navigation
+      console.error('[LeadDetail] cargarLead ERROR', err?.message || err)
       if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
       if (!isMountedRef.current) return
       if (requestId === loadDetailRef.current) {
         setError(err.message || 'Error al cargar el lead')
       }
     } finally {
-      // FIX: always clear loading if mounted — requestId guard caused loading
-      // to get stuck when refrescarLead incremented loadDetailRef during cargarLead
+      console.log('[LeadDetail] cargarLead FINALLY', { mounted: isMountedRef.current, requestId })
       if (isMountedRef.current) {
         setLoading(false)
       }
@@ -287,12 +276,9 @@ export default function CRMLeadDetalle() {
 
   // ── Refresh lead only (after actions like cambiarEtapa) ──────────
   const refrescarLead = useCallback(async () => {
-    if (_fetchAbortController) _fetchAbortController.abort()
-    _fetchAbortController = new AbortController()
-    const signal = _fetchAbortController.signal
     const requestId = ++loadDetailRef.current
     try {
-      const leadResult = await fetchLeadDetail(id, signal)
+      const leadResult = await fetchLeadDetail(id)
       if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
       setLead(leadResult)
       snapshotRef.current = null
