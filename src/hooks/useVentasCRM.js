@@ -8,7 +8,7 @@ import { getCached, setCache } from '../lib/cache'
 
 const LEADS_PER_BATCH = 20
 const TABLE_PAGE_SIZE = 50
-const LOADING_TIMEOUT_MS = 30000
+const LOADING_TIMEOUT_MS = 10000
 const REALTIME_BATCH_THRESHOLD = 50
 const REALTIME_DEBOUNCE_MS = 1200
 
@@ -321,24 +321,22 @@ export function useVentasCRM() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load initial data + default pipeline ──────────────────────────────
-  // Uses its OWN request ID ref (initialLoadRequestRef) — immune to other
-  // functions (cargarLeads, cargarLeadsTabla, etc.) incrementing loadRequestRef.
   const cargarDatosIniciales = useCallback(async () => {
-    const requestId = ++initialLoadRequestRef.current
-    // Also bump shared ref so any stale in-flight queries from previous mount are cancelled
-    ++loadRequestRef.current
     // Signal that initial load is in progress — blocks all other loading functions
     initialLoadRef.current = true
+    console.log('[CRM] cargarDatosIniciales START')
 
     try {
       setLoading(true)
       setError(null)
 
+      console.log('[CRM] loading catalogs...')
       const cache = await loadCRMCatalogsWithOffline()
+      console.log('[CRM] catalogs loaded:', cache.pipelines?.length, 'pipelines,', cache.roles?.length, 'roles')
+
+      if (!mountedRef.current) { console.log('[CRM] BAIL: unmounted after catalogs'); return }
 
       const pipelinesData = cache.pipelines
-      const categoriasData = cache.categorias
-      const etiquetasData = cache.etiquetas
       const rolesData = cache.roles
 
       // Throttle RPC to max once per 60s — no await (fire-and-forget)
@@ -347,12 +345,9 @@ export function useVentasCRM() {
         supabase.rpc('ventas_procesar_citas_pasadas').then(() => {}, () => {})
       }
 
-      if (requestId !== initialLoadRequestRef.current || !mountedRef.current) return
-
       setPipelines(pipelinesData || [])
-      setCategorias(categoriasData || [])
-      setEtiquetas(etiquetasData || [])
-      // Update ref BEFORE state so buildLeadQuery reads fresh roles immediately
+      setCategorias(cache.categorias || [])
+      setEtiquetas(cache.etiquetas || [])
       rolesRef.current = rolesData || []
       setRolesComerciales(rolesData || [])
 
@@ -378,15 +373,18 @@ export function useVentasCRM() {
         }
       }
 
+      console.log('[CRM] defaultPipeline:', defaultPipeline?.nombre || 'NONE')
+
       if (!defaultPipeline) {
         return
       }
 
       setPipelineActivoState(defaultPipeline)
 
-      // Load etapas + leads in sequence
+      // Load etapas
       let etapasData = getCached(`etapas:${defaultPipeline.id}`)
       if (!etapasData) {
+        console.log('[CRM] loading etapas from DB...')
         const { data, error: etapasErr } = await supabase
           .from('ventas_etapas')
           .select('id, pipeline_id, nombre, orden, activo, color, tipo, max_intentos')
@@ -396,19 +394,26 @@ export function useVentasCRM() {
         if (etapasErr) throw etapasErr
         etapasData = data
         setCache(`etapas:${defaultPipeline.id}`, etapasData)
+      } else {
+        console.log('[CRM] etapas from cache')
       }
-      if (requestId !== initialLoadRequestRef.current || !mountedRef.current) return
+      if (!mountedRef.current) { console.log('[CRM] BAIL: unmounted after etapas'); return }
 
+      console.log('[CRM] etapas:', etapasData?.length)
       setEtapas(etapasData || [])
 
-      if ((etapasData || []).length === 0) return
+      if ((etapasData || []).length === 0) {
+        console.log('[CRM] no etapas, done')
+        return
+      }
 
-      // Load kanban leads (initial view is always kanban)
+      // Load kanban leads
       const newLeads = {}
       const newCounts = {}
       let total = 0
 
       const queryFn = buildLeadQueryRef.current || buildLeadQuery
+      console.log('[CRM] loading leads for', etapasData.length, 'etapas...')
       await Promise.all((etapasData || []).map(async (etapa) => {
         const query = queryFn(defaultPipeline.id, defaultPipeline.nombre, etapa.id)
           .order('fecha_entrada', { ascending: false })
@@ -424,20 +429,21 @@ export function useVentasCRM() {
         leadsOffsetRef.current[etapa.id] = (data || []).length
       }))
 
-      if (requestId !== initialLoadRequestRef.current || !mountedRef.current) return
+      if (!mountedRef.current) { console.log('[CRM] BAIL: unmounted after leads'); return }
+      console.log('[CRM] leads loaded, total:', total)
       setLeads(newLeads)
       setLeadCounts(newCounts)
       setTotalLeads(total)
     } catch (err) {
-      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
-      console.error('CRM cargarDatosIniciales error:', err)
-      if (requestId === initialLoadRequestRef.current && mountedRef.current) {
-        setError('Error al cargar datos iniciales')
+      console.error('[CRM] cargarDatosIniciales ERROR:', err)
+      if (mountedRef.current) {
+        setError('Error al cargar datos iniciales: ' + (err.message || err))
       }
     } finally {
       initialLoadRef.current = false
-      // Use OWN ref — never staled by other functions
-      if (requestId === initialLoadRequestRef.current && mountedRef.current) {
+      // ALWAYS clear loading — no requestId guard, no race possible
+      if (mountedRef.current) {
+        console.log('[CRM] cargarDatosIniciales DONE, clearing loading')
         setLoading(false)
       }
     }
@@ -1355,16 +1361,26 @@ export function useVentasCRM() {
     if (vista === 'tabla' && pipelineActivo) cargarLeadsTabla()
   }, [tablaPage, tablaSort]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Safety net: force loading=false after timeout ──────────────────
+  // ── Safety net: force retry after timeout ──────────────────────────
+  const loadingRetryRef = useRef(0)
   useEffect(() => {
-    if (!loading) return
+    if (!loading) { loadingRetryRef.current = 0; return }
     const timeout = setTimeout(() => {
-      console.error('[CRM] Loading timeout — forcing loading=false after', LOADING_TIMEOUT_MS, 'ms')
-      setLoading(false)
-      setError('La carga tardó demasiado. Intenta refrescar.')
+      console.error('[CRM] Loading timeout after', LOADING_TIMEOUT_MS, 'ms. Retry:', loadingRetryRef.current)
+      if (loadingRetryRef.current < 2) {
+        // Auto-retry: clear state and re-run initial load
+        loadingRetryRef.current++
+        initialLoadRef.current = false
+        _crmCatalogCache = null // Force fresh catalog load
+        cargarDatosIniciales()
+      } else {
+        // Give up after 2 retries
+        setLoading(false)
+        setError('La carga tardó demasiado. Intenta refrescar.')
+      }
     }, LOADING_TIMEOUT_MS)
     return () => clearTimeout(timeout)
-  }, [loading])
+  }, [loading, cargarDatosIniciales])
 
   // ── Pipelines visible to user ──────────────────────────────────────
   const pipelinesVisibles = pipelines.filter(p => {
