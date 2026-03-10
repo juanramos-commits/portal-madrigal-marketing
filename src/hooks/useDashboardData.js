@@ -24,14 +24,16 @@ function formatDate(d) {
   return `${yyyy}-${mm}-${dd}`
 }
 
+let _dashboardCache = null
+
 export function useDashboardData(layout) {
   const { user } = useAuth()
   const [periodo, setPeriodo] = useState('este_mes')
   const [fechaInicio, setFechaInicio] = useState(null)
   const [fechaFin, setFechaFin] = useState(null)
   const [usuarioFiltro, setUsuarioFiltro] = useState('')
-  const [data, setData] = useState({})
-  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState(_dashboardCache?.data || {})
+  const [loading, setLoading] = useState(!_dashboardCache)
   const [error, setError] = useState(null)
   const requestRef = useRef(0)
   const mountedRef = useRef(true)
@@ -69,9 +71,8 @@ export function useDashboardData(layout) {
     if (keys.length === 0) { setLoading(false); return }
 
     const reqId = ++requestRef.current
-    setLoading(true)
+    if (!_dashboardCache) setLoading(true)
     setError(null)
-    setData({})
 
     try {
       const { data: result, error: rpcError } = await supabase.rpc('ventas_dashboard_widget_data', {
@@ -81,7 +82,10 @@ export function useDashboardData(layout) {
         p_widgets: keys,
       })
       if (rpcError) throw rpcError
-      if (reqId === requestRef.current && mountedRef.current) setData(result || {})
+      if (reqId === requestRef.current && mountedRef.current) {
+        _dashboardCache = { data: result || {} }
+        setData(result || {})
+      }
     } catch (e) {
       if (e?.name === 'AbortError' || e?.message?.includes('AbortError')) return
       import.meta.env.DEV && console.error('Dashboard data error:', e)

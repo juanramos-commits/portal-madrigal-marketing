@@ -41,22 +41,25 @@ function obtenerRangoDia(fecha) {
   return { inicio, fin }
 }
 
+// Module-level cache — survives route changes so remount doesn't show skeleton
+let _calendarioCache = null
+
 export function useCalendario() {
   const { user, usuario, tienePermiso, rolesComerciales, loading: authLoading } = useAuth()
 
-  const [citas, setCitas] = useState([])
-  const [disponibilidad, setDisponibilidad] = useState([])
-  const [bloqueos, setBloqueos] = useState([])
-  const [config, setConfig] = useState(null)
-  const [enlaces, setEnlaces] = useState([])
+  const [citas, setCitas] = useState(_calendarioCache?.citas || [])
+  const [disponibilidad, setDisponibilidad] = useState(_calendarioCache?.disponibilidad || [])
+  const [bloqueos, setBloqueos] = useState(_calendarioCache?.bloqueos || [])
+  const [config, setConfig] = useState(_calendarioCache?.config || null)
+  const [enlaces, setEnlaces] = useState(_calendarioCache?.enlaces || [])
   const [closers, setClosers] = useState([])
-  const [reunionEstados, setReunionEstados] = useState([])
+  const [reunionEstados, setReunionEstados] = useState(_calendarioCache?.reunionEstados || [])
   const [setters, setSetters] = useState([])
   const [vista, setVista] = useState('semana')
   const [fechaActual, setFechaActual] = useState(new Date())
   const [closerFiltro, setCloserFiltro] = useState(null)
   const [googleEvents, setGoogleEvents] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!_calendarioCache)
   const [error, setError] = useState(null)
   const pullDone = useRef(false)
 
@@ -545,7 +548,8 @@ export function useCalendario() {
   // Refresh
   // Usar permisos (esCloser/esDirector) para cargar datos, ya que los tabs se muestran por permisos
   const refrescar = useCallback(async () => {
-    setLoading(true)
+    const hasCachedData = citas.length > 0 || _calendarioCache
+    if (!hasCachedData) setLoading(true)
     setError(null)
     try {
       const results = await Promise.allSettled([
@@ -567,7 +571,14 @@ export function useCalendario() {
     } finally {
       setLoading(false)
     }
-  }, [cargarCitas, cargarGoogleEvents, cargarReunionEstados, esCloser, esDirector, cargarDisponibilidad, cargarBloqueos, cargarConfig, cargarEnlaces])
+  }, [citas.length, cargarCitas, cargarGoogleEvents, cargarReunionEstados, esCloser, esDirector, cargarDisponibilidad, cargarBloqueos, cargarConfig, cargarEnlaces])
+
+  // Keep module-level cache in sync with state
+  useEffect(() => {
+    if (citas.length > 0 || disponibilidad.length > 0 || config || enlaces.length > 0 || reunionEstados.length > 0 || bloqueos.length > 0) {
+      _calendarioCache = { citas, disponibilidad, bloqueos, config, enlaces, reunionEstados }
+    }
+  }, [citas, disponibilidad, bloqueos, config, enlaces, reunionEstados])
 
   // Refresh on tab focus
   useRefreshOnFocus(refrescar, { enabled: !!user?.id })
@@ -648,7 +659,8 @@ export function useCalendario() {
     // Only reload when these values actually change (not when other deps trigger)
     if (prev.vista === vista && prev.fechaActual === fechaActual && prev.closerFiltro === closerFiltro) return
     if (user?.id && (rolesComerciales.length > 0 || esAdmin)) {
-      setLoading(true)
+      const hasCachedData = citas.length > 0 || _calendarioCache
+      if (!hasCachedData) setLoading(true)
       Promise.all([cargarCitas(), cargarGoogleEvents()]).finally(() => setLoading(false))
     }
   }, [vista, fechaActual, closerFiltro, user?.id, rolesComerciales.length, esAdmin, cargarCitas, cargarGoogleEvents])

@@ -9,25 +9,28 @@ const COMISIONES_PAGE_SIZE = 20
 const RETIROS_PAGE_SIZE = 25
 const FACTURAS_PAGE_SIZE = 25
 
+// Module-level cache — survives route changes so remount doesn't show skeleton
+let _walletCache = null
+
 export function useWallet() {
   const { user, usuario, tienePermiso, loading: authLoading } = useAuth()
 
-  const [wallet, setWallet] = useState(null)
-  const [saldoDisponible, setSaldoDisponible] = useState(0)
-  const [comisiones, setComisiones] = useState([])
+  const [wallet, setWallet] = useState(_walletCache?.wallet || null)
+  const [saldoDisponible, setSaldoDisponible] = useState(_walletCache?.saldoDisponible || 0)
+  const [comisiones, setComisiones] = useState(_walletCache?.comisiones || [])
   const [comisionesTotal, setComisionesTotal] = useState(0)
   const [comisionesPagina, setComisionesPagina] = useState(0)
-  const [retiros, setRetiros] = useState([])
+  const [retiros, setRetiros] = useState(_walletCache?.retiros || [])
   const [retirosTotal, setRetirosTotal] = useState(0)
   const [retirosPagina, setRetirosPagina] = useState(0)
-  const [facturas, setFacturas] = useState([])
+  const [facturas, setFacturas] = useState(_walletCache?.facturas || [])
   const [facturasTotal, setFacturasTotal] = useState(0)
   const [facturasPagina, setFacturasPagina] = useState(0)
-  const [datosFiscales, setDatosFiscales] = useState(null)
+  const [datosFiscales, setDatosFiscales] = useState(_walletCache?.datosFiscales || null)
   const [empresaFiscal, setEmpresaFiscal] = useState(null)
   const [closerAlDia, setCloserAlDia] = useState(true)
   const [citasPendientes, setCitasPendientes] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!_walletCache)
   const [error, setError] = useState(null)
 
   // Admin state
@@ -586,7 +589,7 @@ export function useWallet() {
 
   // ── Refresh all ────────────────────────────────────────────────────
   const refrescar = useCallback(async () => {
-    setLoading(true)
+    if (!_walletCache) setLoading(true)
     setError(null)
     try {
       const results = await Promise.allSettled([
@@ -675,6 +678,13 @@ export function useWallet() {
     return () => clearTimeout(loadingTimeoutRef.current)
   }, [loading])
 
+  // ── Persist cache when data is loaded ─────────────────────────────
+  useEffect(() => {
+    if (!loading && wallet) {
+      _walletCache = { wallet, saldoDisponible, comisiones, retiros, facturas, datosFiscales }
+    }
+  }, [loading, wallet, saldoDisponible, comisiones, retiros, facturas, datosFiscales])
+
   // ── Initial load ───────────────────────────────────────────────────
   const initialLoadDone = useRef(false)
   const prevUserIdRef = useRef(null)
@@ -683,6 +693,7 @@ export function useWallet() {
     if (user?.id !== prevUserIdRef.current) {
       prevUserIdRef.current = user?.id
       initialLoadDone.current = false
+      _walletCache = null
     }
     if (!user?.id || authLoading || initialLoadDone.current) return
     if (rolesComerciales.length > 0 || esAdmin) {

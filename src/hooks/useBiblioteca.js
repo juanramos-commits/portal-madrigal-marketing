@@ -7,16 +7,18 @@ import { logActividad } from '../lib/logActividad'
 
 const ROLES_VISIBLES = ['setter', 'closer', 'director_ventas', 'super_admin']
 
+let _bibliotecaCache = null
+
 export function useBiblioteca() {
   const { user, usuario, tienePermiso, rolesComerciales } = useAuth()
 
-  const [secciones, setSecciones] = useState([])
-  const [recursos, setRecursos] = useState([])
+  const [secciones, setSecciones] = useState(_bibliotecaCache?.secciones || [])
+  const [recursos, setRecursos] = useState(_bibliotecaCache?.recursos || [])
   const [busqueda, setBusqueda] = useState('')
   const busquedaDebounced = useDebounce(busqueda, 300)
   const [modoGestion, setModoGestion] = useState(false)
   const [seccionesAbiertas, setSeccionesAbiertas] = useState(new Set())
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!_bibliotecaCache)
   const [error, setError] = useState(null)
 
   // Roles
@@ -74,6 +76,7 @@ export function useBiblioteca() {
       .order('orden', { ascending: true })
     if (err) { setError('Error al cargar secciones'); return }
     setSecciones(data || [])
+    _bibliotecaCache = { ..._bibliotecaCache, secciones: data || [] }
   }, [])
 
   // Load recursos
@@ -87,13 +90,14 @@ export function useBiblioteca() {
     const { data, error: err } = await query
     if (err) { setError('Error al cargar recursos'); return }
     setRecursos(data || [])
+    _bibliotecaCache = { ..._bibliotecaCache, recursos: data || [] }
   }, [])
 
   // Initial load
   useEffect(() => {
     if (user?.id && rolesLoaded) {
       const cargar = async () => {
-        setLoading(true)
+        if (!_bibliotecaCache) setLoading(true)
         setError(null)
         try {
           await Promise.all([cargarSecciones(), cargarRecursos()])

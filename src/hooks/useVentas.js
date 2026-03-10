@@ -7,17 +7,20 @@ import { getCached, setCache } from '../lib/cache'
 
 const PAGE_SIZE = 25
 
+// Module-level cache — survives route changes so remount doesn't show skeleton
+let _ventasCache = null
+
 export function useVentas() {
   const { user, usuario, tienePermiso } = useAuth()
 
-  const [ventas, setVentas] = useState([])
-  const [paquetes, setPaquetes] = useState([])
+  const [ventas, setVentas] = useState(_ventasCache?.ventas || [])
+  const [paquetes, setPaquetes] = useState(_ventasCache?.paquetes || [])
   const [filtroEstado, setFiltroEstado] = useState('todas')
   const [busqueda, setBusqueda] = useState('')
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!_ventasCache)
   const [paginaActual, setPaginaActual] = useState(0)
-  const [totalVentas, setTotalVentas] = useState(0)
-  const [contadores, setContadores] = useState({ todas: 0, pendiente: 0, aprobada: 0, rechazada: 0, devolucion: 0 })
+  const [totalVentas, setTotalVentas] = useState(_ventasCache?.totalVentas || 0)
+  const [contadores, setContadores] = useState(_ventasCache?.contadores || { todas: 0, pendiente: 0, aprobada: 0, rechazada: 0, devolucion: 0 })
   const [error, setError] = useState(null)
   const [filtros, setFiltrosState] = useState({
     setter_id: '', closer_id: '', paquete_id: '', metodo_pago: '',
@@ -76,6 +79,7 @@ export function useVentas() {
       .order('orden')
     if (error) console.error('Error cargando paquetes:', error)
     setPaquetes(data || [])
+    _ventasCache = { ...(_ventasCache || {}), paquetes: data || [] }
   }, [])
 
   useEffect(() => {
@@ -157,7 +161,7 @@ export function useVentas() {
   const cargarVentas = useCallback(async () => {
     const requestId = ++loadRequestRef.current
     try {
-      setLoading(true)
+      if (!_ventasCache) setLoading(true)
       setError(null)
 
       const from = paginaActual * PAGE_SIZE
@@ -173,6 +177,7 @@ export function useVentas() {
 
       setVentas(data || [])
       setTotalVentas(count || 0)
+      _ventasCache = { ...(_ventasCache || {}), ventas: data || [], totalVentas: count || 0 }
     } catch (err) {
       if (requestId !== loadRequestRef.current) return
       setError('Error al cargar ventas')
@@ -221,13 +226,15 @@ export function useVentas() {
         baseFilter(supabase.from('ventas_ventas').select('id', { count: 'exact', head: true }).eq('es_devolucion', true)),
       ])
 
-      setContadores({
+      const newContadores = {
         todas: todas || 0,
         pendiente: pendiente || 0,
         aprobada: aprobada || 0,
         rechazada: rechazada || 0,
         devolucion: devolucion || 0,
-      })
+      }
+      setContadores(newContadores)
+      _ventasCache = { ...(_ventasCache || {}), contadores: newContadores }
     } catch {
       // Non-critical
     }
