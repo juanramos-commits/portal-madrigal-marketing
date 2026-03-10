@@ -86,6 +86,8 @@ const PREFETCH_TTL = 30_000 // 30 seconds
 let _lastLeadCache = null // { id, data }
 
 function fetchLeadDetail(leadId) {
+  console.log('[LeadDetail] fetchLeadDetail START', leadId)
+  const t0 = Date.now()
   return Promise.all([
     supabase.from('ventas_leads').select(`
       id, nombre, email, telefono, nombre_negocio, categoria_id, fuente,
@@ -94,20 +96,21 @@ function fetchLeadDetail(leadId) {
       categoria:ventas_categorias(id, nombre),
       setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
       closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
-    `).eq('id', leadId).single(),
+    `).eq('id', leadId).single().then(r => { console.log('[LeadDetail] leads query', Date.now() - t0, 'ms', r.error ? 'ERROR: ' + r.error.message : 'OK'); return r }),
     supabase.from('ventas_lead_pipeline').select(`
       id, lead_id, pipeline_id, etapa_id, contador_intentos, fecha_entrada,
       pipeline:ventas_pipelines(id, nombre),
       etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
-    `).eq('lead_id', leadId).limit(20),
+    `).eq('lead_id', leadId).limit(20).then(r => { console.log('[LeadDetail] pipeline query', Date.now() - t0, 'ms', r.error ? 'ERROR: ' + r.error.message : 'OK'); return r }),
     supabase.from('ventas_citas').select(`
       id, lead_id, fecha_hora, estado, notas_closer, google_meet_url, origen_agendacion,
       estado_reunion_id,
       closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
       estado_reunion:ventas_reunion_estados(id, nombre, color)
-    `).eq('lead_id', leadId).order('fecha_hora', { ascending: false }).limit(50),
-    supabase.from('ventas_lead_etiquetas').select('lead_id, etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color)').eq('lead_id', leadId).limit(50),
+    `).eq('lead_id', leadId).order('fecha_hora', { ascending: false }).limit(50).then(r => { console.log('[LeadDetail] citas query', Date.now() - t0, 'ms', r.error ? 'ERROR: ' + r.error.message : 'OK'); return r }),
+    supabase.from('ventas_lead_etiquetas').select('lead_id, etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color)').eq('lead_id', leadId).limit(50).then(r => { console.log('[LeadDetail] etiquetas query', Date.now() - t0, 'ms', r.error ? 'ERROR: ' + r.error.message : 'OK'); return r }),
   ]).then(([leadRes, pipelineRes, citasRes, etiquetasRes]) => {
+    console.log('[LeadDetail] all queries done', Date.now() - t0, 'ms')
     if (leadRes.error) throw leadRes.error
     return {
       ...leadRes.data,
@@ -264,6 +267,7 @@ export default function CRMLeadDetalle() {
   // ── Full load (initial) ──────────────────────────────────────────
   const cargarLead = useCallback(async () => {
     const requestId = ++loadDetailRef.current
+    console.log('[LeadDetail] cargarLead START', { id, requestId, hasLead: !!lead, mounted: isMountedRef.current })
 
     try {
       // Only show skeleton if no cached data to display
@@ -274,8 +278,12 @@ export default function CRMLeadDetalle() {
       cargarCatalogos()
 
       const leadResult = await cargarLeadData(requestId)
+      console.log('[LeadDetail] cargarLeadData result', { hasResult: !!leadResult, requestId, currentRef: loadDetailRef.current, mounted: isMountedRef.current })
 
-      if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
+      if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) {
+        console.warn('[LeadDetail] SKIPPING data update', { staleRequest: requestId !== loadDetailRef.current, unmounted: !isMountedRef.current, noResult: !leadResult })
+        return
+      }
 
       setLead(leadResult)
       snapshotRef.current = null
