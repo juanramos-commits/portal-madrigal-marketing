@@ -54,7 +54,7 @@ BEGIN
       -- Ventas commercial role permissions
       SELECT p.codigo
       FROM ventas_roles_comerciales vrc
-      JOIN ventas_roles_permisos vrp ON vrp.rol_nombre = vrc.rol
+      JOIN ventas_roles_permisos vrp ON vrp.rol_comercial = vrc.rol
       JOIN permisos p ON p.id = vrp.permiso_id
       WHERE vrc.usuario_id = v_user.id AND vrc.activo = true
     ) all_perms;

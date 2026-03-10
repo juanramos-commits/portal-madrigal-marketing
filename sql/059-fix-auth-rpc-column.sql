@@ -1,8 +1,7 @@
--- ============================================================================
--- 057: Fast auth RPC — loads user + all permissions in ONE round-trip
--- Instead of: 1) query usuarios 2) RPC permisos_base 3) RPC permisos_ventas
--- Now: 1 single RPC that returns everything
--- ============================================================================
+-- ==========================================================================
+-- FIX: obtener_usuario_completo used wrong column name (rol_nombre → rol_comercial)
+-- This caused the fast auth path to always fail, falling back to slow 3-query flow
+-- ==========================================================================
 
 CREATE OR REPLACE FUNCTION obtener_usuario_completo(p_email TEXT)
 RETURNS JSON
@@ -51,7 +50,7 @@ BEGIN
 
       UNION
 
-      -- Ventas commercial role permissions
+      -- Ventas commercial role permissions (FIX: rol_comercial, not rol_nombre)
       SELECT p.codigo
       FROM ventas_roles_comerciales vrc
       JOIN ventas_roles_permisos vrp ON vrp.rol_comercial = vrc.rol
@@ -79,6 +78,3 @@ BEGIN
   );
 END;
 $$;
-
--- Grant execute to authenticated users
-GRANT EXECUTE ON FUNCTION obtener_usuario_completo(TEXT) TO authenticated;

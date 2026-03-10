@@ -85,20 +85,25 @@ const PREFETCH_TTL = 30_000 // 30 seconds
 function fetchLeadDetail(leadId) {
   return Promise.all([
     supabase.from('ventas_leads').select(`
-      *,
+      id, nombre, email, telefono, nombre_negocio, categoria_id, fuente,
+      contactos_adicionales, notas, resumen_setter, resumen_closer,
+      enlace_grabacion, setter_asignado_id, closer_asignado_id, tags, created_at, updated_at,
       categoria:ventas_categorias(id, nombre),
       setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
       closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
     `).eq('id', leadId).single(),
     supabase.from('ventas_lead_pipeline').select(`
-      *, pipeline:ventas_pipelines(id, nombre),
+      id, lead_id, pipeline_id, etapa_id, contador_intentos, fecha_entrada,
+      pipeline:ventas_pipelines(id, nombre),
       etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
-    `).eq('lead_id', leadId),
+    `).eq('lead_id', leadId).limit(20),
     supabase.from('ventas_citas').select(`
-      *, closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
+      id, lead_id, fecha_hora, estado, notas_closer, google_meet_url, origen_agendacion,
+      estado_reunion_id,
+      closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
       estado_reunion:ventas_reunion_estados(id, nombre, color)
-    `).eq('lead_id', leadId).order('fecha_hora', { ascending: false }),
-    supabase.from('ventas_lead_etiquetas').select('*, etiqueta:ventas_etiquetas(*)').eq('lead_id', leadId),
+    `).eq('lead_id', leadId).order('fecha_hora', { ascending: false }).limit(50),
+    supabase.from('ventas_lead_etiquetas').select('lead_id, etiqueta_id, etiqueta:ventas_etiquetas(id, nombre, color)').eq('lead_id', leadId).limit(50),
   ]).then(([leadRes, pipelineRes, citasRes, etiquetasRes]) => {
     if (leadRes.error) throw leadRes.error
     return {
@@ -134,11 +139,11 @@ function loadCatalogs() {
   if (_catalogCache) return Promise.resolve(_catalogCache)
   if (_catalogPromise) return _catalogPromise
   _catalogPromise = Promise.all([
-    supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
-    supabase.from('ventas_etiquetas').select('*').eq('activo', true),
-    supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
-    supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
-    supabase.from('ventas_reunion_estados').select('*').order('orden'),
+    supabase.from('ventas_categorias').select('id, nombre, orden').eq('activo', true).order('orden').limit(100),
+    supabase.from('ventas_etiquetas').select('id, nombre, color').eq('activo', true).limit(200),
+    supabase.from('ventas_roles_comerciales').select('id, usuario_id, rol, activo, usuario:usuarios(id, nombre, email)').eq('activo', true).limit(100),
+    supabase.from('ventas_etapas').select('id, nombre, color, tipo, max_intentos, orden, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden').limit(200),
+    supabase.from('ventas_reunion_estados').select('id, nombre, color, orden').order('orden').limit(50),
   ]).then(([cats, etqs, roles, etapasAll, reunionEstadosData]) => {
     _catalogCache = {
       categorias: cats.data || [],
@@ -263,11 +268,10 @@ export default function CRMLeadDetalle() {
       setLoading(true)
       setError(null)
 
-      // Catalogs + lead data in parallel
-      const [, leadResult] = await Promise.all([
-        cargarCatalogos(),
-        cargarLeadData(requestId),
-      ])
+      // Start catalogs in background — don't block lead rendering
+      cargarCatalogos()
+
+      const leadResult = await cargarLeadData(requestId)
 
       if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
 
@@ -276,7 +280,7 @@ export default function CRMLeadDetalle() {
 
       // Load activity in background — don't block the lead from rendering
       supabase.from('ventas_actividad')
-        .select('*, usuario:usuarios(id, nombre)')
+        .select('id, lead_id, tipo, descripcion, created_at, usuario:usuarios(id, nombre)')
         .eq('lead_id', id)
         .order('created_at', { ascending: false })
         .range(0, 19)
@@ -354,7 +358,7 @@ export default function CRMLeadDetalle() {
     setLoadingMoreActividad(true)
     try {
       const { data } = await supabase.from('ventas_actividad')
-        .select('*, usuario:usuarios(id, nombre)')
+        .select('id, lead_id, tipo, descripcion, created_at, usuario:usuarios(id, nombre)')
         .eq('lead_id', id)
         .order('created_at', { ascending: false })
         .range(actividadOffset, actividadOffset + 19)

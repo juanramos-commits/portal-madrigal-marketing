@@ -118,6 +118,8 @@ export function useVentasCRM() {
   // FIX: prevent useRefreshOnFocus from competing with cargarDatosIniciales
   const initialLoadRef = useRef(false)
   const [searchResultCount, setSearchResultCount] = useState(null)
+  // FIX: ref for roles so buildLeadQuery always reads fresh data (not stale state)
+  const rolesRef = useRef([])
 
   const esAdmin = usuario?.tipo === 'super_admin'
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
@@ -126,8 +128,18 @@ export function useVentasCRM() {
   const esDirector = misRoles.some(r => r.rol === 'director_ventas')
   const esAdminODirector = tienePermiso('ventas.crm.ver_todos')
 
-  // ── Build query (explicit pipeline params — no stale closures) ────────
+  // Keep roles ref in sync with state (for buildLeadQuery to read fresh data)
+  useEffect(() => { rolesRef.current = rolesComerciales }, [rolesComerciales])
+
+  // ── Build query (explicit pipeline params — reads roles from ref for freshness) ────────
   const buildLeadQuery = useCallback((pipelineId, pipelineNombre, etapaId = null) => {
+    // Read roles from ref — always current, even during initial load before state updates
+    const currentRoles = rolesRef.current
+    const myRoles = currentRoles.filter(r => r.usuario_id === user?.id && r.activo)
+    const isSetter = myRoles.some(r => r.rol === 'setter')
+    const isCloser = myRoles.some(r => r.rol === 'closer')
+    const isAdminODirector = tienePermiso('ventas.crm.ver_todos')
+
     let query = supabase
       .from('ventas_lead_pipeline')
       .select(`
@@ -154,11 +166,11 @@ export function useVentasCRM() {
     }
 
     // Role-based filtering
-    if (!esAdminODirector) {
+    if (!isAdminODirector) {
       const nombre = (pipelineNombre || '').toLowerCase()
-      if (nombre.includes('setter') && esSetter) {
+      if (nombre.includes('setter') && isSetter) {
         query = query.eq('lead.setter_asignado_id', user.id)
-      } else if (nombre.includes('closer') && esCloser) {
+      } else if (nombre.includes('closer') && isCloser) {
         query = query.eq('lead.closer_asignado_id', user.id)
       } else {
         // User has no matching role for this pipeline — return no results
@@ -198,7 +210,7 @@ export function useVentasCRM() {
     }
 
     return query
-  }, [esAdminODirector, esSetter, esCloser, user?.id, filtros, busqueda])
+  }, [user?.id, tienePermiso, filtros, busqueda])
 
   // Keep ref in sync — avoids cascading dependency rebuilds
   useEffect(() => { buildLeadQueryRef.current = buildLeadQuery }, [buildLeadQuery])
@@ -332,6 +344,8 @@ export function useVentasCRM() {
       setPipelines(pipelinesData || [])
       setCategorias(categoriasData || [])
       setEtiquetas(etiquetasData || [])
+      // FIX: update ref BEFORE state so buildLeadQuery reads fresh roles immediately
+      rolesRef.current = rolesData || []
       setRolesComerciales(rolesData || [])
 
       const settersList = (rolesData || []).filter(r => r.rol === 'setter' && r.activo)

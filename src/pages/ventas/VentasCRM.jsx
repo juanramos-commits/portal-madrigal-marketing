@@ -129,7 +129,7 @@ export default function VentasCRM() {
       </div>
 
       {/* ── Content ─────────────────────────────────────────────────── */}
-      {crm.loading && crm.leads.length === 0 && crm.leadsTabla.length === 0 ? (
+      {crm.loading && Object.keys(crm.leads).length === 0 && crm.leadsTabla.length === 0 ? (
         <div className="crm-loading" role="status">Cargando leads...</div>
       ) : crm.vista === 'kanban' ? (
         <CRMKanban
