@@ -254,20 +254,29 @@ export default function CRMLeadDetalle() {
     // Catalogs in background (module-level cache — fires once)
     cargarCatalogos()
 
+    // Safety timeout: if fetchLeadDetail never resolves (connection pool exhausted),
+    // stop loading and show retry instead of permanent skeleton
+    const timeoutId = setTimeout(() => {
+      if (!cancelled) {
+        console.warn(`[Lead] fetchLeadDetail timeout for id=${id}`)
+        setLoading(false)
+        setError('Tiempo de espera agotado. Pulsa para reintentar.')
+      }
+    }, 10000)
+
     // Fetch lead data
     fetchLeadDetail(id).then(leadResult => {
+      clearTimeout(timeoutId)
       console.log(`[Lead] fetchLeadDetail resolved, cancelled=${cancelled}, mounted=${isMountedRef.current}, hasData=${!!leadResult}, id=${id}`)
       if (cancelled || !isMountedRef.current) return
       if (leadResult) {
         setLead(leadResult)
         snapshotRef.current = null
         _lastLeadCache = { id, data: leadResult }
-        console.log(`[Lead] setLead called with data for id=${id}`)
       } else {
         console.warn(`[Lead] fetchLeadDetail returned null for id=${id}`)
       }
       setLoading(false)
-      console.log(`[Lead] setLoading(false) called for id=${id}`)
 
       // Activity in background (non-blocking)
       supabase.from('ventas_actividad')
@@ -283,6 +292,7 @@ export default function CRMLeadDetalle() {
         })
         .catch(() => {})
     }).catch(err => {
+      clearTimeout(timeoutId)
       console.log(`[Lead] fetchLeadDetail error, cancelled=${cancelled}, mounted=${isMountedRef.current}, err=${err.message}, id=${id}`)
       if (cancelled || !isMountedRef.current) return
       setError(err.message || 'Error al cargar el lead')
@@ -292,6 +302,7 @@ export default function CRMLeadDetalle() {
     return () => {
       console.log(`[Lead] useEffect cleanup for id=${id}, setting cancelled=true`)
       cancelled = true
+      clearTimeout(timeoutId)
     }
   }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -804,7 +815,14 @@ export default function CRMLeadDetalle() {
         </button>
         <div className="crm-error">
           <p>{error || 'Lead no encontrado'}</p>
-          <button className="ui-btn ui-btn--secondary ui-btn--md" onClick={() => navigate('/ventas/crm')}>Volver</button>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 12 }}>
+            <button className="ui-btn ui-btn--primary ui-btn--md" onClick={() => {
+              setError(null)
+              setLoading(true)
+              refrescarLead()
+            }}>Reintentar</button>
+            <button className="ui-btn ui-btn--secondary ui-btn--md" onClick={() => navigate('/ventas/crm')}>Volver</button>
+          </div>
         </div>
       </div>
     )
