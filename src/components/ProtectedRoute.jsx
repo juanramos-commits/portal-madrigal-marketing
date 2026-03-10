@@ -1,9 +1,22 @@
+import { useEffect, useRef } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabase'
 
 export default function ProtectedRoute({ children }) {
   const { user, usuario, loading, refrescarUsuario } = useAuth()
+  const autoRetryRef = useRef(null)
+
+  // Auto-retry loading usuario if it failed (transient network error)
+  useEffect(() => {
+    if (user && !usuario && !loading) {
+      // User is authenticated but usuario failed to load — auto-retry after 3s
+      autoRetryRef.current = setTimeout(() => {
+        refrescarUsuario()
+      }, 3000)
+      return () => clearTimeout(autoRetryRef.current)
+    }
+  }, [user, usuario, loading, refrescarUsuario])
 
   const handleCerrarSesion = async () => {
     await supabase.auth.signOut()
@@ -61,7 +74,7 @@ export default function ProtectedRoute({ children }) {
             color: 'var(--text)',
             marginBottom: '8px'
           }}>
-            No se pudo cargar tu cuenta
+            Cargando cuenta...
           </h2>
           <p style={{
             fontSize: '14px',
@@ -69,7 +82,7 @@ export default function ProtectedRoute({ children }) {
             marginBottom: '16px',
             lineHeight: 1.5
           }}>
-            Tu email está autenticado pero no se encontró una cuenta de usuario asociada. Contacta con el administrador para que verifique tu cuenta.
+            Reintentando automáticamente. Si tarda mucho, prueba a cerrar sesión y volver a entrar.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
@@ -85,7 +98,7 @@ export default function ProtectedRoute({ children }) {
                 fontWeight: 600
               }}
             >
-              Reintentar
+              Reintentar ahora
             </button>
             <button
               onClick={handleCerrarSesion}

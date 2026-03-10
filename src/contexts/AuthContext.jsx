@@ -49,8 +49,8 @@ export function AuthProvider({ children }) {
 
         if (userError) {
           logger.error('Error cargando usuario:', userError)
-          if (_retry < 1) {
-            await new Promise(r => setTimeout(r, 1000))
+          if (_retry < 3) {
+            await new Promise(r => setTimeout(r, 1000 * (_retry + 1)))
             return cargarUsuario(email, { esLoginFresco, _retry: _retry + 1 })
           }
           return null
@@ -106,8 +106,8 @@ export function AuthProvider({ children }) {
       return usuarioData
     } catch (error) {
       logger.error('Error en cargarUsuario:', error)
-      if (_retry < 1) {
-        await new Promise(r => setTimeout(r, 1000))
+      if (_retry < 3) {
+        await new Promise(r => setTimeout(r, 1000 * (_retry + 1)))
         return cargarUsuario(email, { esLoginFresco, _retry: _retry + 1 })
       }
       return null
