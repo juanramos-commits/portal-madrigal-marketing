@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
-import { supabase } from '../../lib/supabase'
+import { supabase, smartRpc } from '../../lib/supabase'
 import { logActividad } from '../../lib/logActividad'
 import { invalidatePipelineCache } from '../../hooks/useVentasCRM'
 import Select from '../ui/Select'
@@ -84,23 +84,18 @@ let _lastLeadCache = null // { id, data }
 // RPC: 1 single SQL roundtrip for lead + pipeline_states + citas + etiquetas + actividad
 // Accepts optional AbortSignal to kill the HTTP request on navigation (frees connection pool)
 function fetchLeadDetail(leadId, signal) {
-  let query = supabase.rpc('obtener_lead_detalle', { p_lead_id: leadId })
-  if (signal) query = query.abortSignal(signal)
-
-  return query.then(({ data, error }) => {
-    if (error) {
-      console.error(`[Lead] RPC error for id=${leadId}:`, error.message, '| code:', error.code, '| details:', error.details, '| hint:', error.hint)
-      throw error
-    }
-    if (!data) return null
-    return {
-      ...data,
-      pipeline_states: data.pipeline_states || [],
-      citas: data.citas || [], // Already sorted DESC by RPC
-      lead_etiquetas: (data.lead_etiquetas || []).map(le => le.etiqueta).filter(Boolean),
-      actividad: data.actividad || [],
-    }
-  })
+  // smartRpc uses direct fetch with cached token if supabase-js isn't ready yet
+  return smartRpc('obtener_lead_detalle', { p_lead_id: leadId }, signal)
+    .then((data) => {
+      if (!data) return null
+      return {
+        ...data,
+        pipeline_states: data.pipeline_states || [],
+        citas: data.citas || [], // Already sorted DESC by RPC
+        lead_etiquetas: (data.lead_etiquetas || []).map(le => le.etiqueta).filter(Boolean),
+        actividad: data.actividad || [],
+      }
+    })
 }
 
 // Prefetch disabled — was causing connection exhaustion on rapid navigation

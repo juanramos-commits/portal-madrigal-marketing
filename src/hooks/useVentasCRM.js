@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, smartRpc } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useRefreshOnFocus } from './useRefreshOnFocus'
 import { logActividad } from '../lib/logActividad'
@@ -96,7 +96,7 @@ async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda, 
     if (s) sanitizedSearch = s
   }
 
-  let query = supabase.rpc('obtener_crm_completo', {
+  const params = {
     p_pipeline_id: pipelineId,
     p_user_id: userId || null,
     p_es_admin: esAdmin,
@@ -109,10 +109,10 @@ async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda, 
     p_filtro_etapa_ids: (filtros.etapa_ids && filtros.etapa_ids.length > 0) ? filtros.etapa_ids : null,
     p_busqueda: sanitizedSearch,
     p_limit: 500,
-  })
-  if (signal) query = query.abortSignal(signal)
-  const { data, error } = await query
-  if (error) throw error
+  }
+
+  // smartRpc uses direct fetch with cached token if supabase-js isn't ready yet
+  const data = await smartRpc('obtener_crm_completo', params, signal)
   if (data?.error) throw new Error(data.error)
   return data
 }
