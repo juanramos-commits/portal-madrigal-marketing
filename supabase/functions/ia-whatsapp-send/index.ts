@@ -12,9 +12,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * - Media: imágenes, documentos, audio, video
  *
  * Params (POST body):
- *   agente_id: UUID del agente
- *   conversacion_id: UUID de la conversación
- *   to: Teléfono destino E.164
+ *   agente_id: UUID del agente (required)
+ *   conversacion_id: UUID de la conversación (required)
+ *   to: Teléfono destino E.164 (required)
  *   messages: Array de { type, content, media_url?, template_name?, template_params? }
  *   sender: 'bot' | 'humano' (default 'bot')
  *   is_repesca: boolean (default false)
@@ -38,7 +38,11 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-// Send a single text message via Meta API
+// Strip all '+' characters for Meta API (use regex for global replace)
+function stripPlus(phone: string): string {
+  return phone.replace(/\+/g, '')
+}
+
 async function sendTextMessage(
   phoneNumberId: string,
   token: string,
@@ -56,7 +60,7 @@ async function sendTextMessage(
         },
         body: JSON.stringify({
           messaging_product: 'whatsapp',
-          to: to.replace('+', ''),
+          to: stripPlus(to),
           type: 'text',
           text: { body: text },
         }),
@@ -72,7 +76,6 @@ async function sendTextMessage(
   }
 }
 
-// Send a template message via Meta API
 async function sendTemplateMessage(
   phoneNumberId: string,
   token: string,
@@ -82,10 +85,7 @@ async function sendTemplateMessage(
   language = 'es',
 ): Promise<{ ok: boolean; waMessageId?: string; error?: string }> {
   try {
-    // Build components from params
     const components: Array<Record<string, unknown>> = []
-
-    // Body parameters (most common)
     const bodyParams = templateParams.body as Array<string> | undefined
     if (bodyParams && bodyParams.length > 0) {
       components.push({
@@ -104,7 +104,7 @@ async function sendTemplateMessage(
         },
         body: JSON.stringify({
           messaging_product: 'whatsapp',
-          to: to.replace('+', ''),
+          to: stripPlus(to),
           type: 'template',
           template: {
             name: templateName,
@@ -124,7 +124,6 @@ async function sendTemplateMessage(
   }
 }
 
-// Send media message (image, document, audio, video)
 async function sendMediaMessage(
   phoneNumberId: string,
   token: string,
@@ -149,7 +148,7 @@ async function sendMediaMessage(
         },
         body: JSON.stringify({
           messaging_product: 'whatsapp',
-          to: to.replace('+', ''),
+          to: stripPlus(to),
           type: mediaType,
           [mediaType]: mediaPayload,
         }),
@@ -189,21 +188,21 @@ Deno.serve(async (req) => {
   const agenteId = params.agente_id as string
   const conversacionId = params.conversacion_id as string
   const to = params.to as string
-  const sender = (params.sender as string) || 'bot'
-  const isRepesca = (params.is_repesca as boolean) || false
+  const sender = (params.sender as string) ?? 'bot'
+  const isRepesca = (params.is_repesca as boolean) ?? false
 
-  if (!agenteId || !to) {
-    return jsonResponse({ error: 'agente_id and to are required' }, 400)
+  if (!agenteId || !to || !conversacionId) {
+    return jsonResponse({ error: 'agente_id, conversacion_id and to are required' }, 400)
   }
 
-  // === LOAD AGENT ===
-  const { data: agente } = await supabase
+  // === LOAD AGENT (only needed fields) ===
+  const { data: agente, error: agenteErr } = await supabase
     .from('ia_agentes')
-    .select('*')
+    .select('id, whatsapp_phone_id, modo_sandbox, sandbox_phones, rate_limit_msg_hora, config')
     .eq('id', agenteId)
     .single()
 
-  if (!agente) {
+  if (agenteErr || !agente) {
     return jsonResponse({ error: 'Agent not found' }, 404)
   }
 
@@ -243,27 +242,40 @@ Deno.serve(async (req) => {
     }
   }
 
-  // === CHECK RATE LIMITING ===
+  // === CHECK RATE LIMITING (hourly) ===
   const now = new Date()
+  const today = now.toISOString().split('T')[0]
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString()
 
-  // Count messages sent in last hour
-  const { count: msgLastHour } = await supabase
-    .from('ia_mensajes')
-    .select('id', { count: 'exact', head: true })
-    .eq('direction', 'outbound')
-    .gte('created_at', oneHourAgo)
-    .in('conversacion_id',
-      // Get all conversations of this agent
-      supabase
-        .from('ia_conversaciones')
-        .select('id')
-        .eq('agente_id', agenteId)
-        .then(r => (r.data || []).map(c => c.id)),
-    )
+  // Get agent's conversation IDs first, then count messages
+  const { data: agentConvos } = await supabase
+    .from('ia_conversaciones')
+    .select('id')
+    .eq('agente_id', agenteId)
 
-  // Simplified rate limit check using costes table
-  const today = now.toISOString().split('T')[0]
+  const convoIds = (agentConvos || []).map(c => c.id)
+
+  if (convoIds.length > 0) {
+    const { count: msgLastHour } = await supabase
+      .from('ia_mensajes')
+      .select('id', { count: 'exact', head: true })
+      .eq('direction', 'outbound')
+      .gte('created_at', oneHourAgo)
+      .in('conversacion_id', convoIds)
+
+    const maxPerHour = agente.rate_limit_msg_hora || 60
+    if ((msgLastHour || 0) >= maxPerHour) {
+      await supabase.from('ia_logs').insert({
+        agente_id: agenteId,
+        conversacion_id: conversacionId,
+        tipo: 'warning',
+        mensaje: `Rate limit horario alcanzado: ${msgLastHour}/${maxPerHour} mensajes/hora`,
+      })
+      return jsonResponse({ error: 'Hourly rate limit reached', blocked: true }, 429)
+    }
+  }
+
+  // === CHECK DAILY RATE LIMIT ===
   const { data: costes } = await supabase
     .from('ia_costes')
     .select('whatsapp_mensajes')
@@ -285,20 +297,15 @@ Deno.serve(async (req) => {
   }
 
   // === CHECK 24H WINDOW ===
-  let windowOpen = true
-  if (conversacionId) {
-    const { data: convo } = await supabase
-      .from('ia_conversaciones')
-      .select('wa_window_expires_at')
-      .eq('id', conversacionId)
-      .single()
+  const { data: convo } = await supabase
+    .from('ia_conversaciones')
+    .select('wa_window_expires_at')
+    .eq('id', conversacionId)
+    .single()
 
-    if (convo?.wa_window_expires_at) {
-      windowOpen = new Date(convo.wa_window_expires_at) > now
-    } else {
-      // No window info → assume closed (need template)
-      windowOpen = false
-    }
+  let windowOpen = false
+  if (convo?.wa_window_expires_at) {
+    windowOpen = new Date(convo.wa_window_expires_at) > now
   }
 
   // === SEND MESSAGES ===
@@ -310,21 +317,19 @@ Deno.serve(async (req) => {
   }> = []
 
   // Direct template send (for repesca, outbound, etc.)
-  if (params.template_name) {
+  // Only if there are no messages in the array (avoid duplicates)
+  const messages = (params.messages as Array<Record<string, unknown>>) || []
+
+  if (params.template_name && messages.length === 0) {
     const templateName = params.template_name as string
     const templateParams = (params.template_params as Record<string, unknown>) || {}
 
     const result = await sendTemplateMessage(
-      phoneNumberId,
-      waToken,
-      to,
-      templateName,
-      templateParams,
+      phoneNumberId, waToken, to, templateName, templateParams,
     )
     results.push({ ...result, type: 'template' })
 
-    // Save message record
-    if (result.ok && conversacionId) {
+    if (result.ok) {
       await supabase.from('ia_mensajes').insert({
         conversacion_id: conversacionId,
         direction: 'outbound',
@@ -338,35 +343,31 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Message array (text, media)
-  const messages = (params.messages as Array<Record<string, unknown>>) || []
-
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i]
     const type = msg.type as string
-    const content = msg.content as string
+    const content = (msg.content as string) || ''
     const mediaUrl = msg.media_url as string | undefined
 
-    // Add delay between messages (1-2s for natural feel)
     if (i > 0) {
       await sleep(1000 + Math.random() * 1000)
     }
 
     let result: { ok: boolean; waMessageId?: string; error?: string }
 
-    // If window is closed, use template instead
-    if (!windowOpen && type === 'text') {
-      // Try to send as template fallback
+    // If window is closed, block ALL free-form messages (text AND media)
+    // Only templates can be sent outside the 24h window
+    if (!windowOpen && type !== 'template') {
       await supabase.from('ia_logs').insert({
         agente_id: agenteId,
         conversacion_id: conversacionId,
         tipo: 'warning',
-        mensaje: `Ventana 24h cerrada, mensaje no enviado (requiere plantilla): "${content.substring(0, 50)}..."`,
+        mensaje: `Ventana 24h cerrada, ${type} no enviado (requiere plantilla): "${content.substring(0, 50)}"`,
       })
       results.push({
         ok: false,
         error: '24h window closed, template required',
-        type: 'text',
+        type,
       })
       continue
     }
@@ -384,19 +385,14 @@ Deno.serve(async (req) => {
           continue
         }
         result = await sendMediaMessage(
-          phoneNumberId,
-          waToken,
-          to,
+          phoneNumberId, waToken, to,
           type as 'image' | 'video' | 'audio' | 'document',
-          mediaUrl,
-          content || undefined,
+          mediaUrl, content || undefined,
         )
         break
       case 'template':
         result = await sendTemplateMessage(
-          phoneNumberId,
-          waToken,
-          to,
+          phoneNumberId, waToken, to,
           msg.template_name as string,
           (msg.template_params as Record<string, unknown>) || {},
         )
@@ -408,8 +404,7 @@ Deno.serve(async (req) => {
 
     results.push({ ...result, type })
 
-    // Save message to DB
-    if (result.ok && conversacionId) {
+    if (result.ok) {
       await supabase.from('ia_mensajes').insert({
         conversacion_id: conversacionId,
         direction: 'outbound',
@@ -423,7 +418,6 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Log errors
     if (!result.ok) {
       await supabase.from('ia_logs').insert({
         agente_id: agenteId,
@@ -435,39 +429,25 @@ Deno.serve(async (req) => {
   }
 
   // === UPDATE CONVERSATION TIMESTAMPS ===
-  if (conversacionId && results.some(r => r.ok)) {
+  if (results.some(r => r.ok)) {
     await supabase
       .from('ia_conversaciones')
       .update({
         last_bot_message_at: new Date().toISOString(),
-        ...(sender === 'bot'
-          ? { estado: 'waiting_reply' }
-          : {}),
+        ...(sender === 'bot' ? { estado: 'waiting_reply' } : {}),
       })
       .eq('id', conversacionId)
   }
 
-  // === UPDATE COSTS ===
+  // === UPDATE COSTS (atomic increment via RPC) ===
   const sentCount = results.filter(r => r.ok).length
   if (sentCount > 0) {
-    // WhatsApp pricing varies by country/type, estimate ~$0.05/conversation
     const costPerMsg = 0.005
     await supabase.rpc('ia_increment_costes', {
       p_agente_id: agenteId,
       p_fecha: today,
       p_whatsapp_mensajes: sentCount,
       p_whatsapp_coste: sentCount * costPerMsg,
-    }).catch(() => {
-      // Fallback: upsert directly
-      supabase.from('ia_costes').upsert(
-        {
-          agente_id: agenteId,
-          fecha: today,
-          whatsapp_mensajes: sentCount,
-          whatsapp_coste: sentCount * costPerMsg,
-        },
-        { onConflict: 'agente_id,fecha' },
-      )
     })
   }
 

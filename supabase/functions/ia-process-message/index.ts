@@ -523,8 +523,8 @@ Deno.serve(async (req) => {
   const conversacionId = params.conversacion_id as string
   const agenteId = params.agente_id as string
   const leadId = params.lead_id as string
-  const messageContent = params.message_content as string
-  const messageType = params.message_type as string
+  const messageContent = (params.message_content as string) || ''
+  const messageType = (params.message_type as string) || 'text'
 
   if (!conversacionId || !agenteId || !leadId) {
     return jsonResponse({ error: 'Missing required params' }, 400)
@@ -544,6 +544,17 @@ Deno.serve(async (req) => {
 
     if (!agente || !lead || !convo) {
       return jsonResponse({ error: 'Context not found' }, 404)
+    }
+
+    // === GUARD CHECKS ===
+    if (!convo.chatbot_activo) {
+      return jsonResponse({ status: 'skipped', reason: 'chatbot_inactivo' })
+    }
+    if (!agente.activo) {
+      return jsonResponse({ status: 'skipped', reason: 'agente_inactivo' })
+    }
+    if (lead.opted_out) {
+      return jsonResponse({ status: 'skipped', reason: 'lead_opted_out' })
     }
 
     // Load conversation history (last 30 messages)
@@ -694,7 +705,6 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
     const guardrails = checkGuardrails(finalResponse)
 
     if (!guardrails.pass) {
-      // Log guardrail failure
       await supabase.from('ia_logs').insert({
         agente_id: agenteId,
         conversacion_id: conversacionId,
@@ -703,8 +713,8 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
         detalles: { original_response: finalResponse, issues: guardrails.issues },
       })
 
-      // If mentions AI → derivar
-      if (guardrails.issues.some(i => i.includes('IA'))) {
+      // If mentions AI → derivar (use specific marker, not substring match)
+      if (guardrails.issues.some(i => i.startsWith('Menciona ser IA'))) {
         await executeTool('derivar_humano', {
           motivo: 'Bot intentó revelar que es IA',
           urgente: true,
@@ -740,17 +750,13 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
       qualityScore = quality.score
       qualityFeedback = quality.feedback
 
-      // Log Haiku cost
-      const today = new Date().toISOString().split('T')[0]
-      await supabase.from('ia_costes').upsert(
-        {
-          agente_id: agenteId,
-          fecha: today,
-          haiku_calls: 1,
-          haiku_coste: 0.001,
-        },
-        { onConflict: 'agente_id,fecha' },
-      )
+      // Log Haiku cost via atomic RPC
+      await supabase.rpc('ia_increment_costes', {
+        p_agente_id: agenteId,
+        p_fecha: new Date().toISOString().split('T')[0],
+        p_haiku_calls: 1,
+        p_haiku_coste: 0.001,
+      })
     }
 
     // If quality too low → derivar
@@ -781,21 +787,19 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
     }
 
     // === TIMING INTELIGENTE ===
-    // Calculate delay to seem human (15s-3min)
-    const baseDelay = 15000 // 15s minimum
+    // Calculate delay to seem human (5s-45s max to stay within Edge Function limits)
+    const baseDelay = 5000 // 5s minimum
     const messageLength = finalResponse.length
-    // ~50ms per char (reading time simulation)
-    const readingTime = messageContent.length * 50
-    // ~30ms per char (typing time simulation)
-    const typingTime = messageLength * 30
-    // Random variance ±30%
+    const readingTime = (messageContent || '').length * 30
+    const typingTime = messageLength * 20
     const variance = 0.7 + Math.random() * 0.6
     let delay = Math.max(baseDelay, (readingTime + typingTime) * variance)
-    delay = Math.min(delay, 180000) // Max 3 minutes
+    // Cap at 45s to avoid Edge Function timeout (60s limit)
+    delay = Math.min(delay, 45000)
 
     // During qualification step, respond faster
     if (convo.step === 'first_message' || convo.step === 'qualify') {
-      delay = Math.min(delay, 60000)
+      delay = Math.min(delay, 20000)
     }
 
     await sleep(delay)
@@ -839,9 +843,26 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
 
     const sendResult = await sendRes.json()
 
+    // Check if send failed
+    if (!sendRes.ok || sendResult.sent === 0) {
+      await supabase.from('ia_logs').insert({
+        agente_id: agenteId,
+        conversacion_id: conversacionId,
+        tipo: 'error',
+        mensaje: `Error al enviar respuesta: ${JSON.stringify(sendResult).substring(0, 300)}`,
+      })
+    }
+
     // === UPDATE CONVERSATION STATE ===
     const convoUpdates: Record<string, unknown> = {
       last_bot_message_at: new Date().toISOString(),
+    }
+
+    // Advance step based on current state
+    if (convo.step === 'first_message') {
+      convoUpdates.step = 'qualify'
+    } else if (convo.step === 'qualify' && convo.estado === 'agendado') {
+      convoUpdates.step = 'meeting_pref'
     }
 
     // Update resumen (executive summary)
@@ -874,35 +895,28 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
       }
     }
 
-    // === LOG COSTS ===
+    // === LOG COSTS (atomic increment via RPC) ===
     const today = new Date().toISOString().split('T')[0]
-    // Claude Sonnet 4.6 pricing: ~$3/MTok in, ~$15/MTok out
+    // Claude Sonnet pricing: ~$3/MTok in, ~$15/MTok out
     const claudeCost = (tokensIn * 3 + tokensOut * 15) / 1_000_000
 
-    await supabase.from('ia_costes').upsert(
-      {
-        agente_id: agenteId,
-        fecha: today,
-        claude_calls: 1,
-        claude_tokens_in: tokensIn,
-        claude_tokens_out: tokensOut,
-        claude_coste: claudeCost,
-      },
-      { onConflict: 'agente_id,fecha' },
-    )
+    await supabase.rpc('ia_increment_costes', {
+      p_agente_id: agenteId,
+      p_fecha: today,
+      p_claude_calls: 1,
+      p_claude_tokens_in: tokensIn,
+      p_claude_tokens_out: tokensOut,
+      p_claude_coste: claudeCost,
+    })
 
-    // === UPDATE METRICS ===
-    await supabase.from('ia_metricas_diarias').upsert(
-      {
-        agente_id: agenteId,
-        fecha: today,
-        ab_version: convo.ab_version || 'A',
-        mensajes_enviados: messageParts.length,
-        mensajes_recibidos: 1,
-        score_calidad_promedio: qualityScore,
-      },
-      { onConflict: 'agente_id,fecha,ab_version' },
-    )
+    // === UPDATE METRICS (atomic increment via RPC) ===
+    await supabase.rpc('ia_increment_metricas', {
+      p_agente_id: agenteId,
+      p_fecha: today,
+      p_ab_version: convo.ab_version || 'A',
+      p_mensajes_enviados: messageParts.length,
+      p_mensajes_recibidos: 1,
+    })
 
     // === LOG ===
     await supabase.from('ia_logs').insert({
@@ -931,22 +945,24 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
   } catch (err) {
     console.error('Error processing message:', err)
 
-    // === FALLBACK: Alert team ===
-    await supabase.from('ia_alertas_supervisor').insert({
-      agente_id: agenteId,
-      conversacion_id: conversacionId,
-      tipo: 'error',
-      mensaje: `Error procesando mensaje: ${err}`,
-      leida: false,
-    })
+    // === FALLBACK: Alert team (only if we have valid IDs) ===
+    if (agenteId) {
+      await supabase.from('ia_alertas_supervisor').insert({
+        agente_id: agenteId,
+        conversacion_id: conversacionId || null,
+        tipo: 'error',
+        mensaje: `Error procesando mensaje: ${err}`,
+        leida: false,
+      }).catch(() => {})
 
-    await supabase.from('ia_logs').insert({
-      agente_id: agenteId,
-      conversacion_id: conversacionId,
-      tipo: 'error',
-      mensaje: `Error en ia-process-message: ${err}`,
-      detalles: { error: String(err), stack: (err as Error).stack },
-    })
+      await supabase.from('ia_logs').insert({
+        agente_id: agenteId,
+        conversacion_id: conversacionId || null,
+        tipo: 'error',
+        mensaje: `Error en ia-process-message: ${err}`,
+        detalles: { error: String(err), stack: (err as Error).stack },
+      }).catch(() => {})
+    }
 
     return jsonResponse({ error: 'Processing failed', details: String(err) }, 500)
   }

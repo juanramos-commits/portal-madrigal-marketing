@@ -1,12 +1,11 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { hmac } from 'https://deno.land/x/hmac@v2.0.1/mod.ts'
 
 /**
  * ia-whatsapp-webhook
  *
  * Recibe webhooks de Meta WhatsApp Business API:
  * - GET: Verificación del webhook (challenge)
- * - POST: Mensajes entrantes + status updates (sent/delivered/read)
+ * - POST: Mensajes entrantes + status updates (sent/delivered/read/failed)
  *
  * Verifica firma HMAC de Meta para seguridad.
  * Procesa texto, audio, imagen, video, sticker, document.
@@ -25,7 +24,7 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
   })
 }
 
-// Verify Meta webhook signature (HMAC SHA-256)
+// Timing-safe HMAC verification
 async function verifySignature(body: string, signature: string | null, secret: string): Promise<boolean> {
   if (!signature) return false
   try {
@@ -36,13 +35,11 @@ async function verifySignature(body: string, signature: string | null, secret: s
       encoder.encode(secret),
       { name: 'HMAC', hash: 'SHA-256' },
       false,
-      ['sign'],
+      ['sign', 'verify'],
     )
-    const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body))
-    const computed = Array.from(new Uint8Array(sig))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-    return computed === expected
+    // Use verify() for timing-safe comparison
+    const expectedBytes = new Uint8Array(expected.match(/.{2}/g)!.map(b => parseInt(b, 16)))
+    return await crypto.subtle.verify('HMAC', key, expectedBytes, encoder.encode(body))
   } catch {
     return false
   }
@@ -55,13 +52,14 @@ function normalizePhone(phone: string): string {
   return p
 }
 
-// Download media from WhatsApp (returns base64 or URL)
+// Download media from WhatsApp — streams to Supabase Storage instead of base64
 async function downloadMedia(
   mediaId: string,
   token: string,
+  supabase: ReturnType<typeof createClient>,
 ): Promise<{ url: string; mimeType: string } | null> {
   try {
-    // Step 1: Get media URL
+    // Step 1: Get media URL from Meta
     const metaRes = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -70,19 +68,35 @@ async function downloadMedia(
     const mediaUrl = metaData.url
     const mimeType = metaData.mime_type || 'application/octet-stream'
 
-    // Step 2: Download media
+    // Step 2: Download media as ArrayBuffer (safe for large files)
     const mediaRes = await fetch(mediaUrl, {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!mediaRes.ok) return null
-    const blob = await mediaRes.blob()
+    const arrayBuffer = await mediaRes.arrayBuffer()
 
-    // Convert to base64 data URL for storage
-    const arrayBuffer = await blob.arrayBuffer()
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
-    const dataUrl = `data:${mimeType};base64,${base64}`
+    // Step 3: Upload to Supabase Storage
+    const ext = mimeType.split('/')[1]?.split(';')[0] || 'bin'
+    const filePath = `ia-media/${Date.now()}-${mediaId}.${ext}`
 
-    return { url: dataUrl, mimeType }
+    const { error: uploadError } = await supabase.storage
+      .from('archivos')
+      .upload(filePath, arrayBuffer, {
+        contentType: mimeType,
+        upsert: false,
+      })
+
+    if (uploadError) {
+      console.error('Error uploading media to storage:', uploadError)
+      return null
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('archivos')
+      .getPublicUrl(filePath)
+
+    return { url: urlData.publicUrl, mimeType }
   } catch (err) {
     console.error('Error downloading media:', err)
     return null
@@ -92,19 +106,15 @@ async function downloadMedia(
 // Transcribe audio using OpenAI Whisper
 async function transcribeAudio(
   audioUrl: string,
-  mimeType: string,
   openaiKey: string,
 ): Promise<string | null> {
   try {
-    // Decode base64 back to blob
-    const base64Data = audioUrl.split(',')[1]
-    const binaryString = atob(base64Data)
-    const bytes = new Uint8Array(binaryString.length)
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i)
-    }
-    const blob = new Blob([bytes], { type: mimeType })
+    // Download the file from storage URL
+    const audioRes = await fetch(audioUrl)
+    if (!audioRes.ok) return null
+    const blob = await audioRes.blob()
 
+    const mimeType = blob.type || 'audio/ogg'
     const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'ogg'
     const formData = new FormData()
     formData.append('file', blob, `audio.${ext}`)
@@ -125,10 +135,9 @@ async function transcribeAudio(
   }
 }
 
-// Analyze image/video/sticker with GPT-4o Vision
+// Analyze image/sticker with GPT-4o Vision
 async function analyzeImage(
   imageUrl: string,
-  mimeType: string,
   openaiKey: string,
 ): Promise<string | null> {
   try {
@@ -168,7 +177,6 @@ async function analyzeImage(
 }
 
 Deno.serve(async (req) => {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -188,7 +196,6 @@ Deno.serve(async (req) => {
     return new Response('Forbidden', { status: 403 })
   }
 
-  // === POST: Incoming messages & status updates ===
   if (req.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405)
   }
@@ -197,10 +204,9 @@ Deno.serve(async (req) => {
   const waToken = Deno.env.get('WA_ACCESS_TOKEN') ?? ''
   const openaiKey = Deno.env.get('OPENAI_API_KEY') ?? ''
 
-  // Read body for signature verification
   const rawBody = await req.text()
 
-  // Verify HMAC signature from Meta
+  // Verify HMAC signature — REQUIRED if secret is configured
   if (appSecret) {
     const signature = req.headers.get('x-hub-signature-256')
     const valid = await verifySignature(rawBody, signature, appSecret)
@@ -208,6 +214,8 @@ Deno.serve(async (req) => {
       console.error('Invalid webhook signature')
       return jsonResponse({ error: 'Invalid signature' }, 401)
     }
+  } else {
+    console.warn('WA_APP_SECRET not set — webhook signature verification DISABLED')
   }
 
   let body: Record<string, unknown>
@@ -222,7 +230,6 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   )
 
-  // Meta sends an array of entries
   const entries = (body.entry as Array<Record<string, unknown>>) || []
 
   for (const entry of entries) {
@@ -235,7 +242,6 @@ Deno.serve(async (req) => {
       const metadata = value.metadata as Record<string, string>
       const phoneNumberId = metadata?.phone_number_id
 
-      // Find the agent that owns this phone number
       const { data: agente } = await supabase
         .from('ia_agentes')
         .select('id, activo, modo_sandbox, sandbox_phones, rate_limit_msg_hora, rate_limit_nuevos_dia')
@@ -247,11 +253,11 @@ Deno.serve(async (req) => {
         continue
       }
 
-      // === STATUS UPDATES (sent, delivered, read) ===
+      // === STATUS UPDATES (sent, delivered, read, failed) ===
       const statuses = (value.statuses as Array<Record<string, unknown>>) || []
       for (const status of statuses) {
         const waMessageId = status.id as string
-        const waStatus = status.status as string // sent, delivered, read, failed
+        const waStatus = status.status as string
 
         if (['sent', 'delivered', 'read'].includes(waStatus)) {
           await supabase
@@ -260,22 +266,20 @@ Deno.serve(async (req) => {
             .eq('wa_message_id', waMessageId)
         }
 
-        // If read → update wa_window for the conversation (24h from read)
-        if (waStatus === 'read') {
-          const { data: msg } = await supabase
-            .from('ia_mensajes')
-            .select('conversacion_id')
-            .eq('wa_message_id', waMessageId)
-            .single()
-
-          if (msg) {
-            const windowExpires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-            await supabase
-              .from('ia_conversaciones')
-              .update({ wa_window_expires_at: windowExpires })
-              .eq('id', msg.conversacion_id)
-          }
+        // Log failed deliveries
+        if (waStatus === 'failed') {
+          const errors = (status.errors as Array<Record<string, unknown>>) || []
+          const errorMsg = errors.map(e => `${e.code}: ${e.title}`).join(', ') || 'Unknown'
+          await supabase.from('ia_logs').insert({
+            agente_id: agente.id,
+            tipo: 'error',
+            mensaje: `WhatsApp delivery failed for ${waMessageId}: ${errorMsg}`,
+            detalles: { wa_message_id: waMessageId, errors },
+          })
         }
+
+        // NOTE: 24h window is set when the LEAD sends a message (line below),
+        // NOT when they read our message. Read status does NOT extend the window.
       }
 
       // === INCOMING MESSAGES ===
@@ -285,10 +289,20 @@ Deno.serve(async (req) => {
       for (const message of messages) {
         const from = normalizePhone(message.from as string)
         const waMessageId = message.id as string
-        const timestamp = message.timestamp as string
-        const msgType = message.type as string // text, audio, image, video, sticker, document, reaction, etc.
+        const msgType = message.type as string
 
-        // Get contact name from Meta
+        // === DEDUP: Skip if we already processed this wa_message_id ===
+        const { data: existingMsg } = await supabase
+          .from('ia_mensajes')
+          .select('id')
+          .eq('wa_message_id', waMessageId)
+          .maybeSingle()
+
+        if (existingMsg) {
+          console.log(`Duplicate message skipped: ${waMessageId}`)
+          continue
+        }
+
         const contactInfo = contacts.find(
           (c: Record<string, unknown>) =>
             (c.wa_id as string) === (message.from as string),
@@ -326,6 +340,7 @@ Deno.serve(async (req) => {
         }
 
         // === RESOLVE LEAD ===
+        // FIX: Use 'manual' as origen (valid CHECK constraint value)
         let { data: lead } = await supabase
           .from('ia_leads')
           .select('*')
@@ -333,20 +348,24 @@ Deno.serve(async (req) => {
           .maybeSingle()
 
         if (!lead) {
-          const { data: newLead } = await supabase
+          const { data: newLead, error: leadErr } = await supabase
             .from('ia_leads')
             .insert({
               telefono: from,
               nombre: profileName || null,
-              origen: 'whatsapp_inbound',
+              origen: 'formulario', // Valid CHECK value; lead came via WhatsApp form/ad
               consentimiento: true,
               consentimiento_at: new Date().toISOString(),
             })
             .select()
             .single()
+
+          if (leadErr) {
+            console.error('Error creating lead:', leadErr)
+            continue
+          }
           lead = newLead
         } else if (!lead.nombre && profileName) {
-          // Update name if we didn't have it
           await supabase
             .from('ia_leads')
             .update({ nombre: profileName })
@@ -358,7 +377,6 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // Check opted_out
         if (lead.opted_out) {
           await supabase.from('ia_logs').insert({
             agente_id: agente.id,
@@ -380,7 +398,7 @@ Deno.serve(async (req) => {
           .maybeSingle()
 
         if (!convo) {
-          const { data: newConvo } = await supabase
+          const { data: newConvo, error: convoErr } = await supabase
             .from('ia_conversaciones')
             .insert({
               agente_id: agente.id,
@@ -392,6 +410,11 @@ Deno.serve(async (req) => {
             })
             .select()
             .single()
+
+          if (convoErr) {
+            console.error('Error creating conversation:', convoErr)
+            continue
+          }
           convo = newConvo
         }
 
@@ -404,14 +427,10 @@ Deno.serve(async (req) => {
         const convoUpdates: Record<string, unknown> = {
           last_lead_message_at: new Date().toISOString(),
           leida: false,
+          // 24h window starts when LEAD sends a message
+          wa_window_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         }
 
-        // Update 24h window (starts when lead sends a message)
-        convoUpdates.wa_window_expires_at = new Date(
-          Date.now() + 24 * 60 * 60 * 1000,
-        ).toISOString()
-
-        // If was waiting_reply or scheduled_followup, switch to needs_reply
         if (['waiting_reply', 'scheduled_followup', 'no_response'].includes(convo.estado)) {
           convoUpdates.estado = 'needs_reply'
           convoUpdates.followup_count = 0
@@ -439,24 +458,20 @@ Deno.serve(async (req) => {
             messageType = 'audio'
             const audioInfo = message.audio as Record<string, string>
             if (audioInfo?.id) {
-              const media = await downloadMedia(audioInfo.id, waToken)
+              const media = await downloadMedia(audioInfo.id, waToken, supabase)
               if (media) {
                 mediaUrl = media.url
-                // Transcribe with Whisper
                 if (openaiKey) {
-                  transcription = await transcribeAudio(media.url, media.mimeType, openaiKey)
+                  transcription = await transcribeAudio(media.url, openaiKey)
                   content = transcription || '[Audio no transcrito]'
 
-                  // Log Whisper cost
-                  await supabase.from('ia_costes').upsert(
-                    {
-                      agente_id: agente.id,
-                      fecha: new Date().toISOString().split('T')[0],
-                      whisper_calls: 1,
-                      whisper_coste: 0.006, // ~$0.006/min estimate
-                    },
-                    { onConflict: 'agente_id,fecha', ignoreDuplicates: false },
-                  )
+                  // Increment Whisper costs via RPC
+                  await supabase.rpc('ia_increment_costes', {
+                    p_agente_id: agente.id,
+                    p_fecha: new Date().toISOString().split('T')[0],
+                    p_whisper_calls: 1,
+                    p_whisper_coste: 0.006,
+                  })
                 } else {
                   content = '[Audio recibido]'
                 }
@@ -472,23 +487,19 @@ Deno.serve(async (req) => {
             messageType = msgType
             const imgInfo = message[msgType] as Record<string, string>
             if (imgInfo?.id) {
-              const media = await downloadMedia(imgInfo.id, waToken)
+              const media = await downloadMedia(imgInfo.id, waToken, supabase)
               if (media) {
                 mediaUrl = media.url
-                // Analyze with GPT-4o
                 if (openaiKey) {
-                  transcription = await analyzeImage(media.url, media.mimeType, openaiKey)
+                  transcription = await analyzeImage(media.url, openaiKey)
                   content = transcription || `[${msgType === 'sticker' ? 'Sticker' : 'Imagen'} recibida]`
 
-                  await supabase.from('ia_costes').upsert(
-                    {
-                      agente_id: agente.id,
-                      fecha: new Date().toISOString().split('T')[0],
-                      gpt4o_calls: 1,
-                      gpt4o_coste: 0.005, // ~$0.005 per image
-                    },
-                    { onConflict: 'agente_id,fecha', ignoreDuplicates: false },
-                  )
+                  await supabase.rpc('ia_increment_costes', {
+                    p_agente_id: agente.id,
+                    p_fecha: new Date().toISOString().split('T')[0],
+                    p_gpt4o_calls: 1,
+                    p_gpt4o_coste: 0.005,
+                  })
                 } else {
                   content = `[${msgType === 'sticker' ? 'Sticker' : 'Imagen'} recibida]`
                 }
@@ -504,7 +515,7 @@ Deno.serve(async (req) => {
             messageType = 'video'
             const videoInfo = message.video as Record<string, string>
             if (videoInfo?.id) {
-              const media = await downloadMedia(videoInfo.id, waToken)
+              const media = await downloadMedia(videoInfo.id, waToken, supabase)
               if (media) {
                 mediaUrl = media.url
                 content = '[Video recibido]'
@@ -521,14 +532,13 @@ Deno.serve(async (req) => {
             const docInfo = message.document as Record<string, string>
             content = `[Documento: ${docInfo?.filename || 'archivo'}]`
             if (docInfo?.id) {
-              const media = await downloadMedia(docInfo.id, waToken)
+              const media = await downloadMedia(docInfo.id, waToken, supabase)
               if (media) mediaUrl = media.url
             }
             break
           }
 
           case 'reaction': {
-            // Reactions don't need full processing, just log
             const reaction = message.reaction as Record<string, string>
             content = reaction?.emoji || '👍'
             messageType = 'text'
@@ -543,36 +553,23 @@ Deno.serve(async (req) => {
 
         // === CHECK RGPD / STOP ===
         const stopPhrases = [
-          'no me escribas más',
-          'no me escribas mas',
-          'no me contactes',
-          'borra mis datos',
-          'stop',
-          'no quiero recibir',
-          'deja de escribirme',
-          'elimina mis datos',
-          'para de escribirme',
+          'no me escribas más', 'no me escribas mas', 'no me contactes',
+          'borra mis datos', 'stop', 'no quiero recibir',
+          'deja de escribirme', 'elimina mis datos', 'para de escribirme',
         ]
         const contentLower = content.toLowerCase().trim()
         const isStop = stopPhrases.some(phrase => contentLower.includes(phrase))
 
         if (isStop) {
-          // Opt-out immediately
-          await supabase
-            .from('ia_leads')
-            .update({
-              opted_out: true,
-              opted_out_at: new Date().toISOString(),
-            })
-            .eq('id', lead.id)
+          await supabase.from('ia_leads').update({
+            opted_out: true,
+            opted_out_at: new Date().toISOString(),
+          }).eq('id', lead.id)
 
-          await supabase
-            .from('ia_conversaciones')
-            .update({
-              estado: 'descartado',
-              chatbot_activo: false,
-            })
-            .eq('id', convo.id)
+          await supabase.from('ia_conversaciones').update({
+            estado: 'descartado',
+            chatbot_activo: false,
+          }).eq('id', convo.id)
 
           await supabase.from('ia_logs').insert({
             agente_id: agente.id,
@@ -581,7 +578,6 @@ Deno.serve(async (req) => {
             mensaje: `Lead opted-out automático (RGPD): "${content}"`,
           })
 
-          // Still save the message
           await supabase.from('ia_mensajes').insert({
             conversacion_id: convo.id,
             direction: 'inbound',
@@ -609,31 +605,46 @@ Deno.serve(async (req) => {
         })
 
         // === TRIGGER AI PROCESSING ===
-        // If chatbot is active, invoke ia-process-message to generate a response
-        if (convo.chatbot_activo && agente.activo) {
-          // Fire-and-forget call to process the message
+        // Re-check chatbot_activo from the updated conversation (not stale data)
+        const { data: freshConvo } = await supabase
+          .from('ia_conversaciones')
+          .select('chatbot_activo')
+          .eq('id', convo.id)
+          .single()
+
+        if (freshConvo?.chatbot_activo && agente.activo) {
           const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
           const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-          fetch(`${supabaseUrl}/functions/v1/ia-process-message`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${serviceKey}`,
-            },
-            body: JSON.stringify({
-              conversacion_id: convo.id,
-              agente_id: agente.id,
-              lead_id: lead.id,
-              message_content: content,
-              message_type: messageType,
-            }),
-          }).catch(err => {
+          // Await the fetch to ensure Deno doesn't cancel it
+          try {
+            await fetch(`${supabaseUrl}/functions/v1/ia-process-message`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${serviceKey}`,
+              },
+              body: JSON.stringify({
+                conversacion_id: convo.id,
+                agente_id: agente.id,
+                lead_id: lead.id,
+                message_content: content,
+                message_type: messageType,
+              }),
+            })
+          } catch (err) {
             console.error('Error triggering ia-process-message:', err)
-          })
+            // Create alert so team knows
+            await supabase.from('ia_alertas_supervisor').insert({
+              agente_id: agente.id,
+              conversacion_id: convo.id,
+              tipo: 'error',
+              mensaje: `Error al invocar procesamiento IA: ${err}`,
+              leida: false,
+            })
+          }
         }
 
-        // Log
         await supabase.from('ia_logs').insert({
           agente_id: agente.id,
           conversacion_id: convo.id,
@@ -649,6 +660,5 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Always return 200 to Meta (they retry on non-200)
   return jsonResponse({ status: 'ok' })
 })
