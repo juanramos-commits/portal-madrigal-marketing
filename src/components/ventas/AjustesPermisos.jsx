@@ -15,6 +15,7 @@ const MODULO_LABELS = {
   ventas_notificaciones: 'Notificaciones',
   ventas_email: 'Email Marketing',
   ventas_outreach: 'Cold Outreach',
+  ventas_agentes_ia: 'Agentes IA',
   ventas_ajustes: 'Ajustes',
 }
 
