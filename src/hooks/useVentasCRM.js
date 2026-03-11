@@ -108,7 +108,7 @@ async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda, 
     p_filtro_fecha_hasta: filtros.fecha_hasta ? filtros.fecha_hasta + 'T23:59:59' : null,
     p_filtro_etapa_ids: (filtros.etapa_ids && filtros.etapa_ids.length > 0) ? filtros.etapa_ids : null,
     p_busqueda: sanitizedSearch,
-    p_limit: 500,
+    p_limit: LEADS_PER_BATCH,
   }
 
   // smartRpc uses direct fetch with cached token if supabase-js isn't ready yet
@@ -120,6 +120,7 @@ async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda, 
 // Process RPC result into the state format expected by kanban
 function processRpcResult(rpcData, etapasData) {
   const allData = rpcData.leads || []
+  const realCounts = rpcData.counts || {} // Real totals per etapa (no limit)
   const newLeads = {}
   const newCounts = {}
   let total = 0
@@ -134,12 +135,14 @@ function processRpcResult(rpcData, etapasData) {
 
   for (const etapa of etapasData) {
     const etapaItems = grouped[etapa.id] || []
-    const totalInEtapa = etapaItems.length
-    newLeads[etapa.id] = mapLeadItems(etapaItems.slice(0, LEADS_PER_BATCH))
+    const loadedCount = etapaItems.length
+    // Use real count from SQL if available, otherwise fall back to loaded count
+    const totalInEtapa = realCounts[etapa.id] || loadedCount
+    newLeads[etapa.id] = mapLeadItems(etapaItems)
     newCounts[etapa.id] = totalInEtapa
     total += totalInEtapa
-    hasMore[etapa.id] = totalInEtapa > LEADS_PER_BATCH
-    offsets[etapa.id] = Math.min(totalInEtapa, LEADS_PER_BATCH)
+    hasMore[etapa.id] = totalInEtapa > loadedCount
+    offsets[etapa.id] = loadedCount
   }
 
   return { newLeads, newCounts, total, hasMore, offsets, allData }
