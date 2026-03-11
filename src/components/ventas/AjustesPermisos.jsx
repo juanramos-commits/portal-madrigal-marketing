@@ -3,7 +3,7 @@ import { useVentasPermisos, ROLES_COMERCIALES, ROL_LABELS } from '../../hooks/us
 import { useAuth } from '../../contexts/AuthContext'
 import ConfirmDialog from '../ui/ConfirmDialog'
 
-// Agrupar permisos por submódulo para la UI
+// Agrupar permisos por submódulo para la UI (incluye Agentes IA)
 const MODULO_LABELS = {
   ventas_crm: 'CRM',
   ventas_ventas: 'Ventas',
