@@ -3,9 +3,10 @@
    ===================================================== */
 
 .ia-page {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-height: 100%;
 }
 
 /* Header */
@@ -13,7 +14,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
 }
 
 .ia-header-left {
@@ -38,7 +38,6 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin-bottom: 24px;
 }
 
 @media (max-width: 768px) {
@@ -106,7 +105,8 @@
 
 .ia-btn-primary {
   background: var(--primary);
-  color: white;
+  color: var(--text-inverse);
+  border-color: var(--primary);
 }
 
 .ia-btn-primary:hover:not(:disabled) {
@@ -124,12 +124,12 @@
 }
 
 .ia-btn-danger {
-  background: #ef4444;
-  color: white;
+  background: var(--error);
+  color: var(--text-inverse);
 }
 
 .ia-btn-danger:hover:not(:disabled) {
-  background: #dc2626;
+  opacity: 0.9;
 }
 
 /* Table */
@@ -406,7 +406,6 @@
   background: var(--bg);
   border-radius: 10px;
   padding: 3px;
-  margin-bottom: 24px;
   border: 1px solid var(--border);
 }
 
