@@ -161,6 +161,11 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
     </svg>
+  ),
+  Bot: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 8V4H8"/><rect x="2" y="8" width="20" height="12" rx="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/><path d="M10 16h4"/>
+    </svg>
   )
 }
 
@@ -227,6 +232,7 @@ export default function Layout() {
       { name: 'Email Marketing', href: '/ventas/email', icon: Icons.Mail, permiso: 'ventas.email.ver' },
       { name: 'Cold Outreach', href: '/ventas/outreach', icon: Icons.Target, permiso: 'ventas.outreach.ver' },
       { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ajustes.ver' },
+      { name: 'Agentes IA', href: '/ventas/agentes-ia', icon: Icons.Bot, permiso: 'ventas.agentes_ia.ver' },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [
       { name: 'Dashboard', href: '/dashboard', icon: Icons.Dashboard, permiso: 'dashboard.ver' },
