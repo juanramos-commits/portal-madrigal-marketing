@@ -66,6 +66,7 @@ const MODULOS = {
   paquetes: { nombre: 'Paquetes', icono: '📦' },
   notas: { nombre: 'Notas', icono: '📝' },
   historial: { nombre: 'Historial', icono: '🕐' },
+  ventas_agentes_ia: { nombre: 'Agentes IA', icono: '🤖' },
 }
 
 export default function Roles() {
