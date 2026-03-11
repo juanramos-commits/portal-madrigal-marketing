@@ -231,8 +231,8 @@ export default function Layout() {
       { name: 'Enlaces', href: '/ventas/enlaces', icon: Icons.Link2, permiso: 'ventas.enlaces.ver' },
       { name: 'Email Marketing', href: '/ventas/email', icon: Icons.Mail, permiso: 'ventas.email.ver' },
       { name: 'Cold Outreach', href: '/ventas/outreach', icon: Icons.Target, permiso: 'ventas.outreach.ver' },
-      { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ajustes.ver' },
       { name: 'Agentes IA', href: '/ventas/agentes-ia', icon: Icons.Bot, permiso: 'ventas.agentes_ia.ver' },
+      { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ajustes.ver' },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [
       { name: 'Dashboard', href: '/dashboard', icon: Icons.Dashboard, permiso: 'dashboard.ver' },
