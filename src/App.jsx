@@ -72,6 +72,7 @@ const OutreachSettings = lazy(() => import('./pages/ventas/OutreachSettings'))
 
 // Páginas de Agentes IA
 const AgentesIA = lazy(() => import('./pages/ventas/AgentesIA'))
+const AgenteIADetalle = lazy(() => import('./pages/ventas/AgenteIADetalle'))
 
 // Páginas generales
 const Notificaciones = lazy(() => import('./pages/Notificaciones'))
@@ -186,6 +187,7 @@ function App() {
             <Route path="ventas/email/analytics" element={<PermissionRoute permiso="ventas.email.analytics.ver"><EmailAnalytics /></PermissionRoute>} />
             <Route path="ventas/email/ajustes" element={<PermissionRoute permiso="ventas.email.ajustes.ver"><EmailSettings /></PermissionRoute>} />
             <Route path="ventas/agentes-ia" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><AgentesIA /></PermissionRoute>} />
+            <Route path="ventas/agentes-ia/:id" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><AgenteIADetalle /></PermissionRoute>} />
             <Route path="ventas/outreach" element={<PermissionRoute permiso="ventas.outreach.ver"><OutreachDashboard /></PermissionRoute>} />
             <Route path="ventas/outreach/dominios" element={<PermissionRoute permiso="ventas.outreach.dominios.ver"><OutreachDomains /></PermissionRoute>} />
             <Route path="ventas/outreach/inboxes" element={<PermissionRoute permiso="ventas.outreach.inboxes.ver"><OutreachInboxes /></PermissionRoute>} />
