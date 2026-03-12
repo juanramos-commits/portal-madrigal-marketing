@@ -806,8 +806,9 @@ function parseFollowupDate(whenText: string): Date | null {
 async function callClaudeWithRetry(
   body: Record<string, unknown>,
   anthropicKey: string,
-  maxRetries = 3,
+  maxRetries = 5,
 ): Promise<{ data: Record<string, unknown>; ok: boolean; error?: string }> {
+  let lastError = ''
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -825,24 +826,29 @@ async function callClaudeWithRetry(
         return { data, ok: true }
       }
 
+      const errText = await res.text()
+      lastError = `Claude API ${res.status}: ${errText.substring(0, 200)}`
+      console.error(`[claude] Attempt ${attempt + 1}/${maxRetries} failed: ${lastError}`)
+
       // 429 or 529 → retry with backoff
       if (res.status === 429 || res.status === 529) {
-        await sleep(Math.pow(2, attempt) * 1000)
+        await sleep(Math.pow(2, attempt) * 2000)
         continue
       }
 
       // Other errors → don't retry
-      const errText = await res.text()
-      return { data: {}, ok: false, error: `Claude API ${res.status}: ${errText}` }
+      return { data: {}, ok: false, error: lastError }
     } catch (err) {
+      lastError = `Claude API network error: ${err}`
+      console.error(`[claude] Attempt ${attempt + 1}/${maxRetries} exception: ${lastError}`)
       if (attempt < maxRetries - 1) {
-        await sleep(Math.pow(2, attempt) * 1000)
+        await sleep(Math.pow(2, attempt) * 2000)
         continue
       }
-      return { data: {}, ok: false, error: `Claude API network error: ${err}` }
+      return { data: {}, ok: false, error: lastError }
     }
   }
-  return { data: {}, ok: false, error: 'Max retries exhausted' }
+  return { data: {}, ok: false, error: `Max retries exhausted. Last: ${lastError}` }
 }
 
 // ============================================================
@@ -862,7 +868,9 @@ Deno.serve(async (req) => {
   )
   const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  // Use the incoming Authorization header's key if available (more reliable than env var)
+  const incomingAuth = req.headers.get('Authorization')?.replace('Bearer ', '') ?? ''
+  const serviceKey = incomingAuth || (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '')
 
   let params: Record<string, unknown>
   try {
@@ -1172,22 +1180,39 @@ ${styleAddendum}`
     const maxIterations = 10
     const bookingUsed = { value: false }
 
+    const PRIMARY_MODEL = 'claude-sonnet-4-6'
+    const FALLBACK_MODEL = 'claude-haiku-4-5-20251001'
+    let activeModel = PRIMARY_MODEL
+
     for (let iteration = 0; iteration < maxIterations; iteration++) {
-      const claudeResult = await callClaudeWithRetry({
-        model: 'claude-sonnet-4-6',
+      let claudeResult = await callClaudeWithRetry({
+        model: activeModel,
         max_tokens: 1024,
         system: fullSystemPrompt,
         tools: AGENT_TOOLS,
         messages: claudeMessages,
       }, anthropicKey)
 
+      // If primary model fails, try fallback model
+      if (!claudeResult.ok && activeModel === PRIMARY_MODEL) {
+        console.warn(`[claude] Primary model ${PRIMARY_MODEL} failed, trying fallback ${FALLBACK_MODEL}`)
+        activeModel = FALLBACK_MODEL
+        claudeResult = await callClaudeWithRetry({
+          model: FALLBACK_MODEL,
+          max_tokens: 1024,
+          system: fullSystemPrompt,
+          tools: AGENT_TOOLS,
+          messages: claudeMessages,
+        }, anthropicKey)
+      }
+
       if (!claudeResult.ok) {
-        // === FALLBACK: Claude API failed after retries ===
+        // === FALLBACK: Both models failed ===
         await supabase.from('ia_alertas_supervisor').insert({
           agente_id: agenteId,
           conversacion_id: conversacionId,
           tipo: 'error',
-          mensaje: `Claude API caído: ${claudeResult.error}. Lead sin respuesta.`,
+          mensaje: `Claude API caído (ambos modelos): ${claudeResult.error}. Lead sin respuesta.`,
           leida: false,
         })
 
@@ -1195,7 +1220,7 @@ ${styleAddendum}`
           agente_id: agenteId,
           conversacion_id: conversacionId,
           tipo: 'error',
-          mensaje: `Claude API fallback triggered: ${claudeResult.error}`,
+          mensaje: `Claude API fallback triggered (both models): ${claudeResult.error}`,
         })
 
         // Don't leave lead without response — derive to human
@@ -1450,7 +1475,7 @@ ${styleAddendum}`
 
     messageParts = messageParts.filter(p => p.length > 0).slice(0, 4) // Max 4 messages
 
-    console.log(`[split] Response split into ${messageParts.length} parts:`, messageParts.map(p => p.substring(0, 50)))
+    console.log(`[split] Response split into ${messageParts.length} parts`)
 
     const sendRes = await fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
       method: 'POST',
