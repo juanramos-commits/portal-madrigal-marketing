@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAgentesIA, TIPO_LABELS, DEFAULT_CONFIG } from '../../hooks/useAgentesIA'
-import { Bot, Plus, Power, Zap, Users, Calendar, AlertTriangle, DollarSign } from 'lucide-react'
+import { Bot, Plus, Power, Zap, Users, Calendar, AlertTriangle, DollarSign, Eye } from 'lucide-react'
 import '../../styles/agentes-ia.css'
 
 function StatCard({ icon: Icon, label, value, color }) {
@@ -121,12 +121,18 @@ export default function AgentesIA() {
           <Bot size={28} />
           <h1>Agentes IA</h1>
         </div>
-        {tienePermiso('ventas.agentes_ia.crear') && (
-          <button className="ia-btn ia-btn-primary" onClick={() => setModalOpen(true)}>
-            <Plus size={16} />
-            Crear agente
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="ia-btn ia-btn-secondary" onClick={() => navigate('/ventas/agentes-ia/supervisor')}>
+            <Eye size={16} />
+            Supervisor
           </button>
-        )}
+          {tienePermiso('ventas.agentes_ia.crear') && (
+            <button className="ia-btn ia-btn-primary" onClick={() => setModalOpen(true)}>
+              <Plus size={16} />
+              Crear agente
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Mini-dashboard */}
