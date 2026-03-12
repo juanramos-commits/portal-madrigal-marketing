@@ -1035,7 +1035,7 @@ ${styleAddendum}`
 
     for (let iteration = 0; iteration < maxIterations; iteration++) {
       const claudeResult = await callClaudeWithRetry({
-        model: 'claude-sonnet-4-6-20250514',
+        model: 'claude-sonnet-4-5-20241022',
         max_tokens: 1024,
         system: fullSystemPrompt,
         tools: AGENT_TOOLS,
