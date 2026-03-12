@@ -1067,6 +1067,7 @@ FORMATO WHATSAPP: Escribe como una persona real en WhatsApp. NUNCA envíes un bl
 - Cada mensaje debe ser corto (1-2 frases máximo).
 - NUNCA uses signos de apertura: ¿ ¡ — están PROHIBIDOS. Solo usa ? y ! al final.
 - NUNCA termines un mensaje con punto final.
+- NUNCA uses dos puntos (:) en medio de frase — suena a bot. Reformula la frase.
 - NUNCA te presentes si la plantilla inicial ya lo hizo — el lead ya sabe quién eres.
 - El primer mensaje en el historial es una plantilla que TÚ ya enviaste. Lee su contenido y continúa la conversación desde ahí sin repetir nada.
 
@@ -1355,9 +1356,9 @@ ${styleAddendum}`
     await sleep(delay)
 
     // === SEND RESPONSE ===
-    // Split by "---" delimiter (Claude writes multiple short messages separated by ---)
+    // Split by "---" delimiter or double newline (Claude may use either)
     const messageParts: string[] = finalResponse
-      .split(/\n---\n|^---\n|\n---$/gm)
+      .split(/\n---\n|^---\n|\n---$|\n\n+/gm)
       .map(p => p.trim())
       .filter(p => p.length > 0)
       .slice(0, 4) // Max 4 messages
