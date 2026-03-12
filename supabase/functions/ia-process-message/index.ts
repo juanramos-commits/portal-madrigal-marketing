@@ -1519,23 +1519,37 @@ ${styleAddendum}`
     console.log(`[split] Response split into ${messageParts.length} parts`)
 
     // === PRE-SEND CHECK: Did lead send more messages while AI was thinking? ===
-    // If so, discard this response and let the new debounce cycle handle it
-    const { count: newInboundCount } = await supabase
-      .from('ia_message_queue')
-      .select('id', { count: 'exact', head: true })
+    // Compare latest inbound message timestamp vs when we acquired the lock.
+    // If a newer inbound arrived, discard this response — the webhook debounce
+    // will fire a new processing cycle with the complete context.
+    const { data: latestInbound } = await supabase
+      .from('ia_mensajes')
+      .select('created_at')
       .eq('conversacion_id', conversacionId)
-      .eq('processed', false)
+      .eq('direction', 'inbound')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
 
-    if (newInboundCount && newInboundCount > 0) {
-      console.log(`[interrupt] ${newInboundCount} new inbound message(s) arrived while AI was thinking — discarding response`)
-      try { await supabase.from('ia_logs').insert({
-        agente_id: agenteId,
-        conversacion_id: conversacionId,
-        tipo: 'info',
-        mensaje: `Respuesta descartada: el lead envió ${newInboundCount} mensaje(s) más mientras la IA pensaba. Se re-procesará con contexto completo.`,
-      }) } catch (_e) { /* ignore */ }
-      // Release lock so the new debounce cycle can acquire it
-      return jsonResponse({ status: 'discarded', reason: 'new_inbound_during_thinking' })
+    const { data: convoLock } = await supabase
+      .from('ia_conversaciones')
+      .select('processing_lock_at')
+      .eq('id', conversacionId)
+      .single()
+
+    if (latestInbound && convoLock?.processing_lock_at) {
+      const lastMsgTime = new Date(latestInbound.created_at).getTime()
+      const lockTime = new Date(convoLock.processing_lock_at).getTime()
+      if (lastMsgTime > lockTime) {
+        console.log(`[interrupt] New inbound arrived after lock — discarding response`)
+        try { await supabase.from('ia_logs').insert({
+          agente_id: agenteId,
+          conversacion_id: conversacionId,
+          tipo: 'info',
+          mensaje: `Respuesta descartada: el lead envió mensaje(s) mientras la IA pensaba. Se re-procesará con contexto completo.`,
+        }) } catch (_e) { /* ignore */ }
+        return jsonResponse({ status: 'discarded', reason: 'new_inbound_during_thinking' })
+      }
     }
 
     const sendRes = await fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
