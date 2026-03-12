@@ -126,7 +126,8 @@ function KPICard({ icon: Icon, label, value, sub, color, trend }) {
 
 function FunnelVisualization({ totals }) {
   const steps = [
-    { label: 'Contactados', value: totals.leads, color: '#3b82f6' },
+    ...(totals.queued > 0 ? [{ label: 'En cola', value: totals.queued + totals.contactados, color: '#6b7280' }] : []),
+    { label: 'Contactados', value: totals.contactados, color: '#3b82f6' },
     { label: 'Respondieron', value: totals.respondieron, color: '#8b5cf6' },
     { label: 'En proceso', value: totals.activas, color: '#f59e0b' },
     { label: 'Agendados', value: totals.agendados, color: '#10b981' },
@@ -490,7 +491,7 @@ export default function TabMetricas({ agenteId, agente }) {
   const [metricas, setMetricas] = useState([])
   const [costes, setCostes] = useState([])
   const [objeciones, setObjeciones] = useState([])
-  const [convStats, setConvStats] = useState({ total: 0, respondieron: 0, agendados: 0, descartados: 0, activas: 0 })
+  const [convStats, setConvStats] = useState({ total: 0, queued: 0, contactados: 0, respondieron: 0, agendados: 0, descartados: 0, activas: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -506,7 +507,7 @@ export default function TabMetricas({ agenteId, agente }) {
     const { inicio: fechaInicio, fin: fechaFin } = getDateRange()
 
     try {
-      const [metricasRes, costesRes, objecionesRes, convsRes] = await Promise.all([
+      const [metricasRes, costesRes, objecionesRes, convsRes, queuedRes] = await Promise.all([
         supabase
           .from('ia_metricas_diarias')
           .select('*')
@@ -534,6 +535,12 @@ export default function TabMetricas({ agenteId, agente }) {
           .eq('agente_id', agenteId)
           .gte('created_at', new Date(fechaInicio).toISOString())
           .lte('created_at', new Date(fechaFin + 'T23:59:59').toISOString()),
+        // Total queued (all time, not filtered by date — they haven't been contacted yet)
+        supabase
+          .from('ia_conversaciones')
+          .select('id', { count: 'exact', head: true })
+          .eq('agente_id', agenteId)
+          .eq('estado', 'queued'),
       ])
 
       if (metricasRes.error) throw metricasRes.error
@@ -546,14 +553,18 @@ export default function TabMetricas({ agenteId, agente }) {
 
       // Compute real conversation stats
       const convs = convsRes.data || []
+      const queuedCount = queuedRes.count || 0
       const noResponseStates = ['no_response', 'descartado']
       const respondedStates = ['needs_reply', 'handoff_humano', 'waiting_reply', 'scheduled_followup', 'qualify', 'meeting_pref', 'agendado']
+      const contactados = convs.filter(c => c.estado !== 'queued').length
       setConvStats({
         total: convs.length,
+        queued: queuedCount,
+        contactados,
         respondieron: convs.filter(c => respondedStates.includes(c.estado)).length,
         agendados: convs.filter(c => c.estado === 'agendado').length,
         descartados: convs.filter(c => noResponseStates.includes(c.estado)).length,
-        activas: convs.filter(c => !noResponseStates.includes(c.estado) && c.estado !== 'agendado').length,
+        activas: convs.filter(c => !noResponseStates.includes(c.estado) && c.estado !== 'agendado' && c.estado !== 'queued').length,
       })
     } catch (err) {
       console.error('Error cargando métricas:', err)
@@ -580,19 +591,21 @@ export default function TabMetricas({ agenteId, agente }) {
 
     // Use real conversation-level data for funnel metrics
     const leads = convStats.total
+    const queued = convStats.queued
+    const contactados = convStats.contactados
     const respondieron = convStats.respondieron
     const agendados = convStats.agendados
     const descartados = convStats.descartados
     const activas = convStats.activas
-    const tasaRespuesta = leads > 0 ? respondieron / leads : 0
-    const conversion = leads > 0 ? agendados / leads : 0
+    const tasaRespuesta = contactados > 0 ? respondieron / contactados : 0
+    const conversion = contactados > 0 ? agendados / contactados : 0
 
     const gastoTotal = costes.reduce((s, r) => {
       return s + (r.claude_coste || 0) + (r.haiku_coste || 0) +
         (r.whisper_coste || 0) + (r.gpt4o_coste || 0) + (r.whatsapp_coste || 0)
     }, 0)
 
-    return { leads, respondieron, agendados, descartados, activas, conversion, tasaRespuesta, gastoTotal, msgEnviados, msgRecibidos }
+    return { leads, queued, contactados, respondieron, agendados, descartados, activas, conversion, tasaRespuesta, gastoTotal, msgEnviados, msgRecibidos }
   }, [metricas, costes, convStats])
 
   const { metricasA, metricasB } = useMemo(() => {
@@ -680,11 +693,21 @@ export default function TabMetricas({ agenteId, agente }) {
 
       {/* KPI Cards */}
       <div className="ia-met-kpis">
+        {totals.queued > 0 && (
+          <KPICard
+            icon={Filter}
+            label="En cola"
+            value={fmtNum(totals.queued)}
+            color="#6b7280"
+            sub="Pendientes de contactar"
+          />
+        )}
         <KPICard
           icon={Users}
-          label="Conversaciones"
-          value={fmtNum(totals.leads)}
+          label="Contactados"
+          value={fmtNum(totals.contactados)}
           color="#3b82f6"
+          sub={totals.queued > 0 ? `${fmtNum(totals.leads)} total` : undefined}
         />
         <KPICard
           icon={MessageSquare}
@@ -721,7 +744,7 @@ export default function TabMetricas({ agenteId, agente }) {
       </div>
 
       {/* Funnel */}
-      {totals.leads > 0 && <FunnelVisualization totals={totals} />}
+      {(totals.leads > 0 || totals.queued > 0) && <FunnelVisualization totals={totals} />}
 
       {/* Charts */}
       {dailyData.length > 0 && (
