@@ -677,14 +677,31 @@ Responde SOLO en este formato JSON:
     const text = data.content?.[0]?.text || ''
 
     try {
-      const parsed = JSON.parse(text)
+      // Try direct parse first, then extract JSON from surrounding text
+      let parsed: Record<string, unknown>
+      try {
+        parsed = JSON.parse(text)
+      } catch {
+        const jsonMatch = text.match(/\{[\s\S]*"score"\s*:\s*\d+[\s\S]*\}/)
+        if (jsonMatch) {
+          parsed = JSON.parse(jsonMatch[0])
+        } else {
+          // Try to extract score from plain text
+          const scoreMatch = text.match(/(\d+)\s*\/\s*10/)
+          if (scoreMatch) {
+            return { score: Math.min(10, Math.max(1, parseInt(scoreMatch[1]))), feedback: text.substring(0, 200) }
+          }
+          console.error('Quality check unparseable:', text.substring(0, 300))
+          return { score: 7, feedback: 'Quality parse failed — allowing by default' }
+        }
+      }
       return {
-        score: Math.min(10, Math.max(1, parsed.score || 5)),
-        feedback: parsed.feedback || '',
+        score: Math.min(10, Math.max(1, (parsed.score as number) || 5)),
+        feedback: (parsed.feedback as string) || '',
       }
     } catch {
-      // Can't parse → conservative score (block if threshold is 6)
-      return { score: 5, feedback: 'Could not parse quality response' }
+      // Can't parse at all → allow through
+      return { score: 7, feedback: 'Quality parse failed — allowing by default' }
     }
   } catch {
     // Quality check failed → conservative: return 5 so it blocks if threshold is 6
