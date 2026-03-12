@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     // === LOAD AGENT ===
     const { data: agente, error: agenteErr } = await supabase
       .from('ia_agentes')
-      .select('id, tipo, activo, ab_test_activo, ab_split, rate_limit_nuevos_dia, whatsapp_phone_id')
+      .select('id, tipo, activo, ab_test_activo, ab_split, rate_limit_nuevos_dia, whatsapp_phone_id, config')
       .eq('id', agenteId)
       .single()
 
@@ -164,7 +164,7 @@ Deno.serve(async (req) => {
         templateParamsFn = (nombre) => ({ body: [nombre || 'amigo/a'] })
         break
       case 'repescadora':
-        templateName = 'hola_he_visto_que_nos_has_v'
+        templateName = 're_contacto_rosalia_1'
         templateParamsFn = () => ({})
         break
       case 'outbound_frio':
@@ -398,6 +398,22 @@ Deno.serve(async (req) => {
             p_leads_contactados: 1,
             p_mensajes_enviados: 1,
           })
+
+          // Schedule outbound sequence for repescadora / outbound_frio
+          if (agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio') {
+            const agentConfig = (agente.config || {}) as Record<string, unknown>
+            const delays: number[] = (agentConfig.secuencia_delays as number[]) || [172800000, 172800000]
+            const firstDelay = delays[0] || 172800000
+            const nextAt = new Date(Date.now() + firstDelay).toISOString()
+
+            await supabase
+              .from('ia_conversaciones')
+              .update({
+                secuencia_outbound_step: 0,
+                secuencia_outbound_next_at: nextAt,
+              })
+              .eq('id', conversacionId)
+          }
 
           details.push({
             telefono,

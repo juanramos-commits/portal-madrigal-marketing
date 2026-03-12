@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       .from('ia_agentes')
       .select('id, config')
       .eq('activo', true)
-      .eq('tipo', 'outbound_frio')
+      .in('tipo', ['outbound_frio', 'repescadora'])
 
     if (agentesErr) {
       throw new Error(`Error loading agents: ${agentesErr.message}`)

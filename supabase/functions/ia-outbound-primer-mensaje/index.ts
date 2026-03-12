@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     // === LOAD AGENT ===
     const { data: agente, error: agenteErr } = await supabase
       .from('ia_agentes')
-      .select('id, tipo, activo, ab_test_activo, ab_split, rate_limit_nuevos_dia, whatsapp_phone_id, nombre, usuario_id')
+      .select('id, tipo, activo, ab_test_activo, ab_split, rate_limit_nuevos_dia, whatsapp_phone_id, nombre, usuario_id, config')
       .eq('id', agenteId)
       .single()
 
@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
         templateParams = { body: { nombre: nombre || 'amigo/a' } }
         break
       case 'repescadora':
-        templateName = 'hola_he_visto_que_nos_has_vuelto_a_rellenar_el_formulario_en_que_te_puedo_ayudar'
+        templateName = 're_contacto_rosalia_1'
         break
       case 'outbound_frio':
         templateName = 're_contacto_rosalia_1'
@@ -293,6 +293,22 @@ Deno.serve(async (req) => {
         lead_id: leadId,
         conversacion_id: conversacionId,
       }, 502)
+    }
+
+    // === SCHEDULE OUTBOUND SEQUENCE for repescadora / outbound_frio ===
+    if (agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio') {
+      const agentConfig = (agente as Record<string, unknown>).config as Record<string, unknown> | undefined
+      const delays: number[] = (agentConfig?.secuencia_delays as number[]) || [172800000, 172800000] // 2 days default
+      const firstDelay = delays[0] || 172800000
+      const nextAt = new Date(Date.now() + firstDelay).toISOString()
+
+      await supabase
+        .from('ia_conversaciones')
+        .update({
+          secuencia_outbound_step: 0,
+          secuencia_outbound_next_at: nextAt,
+        })
+        .eq('id', conversacionId)
     }
 
     // === LOG ===

@@ -21,7 +21,11 @@ function resolveTemplateText(
     'ultimo_toque_y_no_molesto_mas__seguimos_o_lo_dejamos_aqui':
       `Último toque y no molesto más, seguimos o lo dejamos aquí?`,
     're_contacto_rosalia_1':
-      `Hola! Soy Rosalía del equipo de Madrigal Marketing. Te escribo porque creo que podemos ayudarte con tu negocio. Tienes un momento?`,
+      `Hola! Soy Rosalía de Madrigal Marketing. Acabo de incorporarme como directora del Departamento de Desarrollo de Proveedores y estoy revisando nuestra base de contactos.`,
+    're_contacto_rosalia_2':
+      `He visto que en su momento solicitaste información sobre nuestros servicios y quería saber si sigues en el sector y te interesaría que te cuente las novedades para la campaña 2026.`,
+    're_contacto_rosalia_3':
+      `Un saludo!`,
   }
 
   return TEMPLATES[templateName] || `[Plantilla: ${templateName}]`
