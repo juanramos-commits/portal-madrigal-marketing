@@ -1057,6 +1057,9 @@ Tono: ${estilo.tono || 'no disponible'}
 
     const contextAddendum = `
 
+--- REGLA CRÍTICA: BASE DE CONOCIMIENTO ---
+DEBES usar la herramienta consultar_base_conocimiento en tu PRIMERA interacción con cada lead y siempre que el lead pregunte sobre servicios, precios, metodología o qué hacemos. NUNCA improvises sobre los servicios de la empresa — consulta primero.
+
 --- REGLAS ADICIONALES DE FORMATO (OBLIGATORIO) ---
 
 FORMATO WHATSAPP: Escribe como una persona real en WhatsApp. NUNCA envíes un bloque largo.
