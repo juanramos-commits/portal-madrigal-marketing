@@ -127,9 +127,9 @@ function KPICard({ icon: Icon, label, value, sub, color, trend }) {
 function FunnelVisualization({ totals }) {
   const steps = [
     { label: 'Contactados', value: totals.leads, color: '#3b82f6' },
-    { label: 'Respondieron', value: totals.respuestas, color: '#8b5cf6' },
-    { label: 'Calificados', value: totals.leads - totals.descartados, color: '#f59e0b' },
-    { label: 'Agendados', value: totals.reuniones, color: '#10b981' },
+    { label: 'Respondieron', value: totals.respondieron, color: '#8b5cf6' },
+    { label: 'En proceso', value: totals.activas, color: '#f59e0b' },
+    { label: 'Agendados', value: totals.agendados, color: '#10b981' },
   ]
   const maxVal = Math.max(steps[0].value, 1)
 
@@ -349,7 +349,7 @@ function SentimientoSection({ dailySentimiento }) {
 function CostBreakdown({ costes, totals }) {
   const sum = (key) => costes.reduce((s, r) => s + (r[key] || 0), 0)
 
-  const rows = [
+  const allRows = [
     { label: 'Claude', calls: sum('claude_calls'), coste: sum('claude_coste'), color: '#8b5cf6' },
     { label: 'Haiku', calls: sum('haiku_calls'), coste: sum('haiku_coste'), color: '#06b6d4' },
     { label: 'Whisper', calls: sum('whisper_calls'), coste: sum('whisper_coste'), color: '#f59e0b' },
@@ -357,54 +357,60 @@ function CostBreakdown({ costes, totals }) {
     { label: 'WhatsApp', calls: sum('whatsapp_mensajes'), coste: sum('whatsapp_coste'), color: '#00a884' },
   ]
 
-  const total = rows.reduce((s, r) => s + r.coste, 0)
+  // Only show services that have usage
+  const rows = allRows.filter(r => r.calls > 0 || r.coste > 0)
+  const total = allRows.reduce((s, r) => s + r.coste, 0)
   const maxCoste = Math.max(...rows.map(r => r.coste), 0.01)
   const costePorLead = totals.leads > 0 ? total / totals.leads : 0
-  const costePorReunion = totals.reuniones > 0 ? total / totals.reuniones : 0
+  const costePorReunion = totals.agendados > 0 ? total / totals.agendados : 0
 
   return (
-    <div className="ia-met-panel">
-      <div className="ia-met-panel-header">
-        <DollarSign size={16} />
-        <span>Costes</span>
-        <span className="ia-met-cost-badge">{fmtMoney(total)}</span>
-      </div>
-
-      <div className="ia-met-cost-roi">
-        <div className="ia-met-cost-roi-item">
-          <Target size={15} />
-          <div>
-            <span className="ia-met-cost-roi-val">{fmtMoney(costePorLead)}</span>
-            <span className="ia-met-cost-roi-label">/ lead</span>
-          </div>
+    <div className="ia-met-panel ia-met-costs-panel">
+      <div className="ia-met-costs-top">
+        <div className="ia-met-costs-total-block">
+          <span className="ia-met-costs-total-label">Gasto total</span>
+          <span className="ia-met-costs-total-value">{fmtMoney(total)}</span>
         </div>
-        <div className="ia-met-cost-roi-item">
-          <Calendar size={15} />
-          <div>
-            <span className="ia-met-cost-roi-val">{fmtMoney(costePorReunion)}</span>
-            <span className="ia-met-cost-roi-label">/ reunión</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="ia-met-cost-bars">
-        {rows.map(r => {
-          const pct = (r.coste / maxCoste) * 100
-          return (
-            <div key={r.label} className="ia-met-cost-row">
-              <div className="ia-met-cost-row-info">
-                <span className="ia-met-cost-swatch" style={{ background: r.color }} />
-                <span className="ia-met-cost-name">{r.label}</span>
-                <span className="ia-met-cost-calls">{r.calls.toLocaleString()} calls</span>
-                <span className="ia-met-cost-amount">{fmtMoney(r.coste)}</span>
-              </div>
-              <div className="ia-met-cost-track">
-                <div className="ia-met-cost-fill" style={{ width: `${pct}%`, background: r.color }} />
-              </div>
+        <div className="ia-met-cost-roi">
+          <div className="ia-met-cost-roi-item">
+            <Target size={15} />
+            <div>
+              <span className="ia-met-cost-roi-val">{fmtMoney(costePorLead)}</span>
+              <span className="ia-met-cost-roi-label">/ lead</span>
             </div>
-          )
-        })}
+          </div>
+          <div className="ia-met-cost-roi-item">
+            <Calendar size={15} />
+            <div>
+              <span className="ia-met-cost-roi-val">{fmtMoney(costePorReunion)}</span>
+              <span className="ia-met-cost-roi-label">/ reunión</span>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {rows.length > 0 && (
+        <div className="ia-met-cost-bars">
+          {rows.map(r => {
+            const pct = (r.coste / maxCoste) * 100
+            const pctOfTotal = total > 0 ? ((r.coste / total) * 100).toFixed(0) : 0
+            return (
+              <div key={r.label} className="ia-met-cost-row">
+                <div className="ia-met-cost-row-info">
+                  <span className="ia-met-cost-swatch" style={{ background: r.color }} />
+                  <span className="ia-met-cost-name">{r.label}</span>
+                  <span className="ia-met-cost-calls">{r.calls.toLocaleString()} calls</span>
+                  <span className="ia-met-cost-pct">{pctOfTotal}%</span>
+                  <span className="ia-met-cost-amount">{fmtMoney(r.coste)}</span>
+                </div>
+                <div className="ia-met-cost-track">
+                  <div className="ia-met-cost-fill" style={{ width: `${pct}%`, background: r.color }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -484,6 +490,7 @@ export default function TabMetricas({ agenteId, agente }) {
   const [metricas, setMetricas] = useState([])
   const [costes, setCostes] = useState([])
   const [objeciones, setObjeciones] = useState([])
+  const [convStats, setConvStats] = useState({ total: 0, respondieron: 0, agendados: 0, descartados: 0, activas: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -499,7 +506,7 @@ export default function TabMetricas({ agenteId, agente }) {
     const { inicio: fechaInicio, fin: fechaFin } = getDateRange()
 
     try {
-      const [metricasRes, costesRes, objecionesRes] = await Promise.all([
+      const [metricasRes, costesRes, objecionesRes, convsRes] = await Promise.all([
         supabase
           .from('ia_metricas_diarias')
           .select('*')
@@ -520,6 +527,13 @@ export default function TabMetricas({ agenteId, agente }) {
           .eq('conversacion.agente_id', agenteId)
           .gte('created_at', new Date(fechaInicio).toISOString())
           .lte('created_at', new Date(fechaFin + 'T23:59:59').toISOString()),
+        // Real conversation-level stats for accurate funnel
+        supabase
+          .from('ia_conversaciones')
+          .select('id, estado, created_at')
+          .eq('agente_id', agenteId)
+          .gte('created_at', new Date(fechaInicio).toISOString())
+          .lte('created_at', new Date(fechaFin + 'T23:59:59').toISOString()),
       ])
 
       if (metricasRes.error) throw metricasRes.error
@@ -529,6 +543,18 @@ export default function TabMetricas({ agenteId, agente }) {
       setMetricas(metricasRes.data || [])
       setCostes(costesRes.data || [])
       setObjeciones(objecionesRes.data || [])
+
+      // Compute real conversation stats
+      const convs = convsRes.data || []
+      const noResponseStates = ['no_response', 'descartado']
+      const respondedStates = ['needs_reply', 'handoff_humano', 'waiting_reply', 'scheduled_followup', 'qualify', 'meeting_pref', 'agendado']
+      setConvStats({
+        total: convs.length,
+        respondieron: convs.filter(c => respondedStates.includes(c.estado)).length,
+        agendados: convs.filter(c => c.estado === 'agendado').length,
+        descartados: convs.filter(c => noResponseStates.includes(c.estado)).length,
+        activas: convs.filter(c => !noResponseStates.includes(c.estado) && c.estado !== 'agendado').length,
+      })
     } catch (err) {
       console.error('Error cargando métricas:', err)
       setError(err.message || 'Error al cargar métricas')
@@ -549,22 +575,25 @@ export default function TabMetricas({ agenteId, agente }) {
 
   const totals = useMemo(() => {
     const sum = (key) => metricas.reduce((s, r) => s + (r[key] || 0), 0)
-    const leads = sum('leads_contactados')
-    const respuestas = sum('respuestas_recibidas')
-    const reuniones = sum('reuniones_agendadas')
-    const descartados = sum('leads_descartados')
-    const conversion = leads > 0 ? reuniones / leads : 0
-    const tasaRespuesta = leads > 0 ? respuestas / leads : 0
     const msgEnviados = sum('mensajes_enviados')
     const msgRecibidos = sum('mensajes_recibidos')
+
+    // Use real conversation-level data for funnel metrics
+    const leads = convStats.total
+    const respondieron = convStats.respondieron
+    const agendados = convStats.agendados
+    const descartados = convStats.descartados
+    const activas = convStats.activas
+    const tasaRespuesta = leads > 0 ? respondieron / leads : 0
+    const conversion = leads > 0 ? agendados / leads : 0
 
     const gastoTotal = costes.reduce((s, r) => {
       return s + (r.claude_coste || 0) + (r.haiku_coste || 0) +
         (r.whisper_coste || 0) + (r.gpt4o_coste || 0) + (r.whatsapp_coste || 0)
     }, 0)
 
-    return { leads, respuestas, reuniones, descartados, conversion, tasaRespuesta, gastoTotal, msgEnviados, msgRecibidos }
-  }, [metricas, costes])
+    return { leads, respondieron, agendados, descartados, activas, conversion, tasaRespuesta, gastoTotal, msgEnviados, msgRecibidos }
+  }, [metricas, costes, convStats])
 
   const { metricasA, metricasB } = useMemo(() => {
     if (!agente?.ab_test_activo) return { metricasA: [], metricasB: [] }
@@ -653,21 +682,21 @@ export default function TabMetricas({ agenteId, agente }) {
       <div className="ia-met-kpis">
         <KPICard
           icon={Users}
-          label="Leads contactados"
+          label="Conversaciones"
           value={fmtNum(totals.leads)}
           color="#3b82f6"
         />
         <KPICard
           icon={MessageSquare}
-          label="Respuestas"
-          value={fmtNum(totals.respuestas)}
+          label="Respondieron"
+          value={fmtNum(totals.respondieron)}
           color="#8b5cf6"
           sub={`Tasa: ${fmtPct(totals.tasaRespuesta)}`}
         />
         <KPICard
           icon={Calendar}
-          label="Reuniones"
-          value={fmtNum(totals.reuniones)}
+          label="Agendados"
+          value={fmtNum(totals.agendados)}
           color="#10b981"
           sub={`Conversión: ${fmtPct(totals.conversion)}`}
         />
@@ -698,7 +727,7 @@ export default function TabMetricas({ agenteId, agente }) {
       {dailyData.length > 0 && (
         <div className="ia-met-charts">
           <SparkChart data={dailyData} dataKey="leads_contactados" label="Leads / día" color="#3b82f6" icon={Users} />
-          <SparkChart data={dailyData} dataKey="respuestas_recibidas" label="Respuestas / día" color="#8b5cf6" icon={MessageSquare} />
+          <SparkChart data={dailyData} dataKey="mensajes_recibidos" label="Msgs recibidos / día" color="#8b5cf6" icon={MessageSquare} />
           <SparkChart data={dailyData} dataKey="reuniones_agendadas" label="Reuniones / día" color="#10b981" icon={Calendar} />
           <SparkChart data={dailyData} dataKey="mensajes_enviados" label="Mensajes / día" color="#f59e0b" icon={Activity} />
         </div>
@@ -711,19 +740,19 @@ export default function TabMetricas({ agenteId, agente }) {
         </div>
       )}
 
+      {/* Costs — full width */}
+      {costes.length > 0 && <CostBreakdown costes={costes} totals={totals} />}
+
       {/* Bottom grid: 2 columns */}
       <div className="ia-met-bottom-grid">
-        {/* Left column */}
         <div className="ia-met-bottom-col">
           {agente?.ab_test_activo && metricasA.length > 0 && metricasB.length > 0 && (
             <ABComparison metricasA={metricasA} metricasB={metricasB} />
           )}
           <ObjecionesSummary objeciones={objeciones} />
         </div>
-        {/* Right column */}
         <div className="ia-met-bottom-col">
           <SentimientoSection dailySentimiento={dailySentimiento} />
-          {costes.length > 0 && <CostBreakdown costes={costes} totals={totals} />}
         </div>
       </div>
     </div>

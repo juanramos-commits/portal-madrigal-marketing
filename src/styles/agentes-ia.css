@@ -2077,28 +2077,54 @@
 }
 
 /* Cost Breakdown */
-.ia-met-cost-badge {
-  margin-left: auto;
-  font-size: 18px;
+.ia-met-costs-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.ia-met-costs-top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ia-met-costs-total-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100px;
+}
+
+.ia-met-costs-total-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.ia-met-costs-total-value {
+  font-size: 28px;
   font-weight: 700;
   color: var(--text);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
 .ia-met-cost-roi {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  flex: 1;
 }
 
 .ia-met-cost-roi-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
+  padding: 10px 16px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: 10px;
-  flex: 1;
   color: var(--text-secondary);
 }
 
@@ -2126,13 +2152,14 @@
 .ia-met-cost-bars {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  padding: 20px 24px;
 }
 
 .ia-met-cost-row {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .ia-met-cost-row-info {
@@ -2143,16 +2170,16 @@
 }
 
 .ia-met-cost-swatch {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
   flex-shrink: 0;
 }
 
 .ia-met-cost-name {
   font-weight: 500;
   color: var(--text);
-  min-width: 70px;
+  min-width: 75px;
 }
 
 .ia-met-cost-calls {
@@ -2161,10 +2188,19 @@
   flex: 1;
 }
 
+.ia-met-cost-pct {
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-width: 28px;
+  text-align: right;
+}
+
 .ia-met-cost-amount {
   font-weight: 600;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  min-width: 56px;
+  text-align: right;
 }
 
 .ia-met-cost-track {
@@ -2179,7 +2215,18 @@
   height: 100%;
   border-radius: 3px;
   transition: width 0.4s;
-  opacity: 0.8;
+  opacity: 0.85;
+}
+
+@media (max-width: 640px) {
+  .ia-met-costs-top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .ia-met-cost-roi {
+    width: 100%;
+  }
 }
 
 /* Objeciones */
