@@ -31,7 +31,7 @@ export default function AsignarLeadsCRMModal({ open, onClose, agenteId }) {
       // Fetch CRM leads with etapa info
       const { data, error: err } = await supabase
         .from('ventas_leads')
-        .select('id, nombre, telefono, email, servicio_interesado, etapa_actual_id')
+        .select('id, nombre, telefono, email, etapa_actual_id')
         .order('created_at', { ascending: false })
         .limit(500)
 
@@ -54,7 +54,7 @@ export default function AsignarLeadsCRMModal({ open, onClose, agenteId }) {
       (l.nombre || '').toLowerCase().includes(term) ||
       (l.telefono || '').includes(term) ||
       (l.email || '').toLowerCase().includes(term) ||
-      (l.servicio_interesado || '').toLowerCase().includes(term)
+      (l.email || '').toLowerCase().includes(term)
     )
   }, [leads, busqueda])
 
@@ -247,7 +247,6 @@ export default function AsignarLeadsCRMModal({ open, onClose, agenteId }) {
                       <th>Nombre</th>
                       <th>Telefono</th>
                       <th>Email</th>
-                      <th>Servicio</th>
                       <th>Etapa</th>
                     </tr>
                   </thead>
@@ -268,7 +267,6 @@ export default function AsignarLeadsCRMModal({ open, onClose, agenteId }) {
                         <td>{lead.nombre || '-'}</td>
                         <td className="ia-crm-phone">{lead.telefono || '-'}</td>
                         <td>{lead.email || '-'}</td>
-                        <td>{lead.servicio_interesado || '-'}</td>
                         <td>{lead.etapa_actual_id ? 'Asignada' : '-'}</td>
                       </tr>
                     ))}
@@ -283,24 +281,23 @@ export default function AsignarLeadsCRMModal({ open, onClose, agenteId }) {
             )}
 
             {/* Actions */}
-            <div className="ia-modal-actions">
-              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
+            <div className="ia-modal-actions" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)', marginRight: 'auto' }}>
                 {selected.size} lead{selected.size !== 1 ? 's' : ''} seleccionado{selected.size !== 1 ? 's' : ''}
               </span>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" className="ia-btn ia-btn-secondary" onClick={handleClose}>
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="ia-btn ia-btn-primary"
-                  onClick={handleAsignar}
-                  disabled={selected.size === 0 || assigning}
-                >
-                  <Users size={14} />
-                  {assigning ? 'Asignando...' : `Asignar ${selected.size} lead${selected.size !== 1 ? 's' : ''}`}
-                </button>
-              </div>
+              <button type="button" className="ia-btn ia-btn-secondary" onClick={handleClose} style={{ minWidth: 100 }}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="ia-btn ia-btn-primary"
+                onClick={handleAsignar}
+                disabled={selected.size === 0 || assigning}
+                style={{ minWidth: 100 }}
+              >
+                <Users size={14} />
+                {assigning ? 'Asignando...' : `Asignar ${selected.size}`}
+              </button>
             </div>
           </>
         )}
