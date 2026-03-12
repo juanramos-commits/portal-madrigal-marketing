@@ -393,7 +393,12 @@ Deno.serve(async (req) => {
     const mediaUrl = msg.media_url as string | undefined
 
     if (i > 0) {
-      await sleep(1000 + Math.random() * 1000)
+      // Simulate typing: ~30ms per character + random variance (2-6 seconds typical)
+      const typingDelay = Math.min(
+        7000,
+        Math.max(2000, content.length * 30 + (Math.random() * 2000 - 500)),
+      )
+      await sleep(typingDelay)
     }
 
     let result: { ok: boolean; waMessageId?: string; error?: string } = {
