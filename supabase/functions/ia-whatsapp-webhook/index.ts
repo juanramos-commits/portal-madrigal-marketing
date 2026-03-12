@@ -792,14 +792,40 @@ Deno.serve(async (req) => {
     console.error('WA_APP_SECRET not set — SECURITY RISK: webhook signature verification DISABLED')
   }
 
-  // === RETURN 200 IMMEDIATELY (Meta requires <5s) ===
-  // Process asynchronously to avoid Meta timeouts and retries
-  // Use waitUntil pattern for Deno Deploy / Edge Functions
+  // === PROCESS STATUS UPDATES SYNCHRONOUSLY (fast, just DB updates) ===
+  try {
+    const body = JSON.parse(rawBody)
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    )
+    const entries = (body.entry as Array<Record<string, unknown>>) || []
+    for (const entry of entries) {
+      const changes = (entry.changes as Array<Record<string, unknown>>) || []
+      for (const change of changes) {
+        const value = change.value as Record<string, unknown>
+        if (!value) continue
+        const statuses = (value.statuses as Array<Record<string, unknown>>) || []
+        for (const status of statuses) {
+          const waMessageId = status.id as string
+          const waStatus = status.status as string
+          if (['sent', 'delivered', 'read'].includes(waStatus)) {
+            await supabase
+              .from('ia_mensajes')
+              .update({ wa_status: waStatus })
+              .eq('wa_message_id', waMessageId)
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error processing status updates:', err)
+  }
+
+  // === PROCESS MESSAGES ASYNCHRONOUSLY (heavy: AI, transcription, etc.) ===
   const processingPromise = processWebhookAsync(rawBody, appSecret, waToken, openaiKey)
     .catch(err => console.error('Async webhook processing error:', err))
 
-  // In Deno Deploy, we need to keep the promise alive
-  // The EdgeRuntime will wait for it after returning the response
   ;(globalThis as Record<string, unknown>).__pendingPromise = processingPromise
 
   return jsonResponse({ status: 'ok' })
