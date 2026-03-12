@@ -461,6 +461,7 @@ Deno.serve(async (req) => {
   // Update costs
   const sentCount = results.filter((r) => r.ok).length
   if (sentCount > 0) {
+    const agentConfig = (agente.config as Record<string, unknown>) || {}
     const costPerMsg =
       (agentConfig.wa_cost_per_msg as number) || 0.005
     try {
