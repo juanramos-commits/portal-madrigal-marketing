@@ -390,7 +390,7 @@
 .ia-field input:focus,
 .ia-field select:focus,
 .ia-field textarea:focus {
-  border-color: var(--primary);
+  border-color: var(--border-focus, rgba(255, 255, 255, 0.2));
 }
 
 .ia-field textarea {
