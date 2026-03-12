@@ -1563,7 +1563,7 @@ ${styleAddendum}`
     }
 
     // Advance qualify → meeting_pref when score is high enough and enough exchanges happened
-    const meetingScoreThreshold = (agentConfig.umbral_score_reunion as number) || 40
+    const meetingScoreThreshold = (agentConfig.umbral_score_reunion as number) || 60
     const { count: exchangeCount } = await supabase
       .from('ia_mensajes')
       .select('id', { count: 'exact', head: true })
