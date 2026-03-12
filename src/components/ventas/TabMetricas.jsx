@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import {
-  Users, MessageSquare, Calendar, TrendingUp, Star, DollarSign,
-  BarChart3, GitCompare, AlertTriangle, CheckCircle, ChevronDown,
-  Loader2, RefreshCw, Heart, Filter, XCircle
+  Users, MessageSquare, Calendar, TrendingUp, TrendingDown,
+  DollarSign, BarChart3, GitCompare, AlertTriangle, CheckCircle,
+  Loader2, RefreshCw, Heart, Filter, XCircle, Zap, Target,
+  ArrowUpRight, ArrowDownRight, Activity, PieChart
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
@@ -40,42 +41,50 @@ function shortDate(dateStr) {
   return `${d.getDate()}/${d.getMonth() + 1}`
 }
 
+function fmtNum(n) {
+  if (n == null) return '0'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
+  return n.toLocaleString()
+}
+
 // ---------------------------------------------------------------------------
-// Date Range Selector
+// Date Range Pills
 // ---------------------------------------------------------------------------
 
 const RANGE_OPTIONS = [
-  { value: '7', label: 'Últimos 7 días' },
-  { value: '30', label: 'Últimos 30 días' },
-  { value: '90', label: 'Últimos 90 días' },
-  { value: 'custom', label: 'Personalizado' },
+  { value: '7', label: '7d' },
+  { value: '30', label: '30d' },
+  { value: '90', label: '90d' },
+  { value: 'custom', label: 'Custom' },
 ]
 
 function DateRangeSelector({ rango, desde, hasta, onChange }) {
   return (
-    <div className="ia-metricas-rango">
-      <select
-        className="ia-metricas-select"
-        value={rango}
-        onChange={e => onChange({ rango: e.target.value })}
-      >
+    <div className="ia-met-range">
+      <div className="ia-met-range-pills">
         {RANGE_OPTIONS.map(o => (
-          <option key={o.value} value={o.value}>{o.label}</option>
+          <button
+            key={o.value}
+            className={`ia-met-range-pill ${rango === o.value ? 'active' : ''}`}
+            onClick={() => onChange({ rango: o.value })}
+          >
+            {o.label}
+          </button>
         ))}
-      </select>
+      </div>
       {rango === 'custom' && (
-        <div className="ia-metricas-fechas">
+        <div className="ia-met-range-dates">
           <input
             type="date"
-            className="ia-metricas-input-fecha"
+            className="ia-met-date-input"
             value={desde}
             max={hasta || undefined}
             onChange={e => onChange({ desde: e.target.value })}
           />
-          <span className="ia-metricas-sep">&mdash;</span>
+          <span className="ia-met-date-sep">—</span>
           <input
             type="date"
-            className="ia-metricas-input-fecha"
+            className="ia-met-date-input"
             value={hasta}
             min={desde || undefined}
             onChange={e => onChange({ hasta: e.target.value })}
@@ -87,69 +96,73 @@ function DateRangeSelector({ rango, desde, hasta, onChange }) {
 }
 
 // ---------------------------------------------------------------------------
-// Summary Card
+// KPI Card (big number style)
 // ---------------------------------------------------------------------------
 
-function SummaryCard({ icon: Icon, label, value, color, sub }) {
+function KPICard({ icon: Icon, label, value, sub, color, trend }) {
   return (
-    <div className="ia-metricas-card">
-      <div className="ia-metricas-card-icon" style={{ color }}>
-        <Icon size={20} />
+    <div className="ia-met-kpi">
+      <div className="ia-met-kpi-top">
+        <div className="ia-met-kpi-icon" style={{ background: color + '18', color }}>
+          <Icon size={18} />
+        </div>
+        {trend !== undefined && trend !== null && (
+          <span className={`ia-met-kpi-trend ${trend >= 0 ? 'positive' : 'negative'}`}>
+            {trend >= 0 ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+            {Math.abs(trend).toFixed(1)}%
+          </span>
+        )}
       </div>
-      <div className="ia-metricas-card-body">
-        <span className="ia-metricas-card-value">{value}</span>
-        <span className="ia-metricas-card-label">{label}</span>
-        {sub && <span className="ia-metricas-card-sub">{sub}</span>}
-      </div>
+      <div className="ia-met-kpi-value">{value}</div>
+      <div className="ia-met-kpi-label">{label}</div>
+      {sub && <div className="ia-met-kpi-sub">{sub}</div>}
     </div>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Funnel Visualization
+// Funnel (horizontal bars, premium)
 // ---------------------------------------------------------------------------
 
 function FunnelVisualization({ totals }) {
   const steps = [
-    { label: 'Contactados', value: totals.leads, color: '#3b82f6', gradient: 'linear-gradient(90deg, #3b82f6, #60a5fa)' },
-    { label: 'Respondieron', value: totals.respuestas, color: '#8b5cf6', gradient: 'linear-gradient(90deg, #8b5cf6, #a78bfa)' },
-    { label: 'Calificados', value: totals.leads - totals.descartados, color: '#f59e0b', gradient: 'linear-gradient(90deg, #f59e0b, #fbbf24)' },
-    { label: 'Agendados', value: totals.reuniones, color: '#10b981', gradient: 'linear-gradient(90deg, #10b981, #34d399)' },
+    { label: 'Contactados', value: totals.leads, color: '#3b82f6' },
+    { label: 'Respondieron', value: totals.respuestas, color: '#8b5cf6' },
+    { label: 'Calificados', value: totals.leads - totals.descartados, color: '#f59e0b' },
+    { label: 'Agendados', value: totals.reuniones, color: '#10b981' },
   ]
-
   const maxVal = Math.max(steps[0].value, 1)
 
   return (
-    <div className="ia-funnel-section">
-      <div className="ia-funnel-header">
-        <Filter size={18} />
-        <h3>Embudo de conversión</h3>
+    <div className="ia-met-panel">
+      <div className="ia-met-panel-header">
+        <Filter size={16} />
+        <span>Embudo de conversión</span>
       </div>
-      <div className="ia-funnel-steps">
+      <div className="ia-met-funnel">
         {steps.map((step, i) => {
-          const widthPct = Math.max((step.value / maxVal) * 100, 12)
+          const widthPct = Math.max((step.value / maxVal) * 100, 8)
           const prevValue = i > 0 ? steps[i - 1].value : null
           const dropOff = prevValue && prevValue > 0
             ? ((prevValue - step.value) / prevValue * 100).toFixed(0)
             : null
 
           return (
-            <div key={step.label} className="ia-funnel-step">
-              {dropOff !== null && (
-                <div className="ia-funnel-dropoff">
-                  <span className="ia-funnel-dropoff-arrow">&#9662;</span>
-                  <span className="ia-funnel-dropoff-pct">-{dropOff}%</span>
+            <div key={step.label} className="ia-met-funnel-step">
+              <div className="ia-met-funnel-info">
+                <span className="ia-met-funnel-label">{step.label}</span>
+                <div className="ia-met-funnel-nums">
+                  <span className="ia-met-funnel-value" style={{ color: step.color }}>{step.value}</span>
+                  {dropOff !== null && (
+                    <span className="ia-met-funnel-drop">-{dropOff}%</span>
+                  )}
                 </div>
-              )}
-              <div className="ia-funnel-bar-row">
-                <span className="ia-funnel-label">{step.label}</span>
-                <div className="ia-funnel-bar-track">
-                  <div
-                    className="ia-funnel-bar-fill"
-                    style={{ width: `${widthPct}%`, background: step.gradient }}
-                  />
-                </div>
-                <span className="ia-funnel-value" style={{ color: step.color }}>{step.value}</span>
+              </div>
+              <div className="ia-met-funnel-track">
+                <div
+                  className="ia-met-funnel-fill"
+                  style={{ width: `${widthPct}%`, background: step.color }}
+                />
               </div>
             </div>
           )
@@ -160,34 +173,36 @@ function FunnelVisualization({ totals }) {
 }
 
 // ---------------------------------------------------------------------------
-// CSS Bar Chart
+// Mini Sparkline Bar Chart
 // ---------------------------------------------------------------------------
 
-function BarChart({ data, dataKey, label, color = 'var(--primary, #3b82f6)' }) {
+function SparkChart({ data, dataKey, label, color = '#3b82f6', icon: Icon = BarChart3 }) {
   const max = Math.max(...data.map(d => d[dataKey] || 0), 1)
+  const total = data.reduce((s, d) => s + (d[dataKey] || 0), 0)
 
   return (
-    <div className="ia-chart-container">
-      <div className="ia-chart-header">
-        <BarChart3 size={16} />
-        <span>{label}</span>
+    <div className="ia-met-spark">
+      <div className="ia-met-spark-header">
+        <div className="ia-met-spark-title">
+          <Icon size={14} style={{ color }} />
+          <span>{label}</span>
+        </div>
+        <span className="ia-met-spark-total" style={{ color }}>{fmtNum(total)}</span>
       </div>
-      <div className="ia-chart-bars">
+      <div className="ia-met-spark-bars">
         {data.map((d, i) => {
           const val = d[dataKey] || 0
           const pct = (val / max) * 100
           return (
-            <div key={d.fecha || i} className="ia-chart-bar-col" title={`${shortDate(d.fecha)}: ${val}`}>
-              <div className="ia-chart-bar-track">
-                <div
-                  className="ia-chart-bar-fill"
-                  style={{ height: `${pct}%`, background: color }}
-                />
-              </div>
-              <span className="ia-chart-bar-label">{shortDate(d.fecha)}</span>
+            <div key={d.fecha || i} className="ia-met-spark-col" title={`${shortDate(d.fecha)}: ${val}`}>
+              <div className="ia-met-spark-bar" style={{ height: `${Math.max(pct, 3)}%`, background: color }} />
             </div>
           )
         })}
+      </div>
+      <div className="ia-met-spark-dates">
+        <span>{shortDate(data[0]?.fecha)}</span>
+        <span>{shortDate(data[data.length - 1]?.fecha)}</span>
       </div>
     </div>
   )
@@ -202,119 +217,61 @@ function ABComparison({ metricasA, metricasB }) {
 
   const rows = [
     { label: 'Leads contactados', key: 'leads_contactados' },
-    { label: 'Respuestas recibidas', key: 'respuestas_recibidas' },
-    { label: 'Reuniones agendadas', key: 'reuniones_agendadas' },
-    { label: 'Leads descartados', key: 'leads_descartados' },
+    { label: 'Respuestas', key: 'respuestas_recibidas' },
+    { label: 'Reuniones', key: 'reuniones_agendadas' },
+    { label: 'Descartados', key: 'leads_descartados' },
     { label: 'Objeciones detectadas', key: 'objeciones_detectadas' },
     { label: 'Objeciones resueltas', key: 'objeciones_resueltas' },
   ]
 
-  return (
-    <div className="ia-ab-section">
-      <div className="ia-ab-header">
-        <GitCompare size={18} />
-        <h3>Comparación A/B</h3>
-      </div>
-      <table className="ia-ab-table">
-        <thead>
-          <tr>
-            <th>Métrica</th>
-            <th>Versión A</th>
-            <th>Versión B</th>
-            <th>Diferencia</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(r => {
-            const a = sum(metricasA, r.key)
-            const b = sum(metricasB, r.key)
-            const diff = b - a
-            const diffPct = a > 0 ? ((diff / a) * 100).toFixed(1) : '—'
-            return (
-              <tr key={r.key}>
-                <td>{r.label}</td>
-                <td>{a}</td>
-                <td>{b}</td>
-                <td className={diff > 0 ? 'ia-ab-positive' : diff < 0 ? 'ia-ab-negative' : ''}>
-                  {diff > 0 ? '+' : ''}{diff}{diffPct !== '—' ? ` (${diffPct}%)` : ''}
-                </td>
-              </tr>
-            )
-          })}
-          {/* Conversion rate row */}
-          {(() => {
-            const leadsA = sum(metricasA, 'leads_contactados')
-            const reunA = sum(metricasA, 'reuniones_agendadas')
-            const leadsB = sum(metricasB, 'leads_contactados')
-            const reunB = sum(metricasB, 'reuniones_agendadas')
-            const rateA = leadsA > 0 ? reunA / leadsA : 0
-            const rateB = leadsB > 0 ? reunB / leadsB : 0
-            return (
-              <tr className="ia-ab-highlight">
-                <td>Tasa de conversión</td>
-                <td>{fmtPct(rateA)}</td>
-                <td>{fmtPct(rateB)}</td>
-                <td className={rateB > rateA ? 'ia-ab-positive' : rateB < rateA ? 'ia-ab-negative' : ''}>
-                  {rateB > rateA ? '+' : ''}{((rateB - rateA) * 100).toFixed(1)}pp
-                </td>
-              </tr>
-            )
-          })()}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Sentimiento Section
-// ---------------------------------------------------------------------------
-
-function SentimientoSection({ dailySentimiento }) {
-  if (!dailySentimiento || dailySentimiento.length === 0) return null
-
-  const maxSent = Math.max(...dailySentimiento.map(d => d.sentimiento_promedio || 0), 1)
+  const leadsA = sum(metricasA, 'leads_contactados')
+  const reunA = sum(metricasA, 'reuniones_agendadas')
+  const leadsB = sum(metricasB, 'leads_contactados')
+  const reunB = sum(metricasB, 'reuniones_agendadas')
+  const rateA = leadsA > 0 ? reunA / leadsA : 0
+  const rateB = leadsB > 0 ? reunB / leadsB : 0
 
   return (
-    <div className="ia-sentimiento-section">
-      <div className="ia-sentimiento-header">
-        <Heart size={18} />
-        <h3>Sentimiento y calidad</h3>
+    <div className="ia-met-panel">
+      <div className="ia-met-panel-header">
+        <GitCompare size={16} />
+        <span>Comparación A/B</span>
       </div>
-      <div className="ia-sentimiento-table-wrap">
-        <table className="ia-sentimiento-table">
+      <div className="ia-met-table-wrap">
+        <table className="ia-met-table">
           <thead>
             <tr>
-              <th>Fecha</th>
-              <th>Sentimiento promedio</th>
-              <th>Calidad promedio</th>
-              <th>Visual</th>
+              <th>Métrica</th>
+              <th>A</th>
+              <th>B</th>
+              <th>Dif.</th>
             </tr>
           </thead>
           <tbody>
-            {dailySentimiento.map(d => {
-              const sentPct = maxSent > 0 ? (d.sentimiento_promedio / maxSent) * 100 : 0
-              const sentColor = d.sentimiento_promedio >= 0.6
-                ? '#10b981'
-                : d.sentimiento_promedio >= 0.3
-                  ? '#f59e0b'
-                  : '#ef4444'
+            {rows.map(r => {
+              const a = sum(metricasA, r.key)
+              const b = sum(metricasB, r.key)
+              const diff = b - a
+              const diffPct = a > 0 ? ((diff / a) * 100).toFixed(1) : '—'
               return (
-                <tr key={d.fecha}>
-                  <td>{shortDate(d.fecha)}</td>
-                  <td>{d.sentimiento_promedio != null ? d.sentimiento_promedio.toFixed(2) : '—'}</td>
-                  <td>{d.score_calidad_promedio != null ? d.score_calidad_promedio.toFixed(1) : '—'}</td>
-                  <td>
-                    <div className="ia-sentimiento-bar-track">
-                      <div
-                        className="ia-sentimiento-bar-fill"
-                        style={{ width: `${sentPct}%`, background: sentColor }}
-                      />
-                    </div>
+                <tr key={r.key}>
+                  <td>{r.label}</td>
+                  <td>{a}</td>
+                  <td>{b}</td>
+                  <td className={diff > 0 ? 'ia-met-pos' : diff < 0 ? 'ia-met-neg' : ''}>
+                    {diff > 0 ? '+' : ''}{diff}{diffPct !== '—' ? ` (${diffPct}%)` : ''}
                   </td>
                 </tr>
               )
             })}
+            <tr className="ia-met-table-highlight">
+              <td>Conversión</td>
+              <td>{fmtPct(rateA)}</td>
+              <td>{fmtPct(rateB)}</td>
+              <td className={rateB > rateA ? 'ia-met-pos' : rateB < rateA ? 'ia-met-neg' : ''}>
+                {rateB > rateA ? '+' : ''}{((rateB - rateA) * 100).toFixed(1)}pp
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -323,79 +280,130 @@ function SentimientoSection({ dailySentimiento }) {
 }
 
 // ---------------------------------------------------------------------------
-// Cost Breakdown (with ROI)
+// Sentiment Gauge
+// ---------------------------------------------------------------------------
+
+function SentimientoSection({ dailySentimiento }) {
+  if (!dailySentimiento || dailySentimiento.length === 0) return null
+
+  const avgSent = dailySentimiento.reduce((s, d) => s + (d.sentimiento_promedio || 0), 0) / dailySentimiento.length
+  const avgCalidad = dailySentimiento.reduce((s, d) => s + (d.score_calidad_promedio || 0), 0) / dailySentimiento.length
+
+  const sentColor = avgSent >= 0.6 ? '#10b981' : avgSent >= 0.3 ? '#f59e0b' : '#ef4444'
+  const sentLabel = avgSent >= 0.6 ? 'Positivo' : avgSent >= 0.3 ? 'Neutro' : 'Negativo'
+
+  return (
+    <div className="ia-met-panel">
+      <div className="ia-met-panel-header">
+        <Heart size={16} />
+        <span>Sentimiento y calidad</span>
+      </div>
+      <div className="ia-met-sentiment-grid">
+        <div className="ia-met-gauge">
+          <div className="ia-met-gauge-ring" style={{ '--gauge-color': sentColor, '--gauge-pct': `${avgSent * 100}%` }}>
+            <div className="ia-met-gauge-inner">
+              <span className="ia-met-gauge-value" style={{ color: sentColor }}>
+                {(avgSent * 100).toFixed(0)}
+              </span>
+            </div>
+          </div>
+          <span className="ia-met-gauge-label" style={{ color: sentColor }}>{sentLabel}</span>
+          <span className="ia-met-gauge-sub">Sentimiento promedio</span>
+        </div>
+        <div className="ia-met-gauge">
+          <div className="ia-met-gauge-ring" style={{ '--gauge-color': '#3b82f6', '--gauge-pct': `${avgCalidad * 10}%` }}>
+            <div className="ia-met-gauge-inner">
+              <span className="ia-met-gauge-value" style={{ color: '#3b82f6' }}>
+                {avgCalidad.toFixed(1)}
+              </span>
+            </div>
+          </div>
+          <span className="ia-met-gauge-label" style={{ color: '#3b82f6' }}>/10</span>
+          <span className="ia-met-gauge-sub">Calidad promedio</span>
+        </div>
+        <div className="ia-met-sentiment-history">
+          {dailySentimiento.slice(-10).map(d => {
+            const c = d.sentimiento_promedio >= 0.6 ? '#10b981' : d.sentimiento_promedio >= 0.3 ? '#f59e0b' : '#ef4444'
+            return (
+              <div key={d.fecha} className="ia-met-sentiment-dot-row" title={`${shortDate(d.fecha)}: ${(d.sentimiento_promedio * 100).toFixed(0)}%`}>
+                <span className="ia-met-sentiment-dot-date">{shortDate(d.fecha)}</span>
+                <div className="ia-met-sentiment-dot-track">
+                  <div className="ia-met-sentiment-dot-fill" style={{ width: `${d.sentimiento_promedio * 100}%`, background: c }} />
+                </div>
+                <span className="ia-met-sentiment-dot-val" style={{ color: c }}>
+                  {(d.sentimiento_promedio * 100).toFixed(0)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Cost Breakdown (modern cards)
 // ---------------------------------------------------------------------------
 
 function CostBreakdown({ costes, totals }) {
   const sum = (key) => costes.reduce((s, r) => s + (r[key] || 0), 0)
 
   const rows = [
-    { label: 'Claude (Sonnet)', calls: sum('claude_calls'), coste: sum('claude_coste') },
-    { label: 'Haiku', calls: sum('haiku_calls'), coste: sum('haiku_coste') },
-    { label: 'Whisper', calls: sum('whisper_calls'), coste: sum('whisper_coste') },
-    { label: 'GPT-4o', calls: sum('gpt4o_calls'), coste: sum('gpt4o_coste') },
-    { label: 'WhatsApp', calls: sum('whatsapp_mensajes'), coste: sum('whatsapp_coste') },
+    { label: 'Claude', calls: sum('claude_calls'), coste: sum('claude_coste'), color: '#8b5cf6' },
+    { label: 'Haiku', calls: sum('haiku_calls'), coste: sum('haiku_coste'), color: '#06b6d4' },
+    { label: 'Whisper', calls: sum('whisper_calls'), coste: sum('whisper_coste'), color: '#f59e0b' },
+    { label: 'GPT-4o', calls: sum('gpt4o_calls'), coste: sum('gpt4o_coste'), color: '#10b981' },
+    { label: 'WhatsApp', calls: sum('whatsapp_mensajes'), coste: sum('whatsapp_coste'), color: '#00a884' },
   ]
 
   const total = rows.reduce((s, r) => s + r.coste, 0)
-  const maxCoste = Math.max(...rows.map(r => r.coste), 1)
-
+  const maxCoste = Math.max(...rows.map(r => r.coste), 0.01)
   const costePorLead = totals.leads > 0 ? total / totals.leads : 0
   const costePorReunion = totals.reuniones > 0 ? total / totals.reuniones : 0
 
   return (
-    <div className="ia-costes-section">
-      <div className="ia-costes-header">
-        <DollarSign size={18} />
-        <h3>Desglose de costes</h3>
-        <span className="ia-costes-total">{fmtMoney(total)}</span>
+    <div className="ia-met-panel">
+      <div className="ia-met-panel-header">
+        <DollarSign size={16} />
+        <span>Costes</span>
+        <span className="ia-met-cost-badge">{fmtMoney(total)}</span>
       </div>
-      <table className="ia-costes-table">
-        <thead>
-          <tr>
-            <th>Servicio</th>
-            <th>Llamadas / Msgs</th>
-            <th>Coste</th>
-            <th>Proporción</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(r => (
-            <tr key={r.label}>
-              <td>{r.label}</td>
-              <td>{r.calls.toLocaleString()}</td>
-              <td>{fmtMoney(r.coste)}</td>
-              <td>
-                <div className="ia-costes-bar-track">
-                  <div
-                    className="ia-costes-bar-fill"
-                    style={{ width: `${(r.coste / maxCoste) * 100}%` }}
-                  />
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td><strong>Total</strong></td>
-            <td></td>
-            <td><strong>{fmtMoney(total)}</strong></td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
 
-      {/* ROI Metrics */}
-      <div className="ia-costes-roi">
-        <div className="ia-costes-roi-card">
-          <span className="ia-costes-roi-value">{fmtMoney(costePorLead)}</span>
-          <span className="ia-costes-roi-label">Coste por lead contactado</span>
+      <div className="ia-met-cost-roi">
+        <div className="ia-met-cost-roi-item">
+          <Target size={15} />
+          <div>
+            <span className="ia-met-cost-roi-val">{fmtMoney(costePorLead)}</span>
+            <span className="ia-met-cost-roi-label">/ lead</span>
+          </div>
         </div>
-        <div className="ia-costes-roi-card">
-          <span className="ia-costes-roi-value">{fmtMoney(costePorReunion)}</span>
-          <span className="ia-costes-roi-label">Coste por reunión agendada</span>
+        <div className="ia-met-cost-roi-item">
+          <Calendar size={15} />
+          <div>
+            <span className="ia-met-cost-roi-val">{fmtMoney(costePorReunion)}</span>
+            <span className="ia-met-cost-roi-label">/ reunión</span>
+          </div>
         </div>
+      </div>
+
+      <div className="ia-met-cost-bars">
+        {rows.map(r => {
+          const pct = (r.coste / maxCoste) * 100
+          return (
+            <div key={r.label} className="ia-met-cost-row">
+              <div className="ia-met-cost-row-info">
+                <span className="ia-met-cost-swatch" style={{ background: r.color }} />
+                <span className="ia-met-cost-name">{r.label}</span>
+                <span className="ia-met-cost-calls">{r.calls.toLocaleString()} calls</span>
+                <span className="ia-met-cost-amount">{fmtMoney(r.coste)}</span>
+              </div>
+              <div className="ia-met-cost-track">
+                <div className="ia-met-cost-fill" style={{ width: `${pct}%`, background: r.color }} />
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -420,40 +428,42 @@ function ObjecionesSummary({ objeciones }) {
   })
 
   const tipoLabels = {
-    precio: 'Precio',
-    tiempo: 'Tiempo',
-    confianza: 'Confianza',
-    competencia: 'Competencia',
-    pensar: 'Necesita pensar',
-    otro: 'Otro',
+    precio: 'Precio', tiempo: 'Tiempo', confianza: 'Confianza',
+    competencia: 'Competencia', pensar: 'Necesita pensar', otro: 'Otro',
+  }
+  const tipoColors = {
+    precio: '#ef4444', tiempo: '#f59e0b', confianza: '#8b5cf6',
+    competencia: '#3b82f6', pensar: '#06b6d4', otro: '#6b7280',
   }
 
   const totalObj = objeciones.length
   const totalRes = objeciones.filter(o => o.resuelta).length
+  const resRate = totalObj > 0 ? (totalRes / totalObj) : 0
 
   return (
-    <div className="ia-objeciones-section">
-      <div className="ia-objeciones-header">
-        <AlertTriangle size={18} />
-        <h3>Objeciones</h3>
-        <span className="ia-objeciones-ratio">
-          <CheckCircle size={14} />
-          {totalRes}/{totalObj} resueltas ({totalObj > 0 ? fmtPct(totalRes / totalObj) : '0%'})
+    <div className="ia-met-panel">
+      <div className="ia-met-panel-header">
+        <AlertTriangle size={16} />
+        <span>Objeciones</span>
+        <span className={`ia-met-obj-badge ${resRate >= 0.7 ? 'good' : resRate >= 0.4 ? 'warn' : 'bad'}`}>
+          <CheckCircle size={12} />
+          {fmtPct(resRate)} resueltas
         </span>
       </div>
-      <div className="ia-objeciones-grid">
+      <div className="ia-met-obj-grid">
         {tipos.map(t => {
           const g = grouped[t]
           if (g.total === 0) return null
           const pct = g.total > 0 ? (g.resueltas / g.total) * 100 : 0
           return (
-            <div key={t} className="ia-objecion-item">
-              <div className="ia-objecion-label">
-                <span>{tipoLabels[t]}</span>
-                <span className="ia-objecion-count">{g.resueltas}/{g.total}</span>
+            <div key={t} className="ia-met-obj-item">
+              <div className="ia-met-obj-info">
+                <span className="ia-met-obj-dot" style={{ background: tipoColors[t] }} />
+                <span className="ia-met-obj-name">{tipoLabels[t]}</span>
+                <span className="ia-met-obj-count">{g.resueltas}/{g.total}</span>
               </div>
-              <div className="ia-objecion-bar-track">
-                <div className="ia-objecion-bar-fill" style={{ width: `${pct}%` }} />
+              <div className="ia-met-obj-track">
+                <div className="ia-met-obj-fill" style={{ width: `${pct}%`, background: tipoColors[t] }} />
               </div>
             </div>
           )
@@ -477,7 +487,6 @@ export default function TabMetricas({ agenteId, agente }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Compute date range fresh each time (no stale memo for "today")
   const getDateRange = useCallback(() => {
     if (rango === 'custom') return { inicio: desde, fin: hasta }
     return { inicio: formatDate(daysAgo(Number(rango))), fin: formatDate(new Date()) }
@@ -487,11 +496,9 @@ export default function TabMetricas({ agenteId, agente }) {
     if (!agenteId) return
     setLoading(true)
     setError(null)
-
     const { inicio: fechaInicio, fin: fechaFin } = getDateRange()
 
     try {
-      // Fetch objeciones through conversaciones that belong to this agent
       const [metricasRes, costesRes, objecionesRes] = await Promise.all([
         supabase
           .from('ia_metricas_diarias')
@@ -530,9 +537,7 @@ export default function TabMetricas({ agenteId, agente }) {
     }
   }, [agenteId, getDateRange])
 
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
+  useEffect(() => { fetchData() }, [fetchData])
 
   const handleRangoChange = ({ rango: r, desde: d, hasta: h }) => {
     if (r !== undefined) setRango(r)
@@ -540,7 +545,7 @@ export default function TabMetricas({ agenteId, agente }) {
     if (h !== undefined) setHasta(h)
   }
 
-  // ---------- Computed summaries ----------
+  // ---------- Computed ----------
 
   const totals = useMemo(() => {
     const sum = (key) => metricas.reduce((s, r) => s + (r[key] || 0), 0)
@@ -550,19 +555,17 @@ export default function TabMetricas({ agenteId, agente }) {
     const descartados = sum('leads_descartados')
     const conversion = leads > 0 ? reuniones / leads : 0
     const tasaRespuesta = leads > 0 ? respuestas / leads : 0
-    const objecionesDetectadas = sum('objeciones_detectadas')
-    const objecionesResueltas = sum('objeciones_resueltas')
-    const calidad = objecionesDetectadas > 0 ? objecionesResueltas / objecionesDetectadas : 0
+    const msgEnviados = sum('mensajes_enviados')
+    const msgRecibidos = sum('mensajes_recibidos')
 
     const gastoTotal = costes.reduce((s, r) => {
       return s + (r.claude_coste || 0) + (r.haiku_coste || 0) +
         (r.whisper_coste || 0) + (r.gpt4o_coste || 0) + (r.whatsapp_coste || 0)
     }, 0)
 
-    return { leads, respuestas, reuniones, descartados, conversion, tasaRespuesta, calidad, gastoTotal }
+    return { leads, respuestas, reuniones, descartados, conversion, tasaRespuesta, gastoTotal, msgEnviados, msgRecibidos }
   }, [metricas, costes])
 
-  // A/B split
   const { metricasA, metricasB } = useMemo(() => {
     if (!agente?.ab_test_activo) return { metricasA: [], metricasB: [] }
     return {
@@ -571,18 +574,13 @@ export default function TabMetricas({ agenteId, agente }) {
     }
   }, [metricas, agente?.ab_test_activo])
 
-  // Aggregate daily for charts (combine A+B if both present)
   const dailyData = useMemo(() => {
     const byDate = {}
     metricas.forEach(m => {
       if (!byDate[m.fecha]) {
         byDate[m.fecha] = {
-          fecha: m.fecha,
-          leads_contactados: 0,
-          respuestas_recibidas: 0,
-          reuniones_agendadas: 0,
-          mensajes_enviados: 0,
-          mensajes_recibidos: 0,
+          fecha: m.fecha, leads_contactados: 0, respuestas_recibidas: 0,
+          reuniones_agendadas: 0, mensajes_enviados: 0, mensajes_recibidos: 0,
         }
       }
       const d = byDate[m.fecha]
@@ -595,18 +593,12 @@ export default function TabMetricas({ agenteId, agente }) {
     return Object.values(byDate).sort((a, b) => a.fecha.localeCompare(b.fecha))
   }, [metricas])
 
-  // Aggregate daily sentimiento
   const dailySentimiento = useMemo(() => {
     const byDate = {}
     metricas.forEach(m => {
       if (m.sentimiento_promedio == null && m.score_calidad_promedio == null) return
       if (!byDate[m.fecha]) {
-        byDate[m.fecha] = {
-          fecha: m.fecha,
-          sentimiento_total: 0,
-          calidad_total: 0,
-          count: 0,
-        }
+        byDate[m.fecha] = { fecha: m.fecha, sentimiento_total: 0, calidad_total: 0, count: 0 }
       }
       const d = byDate[m.fecha]
       if (m.sentimiento_promedio != null) {
@@ -630,8 +622,8 @@ export default function TabMetricas({ agenteId, agente }) {
 
   if (loading) {
     return (
-      <div className="ia-metricas-loading">
-        <Loader2 size={24} className="ia-spin" />
+      <div className="ia-met-loading">
+        <Loader2 size={28} className="ia-spin" />
         <span>Cargando métricas...</span>
       </div>
     )
@@ -639,114 +631,101 @@ export default function TabMetricas({ agenteId, agente }) {
 
   if (error) {
     return (
-      <div className="ia-metricas-error">
-        <AlertTriangle size={20} />
+      <div className="ia-met-error">
+        <AlertTriangle size={24} />
         <span>{error}</span>
-        <button className="ia-btn ia-btn-secondary" onClick={fetchData}>Reintentar</button>
+        <button className="ia-met-retry-btn" onClick={fetchData}>Reintentar</button>
       </div>
     )
   }
 
   return (
-    <div className="ia-metricas">
-      {/* Header + date range */}
-      <div className="ia-metricas-toolbar">
-        <DateRangeSelector
-          rango={rango}
-          desde={desde}
-          hasta={hasta}
-          onChange={handleRangoChange}
-        />
-        <button className="ia-metricas-refresh" onClick={fetchData} title="Actualizar">
-          <RefreshCw size={16} />
+    <div className="ia-met">
+      {/* Toolbar */}
+      <div className="ia-met-toolbar">
+        <DateRangeSelector rango={rango} desde={desde} hasta={hasta} onChange={handleRangoChange} />
+        <button className="ia-met-refresh" onClick={fetchData} title="Actualizar">
+          <RefreshCw size={15} />
         </button>
       </div>
 
-      {/* Summary cards */}
-      <div className="ia-metricas-cards">
-        <SummaryCard
+      {/* KPI Cards */}
+      <div className="ia-met-kpis">
+        <KPICard
           icon={Users}
           label="Leads contactados"
-          value={totals.leads.toLocaleString()}
-          color="var(--primary, #3b82f6)"
+          value={fmtNum(totals.leads)}
+          color="#3b82f6"
         />
-        <SummaryCard
+        <KPICard
           icon={MessageSquare}
-          label="Respuestas recibidas"
-          value={totals.respuestas.toLocaleString()}
+          label="Respuestas"
+          value={fmtNum(totals.respuestas)}
           color="#8b5cf6"
           sub={`Tasa: ${fmtPct(totals.tasaRespuesta)}`}
         />
-        <SummaryCard
+        <KPICard
           icon={Calendar}
-          label="Reuniones agendadas"
-          value={totals.reuniones.toLocaleString()}
-          color="var(--success, #10b981)"
+          label="Reuniones"
+          value={fmtNum(totals.reuniones)}
+          color="#10b981"
           sub={`Conversión: ${fmtPct(totals.conversion)}`}
         />
-        <SummaryCard
+        <KPICard
           icon={XCircle}
-          label="Leads descartados"
-          value={totals.descartados.toLocaleString()}
-          color="var(--error, #ef4444)"
+          label="Descartados"
+          value={fmtNum(totals.descartados)}
+          color="#ef4444"
+        />
+        <KPICard
+          icon={Zap}
+          label="Msgs enviados"
+          value={fmtNum(totals.msgEnviados)}
+          color="#f59e0b"
+        />
+        <KPICard
+          icon={DollarSign}
+          label="Gasto total"
+          value={fmtMoney(totals.gastoTotal)}
+          color="#00a884"
         />
       </div>
 
-      {/* Funnel visualization */}
-      {totals.leads > 0 && (
-        <FunnelVisualization totals={totals} />
-      )}
+      {/* Funnel */}
+      {totals.leads > 0 && <FunnelVisualization totals={totals} />}
 
-      {/* Daily charts */}
+      {/* Charts */}
       {dailyData.length > 0 && (
-        <div className="ia-metricas-charts">
-          <BarChart
-            data={dailyData}
-            dataKey="leads_contactados"
-            label="Leads contactados por día"
-            color="var(--primary, #3b82f6)"
-          />
-          <BarChart
-            data={dailyData}
-            dataKey="respuestas_recibidas"
-            label="Respuestas recibidas por día"
-            color="#8b5cf6"
-          />
-          <BarChart
-            data={dailyData}
-            dataKey="reuniones_agendadas"
-            label="Reuniones agendadas por día"
-            color="var(--success, #10b981)"
-          />
-          <BarChart
-            data={dailyData}
-            dataKey="mensajes_enviados"
-            label="Mensajes enviados por día"
-            color="#f59e0b"
-          />
+        <div className="ia-met-charts">
+          <SparkChart data={dailyData} dataKey="leads_contactados" label="Leads / día" color="#3b82f6" icon={Users} />
+          <SparkChart data={dailyData} dataKey="respuestas_recibidas" label="Respuestas / día" color="#8b5cf6" icon={MessageSquare} />
+          <SparkChart data={dailyData} dataKey="reuniones_agendadas" label="Reuniones / día" color="#10b981" icon={Calendar} />
+          <SparkChart data={dailyData} dataKey="mensajes_enviados" label="Mensajes / día" color="#f59e0b" icon={Activity} />
         </div>
       )}
 
       {dailyData.length === 0 && (
-        <div className="ia-metricas-empty">
-          <BarChart3 size={32} />
+        <div className="ia-met-empty">
+          <BarChart3 size={36} />
           <p>No hay datos para el periodo seleccionado</p>
         </div>
       )}
 
-      {/* A/B Comparison */}
-      {agente?.ab_test_activo && metricasA.length > 0 && metricasB.length > 0 && (
-        <ABComparison metricasA={metricasA} metricasB={metricasB} />
-      )}
-
-      {/* Objeciones */}
-      <ObjecionesSummary objeciones={objeciones} />
-
-      {/* Sentimiento */}
-      <SentimientoSection dailySentimiento={dailySentimiento} />
-
-      {/* Cost breakdown with ROI */}
-      {costes.length > 0 && <CostBreakdown costes={costes} totals={totals} />}
+      {/* Bottom grid: 2 columns */}
+      <div className="ia-met-bottom-grid">
+        {/* Left column */}
+        <div className="ia-met-bottom-col">
+          {agente?.ab_test_activo && metricasA.length > 0 && metricasB.length > 0 && (
+            <ABComparison metricasA={metricasA} metricasB={metricasB} />
+          )}
+          <ObjecionesSummary objeciones={objeciones} />
+        </div>
+        {/* Right column */}
+        <div className="ia-met-bottom-col">
+          <SentimientoSection dailySentimiento={dailySentimiento} />
+          {costes.length > 0 && <CostBreakdown costes={costes} totals={totals} />}
+        </div>
+      </div>
     </div>
   )
 }
