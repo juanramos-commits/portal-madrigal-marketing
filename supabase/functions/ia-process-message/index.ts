@@ -638,7 +638,7 @@ async function evaluateQuality(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 200,
         messages: [
           {
@@ -668,7 +668,11 @@ Responde SOLO en este formato JSON:
       }),
     })
 
-    if (!res.ok) return { score: 5, feedback: 'Quality check unavailable — blocking by default' }
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => 'no body')
+      console.error(`Quality check API error: ${res.status} ${res.statusText} — ${errBody}`)
+      return { score: 5, feedback: `Quality check unavailable (${res.status}): ${errBody.substring(0, 100)}` }
+    }
     const data = await res.json()
     const text = data.content?.[0]?.text || ''
 
@@ -713,7 +717,7 @@ async function generateSummary(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 300,
         messages: [
           {
@@ -969,12 +973,42 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: true })
       .limit(30)
 
-    const historyMessages = (history || []).map((m: Record<string, unknown>) => ({
-      role: m.direction === 'inbound' ? 'user' : 'assistant',
-      content: m.transcription
+    // Map of template names to actual text sent to the lead
+    const TEMPLATE_TEXTS: Record<string, (leadName: string) => string> = {
+      'primer_mensaje_formulario': (name) =>
+        `¡Hola ${name}! 👋 He visto que has rellenado el formulario y quería escribirte directamente. ¿En qué te puedo ayudar?`,
+      'hola_he_visto_que_nos_has_vuelto_a_rellenar_el_formulario_en_que_te_puedo_ayudar': (_name) =>
+        `¡Hola! He visto que nos has vuelto a rellenar el formulario, ¿en qué te puedo ayudar?`,
+      'ests_por_aqui': (_name) =>
+        `¿Estás por aquí? 👀`,
+      'ojitos': (_name) =>
+        `👀`,
+      'ultimo_toque_y_no_molesto_mas__seguimos_o_lo_dejamos_aqui': (_name) =>
+        `Último toque y no molesto más 😊 ¿Seguimos o lo dejamos aquí?`,
+      're_contacto_rosalia_1': (_name) =>
+        `¡Hola! Soy Rosalía del equipo de Madrigal Marketing. Te escribo porque creo que podemos ayudarte con tu negocio. ¿Tienes un momento?`,
+    }
+
+    const leadName = (lead.nombre as string) || 'amigo/a'
+
+    const historyMessages = (history || []).map((m: Record<string, unknown>) => {
+      let content = m.transcription
         ? `${m.content}\n[Transcripción: ${m.transcription}]`
-        : (m.content as string),
-    }))
+        : (m.content as string)
+
+      // Replace template placeholders with actual text
+      const templateMatch = content.match(/^\[Plantilla: (.+)\]$/)
+      if (templateMatch) {
+        const tplName = templateMatch[1]
+        const tplFn = TEMPLATE_TEXTS[tplName]
+        content = tplFn ? tplFn(leadName) : `(Mensaje de saludo inicial al lead)`
+      }
+
+      return {
+        role: m.direction === 'inbound' ? 'user' : 'assistant',
+        content,
+      }
+    })
 
     // === SELECT SYSTEM PROMPT (A/B test) ===
     let systemPrompt = agente.system_prompt || ''
@@ -1001,7 +1035,15 @@ Tono: ${estilo.tono || 'no disponible'}
     }
 
     // Add context to system prompt
+    const agentConfig = (agente.config as Record<string, unknown>) || {}
+    const especialidad = agentConfig.especialidad || agente.tipo || 'setter'
+
     const contextAddendum = `
+
+--- CONTEXTO DEL AGENTE ---
+Nombre del agente: ${agente.nombre || 'Asistente'}
+Tipo de agente: ${agente.tipo || 'setter'}
+Especialidad: ${especialidad}
 
 --- CONTEXTO ACTUAL ---
 Nombre del lead: ${lead.nombre || 'Desconocido'}
