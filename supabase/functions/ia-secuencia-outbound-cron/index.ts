@@ -256,6 +256,30 @@ Deno.serve(async (req) => {
               }
             }
 
+            // --- Check wa_status of last outbound message ---
+            // If last message wasn't delivered at all, skip (might be blocked)
+            if (lastOutbound) {
+              const { data: lastOutMsg } = await supabase
+                .from('ia_mensajes')
+                .select('wa_status')
+                .eq('conversacion_id', convo.id)
+                .eq('direction', 'outbound')
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single()
+
+              if (lastOutMsg && !lastOutMsg.wa_status) {
+                // No delivery status at all — possibly blocked, skip for now
+                await supabase.from('ia_logs').insert({
+                  agente_id: agente.id,
+                  conversacion_id: convo.id,
+                  tipo: 'info',
+                  mensaje: 'Secuencia outbound: último mensaje sin confirmación de entrega, saltando',
+                }).catch(() => {})
+                continue
+              }
+            }
+
             // --- Determine current step ---
             const step = convo.secuencia_outbound_step || 0
 

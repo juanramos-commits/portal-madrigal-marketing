@@ -300,6 +300,75 @@ Deno.serve(async (req) => {
       p_mensajes_enviados: 1,
     })
 
+    // === CRM SYNC — create ventas_leads + pipeline entry if agent has usuario_id ===
+    if (agente.usuario_id) {
+      try {
+        // Find the "Por Contactar" or first etapa in the active pipeline
+        const { data: pipeline } = await supabase
+          .from('ventas_pipelines')
+          .select('id')
+          .eq('activo', true)
+          .limit(1)
+          .single()
+
+        if (pipeline) {
+          const { data: etapa } = await supabase
+            .from('ventas_pipeline_etapas')
+            .select('id')
+            .eq('pipeline_id', pipeline.id)
+            .order('orden', { ascending: true })
+            .limit(1)
+            .single()
+
+          // Create CRM lead
+          const { data: crmLead } = await supabase
+            .from('ventas_leads')
+            .insert({
+              nombre: nombre || telefono,
+              telefono,
+              email: email || null,
+              servicio_interesado: servicio || null,
+              origen: origen === 'whatsapp' ? 'whatsapp' : 'referido',
+              setter_asignado_id: agente.usuario_id,
+              etapa_actual_id: etapa?.id || null,
+            })
+            .select('id')
+            .single()
+
+          if (crmLead && etapa) {
+            // Create pipeline estado
+            await supabase.from('ventas_lead_pipeline_estado').insert({
+              lead_id: crmLead.id,
+              pipeline_id: pipeline.id,
+              etapa_id: etapa.id,
+            })
+
+            // Link ia_lead to CRM lead
+            await supabase
+              .from('ia_leads')
+              .update({ crm_lead_id: crmLead.id })
+              .eq('id', leadId)
+
+            // Log activity
+            await supabase.from('ventas_actividad').insert({
+              lead_id: crmLead.id,
+              usuario_id: agente.usuario_id,
+              tipo: 'creacion',
+              descripcion: `Lead creado por agente IA "${agente.nombre}" — primer contacto enviado`,
+            })
+          }
+        }
+      } catch (crmErr) {
+        console.error('CRM sync error (non-fatal):', crmErr)
+        await supabase.from('ia_logs').insert({
+          agente_id: agenteId,
+          conversacion_id: conversacionId,
+          tipo: 'warning',
+          mensaje: `CRM sync falló (no crítico): ${crmErr}`,
+        }).catch(() => {})
+      }
+    }
+
     return jsonResponse({
       status: 'ok',
       lead_id: leadId,

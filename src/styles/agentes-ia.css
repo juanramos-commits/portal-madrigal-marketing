@@ -3106,3 +3106,432 @@
   justify-content: center;
   padding: 8px 0;
 }
+
+/* =====================================================
+   Lead Panel — Score Breakdown
+   ===================================================== */
+
+.ia-lead-score-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.ia-lead-score-breakdown-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.ia-lead-score-breakdown-row > span:first-child {
+  width: 60px;
+  flex-shrink: 0;
+  text-transform: capitalize;
+}
+
+.ia-lead-score-mini-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ia-lead-score-mini-bar > div {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.ia-lead-score-breakdown-val {
+  width: 24px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+/* Sentiment emoji */
+.ia-lead-sidebar-sentiment-emoji {
+  font-size: 16px;
+}
+
+/* Objeciones in sidebar */
+.ia-lead-sidebar-objeciones {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ia-lead-sidebar-objecion-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.ia-lead-sidebar-objecion-tipo {
+  color: var(--text);
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.ia-lead-sidebar-objecion-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.ia-lead-sidebar-objecion-badge.resuelta {
+  background: #10b98120;
+  color: #10b981;
+}
+
+.ia-lead-sidebar-objecion-badge.pendiente {
+  background: #f59e0b20;
+  color: #f59e0b;
+}
+
+/* CRM Link */
+.ia-lead-sidebar-crm-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.ia-lead-sidebar-crm-link:hover {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+/* RGPD Status */
+.ia-lead-sidebar-rgpd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ia-lead-sidebar-rgpd-status.granted {
+  color: #10b981;
+}
+
+.ia-lead-sidebar-rgpd-status.missing {
+  color: var(--error);
+}
+
+.ia-lead-sidebar-rgpd svg {
+  color: var(--text-secondary);
+}
+
+/* =====================================================
+   Assign Dropdown
+   ===================================================== */
+
+.ia-assign-wrapper {
+  position: relative;
+}
+
+.ia-assign-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 220px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  margin-top: 4px;
+  z-index: 20;
+}
+
+.ia-assign-dropdown-header {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ia-assign-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  color: var(--text);
+  transition: background 0.1s;
+}
+
+.ia-assign-dropdown-item:hover {
+  background: var(--bg);
+}
+
+.ia-assign-dropdown-item.active {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  font-weight: 600;
+}
+
+.ia-assign-dropdown-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--text-inverse);
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ia-assign-dropdown-initials.ia-assign-none {
+  background: var(--border);
+  color: var(--text-secondary);
+}
+
+/* Assigned initials in conversation list */
+.ia-inbox-item-assigned {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--text-inverse);
+  font-size: 8px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* =====================================================
+   File Upload
+   ===================================================== */
+
+.ia-file-upload-wrapper {
+  position: relative;
+}
+
+.ia-file-upload-progress {
+  width: 14px;
+  height: 14px;
+  position: relative;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  overflow: hidden;
+}
+
+.ia-file-upload-progress-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--primary);
+  transition: height 0.3s;
+  border-radius: 0 0 50% 50%;
+}
+
+/* =====================================================
+   Blacklist Section
+   ===================================================== */
+
+.ia-blacklist-section {
+  margin-top: 0;
+}
+
+.ia-blacklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ia-blacklist-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.ia-blacklist-header h3 svg {
+  color: var(--error);
+}
+
+.ia-blacklist-add-form {
+  margin-bottom: 16px;
+}
+
+.ia-blacklist-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ia-blacklist-input {
+  flex: 1;
+  min-width: 160px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+}
+
+.ia-blacklist-input:focus {
+  border-color: var(--primary);
+}
+
+.ia-blacklist-select {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  outline: none;
+}
+
+.ia-blacklist-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #ef444415;
+  color: #ef4444;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.ia-blacklist-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.ia-blacklist-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.ia-blacklist-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ia-blacklist-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.ia-blacklist-table td {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.ia-blacklist-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ia-blacklist-phone {
+  font-family: monospace;
+  font-weight: 600;
+}
+
+.ia-blacklist-date {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.ia-blacklist-motivo-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.ia-blacklist-motivo-competidor {
+  background: #8b5cf620;
+  color: #8b5cf6;
+}
+
+.ia-blacklist-motivo-spam {
+  background: #ef444420;
+  color: #ef4444;
+}
+
+.ia-blacklist-motivo-reportado {
+  background: #f59e0b20;
+  color: #f59e0b;
+}
+
+.ia-blacklist-motivo-manual {
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.ia-blacklist-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.ia-blacklist-delete-btn:hover {
+  background: #ef444415;
+  color: #ef4444;
+}
