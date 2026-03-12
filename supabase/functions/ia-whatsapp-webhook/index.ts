@@ -544,14 +544,18 @@ async function processWebhookAsync(
           }
 
           // === CHECK RGPD / STOP ===
+          // Exact match phrases (match anywhere in message)
           const stopPhrases = [
             'no me escribas más', 'no me escribas mas', 'no me contactes',
-            'borra mis datos', 'stop', 'no quiero recibir',
+            'borra mis datos', 'no quiero recibir',
             'deja de escribirme', 'elimina mis datos', 'para de escribirme',
-            'darme de baja', 'baja', 'unsubscribe',
+            'darme de baja', 'unsubscribe',
           ]
+          // Word-boundary phrases (only match as whole words to avoid false positives like "trabajar" → "baja")
+          const stopExactWords = ['stop', 'baja']
           const contentLower = content.toLowerCase().trim()
-          const isStop = stopPhrases.some(phrase => contentLower === phrase || contentLower.includes(phrase))
+          const isStop = stopPhrases.some(phrase => contentLower.includes(phrase))
+            || stopExactWords.some(word => new RegExp(`\\b${word}\\b`).test(contentLower))
 
           if (isStop) {
             await supabase.from('ia_leads').update({
