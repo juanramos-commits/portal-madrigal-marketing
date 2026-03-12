@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
  * ia-process-message
@@ -439,12 +439,12 @@ async function executeTool(
             })
             .eq('id', lead.crm_lead_id)
 
-          await supabase.from('ventas_actividad').insert({
+          try { await supabase.from('ventas_actividad').insert({
             lead_id: lead.crm_lead_id,
             usuario_id: agente.usuario_id || selectedCloserId,
             tipo: 'cita_agendada',
             descripcion: `Cita agendada por agente IA para ${fechaHora}`,
-          }).catch(() => {})
+          }) } catch (_e) { /* ignore */ }
         }
 
         // CRM sync: move etapa
@@ -1187,12 +1187,12 @@ ${styleAddendum}`
       qualityScore = quality.score
       qualityFeedback = quality.feedback
 
-      await supabase.rpc('ia_increment_costes', {
+      try { await supabase.rpc('ia_increment_costes', {
         p_agente_id: agenteId,
         p_fecha: getMadridDate(),
         p_haiku_calls: 1,
         p_haiku_coste: 0.001,
-      }).catch(() => {})
+      }) } catch (_e) { /* ignore */ }
     }
 
     if (qualityScore < qualityThreshold) {
@@ -1353,17 +1353,17 @@ ${styleAddendum}`
     // Claude Sonnet 4 pricing: $3/MTok in, $15/MTok out
     const claudeCost = (tokensIn * 3 + tokensOut * 15) / 1_000_000
 
-    await supabase.rpc('ia_increment_costes', {
+    try { await supabase.rpc('ia_increment_costes', {
       p_agente_id: agenteId,
       p_fecha: today,
       p_claude_calls: 1,
       p_claude_tokens_in: tokensIn,
       p_claude_tokens_out: tokensOut,
       p_claude_coste: claudeCost,
-    }).catch(() => {})
+    }) } catch (_e) { /* ignore */ }
 
     // === UPDATE METRICS (atomic increment via RPC) ===
-    await supabase.rpc('ia_increment_metricas', {
+    try { await supabase.rpc('ia_increment_metricas', {
       p_agente_id: agenteId,
       p_fecha: today,
       p_ab_version: convo.ab_version || 'A',
@@ -1371,7 +1371,7 @@ ${styleAddendum}`
       p_mensajes_recibidos: 1,
       p_objeciones_detectadas: objection ? 1 : 0,
       p_objeciones_resueltas: objection ? 1 : 0,
-    }).catch(() => {})
+    }) } catch (_e) { /* ignore */ }
 
     // === CRM SYNC (fire and forget) ===
     if (convo.step === 'first_message') {

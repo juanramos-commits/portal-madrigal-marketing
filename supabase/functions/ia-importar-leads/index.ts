@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
  * ia-importar-leads
@@ -444,12 +444,12 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('Error in ia-importar-leads:', err)
 
-    await supabase.from('ia_logs').insert({
+    try { await supabase.from('ia_logs').insert({
       agente_id: agenteId,
       tipo: 'error',
       mensaje: `Error en ia-importar-leads: ${err}`,
-      detalles: { error: String(err), stack: (err as Error).stack },
-    }).catch(() => {})
+      detalles: { error: String(err), stack: String(err) },
+    }) } catch (_e) { /* ignore */ }
 
     return jsonResponse({ error: 'Internal error', details: String(err) }, 500)
   }

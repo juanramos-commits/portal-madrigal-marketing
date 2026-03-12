@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
  * ia-secuencia-outbound-cron
@@ -270,12 +270,12 @@ Deno.serve(async (req) => {
 
               if (lastOutMsg && !lastOutMsg.wa_status) {
                 // No delivery status at all — possibly blocked, skip for now
-                await supabase.from('ia_logs').insert({
+                try { await supabase.from('ia_logs').insert({
                   agente_id: agente.id,
                   conversacion_id: convo.id,
                   tipo: 'info',
                   mensaje: 'Secuencia outbound: último mensaje sin confirmación de entrega, saltando',
-                }).catch(() => {})
+                }) } catch (_e) { /* ignore */ }
                 continue
               }
             }
@@ -310,12 +310,12 @@ Deno.serve(async (req) => {
 
               // Increment no_response metric
               const abVersionEnd = convo.ab_version || 'A'
-              await supabase.rpc('ia_increment_metricas', {
+              try { await supabase.rpc('ia_increment_metricas', {
                 p_agente_id: agente.id,
                 p_fecha: today,
                 p_ab_version: abVersionEnd,
                 p_leads_descartados: 1,
-              }).catch(() => {})
+              }) } catch (_e) { /* ignore */ }
 
               agentCompleted++
               continue
@@ -384,33 +384,33 @@ Deno.serve(async (req) => {
 
             // --- Increment metrics ---
             const abVersionSend = convo.ab_version || 'A'
-            await supabase.rpc('ia_increment_metricas', {
+            try { await supabase.rpc('ia_increment_metricas', {
               p_agente_id: agente.id,
               p_fecha: today,
               p_ab_version: abVersionSend,
               p_mensajes_enviados: 1,
-            }).catch(() => {})
+            }) } catch (_e) { /* ignore */ }
 
             agentSent++
           } catch (convoErr) {
             agentErrors++
-            await supabase.from('ia_logs').insert({
+            try { await supabase.from('ia_logs').insert({
               agente_id: agente.id,
               conversacion_id: convo.id,
               tipo: 'error',
               mensaje: `Secuencia outbound: error procesando conversacion: ${convoErr}`,
               detalles: { error: String(convoErr) },
-            }).catch(() => {})
+            }) } catch (_e) { /* ignore */ }
           }
         }
       } catch (agentErr) {
         agentErrors++
-        await supabase.from('ia_logs').insert({
+        try { await supabase.from('ia_logs').insert({
           agente_id: agente.id,
           tipo: 'error',
           mensaje: `Secuencia outbound cron: error procesando agente: ${agentErr}`,
           detalles: { error: String(agentErr) },
-        }).catch(() => {})
+        }) } catch (_e) { /* ignore */ }
       }
 
       agentResults.push({
@@ -430,7 +430,7 @@ Deno.serve(async (req) => {
     const runMs = Date.now() - runStart
 
     // Log summary
-    await supabase.from('ia_logs').insert({
+    try { await supabase.from('ia_logs').insert({
       tipo: 'info',
       mensaje: `Secuencia outbound cron completado: ${totalSent} enviadas, ${totalCompleted} completadas, ${totalErrors} errores, ${runMs}ms`,
       detalles: {
@@ -442,7 +442,7 @@ Deno.serve(async (req) => {
         run_ms: runMs,
         agent_results: agentResults,
       },
-    }).catch(() => {})
+    }) } catch (_e) { /* ignore */ }
 
     return jsonResponse({
       status: 'ok',
@@ -457,11 +457,11 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('Secuencia outbound cron fatal error:', err)
 
-    await supabase.from('ia_logs').insert({
+    try { await supabase.from('ia_logs').insert({
       tipo: 'error',
       mensaje: `Secuencia outbound cron: error fatal: ${err}`,
-      detalles: { error: String(err), stack: (err as Error).stack },
-    }).catch(() => {})
+      detalles: { error: String(err), stack: String(err) },
+    }) } catch (_e) { /* ignore */ }
 
     return jsonResponse({ error: 'Secuencia outbound cron failed', details: String(err) }, 500)
   }

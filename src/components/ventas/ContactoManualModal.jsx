@@ -3,8 +3,17 @@ import { supabase } from '../../lib/supabase'
 import { Send, AlertCircle, CheckCircle, X } from 'lucide-react'
 import '../../styles/agentes-ia.css'
 
-function validarE164(telefono) {
-  return /^\+[1-9]\d{6,14}$/.test(telefono)
+function normalizarTelefono(raw) {
+  // Strip spaces, dashes, parens
+  let tel = raw.replace(/[\s\-\(\)]/g, '')
+  // Add + if missing
+  if (!tel.startsWith('+')) tel = '+' + tel
+  return tel
+}
+
+function validarTelefono(telefono) {
+  const normalized = normalizarTelefono(telefono)
+  return /^\+\d{7,15}$/.test(normalized)
 }
 
 export default function ContactoManualModal({ open, onClose, agenteId }) {
@@ -31,8 +40,8 @@ export default function ContactoManualModal({ open, onClose, agenteId }) {
       setError('El telefono es obligatorio')
       return
     }
-    if (!validarE164(form.telefono.trim())) {
-      setError('El telefono debe estar en formato E.164 (ej: +34612345678)')
+    if (!validarTelefono(form.telefono.trim())) {
+      setError('Formato de teléfono no válido. Ej: +34612345678, 34612345678, 612 345 678')
       return
     }
 
@@ -62,7 +71,7 @@ export default function ContactoManualModal({ open, onClose, agenteId }) {
           },
           body: JSON.stringify({
             agente_id: agenteId,
-            telefono: form.telefono.trim(),
+            telefono: normalizarTelefono(form.telefono.trim()),
             nombre: form.nombre.trim() || null,
             email: form.email.trim() || null,
             servicio: form.servicio.trim() || null,
@@ -114,12 +123,12 @@ export default function ContactoManualModal({ open, onClose, agenteId }) {
         ) : (
           <form onSubmit={handleEnviar}>
             <div className="ia-field">
-              <label>Telefono (E.164) *</label>
+              <label>Teléfono *</label>
               <input
                 type="tel"
                 value={form.telefono}
                 onChange={e => update('telefono', e.target.value)}
-                placeholder="+34612345678"
+                placeholder="612 345 678 o +34612345678"
                 autoFocus
               />
             </div>

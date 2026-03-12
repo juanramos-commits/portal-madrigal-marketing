@@ -31,7 +31,7 @@ export default function AsignarLeadsCRMModal({ open, onClose, agenteId }) {
       // Fetch CRM leads with etapa info
       const { data, error: err } = await supabase
         .from('ventas_leads')
-        .select('id, nombre, telefono, email, servicio_interesado, etapa_actual_id, etapa:ventas_etapas!etapa_actual_id(nombre)')
+        .select('id, nombre, telefono, email, servicio_interesado, etapa_actual_id')
         .order('created_at', { ascending: false })
         .limit(500)
 
@@ -269,7 +269,7 @@ export default function AsignarLeadsCRMModal({ open, onClose, agenteId }) {
                         <td className="ia-crm-phone">{lead.telefono || '-'}</td>
                         <td>{lead.email || '-'}</td>
                         <td>{lead.servicio_interesado || '-'}</td>
-                        <td>{lead.etapa?.nombre || '-'}</td>
+                        <td>{lead.etapa_actual_id ? 'Asignada' : '-'}</td>
                       </tr>
                     ))}
                   </tbody>

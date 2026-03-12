@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
  * ia-rgpd-borrar
@@ -166,11 +166,11 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('Fatal error in ia-rgpd-borrar:', err)
 
-    await supabase.from('ia_logs').insert({
+    try { await supabase.from('ia_logs').insert({
       tipo: 'error',
       mensaje: `Error en ia-rgpd-borrar para lead ${leadId}: ${String(err)}`,
-      detalles: { error: String(err), stack: (err as Error).stack },
-    }).catch(() => {})
+      detalles: { error: String(err), stack: String(err) },
+    }) } catch (_e) { /* ignore */ }
 
     return jsonResponse({ error: 'Internal error', details: String(err) }, 500)
   }

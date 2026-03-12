@@ -21,10 +21,10 @@ const TABS = [
 
 const WHATSAPP_TEMPLATES = [
   { nombre: 'primer_mensaje_formulario', mensaje: 'Hola {{nombre}}, soy Rosalia de Madrigal Marketing...', usadoPor: 'Setter (primer contacto)' },
-  { nombre: 'hola_he_visto_que_nos_has_v', mensaje: 'Hola! He visto que nos has visitado...', usadoPor: 'Repescadora' },
+  { nombre: 'hola_he_visto_que_nos_has_vuelto_a_rellenar_el_formulario_en_que_te_puedo_ayudar', mensaje: 'Hola! He visto que nos has vuelto a rellenar el formulario...', usadoPor: 'Repescadora' },
   { nombre: 'ests_por_aqui', mensaje: 'Estas por aqui?', usadoPor: 'Repesca nivel 1' },
   { nombre: 'ojitos', mensaje: '\u{1F440}', usadoPor: 'Repesca nivel 2' },
-  { nombre: 'ultimo_toque_y_no_molesto_m', mensaje: 'Ultimo toque y no molesto mas...', usadoPor: 'Repesca nivel 3' },
+  { nombre: 'ultimo_toque_y_no_molesto_mas__seguimos_o_lo_dejamos_aqui', mensaje: 'Ultimo toque y no molesto mas, seguimos o lo dejamos aqui?', usadoPor: 'Repesca nivel 3' },
   { nombre: 'follow_up', mensaje: 'Hola!! Te parece si retomamos...', usadoPor: 'Followup programado' },
   { nombre: 're_contacto_rosalia_1', mensaje: 'Hola! Soy Rosalia de Madrigal...', usadoPor: 'Outbound frio paso 1' },
   { nombre: 're_contacto_rosalia_2', mensaje: 'He visto que en su momento...', usadoPor: 'Outbound frio paso 2' },

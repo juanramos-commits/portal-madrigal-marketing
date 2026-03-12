@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
  * ia-followup-cron
@@ -236,13 +236,13 @@ Deno.serve(async (req) => {
       } catch (err) {
         console.error(`Error processing followup for ${convo.id}:`, err)
 
-        await supabase.from('ia_logs').insert({
+        try { await supabase.from('ia_logs').insert({
           agente_id: convo.agente_id,
           conversacion_id: convo.id,
           tipo: 'error',
           mensaje: `Error en followup cron: ${String(err)}`,
-          detalles: { error: String(err), stack: (err as Error).stack },
-        }).catch(() => {})
+          detalles: { error: String(err), stack: String(err) },
+        }) } catch (_e) { /* ignore */ }
 
         results.push({
           conversacion_id: convo.id,

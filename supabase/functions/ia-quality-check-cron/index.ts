@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
  * ia-quality-check-cron
@@ -175,11 +175,11 @@ Deno.serve(async (req) => {
       } catch (agentErr) {
         console.error(`Error checking quality for agent ${agente.id}:`, agentErr)
 
-        await supabase.from('ia_logs').insert({
+        try { await supabase.from('ia_logs').insert({
           agente_id: agente.id,
           tipo: 'error',
           mensaje: `Error en quality check: ${String(agentErr)}`,
-        }).catch(() => {})
+        }) } catch (_e) { /* ignore */ }
 
         results.push({
           agente_id: agente.id,
@@ -208,11 +208,11 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('Fatal error in ia-quality-check-cron:', err)
 
-    await supabase.from('ia_logs').insert({
+    try { await supabase.from('ia_logs').insert({
       tipo: 'error',
       mensaje: `Error en ia-quality-check-cron: ${String(err)}`,
-      detalles: { error: String(err), stack: (err as Error).stack },
-    }).catch(() => {})
+      detalles: { error: String(err), stack: String(err) },
+    }) } catch (_e) { /* ignore */ }
 
     return jsonResponse({ error: 'Cron failed', details: String(err) }, 500)
   }

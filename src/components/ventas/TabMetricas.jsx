@@ -111,10 +111,10 @@ function SummaryCard({ icon: Icon, label, value, color, sub }) {
 
 function FunnelVisualization({ totals }) {
   const steps = [
-    { label: 'Contactados', value: totals.leads, color: 'var(--primary, #3b82f6)' },
-    { label: 'Respondieron', value: totals.respuestas, color: '#8b5cf6' },
-    { label: 'Calificados', value: totals.leads - totals.descartados, color: '#f59e0b' },
-    { label: 'Agendados', value: totals.reuniones, color: 'var(--success, #10b981)' },
+    { label: 'Contactados', value: totals.leads, color: '#3b82f6', gradient: 'linear-gradient(90deg, #3b82f6, #60a5fa)' },
+    { label: 'Respondieron', value: totals.respuestas, color: '#8b5cf6', gradient: 'linear-gradient(90deg, #8b5cf6, #a78bfa)' },
+    { label: 'Calificados', value: totals.leads - totals.descartados, color: '#f59e0b', gradient: 'linear-gradient(90deg, #f59e0b, #fbbf24)' },
+    { label: 'Agendados', value: totals.reuniones, color: '#10b981', gradient: 'linear-gradient(90deg, #10b981, #34d399)' },
   ]
 
   const maxVal = Math.max(steps[0].value, 1)
@@ -127,17 +127,17 @@ function FunnelVisualization({ totals }) {
       </div>
       <div className="ia-funnel-steps">
         {steps.map((step, i) => {
-          const widthPct = Math.max((step.value / maxVal) * 100, 4)
+          const widthPct = Math.max((step.value / maxVal) * 100, 12)
           const prevValue = i > 0 ? steps[i - 1].value : null
           const dropOff = prevValue && prevValue > 0
-            ? ((prevValue - step.value) / prevValue * 100).toFixed(1)
+            ? ((prevValue - step.value) / prevValue * 100).toFixed(0)
             : null
 
           return (
             <div key={step.label} className="ia-funnel-step">
               {dropOff !== null && (
                 <div className="ia-funnel-dropoff">
-                  <span className="ia-funnel-dropoff-arrow">&#8595;</span>
+                  <span className="ia-funnel-dropoff-arrow">&#9662;</span>
                   <span className="ia-funnel-dropoff-pct">-{dropOff}%</span>
                 </div>
               )}
@@ -146,10 +146,10 @@ function FunnelVisualization({ totals }) {
                 <div className="ia-funnel-bar-track">
                   <div
                     className="ia-funnel-bar-fill"
-                    style={{ width: `${widthPct}%`, background: step.color }}
+                    style={{ width: `${widthPct}%`, background: step.gradient }}
                   />
                 </div>
-                <span className="ia-funnel-value">{step.value}</span>
+                <span className="ia-funnel-value" style={{ color: step.color }}>{step.value}</span>
               </div>
             </div>
           )

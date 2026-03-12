@@ -330,7 +330,8 @@
 .ia-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -338,13 +339,14 @@
 }
 
 .ia-modal {
-  background: var(--card);
+  background: #1a1a2e;
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 24px;
   width: 100%;
   max-width: 440px;
   margin: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
 .ia-modal h2 {
@@ -378,6 +380,7 @@
   background: var(--bg);
   outline: none;
   transition: border-color 0.15s;
+  color-scheme: dark;
 }
 
 .ia-field input:focus,
@@ -470,6 +473,9 @@
   font-weight: 700;
   color: var(--text);
   margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .ia-config-row {
@@ -517,33 +523,46 @@
 .ia-switch {
   position: relative;
   width: 44px;
+  min-width: 44px;
   height: 24px;
-  background: var(--border);
+  background: #555;
   border-radius: 12px;
   cursor: pointer;
-  border: none;
+  border: 1px solid #777;
   padding: 0;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.ia-switch:hover {
+  border-color: #999;
 }
 
 .ia-switch.on {
   background: var(--primary);
+  border-color: var(--primary);
 }
 
 .ia-switch::after {
   content: '';
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 1px;
+  left: 1px;
   width: 20px;
   height: 20px;
   background: white;
   border-radius: 50%;
   transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
 .ia-switch.on::after {
   transform: translateX(20px);
+}
+
+.ia-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* =====================================================
@@ -2312,14 +2331,14 @@
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px;
 }
 
 .ia-funnel-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   color: var(--primary);
 }
 
@@ -2333,66 +2352,83 @@
 .ia-funnel-steps {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
+  align-items: center;
 }
 
 .ia-funnel-step {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .ia-funnel-dropoff {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 2px 0 2px 100px;
+  padding: 4px 0;
   font-size: 11px;
   color: var(--text-secondary);
 }
 
 .ia-funnel-dropoff-arrow {
-  color: var(--error, #ef4444);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 10px;
 }
 
 .ia-funnel-dropoff-pct {
   color: var(--error, #ef4444);
   font-weight: 600;
+  font-size: 11px;
 }
 
 .ia-funnel-bar-row {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  justify-content: center;
 }
 
 .ia-funnel-label {
   width: 88px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text);
+  color: var(--text-secondary);
   text-align: right;
   flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .ia-funnel-bar-track {
   flex: 1;
-  height: 28px;
-  background: var(--bg);
-  border-radius: 6px;
+  max-width: 400px;
+  height: 36px;
+  background: transparent;
+  border-radius: 8px;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
 }
 
 .ia-funnel-bar-fill {
   height: 100%;
-  border-radius: 6px;
-  transition: width 0.4s ease;
-  min-width: 2px;
+  border-radius: 8px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 8px;
+  opacity: 0.9;
+}
+
+.ia-funnel-bar-fill:hover {
+  opacity: 1;
 }
 
 .ia-funnel-value {
   width: 48px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text);
   flex-shrink: 0;

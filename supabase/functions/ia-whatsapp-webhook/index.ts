@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
  * ia-whatsapp-webhook
@@ -422,12 +422,12 @@ async function processWebhookAsync(
                   if (openaiKey) {
                     transcription = await transcribeAudio(media.url, openaiKey)
                     content = transcription || '[Audio no transcrito]'
-                    await supabase.rpc('ia_increment_costes', {
+                    try { await supabase.rpc('ia_increment_costes', {
                       p_agente_id: agente.id,
                       p_fecha: getMadridDate(),
                       p_whisper_calls: 1,
                       p_whisper_coste: 0.006,
-                    }).catch(() => {})
+                    }) } catch (_e) { /* ignore */ }
                   } else {
                     content = '[Audio recibido]'
                   }
@@ -449,12 +449,12 @@ async function processWebhookAsync(
                   if (openaiKey) {
                     transcription = await analyzeImage(media.url, openaiKey)
                     content = transcription || `[${msgType === 'sticker' ? 'Sticker' : 'Imagen'} recibida]`
-                    await supabase.rpc('ia_increment_costes', {
+                    try { await supabase.rpc('ia_increment_costes', {
                       p_agente_id: agente.id,
                       p_fecha: getMadridDate(),
                       p_gpt4o_calls: 1,
                       p_gpt4o_coste: 0.005,
-                    }).catch(() => {})
+                    }) } catch (_e) { /* ignore */ }
                   } else {
                     content = `[${msgType === 'sticker' ? 'Sticker' : 'Imagen'} recibida]`
                   }
@@ -607,13 +607,13 @@ async function processWebhookAsync(
           }
 
           // === UPDATE METRICS ===
-          await supabase.rpc('ia_increment_metricas', {
+          try { await supabase.rpc('ia_increment_metricas', {
             p_agente_id: agente.id,
             p_fecha: getMadridDate(),
             p_ab_version: (convo.ab_version as string) || 'A',
             p_respuestas_recibidas: 1,
             p_mensajes_recibidos: 1,
-          }).catch(() => {})
+          }) } catch (_e) { /* ignore */ }
 
           // === TRIGGER AI PROCESSING WITH DEBOUNCE (7s batching) ===
           // Insert into message queue for batching multiple rapid messages
@@ -704,13 +704,13 @@ async function processWebhookAsync(
                   } catch (err) {
                     console.error('[debounce] Error in debounced processing:', err)
                     const sb = createClient(supabaseUrl, serviceKey)
-                    await sb.from('ia_alertas_supervisor').insert({
+                    try { await sb.from('ia_alertas_supervisor').insert({
                       agente_id: agenteIdLocal,
                       conversacion_id: convId,
                       tipo: 'error',
                       mensaje: `Error al invocar procesamiento IA (debounce): ${err}`,
                       leida: false,
-                    }).catch(() => {})
+                    }) } catch (_e) { /* ignore */ }
                   }
                 })()
               }

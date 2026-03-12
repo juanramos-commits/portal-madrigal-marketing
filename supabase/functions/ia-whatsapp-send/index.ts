@@ -1,18 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-/**
- * ia-whatsapp-send
- *
- * Envía mensajes por WhatsApp vía Meta Cloud API.
- * Comprueba: ventana 24h, rate limiting, blacklist, sandbox.
- *
- * Fixes from audit:
- * - Rate limit uses direct SQL count (not O(N) IN clause)
- * - Date uses Europe/Madrid timezone (not UTC)
- * - Configurable WhatsApp cost per message
- * - Error checking on all DB operations
- * - Validates template_name before sending
- */
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,13 +13,15 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 function getMadridDate(): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Europe/Madrid',
-    year: 'numeric', month: '2-digit', day: '2-digit',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   }).format(new Date())
 }
 
@@ -42,21 +30,31 @@ function stripPlus(phone: string): string {
 }
 
 async function sendTextMessage(
-  phoneNumberId: string, token: string, to: string, text: string,
+  phoneNumberId: string,
+  token: string,
+  to: string,
+  text: string,
 ): Promise<{ ok: boolean; waMessageId?: string; error?: string }> {
   try {
-    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: stripPlus(to),
-        type: 'text',
-        text: { body: text },
-      }),
-    })
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: stripPlus(to),
+          type: 'text',
+          text: { body: text },
+        }),
+      },
+    )
     const data = await res.json()
-    if (!res.ok) return { ok: false, error: data.error?.message || 'Unknown error' }
+    if (!res.ok)
+      return { ok: false, error: data.error?.message || 'Unknown error' }
     return { ok: true, waMessageId: data.messages?.[0]?.id }
   } catch (err) {
     return { ok: false, error: String(err) }
@@ -64,8 +62,12 @@ async function sendTextMessage(
 }
 
 async function sendTemplateMessage(
-  phoneNumberId: string, token: string, to: string,
-  templateName: string, templateParams: Record<string, unknown> = {}, language = 'es',
+  phoneNumberId: string,
+  token: string,
+  to: string,
+  templateName: string,
+  templateParams: Record<string, unknown> = {},
+  language = 'es',
 ): Promise<{ ok: boolean; waMessageId?: string; error?: string }> {
   if (!templateName) {
     return { ok: false, error: 'template_name is required' }
@@ -73,44 +75,50 @@ async function sendTemplateMessage(
   try {
     const components: Array<Record<string, unknown>> = []
 
-    // Support both named params { body: { nombre: "Juan" } } and positional { body: ["Juan"] }
     const rawBody = templateParams.body
     if (rawBody) {
       if (Array.isArray(rawBody)) {
-        // Positional: ["Juan"] → [{ type: "text", text: "Juan" }]
         components.push({
           type: 'body',
-          parameters: (rawBody as string[]).map(p => ({ type: 'text', text: p })),
+          parameters: (rawBody as string[]).map((p) => ({
+            type: 'text',
+            text: p,
+          })),
         })
       } else if (typeof rawBody === 'object') {
-        // Named: { nombre: "Juan" } → [{ type: "text", parameter_name: "nombre", text: "Juan" }]
         components.push({
           type: 'body',
-          parameters: Object.entries(rawBody as Record<string, string>).map(([name, value]) => ({
-            type: 'text',
-            parameter_name: name,
-            text: String(value),
-          })),
+          parameters: Object.entries(rawBody as Record<string, string>).map(
+            ([name, value]) => ({
+              type: 'text',
+              parameter_name: name,
+              text: String(value),
+            }),
+          ),
         })
       }
     }
 
-    // Support header params (same dual format)
     const rawHeader = templateParams.header
     if (rawHeader) {
       if (Array.isArray(rawHeader)) {
         components.push({
           type: 'header',
-          parameters: (rawHeader as string[]).map(p => ({ type: 'text', text: p })),
+          parameters: (rawHeader as string[]).map((p) => ({
+            type: 'text',
+            text: p,
+          })),
         })
       } else if (typeof rawHeader === 'object') {
         components.push({
           type: 'header',
-          parameters: Object.entries(rawHeader as Record<string, string>).map(([name, value]) => ({
-            type: 'text',
-            parameter_name: name,
-            text: String(value),
-          })),
+          parameters: Object.entries(rawHeader as Record<string, string>).map(
+            ([name, value]) => ({
+              type: 'text',
+              parameter_name: name,
+              text: String(value),
+            }),
+          ),
         })
       }
     }
@@ -127,11 +135,17 @@ async function sendTemplateMessage(
     }
     console.log('[sendTemplate] payload:', JSON.stringify(payload))
 
-    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      },
+    )
     const data = await res.json()
     if (!res.ok) {
       console.error('[sendTemplate] Meta error:', JSON.stringify(data))
@@ -144,9 +158,12 @@ async function sendTemplateMessage(
 }
 
 async function sendMediaMessage(
-  phoneNumberId: string, token: string, to: string,
-  mediaType: 'image' | 'document' | 'audio' | 'video',
-  mediaUrl: string, caption?: string,
+  phoneNumberId: string,
+  token: string,
+  to: string,
+  mediaType: string,
+  mediaUrl: string,
+  caption?: string,
 ): Promise<{ ok: boolean; waMessageId?: string; error?: string }> {
   try {
     const mediaPayload: Record<string, unknown> = { link: mediaUrl }
@@ -154,18 +171,25 @@ async function sendMediaMessage(
       mediaPayload.caption = caption
     }
 
-    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: stripPlus(to),
-        type: mediaType,
-        [mediaType]: mediaPayload,
-      }),
-    })
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: stripPlus(to),
+          type: mediaType,
+          [mediaType]: mediaPayload,
+        }),
+      },
+    )
     const data = await res.json()
-    if (!res.ok) return { ok: false, error: data.error?.message || 'Unknown error' }
+    if (!res.ok)
+      return { ok: false, error: data.error?.message || 'Unknown error' }
     return { ok: true, waMessageId: data.messages?.[0]?.id }
   } catch (err) {
     return { ok: false, error: String(err) }
@@ -189,7 +213,7 @@ Deno.serve(async (req) => {
   let params: Record<string, unknown>
   try {
     params = await req.json()
-  } catch {
+  } catch (_e) {
     return jsonResponse({ error: 'Invalid JSON' }, 400)
   }
 
@@ -200,13 +224,18 @@ Deno.serve(async (req) => {
   const isRepesca = (params.is_repesca as boolean) || false
 
   if (!agenteId || !to || !conversacionId) {
-    return jsonResponse({ error: 'agente_id, conversacion_id and to are required' }, 400)
+    return jsonResponse(
+      { error: 'agente_id, conversacion_id and to are required' },
+      400,
+    )
   }
 
-  // === LOAD AGENT ===
+  // Load agent
   const { data: agente, error: agenteErr } = await supabase
     .from('ia_agentes')
-    .select('id, whatsapp_phone_id, modo_sandbox, sandbox_phones, rate_limit_msg_hora, config, created_at')
+    .select(
+      'id, whatsapp_phone_id, modo_sandbox, sandbox_phones, rate_limit_msg_hora, config, created_at',
+    )
     .eq('id', agenteId)
     .single()
 
@@ -219,7 +248,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Agent has no WhatsApp phone configured' }, 400)
   }
 
-  // === CHECK BLACKLIST ===
+  // Check blacklist
   const { data: blacklisted } = await supabase
     .from('ia_blacklist')
     .select('id')
@@ -227,32 +256,21 @@ Deno.serve(async (req) => {
     .maybeSingle()
 
   if (blacklisted) {
-    await supabase.from('ia_logs').insert({
-      agente_id: agenteId,
-      conversacion_id: conversacionId,
-      tipo: 'info',
-      mensaje: `Envío bloqueado: ${to} está en blacklist`,
-    })
     return jsonResponse({ error: 'Phone is blacklisted', blocked: true }, 403)
   }
 
-  // === CHECK SANDBOX MODE ===
+  // Check sandbox
   if (agente.modo_sandbox) {
     const allowed = agente.sandbox_phones || []
     if (!allowed.includes(to)) {
-      await supabase.from('ia_logs').insert({
-        agente_id: agenteId,
-        conversacion_id: conversacionId,
-        tipo: 'info',
-        mensaje: `Envío bloqueado en sandbox: ${to} no autorizado`,
-      })
-      return jsonResponse({ error: 'Phone not in sandbox list', blocked: true }, 403)
+      return jsonResponse(
+        { error: 'Phone not in sandbox list', blocked: true },
+        403,
+      )
     }
   }
 
-  // === CHECK RATE LIMITING (hourly) ===
-  // Use efficient query: count outbound messages for this agent in last hour
-  // via conversacion_id join instead of fetching all conversation IDs
+  // Rate limit (hourly)
   const now = new Date()
   const today = getMadridDate()
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString()
@@ -264,22 +282,16 @@ Deno.serve(async (req) => {
     .eq('direction', 'outbound')
     .gte('created_at', oneHourAgo)
 
-  // Also get agent-wide hourly count (but only from recent conversations to avoid O(N))
-  // Use the costes table which tracks whatsapp_mensajes per day
   const maxPerHour = agente.rate_limit_msg_hora || 60
 
-  // For per-conversation rate limit, use a smaller threshold
   if ((msgLastHour || 0) >= Math.ceil(maxPerHour / 2)) {
-    await supabase.from('ia_logs').insert({
-      agente_id: agenteId,
-      conversacion_id: conversacionId,
-      tipo: 'warning',
-      mensaje: `Rate limit por conversación alcanzado: ${msgLastHour} mensajes en última hora`,
-    })
-    return jsonResponse({ error: 'Per-conversation hourly rate limit reached', blocked: true }, 429)
+    return jsonResponse(
+      { error: 'Per-conversation hourly rate limit reached', blocked: true },
+      429,
+    )
   }
 
-  // === CHECK DAILY RATE LIMIT (with warm-up) ===
+  // Daily rate limit
   const { data: costes } = await supabase
     .from('ia_costes')
     .select('whatsapp_mensajes')
@@ -288,47 +300,15 @@ Deno.serve(async (req) => {
     .maybeSingle()
 
   const msgToday = costes?.whatsapp_mensajes || 0
-  const configuredMaxPerDay = (agente.config as Record<string, unknown>)?.max_mensajes_dia as number || 500
-
-  // === WARM-UP: Gradual limit increase for new WhatsApp numbers ===
   const agentConfig = (agente.config || {}) as Record<string, unknown>
-  const warmupSchedule = (agentConfig.warmup_schedule as Array<{ max_days: number; limit: number }>) || [
-    { max_days: 3, limit: 20 },
-    { max_days: 7, limit: 50 },
-    { max_days: 14, limit: 100 },
-    { max_days: 30, limit: 250 },
-  ]
+  const configuredMaxPerDay =
+    (agentConfig.max_mensajes_dia as number) || 500
 
-  let warmupLimit = configuredMaxPerDay
-  if (agente.created_at) {
-    const daysActive = Math.floor((Date.now() - new Date(agente.created_at).getTime()) / (1000 * 60 * 60 * 24))
-    for (const tier of warmupSchedule) {
-      if (daysActive < tier.max_days) {
-        warmupLimit = tier.limit
-        break
-      }
-    }
-    // Day 31+ (past all tiers): use configuredMaxPerDay (warmupLimit stays as default)
+  if (msgToday >= configuredMaxPerDay) {
+    return jsonResponse({ error: 'Daily rate limit reached', blocked: true }, 429)
   }
 
-  const maxPerDay = Math.min(warmupLimit, configuredMaxPerDay)
-
-  if (warmupLimit < configuredMaxPerDay) {
-    console.log(`[warmup] Agent ${agenteId}: days_active=${Math.floor((Date.now() - new Date(agente.created_at).getTime()) / 86400000)}, warmup_limit=${warmupLimit}, effective_max=${maxPerDay}`)
-  }
-
-  if (msgToday >= maxPerDay) {
-    const isWarmup = warmupLimit < configuredMaxPerDay
-    await supabase.from('ia_logs').insert({
-      agente_id: agenteId,
-      conversacion_id: conversacionId,
-      tipo: 'warning',
-      mensaje: `Rate limit diario alcanzado: ${msgToday}/${maxPerDay} mensajes${isWarmup ? ' (warm-up activo)' : ''}`,
-    })
-    return jsonResponse({ error: 'Daily rate limit reached', blocked: true, warmup_active: warmupLimit < configuredMaxPerDay }, 429)
-  }
-
-  // === CHECK 24H WINDOW ===
+  // Check 24h window
   const { data: convo } = await supabase
     .from('ia_conversaciones')
     .select('wa_window_expires_at')
@@ -340,7 +320,7 @@ Deno.serve(async (req) => {
     windowOpen = new Date(convo.wa_window_expires_at) > now
   }
 
-  // === SEND MESSAGES ===
+  // Send messages
   const results: Array<{
     ok: boolean
     waMessageId?: string
@@ -350,18 +330,23 @@ Deno.serve(async (req) => {
 
   const messages = (params.messages as Array<Record<string, unknown>>) || []
 
-  // Direct template send (for repesca, outbound, etc.)
+  // Direct template send
   if (params.template_name && messages.length === 0) {
     const templateName = params.template_name as string
-    const templateParams = (params.template_params as Record<string, unknown>) || {}
+    const templateParams =
+      (params.template_params as Record<string, unknown>) || {}
 
     const result = await sendTemplateMessage(
-      phoneNumberId, waToken, to, templateName, templateParams,
+      phoneNumberId,
+      waToken,
+      to,
+      templateName,
+      templateParams,
     )
     results.push({ ...result, type: 'template' })
 
     if (result.ok) {
-      const { error: insertErr } = await supabase.from('ia_mensajes').insert({
+      await supabase.from('ia_mensajes').insert({
         conversacion_id: conversacionId,
         direction: 'outbound',
         sender,
@@ -371,7 +356,6 @@ Deno.serve(async (req) => {
         template_name: templateName,
         is_repesca: isRepesca,
       })
-      if (insertErr) console.error('Error saving template message:', insertErr)
     }
   }
 
@@ -385,57 +369,61 @@ Deno.serve(async (req) => {
       await sleep(1000 + Math.random() * 1000)
     }
 
-    let result: { ok: boolean; waMessageId?: string; error?: string }
+    let result: { ok: boolean; waMessageId?: string; error?: string } = {
+      ok: false,
+      error: 'unhandled type',
+    }
 
     if (!windowOpen && type !== 'template') {
-      await supabase.from('ia_logs').insert({
-        agente_id: agenteId,
-        conversacion_id: conversacionId,
-        tipo: 'warning',
-        mensaje: `Ventana 24h cerrada, ${type} no enviado: "${content.substring(0, 50)}"`,
-      })
       results.push({ ok: false, error: '24h window closed', type })
       continue
     }
 
-    switch (type) {
-      case 'text':
-        result = await sendTextMessage(phoneNumberId, waToken, to, content)
-        break
-      case 'image':
-      case 'video':
-      case 'audio':
-      case 'document':
-        if (!mediaUrl) {
-          results.push({ ok: false, error: 'media_url required', type })
-          continue
-        }
-        result = await sendMediaMessage(
-          phoneNumberId, waToken, to,
-          type as 'image' | 'video' | 'audio' | 'document',
-          mediaUrl, content || undefined,
-        )
-        break
-      case 'template':
-        if (!msg.template_name) {
-          results.push({ ok: false, error: 'template_name required for template type', type })
-          continue
-        }
-        result = await sendTemplateMessage(
-          phoneNumberId, waToken, to,
-          msg.template_name as string,
-          (msg.template_params as Record<string, unknown>) || {},
-        )
-        break
-      default:
-        results.push({ ok: false, error: `Unknown type: ${type}`, type })
+    if (type === 'text') {
+      result = await sendTextMessage(phoneNumberId, waToken, to, content)
+    } else if (
+      type === 'image' ||
+      type === 'video' ||
+      type === 'audio' ||
+      type === 'document'
+    ) {
+      if (!mediaUrl) {
+        results.push({ ok: false, error: 'media_url required', type })
         continue
+      }
+      result = await sendMediaMessage(
+        phoneNumberId,
+        waToken,
+        to,
+        type,
+        mediaUrl,
+        content || undefined,
+      )
+    } else if (type === 'template') {
+      if (!msg.template_name) {
+        results.push({
+          ok: false,
+          error: 'template_name required for template type',
+          type,
+        })
+        continue
+      }
+      result = await sendTemplateMessage(
+        phoneNumberId,
+        waToken,
+        to,
+        msg.template_name as string,
+        (msg.template_params as Record<string, unknown>) || {},
+      )
+    } else {
+      results.push({ ok: false, error: `Unknown type: ${type}`, type })
+      continue
     }
 
     results.push({ ...result, type })
 
     if (result.ok) {
-      const { error: insertErr } = await supabase.from('ia_mensajes').insert({
+      await supabase.from('ia_mensajes').insert({
         conversacion_id: conversacionId,
         direction: 'outbound',
         sender,
@@ -443,10 +431,10 @@ Deno.serve(async (req) => {
         message_type: type === 'template' ? 'text' : type,
         media_url: mediaUrl || null,
         wa_message_id: result.waMessageId,
-        template_name: type === 'template' ? (msg.template_name as string) : null,
+        template_name:
+          type === 'template' ? (msg.template_name as string) : null,
         is_repesca: isRepesca,
       })
-      if (insertErr) console.error('Error saving message:', insertErr)
     }
 
     if (!result.ok) {
@@ -459,8 +447,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  // === UPDATE CONVERSATION ===
-  if (results.some(r => r.ok)) {
+  // Update conversation
+  if (results.some((r) => r.ok)) {
     await supabase
       .from('ia_conversaciones')
       .update({
@@ -470,23 +458,27 @@ Deno.serve(async (req) => {
       .eq('id', conversacionId)
   }
 
-  // === UPDATE COSTS ===
-  const sentCount = results.filter(r => r.ok).length
+  // Update costs
+  const sentCount = results.filter((r) => r.ok).length
   if (sentCount > 0) {
-    // WhatsApp pricing varies by country/type. Use configurable value.
-    const costPerMsg = ((agente.config as Record<string, unknown>)?.wa_cost_per_msg as number) || 0.005
-    await supabase.rpc('ia_increment_costes', {
-      p_agente_id: agenteId,
-      p_fecha: today,
-      p_whatsapp_mensajes: sentCount,
-      p_whatsapp_coste: sentCount * costPerMsg,
-    }).catch(err => console.error('Error incrementing costs:', err))
+    const costPerMsg =
+      (agentConfig.wa_cost_per_msg as number) || 0.005
+    try {
+      await supabase.rpc('ia_increment_costes', {
+        p_agente_id: agenteId,
+        p_fecha: today,
+        p_whatsapp_mensajes: sentCount,
+        p_whatsapp_coste: sentCount * costPerMsg,
+      })
+    } catch (err) {
+      console.error('Error incrementing costs:', err)
+    }
   }
 
   return jsonResponse({
     status: 'ok',
-    sent: results.filter(r => r.ok).length,
-    failed: results.filter(r => !r.ok).length,
+    sent: results.filter((r) => r.ok).length,
+    failed: results.filter((r) => !r.ok).length,
     results,
   })
 })

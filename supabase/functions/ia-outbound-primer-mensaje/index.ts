@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
  * ia-outbound-primer-mensaje
@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
         templateParams = { body: { nombre: nombre || 'amigo/a' } }
         break
       case 'repescadora':
-        templateName = 'hola_he_visto_que_nos_has_v'
+        templateName = 'hola_he_visto_que_nos_has_vuelto_a_rellenar_el_formulario_en_que_te_puedo_ayudar'
         break
       case 'outbound_frio':
         templateName = 're_contacto_rosalia_1'
@@ -394,12 +394,14 @@ Deno.serve(async (req) => {
         }
       } catch (crmErr) {
         console.error('CRM sync error (non-fatal):', crmErr)
-        await supabase.from('ia_logs').insert({
-          agente_id: agenteId,
-          conversacion_id: conversacionId,
-          tipo: 'warning',
-          mensaje: `CRM sync falló (no crítico): ${crmErr}`,
-        }).catch(() => {})
+        try {
+          await supabase.from('ia_logs').insert({
+            agente_id: agenteId,
+            conversacion_id: conversacionId,
+            tipo: 'warning',
+            mensaje: `CRM sync falló (no crítico): ${crmErr}`,
+          })
+        } catch (_e) { /* ignore */ }
       }
     }
 
@@ -411,12 +413,14 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('Error in ia-outbound-primer-mensaje:', err)
 
-    await supabase.from('ia_logs').insert({
-      agente_id: agenteId,
-      tipo: 'error',
-      mensaje: `Error en ia-outbound-primer-mensaje: ${err}`,
-      detalles: { error: String(err), stack: (err as Error).stack },
-    }).catch(() => {})
+    try {
+      await supabase.from('ia_logs').insert({
+        agente_id: agenteId,
+        tipo: 'error',
+        mensaje: `Error en ia-outbound-primer-mensaje: ${err}`,
+        detalles: { error: String(err) },
+      })
+    } catch (_e) { /* ignore */ }
 
     return jsonResponse({ error: 'Internal error', details: String(err) }, 500)
   }

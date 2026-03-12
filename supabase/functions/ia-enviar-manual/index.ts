@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 /**
  * ia-enviar-manual
@@ -154,12 +154,12 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('Fatal error in ia-enviar-manual:', err)
 
-    await supabase.from('ia_logs').insert({
+    try { await supabase.from('ia_logs').insert({
       conversacion_id: conversacionId,
       tipo: 'error',
       mensaje: `Error en ia-enviar-manual: ${String(err)}`,
-      detalles: { error: String(err), stack: (err as Error).stack },
-    }).catch(() => {})
+      detalles: { error: String(err), stack: String(err) },
+    }) } catch (_e) { /* ignore */ }
 
     return jsonResponse({ error: 'Internal error', details: String(err) }, 500)
   }
