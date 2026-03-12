@@ -544,20 +544,24 @@ async function processWebhookAsync(
           }
 
           // === CHECK RGPD / STOP ===
-          // Exact match phrases (match anywhere in message)
-          const stopPhrases = [
-            'no me escribas más', 'no me escribas mas', 'no me contactes',
-            'borra mis datos', 'no quiero recibir',
-            'deja de escribirme', 'elimina mis datos', 'para de escribirme',
-            'darme de baja', 'unsubscribe',
-          ]
-          // Word-boundary phrases (only match as whole words to avoid false positives like "trabajar" → "baja")
-          const stopExactWords = ['stop', 'baja']
+          // Only unambiguous phrases trigger immediate opt-out
+          // Ambiguous words like "baja" alone are NOT enough (could be "baja médica", "precio bajo", etc.)
           const contentLower = content.toLowerCase().trim()
-          const isStop = stopPhrases.some(phrase => contentLower.includes(phrase))
-            || stopExactWords.some(word => new RegExp(`\\b${word}\\b`).test(contentLower))
 
-          if (isStop) {
+          // Immediate opt-out: these phrases are unambiguous
+          const clearStopPhrases = [
+            'no me escribas más', 'no me escribas mas', 'no me contactes',
+            'borra mis datos', 'no quiero recibir', 'no quiero que me escribas',
+            'deja de escribirme', 'elimina mis datos', 'para de escribirme',
+            'darme de baja', 'darse de baja', 'quiero darme de baja',
+            'unsubscribe', 'no me mandes más mensajes', 'no me mandes mas mensajes',
+          ]
+
+          // Only "STOP" or "BAJA" as the ENTIRE message (not part of a sentence)
+          const isExactStopWord = contentLower === 'stop' || contentLower === 'baja'
+          const isClearStop = clearStopPhrases.some(phrase => contentLower.includes(phrase)) || isExactStopWord
+
+          if (isClearStop) {
             await supabase.from('ia_leads').update({
               opted_out: true,
               opted_out_at: new Date().toISOString(),
