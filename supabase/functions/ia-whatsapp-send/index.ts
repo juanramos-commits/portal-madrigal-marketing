@@ -1,5 +1,32 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
+// Actual text of WhatsApp templates as approved in Meta
+// Used to store the real message in ia_mensajes so AI and UI can read it
+function resolveTemplateText(
+  templateName: string,
+  params: Record<string, unknown>,
+): string {
+  const bodyParams = params.body as Record<string, string> | undefined
+  const nombre = bodyParams?.nombre || 'amigo/a'
+
+  const TEMPLATES: Record<string, string> = {
+    'primer_mensaje_formulario':
+      `Hola ${nombre}, soy Rosalía, del equipo de Madrigal Marketing. Hemos recibido tu solicitud de información sobre nuestros servicios. Cuéntame, qué es lo que más te está frenando ahora mismo para conseguir más clientes?`,
+    'hola_he_visto_que_nos_has_vuelto_a_rellenar_el_formulario_en_que_te_puedo_ayudar':
+      `Hola! He visto que nos has vuelto a rellenar el formulario, en qué te puedo ayudar?`,
+    'ests_por_aqui':
+      `Estás por aquí?`,
+    'ojitos':
+      `👀`,
+    'ultimo_toque_y_no_molesto_mas__seguimos_o_lo_dejamos_aqui':
+      `Último toque y no molesto más, seguimos o lo dejamos aquí?`,
+    're_contacto_rosalia_1':
+      `Hola! Soy Rosalía del equipo de Madrigal Marketing. Te escribo porque creo que podemos ayudarte con tu negocio. Tienes un momento?`,
+  }
+
+  return TEMPLATES[templateName] || `[Plantilla: ${templateName}]`
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'content-type, authorization',
@@ -350,7 +377,7 @@ Deno.serve(async (req) => {
         conversacion_id: conversacionId,
         direction: 'outbound',
         sender,
-        content: `[Plantilla: ${templateName}]`,
+        content: resolveTemplateText(templateName, templateParams),
         message_type: 'text',
         wa_message_id: result.waMessageId,
         template_name: templateName,

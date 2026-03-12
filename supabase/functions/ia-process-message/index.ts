@@ -990,20 +990,20 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: true })
       .limit(30)
 
-    // Map of template names to actual text sent to the lead
+    // Actual text of WhatsApp templates (must match Meta-approved text exactly)
     const TEMPLATE_TEXTS: Record<string, (leadName: string) => string> = {
       'primer_mensaje_formulario': (name) =>
-        `¡Hola ${name}! 👋 He visto que has rellenado el formulario y quería escribirte directamente. ¿En qué te puedo ayudar?`,
+        `Hola ${name}, soy Rosalía, del equipo de Madrigal Marketing. Hemos recibido tu solicitud de información sobre nuestros servicios. Cuéntame, qué es lo que más te está frenando ahora mismo para conseguir más clientes?`,
       'hola_he_visto_que_nos_has_vuelto_a_rellenar_el_formulario_en_que_te_puedo_ayudar': (_name) =>
-        `¡Hola! He visto que nos has vuelto a rellenar el formulario, ¿en qué te puedo ayudar?`,
+        `Hola! He visto que nos has vuelto a rellenar el formulario, en qué te puedo ayudar?`,
       'ests_por_aqui': (_name) =>
-        `¿Estás por aquí? 👀`,
+        `Estás por aquí?`,
       'ojitos': (_name) =>
         `👀`,
       'ultimo_toque_y_no_molesto_mas__seguimos_o_lo_dejamos_aqui': (_name) =>
-        `Último toque y no molesto más 😊 ¿Seguimos o lo dejamos aquí?`,
+        `Último toque y no molesto más, seguimos o lo dejamos aquí?`,
       're_contacto_rosalia_1': (_name) =>
-        `¡Hola! Soy Rosalía del equipo de Madrigal Marketing. Te escribo porque creo que podemos ayudarte con tu negocio. ¿Tienes un momento?`,
+        `Hola! Soy Rosalía del equipo de Madrigal Marketing. Te escribo porque creo que podemos ayudarte con tu negocio. Tienes un momento?`,
     }
 
     const leadName = (lead.nombre as string) || 'amigo/a'
@@ -1056,6 +1056,11 @@ Tono: ${estilo.tono || 'no disponible'}
     const especialidad = agentConfig.especialidad || agente.tipo || 'setter'
 
     const contextAddendum = `
+
+--- REGLAS ADICIONALES ---
+- NUNCA abras un mensaje con signo de interrogación (¿). Haz una afirmación o comentario primero, luego la pregunta.
+- NUNCA te presentes si la plantilla inicial ya lo hizo — el lead ya sabe quién eres.
+- El primer mensaje en el historial es una plantilla que TÚ ya enviaste. Lee su contenido y continúa desde ahí sin repetir lo que ya dijiste.
 
 --- CONTEXTO DEL AGENTE ---
 Nombre del agente: ${agente.nombre || 'Asistente'}
