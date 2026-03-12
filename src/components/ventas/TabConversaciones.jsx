@@ -649,11 +649,17 @@ function ConversationItem({ conv, isActive, onClick, usuarios }) {
 function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleChatbot, onShowSidebar, onAssign, agenteId, usuarios, onSendMedia }) {
   const [texto, setTexto] = useState('')
   const messagesEndRef = useRef(null)
+  const messagesContainerRef = useRef(null)
+  const prevMensajesLen = useRef(0)
   const inputRef = useRef(null)
   const { showToast } = useToast()
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (!mensajes.length) return
+    // Only smooth scroll when new messages are added, instant on full reload
+    const isNewMessage = mensajes.length > prevMensajesLen.current && prevMensajesLen.current > 0
+    messagesEndRef.current?.scrollIntoView({ behavior: isNewMessage ? 'smooth' : 'instant' })
+    prevMensajesLen.current = mensajes.length
   }, [mensajes])
 
   useEffect(() => {
