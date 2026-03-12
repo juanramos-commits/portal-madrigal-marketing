@@ -262,7 +262,7 @@ Deno.serve(async (req) => {
     switch (agente.tipo) {
       case 'setter':
         templateName = 'primer_mensaje_formulario'
-        templateParams = { body: [nombre || 'amigo/a'] }
+        templateParams = { body: { nombre: nombre || 'amigo/a' } }
         break
       case 'repescadora':
         templateName = 'hola_he_visto_que_nos_has_v'
@@ -272,7 +272,7 @@ Deno.serve(async (req) => {
         break
       default:
         templateName = 'primer_mensaje_formulario'
-        templateParams = { body: [nombre || 'amigo/a'] }
+        templateParams = { body: { nombre: nombre || 'amigo/a' } }
         break
     }
 

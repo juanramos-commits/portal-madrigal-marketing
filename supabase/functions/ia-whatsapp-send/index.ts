@@ -72,30 +72,71 @@ async function sendTemplateMessage(
   }
   try {
     const components: Array<Record<string, unknown>> = []
-    const bodyParams = templateParams.body as Array<string> | undefined
-    if (bodyParams && bodyParams.length > 0) {
-      components.push({
-        type: 'body',
-        parameters: bodyParams.map(p => ({ type: 'text', text: p })),
-      })
+
+    // Support both named params { body: { nombre: "Juan" } } and positional { body: ["Juan"] }
+    const rawBody = templateParams.body
+    if (rawBody) {
+      if (Array.isArray(rawBody)) {
+        // Positional: ["Juan"] → [{ type: "text", text: "Juan" }]
+        components.push({
+          type: 'body',
+          parameters: (rawBody as string[]).map(p => ({ type: 'text', text: p })),
+        })
+      } else if (typeof rawBody === 'object') {
+        // Named: { nombre: "Juan" } → [{ type: "text", parameter_name: "nombre", text: "Juan" }]
+        components.push({
+          type: 'body',
+          parameters: Object.entries(rawBody as Record<string, string>).map(([name, value]) => ({
+            type: 'text',
+            parameter_name: name,
+            text: String(value),
+          })),
+        })
+      }
     }
+
+    // Support header params (same dual format)
+    const rawHeader = templateParams.header
+    if (rawHeader) {
+      if (Array.isArray(rawHeader)) {
+        components.push({
+          type: 'header',
+          parameters: (rawHeader as string[]).map(p => ({ type: 'text', text: p })),
+        })
+      } else if (typeof rawHeader === 'object') {
+        components.push({
+          type: 'header',
+          parameters: Object.entries(rawHeader as Record<string, string>).map(([name, value]) => ({
+            type: 'text',
+            parameter_name: name,
+            text: String(value),
+          })),
+        })
+      }
+    }
+
+    const payload = {
+      messaging_product: 'whatsapp',
+      to: stripPlus(to),
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: language },
+        ...(components.length > 0 ? { components } : {}),
+      },
+    }
+    console.log('[sendTemplate] payload:', JSON.stringify(payload))
 
     const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to: stripPlus(to),
-        type: 'template',
-        template: {
-          name: templateName,
-          language: { code: language },
-          ...(components.length > 0 ? { components } : {}),
-        },
-      }),
+      body: JSON.stringify(payload),
     })
     const data = await res.json()
-    if (!res.ok) return { ok: false, error: data.error?.message || 'Unknown error' }
+    if (!res.ok) {
+      console.error('[sendTemplate] Meta error:', JSON.stringify(data))
+      return { ok: false, error: data.error?.message || 'Unknown error' }
+    }
     return { ok: true, waMessageId: data.messages?.[0]?.id }
   } catch (err) {
     return { ok: false, error: String(err) }
