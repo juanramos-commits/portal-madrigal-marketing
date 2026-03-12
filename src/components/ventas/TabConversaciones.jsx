@@ -648,7 +648,6 @@ function ConversationItem({ conv, isActive, onClick, usuarios }) {
 // ─── Chat Panel ───────────────────────────────────────
 function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleChatbot, onShowSidebar, onAssign, agenteId, usuarios, onSendMedia }) {
   const [texto, setTexto] = useState('')
-  const [modo, setModo] = useState('mensaje') // 'mensaje' | 'nota'
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const { showToast } = useToast()
@@ -665,23 +664,10 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
     e.preventDefault()
     if (!texto.trim() || sending) return
     try {
-      if (modo === 'nota') {
-        await onNote(texto)
-      } else {
-        await onSend(texto)
-      }
+      await onSend(texto)
       setTexto('')
     } catch {
       // Error handled upstream
-    }
-  }
-
-  const handleFileUploaded = async (mediaUrl, mediaType, fileName) => {
-    try {
-      await onSendMedia(texto || fileName, mediaUrl, mediaType)
-      setTexto('')
-    } catch (err) {
-      showToast(err.message || 'Error enviando media', 'error')
     }
   }
 
@@ -845,39 +831,12 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
 
       {/* Input */}
       <form className="ia-chat-input" onSubmit={handleSubmit}>
-        <div className="ia-chat-input-mode">
-          <button
-            type="button"
-            className={`ia-chat-mode-btn ${modo === 'mensaje' ? 'active' : ''}`}
-            onClick={() => setModo('mensaje')}
-            title="Enviar mensaje por WhatsApp"
-          >
-            <Send size={14} />
-          </button>
-          <button
-            type="button"
-            className={`ia-chat-mode-btn ${modo === 'nota' ? 'active' : ''}`}
-            onClick={() => setModo('nota')}
-            title="Agregar nota interna"
-          >
-            <StickyNote size={14} />
-          </button>
-          <QuickReplies agenteId={agenteId} onSelect={setTexto} />
-          {modo === 'mensaje' && conv && (
-            <FileUploadButton
-              agenteId={agenteId}
-              conversacionId={conv.id}
-              onUploaded={handleFileUploaded}
-              disabled={sending}
-            />
-          )}
-        </div>
         <input
           ref={inputRef}
           type="text"
           value={texto}
           onChange={e => setTexto(e.target.value)}
-          placeholder={modo === 'nota' ? 'Escribir nota interna...' : 'Enviar mensaje como humano...'}
+          placeholder="Enviar mensaje como humano..."
           disabled={sending}
           className="ia-chat-input-field"
         />
@@ -886,7 +845,7 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
           className="ia-chat-send-btn"
           disabled={!texto.trim() || sending}
         >
-          {sending ? <Clock size={18} /> : modo === 'nota' ? <StickyNote size={18} /> : <Send size={18} />}
+          {sending ? <Clock size={18} /> : <Send size={18} />}
         </button>
       </form>
     </div>

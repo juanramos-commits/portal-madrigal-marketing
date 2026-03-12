@@ -1256,35 +1256,6 @@
   background: rgba(255, 255, 255, 0.02);
 }
 
-.ia-chat-input-mode {
-  display: flex;
-  gap: 2px;
-}
-
-.ia-chat-mode-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.ia-chat-mode-btn:hover {
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.ia-chat-mode-btn.active {
-  background: #00a884;
-  color: #fff;
-}
-
 .ia-chat-input-field {
   flex: 1;
   border: none;
