@@ -355,6 +355,8 @@ Deno.serve(async (req) => {
     }
   }
 
+  const sendStartedAt = new Date().toISOString()
+
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i]
     const type = msg.type as string
@@ -371,6 +373,34 @@ Deno.serve(async (req) => {
         Math.max(4000, readingPause + typingTime),
       )
       await sleep(typingDelay)
+
+      // === INBOUND INTERRUPT CHECK ===
+      // If the lead sent a message while we were typing, stop sending.
+      // The webhook debounce will handle their response naturally.
+      const { count: inboundCount } = await supabase
+        .from('ia_mensajes')
+        .select('id', { count: 'exact', head: true })
+        .eq('conversacion_id', conversacionId)
+        .eq('direction', 'inbound')
+        .gt('created_at', sendStartedAt)
+
+      if (inboundCount && inboundCount > 0) {
+        // Log the interruption
+        try { await supabase.from('ia_logs').insert({
+          agente_id: agenteId,
+          conversacion_id: conversacionId,
+          tipo: 'info',
+          mensaje: `Envío interrumpido: lead respondió durante envío multi-mensaje (${i}/${messages.length} enviados)`,
+        }) } catch (_e) { /* ignore */ }
+
+        return jsonResponse({
+          status: 'interrupted',
+          sent: results.filter(r => r.ok).length,
+          total: messages.length,
+          reason: 'inbound_interrupt',
+          results,
+        })
+      }
     }
 
     let result: { ok: boolean; waMessageId?: string; error?: string } = {

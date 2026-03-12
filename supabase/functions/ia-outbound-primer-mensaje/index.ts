@@ -342,7 +342,7 @@ Deno.serve(async (req) => {
 
         if (pipeline) {
           const { data: etapa } = await supabase
-            .from('ventas_pipeline_etapas')
+            .from('ventas_etapas')
             .select('id')
             .eq('pipeline_id', pipeline.id)
             .order('orden', { ascending: true })
@@ -356,17 +356,15 @@ Deno.serve(async (req) => {
               nombre: nombre || telefono,
               telefono,
               email: email || null,
-              servicio_interesado: servicio || null,
-              origen: origen === 'whatsapp' ? 'whatsapp' : 'referido',
+              fuente: origen === 'whatsapp' ? 'whatsapp' : 'referido',
               setter_asignado_id: agente.usuario_id,
-              etapa_actual_id: etapa?.id || null,
             })
             .select('id')
             .single()
 
           if (crmLead && etapa) {
             // Create pipeline estado
-            await supabase.from('ventas_lead_pipeline_estado').insert({
+            await supabase.from('ventas_lead_pipeline').insert({
               lead_id: crmLead.id,
               pipeline_id: pipeline.id,
               etapa_id: etapa.id,

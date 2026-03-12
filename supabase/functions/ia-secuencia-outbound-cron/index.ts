@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
     // === 1. FIND ACTIVE OUTBOUND_FRIO AGENTS ===
     const { data: agentes, error: agentesErr } = await supabase
       .from('ia_agentes')
-      .select('id, tipo, config, rate_limit_nuevos_dia')
+      .select('id, tipo, config, rate_limit_nuevos_dia, usuario_id, nombre')
       .eq('activo', true)
       .in('tipo', ['outbound_frio', 'repescadora'])
 
@@ -345,6 +345,67 @@ Deno.serve(async (req) => {
                   p_mensajes_enviados: sentCount,
                 }) } catch (_e) { /* ignore */ }
 
+                // === CRM SYNC ===
+                if (agente.usuario_id) {
+                  try {
+                    const { data: pipeline } = await supabase
+                      .from('ventas_pipelines')
+                      .select('id')
+                      .eq('activo', true)
+                      .limit(1)
+                      .single()
+
+                    if (pipeline) {
+                      const { data: etapa } = await supabase
+                        .from('ventas_etapas')
+                        .select('id')
+                        .eq('pipeline_id', pipeline.id)
+                        .order('orden', { ascending: true })
+                        .limit(1)
+                        .single()
+
+                      const { data: crmLead } = await supabase
+                        .from('ventas_leads')
+                        .insert({
+                          nombre: qLead.nombre || qLead.telefono,
+                          telefono: qLead.telefono,
+                          fuente: 'referido',
+                          setter_asignado_id: agente.usuario_id,
+                        })
+                        .select('id')
+                        .single()
+
+                      if (crmLead && etapa) {
+                        await supabase.from('ventas_lead_pipeline').insert({
+                          lead_id: crmLead.id,
+                          pipeline_id: pipeline.id,
+                          etapa_id: etapa.id,
+                        })
+
+                        await supabase
+                          .from('ia_leads')
+                          .update({ crm_lead_id: crmLead.id })
+                          .eq('id', qConvo.lead_id)
+
+                        await supabase.from('ventas_actividad').insert({
+                          lead_id: crmLead.id,
+                          usuario_id: agente.usuario_id,
+                          tipo: 'creacion',
+                          descripcion: `Lead creado por agente IA "${agente.nombre}" — primer contacto enviado (cron)`,
+                        })
+                      }
+                    }
+                  } catch (crmErr) {
+                    console.error('CRM sync error (non-fatal):', crmErr)
+                    try { await supabase.from('ia_logs').insert({
+                      agente_id: agente.id,
+                      conversacion_id: qConvo.id,
+                      tipo: 'warning',
+                      mensaje: `CRM sync falló (no crítico): ${crmErr}`,
+                    }) } catch (_e) { /* ignore */ }
+                  }
+                }
+
                 agentSent++
                 agentProcessed++
               } catch (qErr) {
@@ -389,8 +450,8 @@ Deno.serve(async (req) => {
         }
 
         if (!conversations || conversations.length === 0) {
-          continue
-        }
+          // Don't continue — fall through to push agentResults with queued stats
+        } else {
 
         // === 3. PROCESS EACH CONVERSATION ===
         for (const convo of conversations) {
@@ -607,6 +668,7 @@ Deno.serve(async (req) => {
             }) } catch (_e) { /* ignore */ }
           }
         }
+        } // end else (conversations exist)
       } catch (agentErr) {
         agentErrors++
         try { await supabase.from('ia_logs').insert({

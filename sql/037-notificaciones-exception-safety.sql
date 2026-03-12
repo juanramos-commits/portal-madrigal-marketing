@@ -280,47 +280,57 @@ CREATE OR REPLACE FUNCTION ventas_asignar_lead_automatico(p_lead_id UUID)
 RETURNS JSONB AS $$
 DECLARE
     v_setter_asignado_id UUID;
-    v_setters UUID[];
-    v_idx INTEGER;
-    v_count INTEGER;
-    v_last_assigned UUID;
+    v_rand DOUBLE PRECISION;
+    v_cumulative INTEGER := 0;
+    v_total_pct INTEGER;
+    rec RECORD;
 BEGIN
     -- Verificar que el lead existe y no tiene setter
     IF NOT EXISTS (SELECT 1 FROM ventas_leads WHERE id = p_lead_id AND setter_asignado_id IS NULL) THEN
         RETURN jsonb_build_object('ok', false, 'error', 'Lead ya tiene setter o no existe');
     END IF;
 
-    -- Obtener setters activos ordenados por nombre
-    SELECT array_agg(vrc.usuario_id ORDER BY u.nombre)
-    INTO v_setters
-    FROM ventas_roles_comerciales vrc
-    JOIN usuarios u ON u.id = vrc.usuario_id
-    WHERE vrc.rol = 'setter' AND vrc.activo = true AND u.activo = true;
+    -- Obtener total de porcentaje de setters con porcentaje > 0
+    SELECT COALESCE(SUM(rc.porcentaje), 0) INTO v_total_pct
+    FROM ventas_reparto_config rc
+    JOIN ventas_roles_comerciales vrc ON vrc.usuario_id = rc.setter_id
+    JOIN usuarios u ON u.id = rc.setter_id
+    WHERE rc.activo = true AND rc.porcentaje > 0
+      AND vrc.rol = 'setter' AND vrc.activo = true AND u.activo = true;
 
-    IF v_setters IS NULL OR array_length(v_setters, 1) = 0 THEN
-        RETURN jsonb_build_object('ok', false, 'error', 'No hay setters activos');
+    IF v_total_pct = 0 THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'No hay setters con porcentaje > 0');
     END IF;
 
-    v_count := array_length(v_setters, 1);
+    -- Selección ponderada por porcentaje
+    v_rand := random() * v_total_pct;
 
-    -- Round-robin: buscar último setter asignado
-    SELECT setter_asignado_id INTO v_last_assigned
-    FROM ventas_leads
-    WHERE setter_asignado_id = ANY(v_setters)
-    ORDER BY created_at DESC
-    LIMIT 1;
+    FOR rec IN
+        SELECT rc.setter_id, rc.porcentaje
+        FROM ventas_reparto_config rc
+        JOIN ventas_roles_comerciales vrc ON vrc.usuario_id = rc.setter_id
+        JOIN usuarios u ON u.id = rc.setter_id
+        WHERE rc.activo = true AND rc.porcentaje > 0
+          AND vrc.rol = 'setter' AND vrc.activo = true AND u.activo = true
+        ORDER BY rc.porcentaje DESC, rc.setter_id
+    LOOP
+        v_cumulative := v_cumulative + rec.porcentaje;
+        IF v_rand <= v_cumulative THEN
+            v_setter_asignado_id := rec.setter_id;
+            EXIT;
+        END IF;
+    END LOOP;
 
-    IF v_last_assigned IS NULL THEN
-        v_setter_asignado_id := v_setters[1];
-    ELSE
-        v_idx := 1;
-        FOR i IN 1..v_count LOOP
-            IF v_setters[i] = v_last_assigned THEN
-                v_idx := i;
-                EXIT;
-            END IF;
-        END LOOP;
-        v_setter_asignado_id := v_setters[(v_idx % v_count) + 1];
+    -- Fallback (should not happen)
+    IF v_setter_asignado_id IS NULL THEN
+        SELECT rc.setter_id INTO v_setter_asignado_id
+        FROM ventas_reparto_config rc
+        WHERE rc.activo = true AND rc.porcentaje > 0
+        LIMIT 1;
+    END IF;
+
+    IF v_setter_asignado_id IS NULL THEN
+        RETURN jsonb_build_object('ok', false, 'error', 'No se pudo seleccionar setter');
     END IF;
 
     -- Asignar setter
