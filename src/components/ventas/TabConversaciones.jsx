@@ -8,7 +8,8 @@ import {
   MessageSquare, Filter, ChevronLeft, Mic, Image,
   FileText, Video, UserPlus, Info, X,
   ChevronRight, Smile, Frown, Meh, TrendingUp,
-  AlertTriangle, Heart, Flame
+  AlertTriangle, Heart, Flame, Paperclip, Shield,
+  ExternalLink, Link
 } from 'lucide-react'
 
 const ESTADO_LABELS = {
@@ -31,13 +32,13 @@ const ESTADO_COLORS = {
   handoff_humano: '#a855f7',
 }
 
-const SENTIMIENTO_ICONS = {
-  positivo: { icon: Smile, color: 'var(--success, #2ee59d)' },
-  interesado: { icon: Heart, color: '#ec4899' },
-  urgente: { icon: Flame, color: '#f97316' },
-  neutro: { icon: Meh, color: 'var(--text-secondary)' },
-  negativo: { icon: Frown, color: 'var(--error)' },
-  frustrado: { icon: AlertTriangle, color: 'var(--error)' },
+const SENTIMIENTO_CONFIG = {
+  positivo: { icon: Smile, color: 'var(--success, #2ee59d)', emoji: '\u{1F60A}', text: 'Positivo' },
+  interesado: { icon: Heart, color: '#ec4899', emoji: '\u{1F914}', text: 'Interesado' },
+  urgente: { icon: Flame, color: '#f97316', emoji: '\u{26A1}', text: 'Urgente' },
+  neutro: { icon: Meh, color: 'var(--text-secondary)', emoji: '\u{1F610}', text: 'Neutro' },
+  negativo: { icon: Frown, color: 'var(--error)', emoji: '\u{1F61F}', text: 'Negativo' },
+  frustrado: { icon: AlertTriangle, color: 'var(--error)', emoji: '\u{1F624}', text: 'Frustrado' },
 }
 
 const FILTROS = [
@@ -72,6 +73,13 @@ function formatFullTime(dateStr) {
   })
 }
 
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString('es-ES', {
+    day: 'numeric', month: 'long', year: 'numeric',
+  })
+}
+
 function MessageTypeIcon({ type, size = 12 }) {
   switch (type) {
     case 'audio': return <Mic size={size} />
@@ -92,11 +100,55 @@ function WaStatus({ status }) {
   }
 }
 
+function getScoreColor(score) {
+  if (score < 30) return '#ef4444'
+  if (score < 60) return '#f59e0b'
+  return '#10b981'
+}
+
+function getInitials(nombre) {
+  if (!nombre) return '?'
+  const parts = nombre.trim().split(/\s+/)
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
+  return parts[0].substring(0, 2).toUpperCase()
+}
+
 // ─── Lead Sidebar Panel ──────────────────────────────
 function LeadSidebar({ conv, onClose, onToggleFavorite, onAssign, usuarios }) {
   const lead = conv?.lead || {}
-  const sentimiento = SENTIMIENTO_ICONS[lead.sentimiento_actual] || SENTIMIENTO_ICONS.neutro
-  const SentimientoIcon = sentimiento.icon
+  const sentConfig = SENTIMIENTO_CONFIG[lead.sentimiento_actual] || SENTIMIENTO_CONFIG.neutro
+  const SentimientoIcon = sentConfig.icon
+
+  const [leadFull, setLeadFull] = useState(null)
+  const [objeciones, setObjeciones] = useState([])
+  const [loadingLead, setLoadingLead] = useState(false)
+
+  // Load full lead data + objeciones
+  useEffect(() => {
+    if (!conv?.lead_id) return
+    setLoadingLead(true)
+
+    Promise.all([
+      supabase
+        .from('ia_leads')
+        .select('*')
+        .eq('id', conv.lead_id)
+        .single(),
+      supabase
+        .from('ia_objeciones')
+        .select('id, tipo, resuelta, created_at')
+        .eq('conversacion_id', conv.id)
+        .order('created_at', { ascending: false }),
+    ]).then(([leadRes, objRes]) => {
+      if (leadRes.data) setLeadFull(leadRes.data)
+      setObjeciones(objRes.data || [])
+    }).finally(() => setLoadingLead(false))
+  }, [conv?.lead_id, conv?.id])
+
+  const fullLead = leadFull || lead
+  const score = fullLead.lead_score ?? 0
+  const scoreColor = getScoreColor(score)
+  const scoreDetalles = fullLead.score_detalles || null
 
   return (
     <div className="ia-lead-sidebar">
@@ -108,36 +160,85 @@ function LeadSidebar({ conv, onClose, onToggleFavorite, onAssign, usuarios }) {
       </div>
 
       <div className="ia-lead-sidebar-content">
+        {loadingLead && (
+          <div className="ia-loading" style={{ padding: 20 }}>
+            <div className="ia-spinner" />
+          </div>
+        )}
+
         {/* Contact info */}
         <div className="ia-lead-sidebar-section">
-          <div className="ia-lead-sidebar-name">{lead.nombre || 'Sin nombre'}</div>
-          {lead.telefono && (
+          <div className="ia-lead-sidebar-name">{fullLead.nombre || 'Sin nombre'}</div>
+          {fullLead.telefono && (
             <div className="ia-lead-sidebar-row">
-              <Phone size={12} /> {lead.telefono}
+              <Phone size={12} /> {fullLead.telefono}
             </div>
           )}
-          {lead.email && (
+          {fullLead.email && (
             <div className="ia-lead-sidebar-row">
-              <Mail size={12} /> {lead.email}
+              <Mail size={12} /> {fullLead.email}
             </div>
           )}
         </div>
 
-        {/* Score & Sentiment */}
+        {/* Score */}
         <div className="ia-lead-sidebar-section">
           <div className="ia-lead-sidebar-label">Lead Score</div>
           <div className="ia-lead-sidebar-score-bar">
             <div
               className="ia-lead-sidebar-score-fill"
-              style={{ width: `${lead.lead_score || 0}%` }}
+              style={{ width: `${score}%`, background: scoreColor }}
             />
-            <span className="ia-lead-sidebar-score-text">{lead.lead_score ?? '–'}/100</span>
+            <span className="ia-lead-sidebar-score-text">{score}/100</span>
           </div>
 
+          {/* Score breakdown */}
+          {scoreDetalles && (
+            <div className="ia-lead-score-breakdown">
+              {scoreDetalles.interes != null && (
+                <div className="ia-lead-score-breakdown-row">
+                  <span>Interes</span>
+                  <div className="ia-lead-score-mini-bar">
+                    <div style={{ width: `${scoreDetalles.interes}%`, background: getScoreColor(scoreDetalles.interes) }} />
+                  </div>
+                  <span className="ia-lead-score-breakdown-val">{scoreDetalles.interes}</span>
+                </div>
+              )}
+              {scoreDetalles.encaje != null && (
+                <div className="ia-lead-score-breakdown-row">
+                  <span>Encaje</span>
+                  <div className="ia-lead-score-mini-bar">
+                    <div style={{ width: `${scoreDetalles.encaje}%`, background: getScoreColor(scoreDetalles.encaje) }} />
+                  </div>
+                  <span className="ia-lead-score-breakdown-val">{scoreDetalles.encaje}</span>
+                </div>
+              )}
+              {scoreDetalles.urgencia != null && (
+                <div className="ia-lead-score-breakdown-row">
+                  <span>Urgencia</span>
+                  <div className="ia-lead-score-mini-bar">
+                    <div style={{ width: `${scoreDetalles.urgencia}%`, background: getScoreColor(scoreDetalles.urgencia) }} />
+                  </div>
+                  <span className="ia-lead-score-breakdown-val">{scoreDetalles.urgencia}</span>
+                </div>
+              )}
+              {scoreDetalles.capacidad_inversion != null && (
+                <div className="ia-lead-score-breakdown-row">
+                  <span>Inversion</span>
+                  <div className="ia-lead-score-mini-bar">
+                    <div style={{ width: `${scoreDetalles.capacidad_inversion}%`, background: getScoreColor(scoreDetalles.capacidad_inversion) }} />
+                  </div>
+                  <span className="ia-lead-score-breakdown-val">{scoreDetalles.capacidad_inversion}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sentimiento */}
           <div className="ia-lead-sidebar-label" style={{ marginTop: 12 }}>Sentimiento</div>
-          <div className="ia-lead-sidebar-sentiment" style={{ color: sentimiento.color }}>
-            <SentimientoIcon size={16} />
-            {lead.sentimiento_actual || 'neutro'}
+          <div className="ia-lead-sidebar-sentiment" style={{ color: sentConfig.color }}>
+            <span className="ia-lead-sidebar-sentiment-emoji">{sentConfig.emoji}</span>
+            {sentConfig.text}
           </div>
         </div>
 
@@ -152,7 +253,7 @@ function LeadSidebar({ conv, onClose, onToggleFavorite, onAssign, usuarios }) {
           </span>
 
           <div className="ia-lead-sidebar-label" style={{ marginTop: 12 }}>Step</div>
-          <span className="ia-lead-sidebar-value">{conv.step || '–'}</span>
+          <span className="ia-lead-sidebar-value">{conv.step || '\u2013'}</span>
 
           <div className="ia-lead-sidebar-label" style={{ marginTop: 12 }}>Bot</div>
           <span className="ia-lead-sidebar-value">
@@ -176,12 +277,58 @@ function LeadSidebar({ conv, onClose, onToggleFavorite, onAssign, usuarios }) {
           </div>
         )}
 
+        {/* Objeciones */}
+        {objeciones.length > 0 && (
+          <div className="ia-lead-sidebar-section">
+            <div className="ia-lead-sidebar-label">Objeciones ({objeciones.length})</div>
+            <div className="ia-lead-sidebar-objeciones">
+              {objeciones.map(obj => (
+                <div key={obj.id} className="ia-lead-sidebar-objecion-item">
+                  <span className="ia-lead-sidebar-objecion-tipo">{obj.tipo}</span>
+                  <span className={`ia-lead-sidebar-objecion-badge ${obj.resuelta ? 'resuelta' : 'pendiente'}`}>
+                    {obj.resuelta ? 'Resuelta' : 'Pendiente'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* CRM Link */}
+        {fullLead.crm_lead_id && (
+          <div className="ia-lead-sidebar-section">
+            <div className="ia-lead-sidebar-label">CRM</div>
+            <a
+              href={`/ventas/leads/${fullLead.crm_lead_id}`}
+              className="ia-lead-sidebar-crm-link"
+            >
+              <Link size={12} />
+              Ver lead en CRM
+              <ExternalLink size={10} />
+            </a>
+          </div>
+        )}
+
+        {/* RGPD + Created at */}
+        <div className="ia-lead-sidebar-section">
+          <div className="ia-lead-sidebar-label">Consentimiento RGPD</div>
+          <div className="ia-lead-sidebar-rgpd">
+            <Shield size={14} />
+            <span className={`ia-lead-sidebar-rgpd-status ${fullLead.consentimiento_rgpd ? 'granted' : 'missing'}`}>
+              {fullLead.consentimiento_rgpd ? 'Otorgado' : 'No otorgado'}
+            </span>
+          </div>
+
+          <div className="ia-lead-sidebar-label" style={{ marginTop: 12 }}>Creado</div>
+          <span className="ia-lead-sidebar-value">{formatDate(fullLead.created_at)}</span>
+        </div>
+
         {/* Timestamps */}
         <div className="ia-lead-sidebar-section">
           <div className="ia-lead-sidebar-label">Primer mensaje</div>
           <span className="ia-lead-sidebar-value">{formatFullTime(conv.first_message_sent_at)}</span>
 
-          <div className="ia-lead-sidebar-label" style={{ marginTop: 8 }}>Último msg lead</div>
+          <div className="ia-lead-sidebar-label" style={{ marginTop: 8 }}>Ultimo msg lead</div>
           <span className="ia-lead-sidebar-value">{formatFullTime(conv.last_lead_message_at)}</span>
 
           <div className="ia-lead-sidebar-label" style={{ marginTop: 8 }}>Ventana 24h</div>
@@ -190,7 +337,7 @@ function LeadSidebar({ conv, onClose, onToggleFavorite, onAssign, usuarios }) {
               ? new Date(conv.wa_window_expires_at) > new Date()
                 ? `Abierta hasta ${formatFullTime(conv.wa_window_expires_at)}`
                 : 'Cerrada (solo plantillas)'
-              : '–'}
+              : '\u2013'}
           </span>
         </div>
 
@@ -228,6 +375,7 @@ function LeadSidebar({ conv, onClose, onToggleFavorite, onAssign, usuarios }) {
 function QuickReplies({ agenteId, onSelect }) {
   const [respuestas, setRespuestas] = useState([])
   const [open, setOpen] = useState(false)
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     if (!agenteId || !open) return
@@ -235,11 +383,12 @@ function QuickReplies({ agenteId, onSelect }) {
       .from('ia_respuestas_rapidas')
       .select('id, titulo, contenido')
       .eq('agente_id', agenteId)
-      .order('titulo')
-      .then(({ data }) => setRespuestas(data || []))
+      .order('orden')
+      .then(({ data }) => {
+        setRespuestas(data || [])
+        setLoaded(true)
+      })
   }, [agenteId, open])
-
-  if (respuestas.length === 0 && !open) return null
 
   return (
     <div className="ia-quick-replies">
@@ -247,14 +396,16 @@ function QuickReplies({ agenteId, onSelect }) {
         type="button"
         className="ia-chat-mode-btn"
         onClick={() => setOpen(!open)}
-        title="Respuestas rápidas"
+        title="Respuestas rapidas"
       >
         <Zap size={14} />
       </button>
       {open && (
         <div className="ia-quick-replies-dropdown">
-          {respuestas.length === 0 ? (
-            <div className="ia-quick-replies-empty">Sin respuestas rápidas</div>
+          {loaded && respuestas.length === 0 ? (
+            <div className="ia-quick-replies-empty">Sin respuestas rapidas</div>
+          ) : !loaded ? (
+            <div className="ia-quick-replies-empty">Cargando...</div>
           ) : (
             respuestas.map(r => (
               <button
@@ -273,12 +424,161 @@ function QuickReplies({ agenteId, onSelect }) {
   )
 }
 
+// ─── Assign Dropdown ──────────────────────────────────
+function AssignDropdown({ conv, usuarios, onAssign }) {
+  const [open, setOpen] = useState(false)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handleClick = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  const handleSelect = (userId) => {
+    onAssign(conv.id, userId || null)
+    setOpen(false)
+  }
+
+  return (
+    <div className="ia-assign-wrapper" ref={dropdownRef}>
+      <button
+        className="ia-btn ia-btn-secondary ia-btn-sm"
+        onClick={() => setOpen(!open)}
+        title="Asignar a equipo"
+      >
+        <UserPlus size={14} />
+      </button>
+      {open && (
+        <div className="ia-assign-dropdown">
+          <div className="ia-assign-dropdown-header">Asignar conversacion</div>
+          <button
+            className={`ia-assign-dropdown-item ${!conv.asignado_a ? 'active' : ''}`}
+            onClick={() => handleSelect(null)}
+          >
+            <span className="ia-assign-dropdown-initials ia-assign-none">--</span>
+            <span>Sin asignar</span>
+          </button>
+          {(usuarios || []).map(u => (
+            <button
+              key={u.id}
+              className={`ia-assign-dropdown-item ${conv.asignado_a === u.id ? 'active' : ''}`}
+              onClick={() => handleSelect(u.id)}
+            >
+              <span className="ia-assign-dropdown-initials">{getInitials(u.nombre || u.email)}</span>
+              <span>{u.nombre || u.email}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── File Upload Button ──────────────────────────────
+function FileUploadButton({ agenteId, conversacionId, onUploaded, disabled }) {
+  const [uploading, setUploading] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const fileInputRef = useRef(null)
+  const { showToast } = useToast()
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    // Reset input
+    e.target.value = ''
+
+    setUploading(true)
+    setProgress(10)
+
+    try {
+      // Determine media type
+      let mediaType = 'document'
+      if (file.type.startsWith('image/')) mediaType = 'image'
+      else if (file.type.startsWith('audio/')) mediaType = 'audio'
+      else if (file.type.startsWith('video/')) mediaType = 'video'
+
+      // Generate unique filename
+      const ext = file.name.split('.').pop()
+      const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`
+      const storagePath = `${agenteId}/${conversacionId}/${uniqueName}`
+
+      setProgress(30)
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('ia-media')
+        .upload(storagePath, file, { contentType: file.type })
+
+      if (error) throw new Error(`Error subiendo archivo: ${error.message}`)
+
+      setProgress(70)
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('ia-media')
+        .getPublicUrl(storagePath)
+
+      setProgress(90)
+
+      onUploaded(publicUrl, mediaType, file.name)
+      setProgress(100)
+      showToast('Archivo subido correctamente', 'success')
+    } catch (err) {
+      console.error('Error uploading file:', err)
+      showToast(err.message || 'Error subiendo archivo', 'error')
+    } finally {
+      setTimeout(() => {
+        setUploading(false)
+        setProgress(0)
+      }, 500)
+    }
+  }
+
+  return (
+    <div className="ia-file-upload-wrapper">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,audio/*,video/*,.pdf,.doc,.docx"
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
+      <button
+        type="button"
+        className="ia-chat-mode-btn"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={disabled || uploading}
+        title="Adjuntar archivo"
+      >
+        {uploading ? (
+          <div className="ia-file-upload-progress">
+            <div className="ia-file-upload-progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+        ) : (
+          <Paperclip size={14} />
+        )}
+      </button>
+    </div>
+  )
+}
+
 // ─── Conversation List ───────────────────────────────
-function ConversationItem({ conv, isActive, onClick }) {
+function ConversationItem({ conv, isActive, onClick, usuarios }) {
   const lead = conv.lead || {}
   const nombre = lead.nombre || lead.telefono || 'Desconocido'
-  const sentimiento = SENTIMIENTO_ICONS[lead.sentimiento_actual]
+  const sentimiento = SENTIMIENTO_CONFIG[lead.sentimiento_actual]
   const SentIcon = sentimiento?.icon
+
+  // Find assigned user
+  const asignado = conv.asignado_a
+    ? (usuarios || []).find(u => u.id === conv.asignado_a)
+    : null
 
   return (
     <div
@@ -306,6 +606,11 @@ function ConversationItem({ conv, isActive, onClick }) {
           )}
           {!conv.leida && <span className="ia-inbox-unread-dot" />}
           {conv.favorita && <Star size={10} fill="var(--warning, #ffa94d)" stroke="var(--warning, #ffa94d)" />}
+          {asignado && (
+            <span className="ia-inbox-item-assigned" title={asignado.nombre || asignado.email}>
+              {getInitials(asignado.nombre || asignado.email)}
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -313,11 +618,12 @@ function ConversationItem({ conv, isActive, onClick }) {
 }
 
 // ─── Chat Panel ───────────────────────────────────────
-function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleChatbot, onShowSidebar, agenteId }) {
+function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleChatbot, onShowSidebar, onAssign, agenteId, usuarios, onSendMedia }) {
   const [texto, setTexto] = useState('')
   const [modo, setModo] = useState('mensaje') // 'mensaje' | 'nota'
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
+  const { showToast } = useToast()
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -339,6 +645,15 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
       setTexto('')
     } catch {
       // Error handled upstream
+    }
+  }
+
+  const handleFileUploaded = async (mediaUrl, mediaType, fileName) => {
+    try {
+      await onSendMedia(texto || fileName, mediaUrl, mediaType)
+      setTexto('')
+    } catch (err) {
+      showToast(err.message || 'Error enviando media', 'error')
     }
   }
 
@@ -364,7 +679,7 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
     return (
       <div className="ia-chat-empty">
         <MessageSquare size={48} strokeWidth={1} />
-        <p>Selecciona una conversación</p>
+        <p>Selecciona una conversacion</p>
       </div>
     )
   }
@@ -394,11 +709,12 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
           <button
             className={`ia-btn ia-btn-secondary ia-btn-sm ${conv.chatbot_activo ? '' : 'ia-chatbot-off'}`}
             onClick={() => onToggleChatbot(conv.id, !conv.chatbot_activo)}
-            title={conv.chatbot_activo ? 'Bot activo — click para desactivar' : 'Bot desactivado — click para activar'}
+            title={conv.chatbot_activo ? 'Bot activo -- click para desactivar' : 'Bot desactivado -- click para activar'}
           >
             <Bot size={14} />
             {conv.chatbot_activo ? 'Bot ON' : 'Bot OFF'}
           </button>
+          <AssignDropdown conv={conv} usuarios={usuarios} onAssign={onAssign} />
           <button
             className="ia-btn ia-btn-secondary ia-btn-sm"
             onClick={onShowSidebar}
@@ -467,7 +783,7 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
                     )}
                     {msg.transcription && (
                       <div className="ia-chat-msg-transcription">
-                        <em>Transcripción: {msg.transcription}</em>
+                        <em>Transcripcion: {msg.transcription}</em>
                       </div>
                     )}
                     <div className="ia-chat-msg-content">{msg.content}</div>
@@ -511,6 +827,14 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
             <StickyNote size={14} />
           </button>
           <QuickReplies agenteId={agenteId} onSelect={setTexto} />
+          {modo === 'mensaje' && conv && (
+            <FileUploadButton
+              agenteId={agenteId}
+              conversacionId={conv.id}
+              onUploaded={handleFileUploaded}
+              disabled={sending}
+            />
+          )}
         </div>
         <input
           ref={inputRef}
@@ -548,6 +872,7 @@ export default function TabConversaciones({ agenteId }) {
     setBusqueda,
     seleccionarConversacion,
     enviarMensaje,
+    enviarMensajeConMedia,
     agregarNota,
     toggleChatbot,
   } = useConversacionesIA(agenteId)
@@ -586,6 +911,15 @@ export default function TabConversaciones({ agenteId }) {
     }
   }
 
+  const handleSendMedia = async (texto, mediaUrl, mediaType) => {
+    try {
+      await enviarMensajeConMedia(texto, mediaUrl, mediaType)
+    } catch (err) {
+      showToast(err.message || 'Error enviando media', 'error')
+      throw err
+    }
+  }
+
   const handleNote = async (texto) => {
     try {
       await agregarNota(texto)
@@ -599,7 +933,7 @@ export default function TabConversaciones({ agenteId }) {
   const handleToggleChatbot = async (id, activo) => {
     try {
       await toggleChatbot(id, activo)
-      showToast(activo ? 'Bot reactivado' : 'Bot desactivado — modo humano', 'info')
+      showToast(activo ? 'Bot reactivado' : 'Bot desactivado -- modo humano', 'info')
     } catch {
       showToast('Error cambiando modo', 'error')
     }
@@ -614,7 +948,7 @@ export default function TabConversaciones({ agenteId }) {
       showToast('Error actualizando favorita', 'error')
       return
     }
-    showToast(favorita ? 'Conversación marcada como favorita' : 'Favorita quitada', 'success')
+    showToast(favorita ? 'Conversacion marcada como favorita' : 'Favorita quitada', 'success')
   }, [showToast])
 
   const handleAssign = useCallback(async (convId, userId) => {
@@ -623,13 +957,13 @@ export default function TabConversaciones({ agenteId }) {
       .update({ asignado_a: userId })
       .eq('id', convId)
     if (error) {
-      showToast('Error asignando conversación', 'error')
+      showToast('Error asignando conversacion', 'error')
       return
     }
     const userName = userId
       ? (usuarios.find(u => u.id === userId)?.nombre || 'usuario')
       : null
-    showToast(userId ? `Asignada a ${userName}` : 'Asignación quitada', 'success')
+    showToast(userId ? `Asignada a ${userName}` : 'Asignacion quitada', 'success')
   }, [usuarios, showToast])
 
   const unreadCount = conversaciones.filter(c => !c.leida).length
@@ -645,7 +979,7 @@ export default function TabConversaciones({ agenteId }) {
             type="text"
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre o teléfono..."
+            placeholder="Buscar por nombre o telefono..."
           />
         </div>
 
@@ -683,6 +1017,7 @@ export default function TabConversaciones({ agenteId }) {
                 conv={conv}
                 isActive={conversacionActiva?.id === conv.id}
                 onClick={() => handleSelectConv(conv)}
+                usuarios={usuarios}
               />
             ))
           )}
@@ -702,10 +1037,13 @@ export default function TabConversaciones({ agenteId }) {
           loading={loadingMensajes}
           sending={sending}
           onSend={handleSend}
+          onSendMedia={handleSendMedia}
           onNote={handleNote}
           onToggleChatbot={handleToggleChatbot}
           onShowSidebar={() => setShowSidebar(!showSidebar)}
+          onAssign={handleAssign}
           agenteId={agenteId}
+          usuarios={usuarios}
         />
       </div>
 

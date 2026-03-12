@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import {
   Users, MessageSquare, Calendar, TrendingUp, Star, DollarSign,
   BarChart3, GitCompare, AlertTriangle, CheckCircle, ChevronDown,
-  Loader2, RefreshCw
+  Loader2, RefreshCw, Heart, Filter, XCircle
 } from 'lucide-react'
 
 // ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ function DateRangeSelector({ rango, desde, hasta, onChange }) {
             max={hasta || undefined}
             onChange={e => onChange({ desde: e.target.value })}
           />
-          <span className="ia-metricas-sep">—</span>
+          <span className="ia-metricas-sep">&mdash;</span>
           <input
             type="date"
             className="ia-metricas-input-fecha"
@@ -100,6 +100,60 @@ function SummaryCard({ icon: Icon, label, value, color, sub }) {
         <span className="ia-metricas-card-value">{value}</span>
         <span className="ia-metricas-card-label">{label}</span>
         {sub && <span className="ia-metricas-card-sub">{sub}</span>}
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Funnel Visualization
+// ---------------------------------------------------------------------------
+
+function FunnelVisualization({ totals }) {
+  const steps = [
+    { label: 'Contactados', value: totals.leads, color: 'var(--primary, #3b82f6)' },
+    { label: 'Respondieron', value: totals.respuestas, color: '#8b5cf6' },
+    { label: 'Calificados', value: totals.leads - totals.descartados, color: '#f59e0b' },
+    { label: 'Agendados', value: totals.reuniones, color: 'var(--success, #10b981)' },
+  ]
+
+  const maxVal = Math.max(steps[0].value, 1)
+
+  return (
+    <div className="ia-funnel-section">
+      <div className="ia-funnel-header">
+        <Filter size={18} />
+        <h3>Embudo de conversión</h3>
+      </div>
+      <div className="ia-funnel-steps">
+        {steps.map((step, i) => {
+          const widthPct = Math.max((step.value / maxVal) * 100, 4)
+          const prevValue = i > 0 ? steps[i - 1].value : null
+          const dropOff = prevValue && prevValue > 0
+            ? ((prevValue - step.value) / prevValue * 100).toFixed(1)
+            : null
+
+          return (
+            <div key={step.label} className="ia-funnel-step">
+              {dropOff !== null && (
+                <div className="ia-funnel-dropoff">
+                  <span className="ia-funnel-dropoff-arrow">&#8595;</span>
+                  <span className="ia-funnel-dropoff-pct">-{dropOff}%</span>
+                </div>
+              )}
+              <div className="ia-funnel-bar-row">
+                <span className="ia-funnel-label">{step.label}</span>
+                <div className="ia-funnel-bar-track">
+                  <div
+                    className="ia-funnel-bar-fill"
+                    style={{ width: `${widthPct}%`, background: step.color }}
+                  />
+                </div>
+                <span className="ia-funnel-value">{step.value}</span>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -213,10 +267,66 @@ function ABComparison({ metricasA, metricasB }) {
 }
 
 // ---------------------------------------------------------------------------
-// Cost Breakdown
+// Sentimiento Section
 // ---------------------------------------------------------------------------
 
-function CostBreakdown({ costes }) {
+function SentimientoSection({ dailySentimiento }) {
+  if (!dailySentimiento || dailySentimiento.length === 0) return null
+
+  const maxSent = Math.max(...dailySentimiento.map(d => d.sentimiento_promedio || 0), 1)
+
+  return (
+    <div className="ia-sentimiento-section">
+      <div className="ia-sentimiento-header">
+        <Heart size={18} />
+        <h3>Sentimiento y calidad</h3>
+      </div>
+      <div className="ia-sentimiento-table-wrap">
+        <table className="ia-sentimiento-table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Sentimiento promedio</th>
+              <th>Calidad promedio</th>
+              <th>Visual</th>
+            </tr>
+          </thead>
+          <tbody>
+            {dailySentimiento.map(d => {
+              const sentPct = maxSent > 0 ? (d.sentimiento_promedio / maxSent) * 100 : 0
+              const sentColor = d.sentimiento_promedio >= 0.6
+                ? '#10b981'
+                : d.sentimiento_promedio >= 0.3
+                  ? '#f59e0b'
+                  : '#ef4444'
+              return (
+                <tr key={d.fecha}>
+                  <td>{shortDate(d.fecha)}</td>
+                  <td>{d.sentimiento_promedio != null ? d.sentimiento_promedio.toFixed(2) : '—'}</td>
+                  <td>{d.score_calidad_promedio != null ? d.score_calidad_promedio.toFixed(1) : '—'}</td>
+                  <td>
+                    <div className="ia-sentimiento-bar-track">
+                      <div
+                        className="ia-sentimiento-bar-fill"
+                        style={{ width: `${sentPct}%`, background: sentColor }}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Cost Breakdown (with ROI)
+// ---------------------------------------------------------------------------
+
+function CostBreakdown({ costes, totals }) {
   const sum = (key) => costes.reduce((s, r) => s + (r[key] || 0), 0)
 
   const rows = [
@@ -229,6 +339,9 @@ function CostBreakdown({ costes }) {
 
   const total = rows.reduce((s, r) => s + r.coste, 0)
   const maxCoste = Math.max(...rows.map(r => r.coste), 1)
+
+  const costePorLead = totals.leads > 0 ? total / totals.leads : 0
+  const costePorReunion = totals.reuniones > 0 ? total / totals.reuniones : 0
 
   return (
     <div className="ia-costes-section">
@@ -272,6 +385,18 @@ function CostBreakdown({ costes }) {
           </tr>
         </tfoot>
       </table>
+
+      {/* ROI Metrics */}
+      <div className="ia-costes-roi">
+        <div className="ia-costes-roi-card">
+          <span className="ia-costes-roi-value">{fmtMoney(costePorLead)}</span>
+          <span className="ia-costes-roi-label">Coste por lead contactado</span>
+        </div>
+        <div className="ia-costes-roi-card">
+          <span className="ia-costes-roi-value">{fmtMoney(costePorReunion)}</span>
+          <span className="ia-costes-roi-label">Coste por reunión agendada</span>
+        </div>
+      </div>
     </div>
   )
 }
@@ -366,6 +491,7 @@ export default function TabMetricas({ agenteId, agente }) {
     const { inicio: fechaInicio, fin: fechaFin } = getDateRange()
 
     try {
+      // Fetch objeciones through conversaciones that belong to this agent
       const [metricasRes, costesRes, objecionesRes] = await Promise.all([
         supabase
           .from('ia_metricas_diarias')
@@ -383,8 +509,8 @@ export default function TabMetricas({ agenteId, agente }) {
           .order('fecha', { ascending: true }),
         supabase
           .from('ia_objeciones')
-          .select('*')
-          .eq('agente_id', agenteId)
+          .select('*, conversacion:ia_conversaciones!inner(agente_id)')
+          .eq('conversacion.agente_id', agenteId)
           .gte('created_at', new Date(fechaInicio).toISOString())
           .lte('created_at', new Date(fechaFin + 'T23:59:59').toISOString()),
       ])
@@ -421,7 +547,9 @@ export default function TabMetricas({ agenteId, agente }) {
     const leads = sum('leads_contactados')
     const respuestas = sum('respuestas_recibidas')
     const reuniones = sum('reuniones_agendadas')
+    const descartados = sum('leads_descartados')
     const conversion = leads > 0 ? reuniones / leads : 0
+    const tasaRespuesta = leads > 0 ? respuestas / leads : 0
     const objecionesDetectadas = sum('objeciones_detectadas')
     const objecionesResueltas = sum('objeciones_resueltas')
     const calidad = objecionesDetectadas > 0 ? objecionesResueltas / objecionesDetectadas : 0
@@ -431,7 +559,7 @@ export default function TabMetricas({ agenteId, agente }) {
         (r.whisper_coste || 0) + (r.gpt4o_coste || 0) + (r.whatsapp_coste || 0)
     }, 0)
 
-    return { leads, respuestas, reuniones, conversion, calidad, gastoTotal }
+    return { leads, respuestas, reuniones, descartados, conversion, tasaRespuesta, calidad, gastoTotal }
   }, [metricas, costes])
 
   // A/B split
@@ -465,6 +593,37 @@ export default function TabMetricas({ agenteId, agente }) {
       d.mensajes_recibidos += m.mensajes_recibidos || 0
     })
     return Object.values(byDate).sort((a, b) => a.fecha.localeCompare(b.fecha))
+  }, [metricas])
+
+  // Aggregate daily sentimiento
+  const dailySentimiento = useMemo(() => {
+    const byDate = {}
+    metricas.forEach(m => {
+      if (m.sentimiento_promedio == null && m.score_calidad_promedio == null) return
+      if (!byDate[m.fecha]) {
+        byDate[m.fecha] = {
+          fecha: m.fecha,
+          sentimiento_total: 0,
+          calidad_total: 0,
+          count: 0,
+        }
+      }
+      const d = byDate[m.fecha]
+      if (m.sentimiento_promedio != null) {
+        d.sentimiento_total += m.sentimiento_promedio
+        d.count++
+      }
+      if (m.score_calidad_promedio != null) {
+        d.calidad_total += m.score_calidad_promedio
+      }
+    })
+    return Object.values(byDate)
+      .map(d => ({
+        fecha: d.fecha,
+        sentimiento_promedio: d.count > 0 ? d.sentimiento_total / d.count : null,
+        score_calidad_promedio: d.count > 0 ? d.calidad_total / d.count : null,
+      }))
+      .sort((a, b) => a.fecha.localeCompare(b.fecha))
   }, [metricas])
 
   // ---------- Render ----------
@@ -516,34 +675,27 @@ export default function TabMetricas({ agenteId, agente }) {
           label="Respuestas recibidas"
           value={totals.respuestas.toLocaleString()}
           color="#8b5cf6"
+          sub={`Tasa: ${fmtPct(totals.tasaRespuesta)}`}
         />
         <SummaryCard
           icon={Calendar}
           label="Reuniones agendadas"
           value={totals.reuniones.toLocaleString()}
-          color="var(--success, #2ee59d)"
+          color="var(--success, #10b981)"
+          sub={`Conversión: ${fmtPct(totals.conversion)}`}
         />
         <SummaryCard
-          icon={TrendingUp}
-          label="Tasa de conversión"
-          value={fmtPct(totals.conversion)}
-          color="#f59e0b"
-          sub={`${totals.reuniones} / ${totals.leads} leads`}
-        />
-        <SummaryCard
-          icon={Star}
-          label="Calidad promedio"
-          value={fmtPct(totals.calidad)}
-          color="#ec4899"
-          sub="Objeciones resueltas"
-        />
-        <SummaryCard
-          icon={DollarSign}
-          label="Gasto total"
-          value={fmtMoney(totals.gastoTotal)}
+          icon={XCircle}
+          label="Leads descartados"
+          value={totals.descartados.toLocaleString()}
           color="var(--error, #ef4444)"
         />
       </div>
+
+      {/* Funnel visualization */}
+      {totals.leads > 0 && (
+        <FunnelVisualization totals={totals} />
+      )}
 
       {/* Daily charts */}
       {dailyData.length > 0 && (
@@ -564,7 +716,7 @@ export default function TabMetricas({ agenteId, agente }) {
             data={dailyData}
             dataKey="reuniones_agendadas"
             label="Reuniones agendadas por día"
-            color="var(--success, #2ee59d)"
+            color="var(--success, #10b981)"
           />
           <BarChart
             data={dailyData}
@@ -590,8 +742,11 @@ export default function TabMetricas({ agenteId, agente }) {
       {/* Objeciones */}
       <ObjecionesSummary objeciones={objeciones} />
 
-      {/* Cost breakdown */}
-      {costes.length > 0 && <CostBreakdown costes={costes} />}
+      {/* Sentimiento */}
+      <SentimientoSection dailySentimiento={dailySentimiento} />
+
+      {/* Cost breakdown with ROI */}
+      {costes.length > 0 && <CostBreakdown costes={costes} totals={totals} />}
     </div>
   )
 }

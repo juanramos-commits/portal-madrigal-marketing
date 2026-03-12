@@ -380,6 +380,56 @@ export function useConversacionesIA(agenteId) {
     }
   }, [conversacionActiva?.id])
 
+  // Send message with optional media attachment
+  const enviarMensajeConMedia = useCallback(async (texto, mediaUrl, mediaType) => {
+    if (!conversacionActiva) return
+    if (!texto.trim() && !mediaUrl) return
+    setSending(true)
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const session = sessionData?.session
+      if (!session?.access_token) {
+        throw new Error('Sesión expirada, recarga la página')
+      }
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      if (!supabaseUrl) {
+        throw new Error('VITE_SUPABASE_URL no configurado')
+      }
+      const body = {
+        agente_id: agenteId,
+        conversacion_id: conversacionActiva.id,
+        to: conversacionActiva.lead?.telefono,
+        sender: 'humano',
+        messages: [{ type: mediaType || 'text', content: texto || '' }],
+      }
+      if (mediaUrl) {
+        body.media_url = mediaUrl
+        body.media_type = mediaType
+      }
+      const res = await fetch(
+        `${supabaseUrl}/functions/v1/ia-whatsapp-send`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify(body),
+        }
+      )
+      const result = await res.json()
+      if (!res.ok || result.error) {
+        throw new Error(result.error || 'Error enviando mensaje')
+      }
+      await cargarMensajes(conversacionActiva.id)
+    } catch (err) {
+      console.error('Error enviando mensaje con media:', err)
+      throw err
+    } finally {
+      setSending(false)
+    }
+  }, [conversacionActiva, agenteId, cargarMensajes])
+
   return {
     conversaciones,
     conversacionActiva,
@@ -394,6 +444,7 @@ export function useConversacionesIA(agenteId) {
     cargarConversaciones,
     seleccionarConversacion,
     enviarMensaje,
+    enviarMensajeConMedia,
     agregarNota,
     toggleChatbot,
   }

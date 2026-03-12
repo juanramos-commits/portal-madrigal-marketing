@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import {
   RefreshCw, ChevronDown, ChevronRight, Calendar,
   Info, AlertTriangle, AlertCircle, Bot, MessageSquare,
-  ShieldCheck, Heart, X
+  ShieldCheck, Heart, X, Search
 } from 'lucide-react'
 
 const TIPOS = [
@@ -23,6 +23,7 @@ const PAGE_SIZE = 50
 function formatTimestamp(dateStr) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleString('es-ES', {
+    timeZone: 'Europe/Madrid',
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -94,11 +95,11 @@ function LogRow({ log }) {
                   <span className="ia-logs-detail-value">{log.conversacion_id}</span>
                 </div>
               )}
-              {log.metadata && typeof log.metadata === 'object' && !Array.isArray(log.metadata) && Object.keys(log.metadata).length > 0 && (
+              {log.detalles && typeof log.detalles === 'object' && !Array.isArray(log.detalles) && Object.keys(log.detalles).length > 0 && (
                 <div className="ia-logs-detail-section">
-                  <span className="ia-logs-detail-label">Metadata</span>
+                  <span className="ia-logs-detail-label">Detalles</span>
                   <pre className="ia-logs-detail-pre">
-                    {JSON.stringify(log.metadata, null, 2)}
+                    {JSON.stringify(log.detalles, null, 2)}
                   </pre>
                 </div>
               )}
@@ -122,15 +123,19 @@ export default function TabLogs({ agenteId }) {
   const [tiposFiltro, setTiposFiltro] = useState([])
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
+  const [busqueda, setBusqueda] = useState('')
   const pageOffsetRef = useRef(0)
+  const searchTimeoutRef = useRef(null)
 
   // Refs for realtime callback to avoid stale closures
   const tiposFiltroRef = useRef(tiposFiltro)
   const fechaDesdeRef = useRef(fechaDesde)
   const fechaHastaRef = useRef(fechaHasta)
+  const busquedaRef = useRef(busqueda)
   useEffect(() => { tiposFiltroRef.current = tiposFiltro }, [tiposFiltro])
   useEffect(() => { fechaDesdeRef.current = fechaDesde }, [fechaDesde])
   useEffect(() => { fechaHastaRef.current = fechaHasta }, [fechaHasta])
+  useEffect(() => { busquedaRef.current = busqueda }, [busqueda])
 
   const fetchLogs = useCallback(async (offset = 0, append = false) => {
     if (!agenteId) return
@@ -161,6 +166,9 @@ export default function TabLogs({ agenteId }) {
         hasta.setHours(23, 59, 59, 999)
         query = query.lte('created_at', hasta.toISOString())
       }
+      if (busqueda.trim()) {
+        query = query.ilike('mensaje', `%${busqueda.trim()}%`)
+      }
 
       const { data, error } = await query
       if (error) throw error
@@ -184,14 +192,14 @@ export default function TabLogs({ agenteId }) {
         setLoading(false)
       }
     }
-  }, [agenteId, tiposFiltro, fechaDesde, fechaHasta])
+  }, [agenteId, tiposFiltro, fechaDesde, fechaHasta, busqueda])
 
   // Initial fetch and refetch on filter change
   useEffect(() => {
     fetchLogs(0, false)
   }, [fetchLogs])
 
-  // Realtime subscription — stable, only depends on agenteId
+  // Realtime subscription -- stable, only depends on agenteId
   useEffect(() => {
     if (!agenteId) return
 
@@ -212,6 +220,7 @@ export default function TabLogs({ agenteId }) {
           const tipos = tiposFiltroRef.current
           const desde = fechaDesdeRef.current
           const hasta = fechaHastaRef.current
+          const search = busquedaRef.current
 
           if (tipos.length > 0 && !tipos.includes(newLog.tipo)) return
           if (desde && new Date(newLog.created_at) < new Date(desde)) return
@@ -220,6 +229,7 @@ export default function TabLogs({ agenteId }) {
             hastaDate.setHours(23, 59, 59, 999)
             if (new Date(newLog.created_at) > hastaDate) return
           }
+          if (search.trim() && newLog.mensaje && !newLog.mensaje.toLowerCase().includes(search.trim().toLowerCase())) return
 
           setLogs(prev => {
             // Deduplicate
@@ -247,13 +257,19 @@ export default function TabLogs({ agenteId }) {
     setTiposFiltro([])
     setFechaDesde('')
     setFechaHasta('')
+    setBusqueda('')
+  }
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value
+    setBusqueda(val)
   }
 
   const handleLoadMore = () => {
     fetchLogs(pageOffsetRef.current, true)
   }
 
-  const hasActiveFilters = tiposFiltro.length > 0 || fechaDesde || fechaHasta
+  const hasActiveFilters = tiposFiltro.length > 0 || fechaDesde || fechaHasta || busqueda.trim()
 
   return (
     <div className="ia-logs">
@@ -276,6 +292,17 @@ export default function TabLogs({ agenteId }) {
                 {t.label}
               </button>
             ))}
+          </div>
+
+          <div className="ia-logs-search-filter">
+            <Search size={14} style={{ color: 'var(--text-secondary)', flexShrink: 0 }} />
+            <input
+              type="text"
+              className="ia-logs-search-input"
+              placeholder="Buscar en logs..."
+              value={busqueda}
+              onChange={handleSearchChange}
+            />
           </div>
 
           <div className="ia-logs-date-filter">

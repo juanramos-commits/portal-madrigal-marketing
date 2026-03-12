@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAgentesIA, TIPO_LABELS, DEFAULT_CONFIG } from '../../hooks/useAgentesIA'
-import { Bot, ArrowLeft, Settings, MessageSquare, BarChart3, ScrollText, Power, Save, Trash2, Upload, UserPlus } from 'lucide-react'
+import { supabase } from '../../lib/supabase'
+import { Bot, ArrowLeft, Settings, MessageSquare, BarChart3, ScrollText, Power, Save, Trash2, Upload, UserPlus, ShieldBan, Plus, X, AlertCircle } from 'lucide-react'
 import TabConversaciones from '../../components/ventas/TabConversaciones'
 import TabMetricas from '../../components/ventas/TabMetricas'
 import TabLogs from '../../components/ventas/TabLogs'
@@ -310,6 +311,183 @@ function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onCo
           </div>
         </div>
       )}
+
+      {/* Blacklist Global */}
+      {canEdit && <BlacklistSection />}
+    </div>
+  )
+}
+
+const BLACKLIST_MOTIVOS = [
+  { value: 'competidor', label: 'Competidor' },
+  { value: 'spam', label: 'Spam' },
+  { value: 'reportado', label: 'Reportado' },
+  { value: 'manual', label: 'Manual' },
+]
+
+function BlacklistSection() {
+  const [entries, setEntries] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showAdd, setShowAdd] = useState(false)
+  const [newPhone, setNewPhone] = useState('')
+  const [newMotivo, setNewMotivo] = useState('manual')
+  const [adding, setAdding] = useState(false)
+  const [error, setError] = useState(null)
+
+  const cargarBlacklist = useCallback(async () => {
+    setLoading(true)
+    const { data, error: err } = await supabase
+      .from('ia_blacklist')
+      .select('id, telefono, motivo, created_at')
+      .order('created_at', { ascending: false })
+      .limit(200)
+    if (!err) setEntries(data || [])
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    cargarBlacklist()
+  }, [cargarBlacklist])
+
+  const handleAdd = async () => {
+    if (!newPhone.trim()) {
+      setError('El telefono es obligatorio')
+      return
+    }
+    if (!/^\+[1-9]\d{6,14}$/.test(newPhone.trim())) {
+      setError('Formato E.164 requerido (ej: +34612345678)')
+      return
+    }
+    setAdding(true)
+    setError(null)
+    const { error: err } = await supabase
+      .from('ia_blacklist')
+      .insert({ telefono: newPhone.trim(), motivo: newMotivo })
+    if (err) {
+      setError(err.message.includes('duplicate') ? 'Este telefono ya esta en la blacklist' : err.message)
+    } else {
+      setNewPhone('')
+      setNewMotivo('manual')
+      setShowAdd(false)
+      await cargarBlacklist()
+    }
+    setAdding(false)
+  }
+
+  const handleDelete = async (id) => {
+    const { error: err } = await supabase
+      .from('ia_blacklist')
+      .delete()
+      .eq('id', id)
+    if (!err) {
+      setEntries(prev => prev.filter(e => e.id !== id))
+    }
+  }
+
+  return (
+    <div className="ia-config-section ia-blacklist-section">
+      <div className="ia-blacklist-header">
+        <h3>
+          <ShieldBan size={16} />
+          Blacklist Global
+        </h3>
+        <button
+          className="ia-btn ia-btn-secondary ia-btn-sm"
+          onClick={() => setShowAdd(!showAdd)}
+        >
+          <Plus size={14} />
+          Agregar
+        </button>
+      </div>
+
+      {showAdd && (
+        <div className="ia-blacklist-add-form">
+          <div className="ia-blacklist-add-row">
+            <input
+              type="tel"
+              value={newPhone}
+              onChange={e => { setNewPhone(e.target.value); setError(null) }}
+              placeholder="+34612345678"
+              className="ia-blacklist-input"
+            />
+            <select
+              value={newMotivo}
+              onChange={e => setNewMotivo(e.target.value)}
+              className="ia-blacklist-select"
+            >
+              {BLACKLIST_MOTIVOS.map(m => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+            <button
+              className="ia-btn ia-btn-primary ia-btn-sm"
+              onClick={handleAdd}
+              disabled={adding}
+            >
+              {adding ? 'Agregando...' : 'Agregar'}
+            </button>
+            <button
+              className="ia-btn ia-btn-secondary ia-btn-sm"
+              onClick={() => { setShowAdd(false); setError(null) }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {error && (
+            <div className="ia-blacklist-error">
+              <AlertCircle size={14} />
+              {error}
+            </div>
+          )}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="ia-loading" style={{ padding: 20 }}>
+          <div className="ia-spinner" />
+        </div>
+      ) : entries.length === 0 ? (
+        <div className="ia-blacklist-empty">No hay numeros en la blacklist</div>
+      ) : (
+        <div className="ia-blacklist-table-wrap">
+          <table className="ia-blacklist-table">
+            <thead>
+              <tr>
+                <th>Telefono</th>
+                <th>Motivo</th>
+                <th>Fecha</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map(entry => (
+                <tr key={entry.id}>
+                  <td className="ia-blacklist-phone">{entry.telefono}</td>
+                  <td>
+                    <span className={`ia-blacklist-motivo-badge ia-blacklist-motivo-${entry.motivo}`}>
+                      {entry.motivo}
+                    </span>
+                  </td>
+                  <td className="ia-blacklist-date">
+                    {new Date(entry.created_at).toLocaleDateString('es-ES', {
+                      day: 'numeric', month: 'short', year: 'numeric'
+                    })}
+                  </td>
+                  <td>
+                    <button
+                      className="ia-blacklist-delete-btn"
+                      onClick={() => handleDelete(entry.id)}
+                      title="Eliminar de blacklist"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }
@@ -318,7 +496,7 @@ function TabPlaceholder({ title }) {
   return (
     <div className="ia-empty">
       <h2>{title}</h2>
-      <p>Esta sección se implementará en las siguientes fases.</p>
+      <p>Esta seccion se implementara en las siguientes fases.</p>
     </div>
   )
 }
