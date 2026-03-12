@@ -1208,9 +1208,38 @@ ${styleAddendum}`
       .replace(/\.\s*$/g, '')          // Remove trailing period
 
     if (!finalResponse) {
-      // Claude returned no text — derive to human
+      // Claude used all iterations on tools without generating text
+      // Force one final call without tools to get a text response
+      claudeMessages.push({ role: 'user', content: '[SISTEMA: Genera tu respuesta de texto ahora. No uses más herramientas.]' })
+      const forceResult = await callClaudeWithRetry({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        system: fullSystemPrompt,
+        messages: claudeMessages,
+      }, anthropicKey)
+
+      if (forceResult.ok) {
+        const forceData = forceResult.data
+        const forceText = ((forceData.content as Array<Record<string, unknown>>) || [])
+          .filter(b => b.type === 'text')
+          .map((b: Record<string, string>) => b.text)
+          .join('')
+        if (forceText) {
+          finalResponse = forceText
+            .replace(/¿/g, '')
+            .replace(/¡/g, '')
+            .replace(/\.(\s*\n|$)/g, '$1')
+            .replace(/\.\s*$/g, '')
+          tokensIn += (forceData.usage as Record<string, number>)?.input_tokens || 0
+          tokensOut += (forceData.usage as Record<string, number>)?.output_tokens || 0
+        }
+      }
+    }
+
+    if (!finalResponse) {
+      // Still nothing — last resort: derive to human
       await executeTool('derivar_humano', {
-        motivo: 'Claude no generó respuesta de texto',
+        motivo: 'Claude no generó respuesta de texto tras reintento',
         urgente: true,
       }, { supabase, agente, lead, convo, bookingUsed })
       return jsonResponse({ status: 'fallback', reason: 'no_response_generated' })
