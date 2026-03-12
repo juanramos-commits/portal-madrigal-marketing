@@ -29,7 +29,7 @@ function resolveTemplateText(
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type, authorization',
+  'Access-Control-Allow-Headers': 'content-type, authorization, x-client-info, apikey, x-supabase-api-version',
 }
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
