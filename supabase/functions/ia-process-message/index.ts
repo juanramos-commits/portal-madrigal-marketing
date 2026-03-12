@@ -903,6 +903,37 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Context not found' }, 404)
     }
 
+    // === CHECK BUSINESS HOURS ===
+    const agenteConfig = (agente.config as Record<string, unknown>) || {}
+    const horario = agenteConfig.horario as Record<string, unknown> | undefined
+    if (horario) {
+      const madridNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Madrid' }))
+      const currentHourMin = madridNow.getHours() * 100 + madridNow.getMinutes()
+      const currentDay = madridNow.getDay() // 0=Sun, 1=Mon...
+      const dias = (horario.dias as number[]) || [1, 2, 3, 4, 5]
+      const inicio = horario.inicio as string || '08:30'
+      const fin = horario.fin as string || '21:00'
+      const [hI, mI] = inicio.split(':').map(Number)
+      const [hF, mF] = fin.split(':').map(Number)
+      const inicioMin = hI * 100 + mI
+      const finMin = hF * 100 + mF
+
+      if (!dias.includes(currentDay) || currentHourMin < inicioMin || currentHourMin > finMin) {
+        // Outside business hours — queue for later, don't respond now
+        await supabase.from('ia_logs').insert({
+          agente_id: agenteId,
+          conversacion_id: conversacionId,
+          tipo: 'info',
+          mensaje: `Mensaje recibido fuera de horario (${madridNow.toLocaleTimeString('es-ES')}). Respuesta pendiente.`,
+        })
+        await supabase.from('ia_conversaciones').update({
+          estado: 'needs_reply',
+        }).eq('id', conversacionId)
+        await releaseLock(supabase, conversacionId)
+        return jsonResponse({ status: 'queued', reason: 'outside_business_hours' })
+      }
+    }
+
     // === GUARD CHECKS ===
     if (!convo.chatbot_activo) {
       return jsonResponse({ status: 'skipped', reason: 'chatbot_inactivo' })
@@ -1060,12 +1091,21 @@ Tono: ${estilo.tono || 'no disponible'}
 --- REGLA CRÍTICA: BASE DE CONOCIMIENTO ---
 DEBES usar la herramienta consultar_base_conocimiento en tu PRIMERA interacción con cada lead y siempre que el lead pregunte sobre servicios, precios, metodología o qué hacemos. NUNCA improvises sobre los servicios de la empresa — consulta primero.
 
---- REGLA CRÍTICA: NO PROPONER REUNIÓN ANTES DE TIEMPO ---
-NO puedes proponer videollamada/reunión hasta que:
-1. El step actual sea "meeting_pref" (NO "qualify" ni "first_message")
-2. El lead score sea >= ${agentConfig.umbral_score_reunion || 60} (actualmente es ${scoring.score})
-El step actual es "${convo.step}". Si es "qualify", tu ÚNICO objetivo es hacer preguntas para entender al lead. NUNCA propongas reunión, videollamada o cita en fase qualify.
-Necesitas al menos 4-5 intercambios de cualificación antes de proponer nada. NO tengas prisa.
+--- REGLA CRÍTICA: REUNIONES ---
+Step actual: "${convo.step}" | Lead score: ${scoring.score}/${agentConfig.umbral_score_reunion || 60}
+
+SI step = "qualify":
+- Tu ÚNICO objetivo es hacer preguntas para entender al lead
+- PROHIBIDO mencionar videollamada, reunión, cita, llamada o agendar
+- Haz preguntas sobre su negocio, situación, qué necesita, qué ha probado
+- NO tengas prisa, necesitas entender bien al lead antes de proponer nada
+
+SI step = "meeting_pref":
+- PRIMERO pregunta si le parece bien hacer una videollamada corta (NO asumas que sí)
+- ESPERA a que el lead diga que sí
+- SOLO ENTONCES usa la herramienta consultar_calendario para ver fechas disponibles
+- NUNCA inventes fechas ni digas "esta semana" sin consultar el calendario
+- Propón 2-3 opciones concretas del calendario
 
 --- REGLAS ADICIONALES DE FORMATO (OBLIGATORIO) ---
 
@@ -1208,12 +1248,14 @@ ${styleAddendum}`
     }
 
     // === POST-PROCESS: clean up formatting ===
-    // Remove ¿ ¡ (opening punctuation) and trailing periods
+    // Remove ¿ ¡ (opening punctuation), trailing periods, and colons
     finalResponse = finalResponse
       .replace(/¿/g, '')
       .replace(/¡/g, '')
-      .replace(/\.(\s*\n|$)/g, '$1')  // Remove period at end of lines
+      .replace(/:\s/g, ', ')           // Replace ": " with ", " (colons sound robotic)
+      .replace(/\.(\s*\n|$)/g, '$1')   // Remove period at end of lines
       .replace(/\.\s*$/g, '')          // Remove trailing period
+      .replace(/\.(\s*---)/g, '$1')    // Remove period before --- delimiter
 
     if (!finalResponse) {
       // Claude used all iterations on tools without generating text
@@ -1363,10 +1405,10 @@ ${styleAddendum}`
     await sleep(delay)
 
     // === SEND RESPONSE ===
-    // Split by "---" delimiter or double newline (Claude may use either)
+    // Split ONLY by "---" delimiter (not \n\n to avoid over-fragmentation)
     const messageParts: string[] = finalResponse
-      .split(/\n---\n|^---\n|\n---$|\n\n+/gm)
-      .map(p => p.trim())
+      .split(/\n---\n|^---\n|\n---$/gm)
+      .map(p => p.replace(/\n+/g, ' ').trim()) // Collapse newlines within each part
       .filter(p => p.length > 0)
       .slice(0, 4) // Max 4 messages
 
@@ -1412,7 +1454,17 @@ ${styleAddendum}`
 
     if (convo.step === 'first_message') {
       convoUpdates.step = 'qualify'
-    } else if (convo.estado === 'agendado') {
+    }
+
+    // Advance qualify → meeting_pref when score is high enough and enough exchanges happened
+    const meetingScoreThreshold = (agentConfig.umbral_score_reunion as number) || 60
+    const { count: exchangeCount } = await supabase
+      .from('ia_mensajes')
+      .select('id', { count: 'exact', head: true })
+      .eq('conversacion_id', conversacionId)
+      .eq('direction', 'inbound')
+
+    if (convo.step === 'qualify' && scoring.score >= meetingScoreThreshold && (exchangeCount || 0) >= 4) {
       convoUpdates.step = 'meeting_pref'
     }
 
