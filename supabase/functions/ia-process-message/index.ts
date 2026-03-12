@@ -1415,21 +1415,21 @@ ${styleAddendum}`
     console.error('Error processing message:', err)
 
     if (agenteId) {
-      await supabase.from('ia_alertas_supervisor').insert({
+      try { await supabase.from('ia_alertas_supervisor').insert({
         agente_id: agenteId,
         conversacion_id: conversacionId || null,
         tipo: 'error',
         mensaje: `Error procesando mensaje: ${err}`,
         leida: false,
-      }).catch(() => {})
+      }) } catch (_e) { /* ignore */ }
 
-      await supabase.from('ia_logs').insert({
+      try { await supabase.from('ia_logs').insert({
         agente_id: agenteId,
         conversacion_id: conversacionId || null,
         tipo: 'error',
         mensaje: `Error en ia-process-message: ${err}`,
-        detalles: { error: String(err), stack: (err as Error).stack },
-      }).catch(() => {})
+        detalles: { error: String(err), stack: String(err) },
+      }) } catch (_e) { /* ignore */ }
     }
 
     return jsonResponse({ error: 'Processing failed', details: String(err) }, 500)
