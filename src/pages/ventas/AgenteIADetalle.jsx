@@ -2,10 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAgentesIA, TIPO_LABELS, DEFAULT_CONFIG } from '../../hooks/useAgentesIA'
-import { Bot, ArrowLeft, Settings, MessageSquare, BarChart3, ScrollText, Power, Save, Trash2 } from 'lucide-react'
+import { Bot, ArrowLeft, Settings, MessageSquare, BarChart3, ScrollText, Power, Save, Trash2, Upload, UserPlus } from 'lucide-react'
 import TabConversaciones from '../../components/ventas/TabConversaciones'
 import TabMetricas from '../../components/ventas/TabMetricas'
 import TabLogs from '../../components/ventas/TabLogs'
+import ImportarLeadsModal from '../../components/ventas/ImportarLeadsModal'
+import ContactoManualModal from '../../components/ventas/ContactoManualModal'
 import '../../styles/agentes-ia.css'
 
 const TABS = [
@@ -15,7 +17,7 @@ const TABS = [
   { id: 'logs', label: 'Logs', icon: ScrollText },
 ]
 
-function TabConfig({ agente, onSave, saving, tienePermiso }) {
+function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onContactoManual }) {
   const [form, setForm] = useState({})
   const [dirty, setDirty] = useState(false)
 
@@ -289,6 +291,25 @@ function TabConfig({ agente, onSave, saving, tienePermiso }) {
           </button>
         </div>
       )}
+
+      {/* Acciones de leads */}
+      {canEdit && (
+        <div className="ia-config-section">
+          <h3>Acciones de leads</h3>
+          <div className="ia-config-row">
+            {agente.tipo !== 'setter' && (
+              <button className="ia-btn ia-btn-secondary" onClick={onImportarLeads}>
+                <Upload size={14} />
+                Importar leads
+              </button>
+            )}
+            <button className="ia-btn ia-btn-secondary" onClick={onContactoManual}>
+              <UserPlus size={14} />
+              Contacto manual
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -309,6 +330,8 @@ export default function AgenteIADetalle() {
   const { agente, loading, saving, cargarAgente, actualizarAgente, eliminarAgente } = useAgentesIA()
   const [activeTab, setActiveTab] = useState('config')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [importarModalOpen, setImportarModalOpen] = useState(false)
+  const [contactoModalOpen, setContactoModalOpen] = useState(false)
 
   useEffect(() => {
     if (id) cargarAgente(id)
@@ -402,11 +425,29 @@ export default function AgenteIADetalle() {
       </div>
 
       {activeTab === 'config' && (
-        <TabConfig agente={agente} onSave={handleSave} saving={saving} tienePermiso={tienePermiso} />
+        <TabConfig
+          agente={agente}
+          onSave={handleSave}
+          saving={saving}
+          tienePermiso={tienePermiso}
+          onImportarLeads={() => setImportarModalOpen(true)}
+          onContactoManual={() => setContactoModalOpen(true)}
+        />
       )}
       {activeTab === 'conversaciones' && <TabConversaciones agenteId={id} />}
       {activeTab === 'metricas' && <TabMetricas agenteId={id} agente={agente} />}
       {activeTab === 'logs' && <TabLogs agenteId={id} />}
+
+      <ImportarLeadsModal
+        open={importarModalOpen}
+        onClose={() => setImportarModalOpen(false)}
+        agenteId={id}
+      />
+      <ContactoManualModal
+        open={contactoModalOpen}
+        onClose={() => setContactoModalOpen(false)}
+        agenteId={id}
+      />
     </div>
   )
 }

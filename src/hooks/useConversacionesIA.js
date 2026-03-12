@@ -1,6 +1,35 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 
+// Play a short beep using Web Audio API for new inbound messages
+function playNotificationBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const oscillator = ctx.createOscillator()
+    const gain = ctx.createGain()
+    oscillator.connect(gain)
+    gain.connect(ctx.destination)
+    oscillator.type = 'sine'
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime)
+    gain.gain.setValueAtTime(0.3, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
+    oscillator.start(ctx.currentTime)
+    oscillator.stop(ctx.currentTime + 0.3)
+  } catch (e) {
+    // Silently fail if audio context is not available
+  }
+}
+
+// Update document title with unread count
+function updateTitleBadge(count) {
+  const base = 'Portal Madrigal'
+  if (count > 0) {
+    document.title = `(${count}) ${base}`
+  } else {
+    document.title = base
+  }
+}
+
 const ESTADO_ORDER = {
   needs_reply: 0,
   handoff_humano: 1,
@@ -25,6 +54,7 @@ export function useConversacionesIA(agenteId) {
   const subscriptionRef = useRef(null)
   const msgSubscriptionRef = useRef(null)
   const conversacionActivaRef = useRef(null)
+  const unreadCountRef = useRef(0)
 
   // Keep ref in sync
   useEffect(() => {
@@ -89,6 +119,11 @@ export function useConversacionesIA(agenteId) {
       })
 
       setConversaciones(sorted)
+
+      // Update unread count and title badge
+      const unread = sorted.filter(c => !c.leida).length
+      unreadCountRef.current = unread
+      updateTitleBadge(unread)
     } catch (err) {
       console.error('Error cargando conversaciones:', err)
     } finally {
@@ -129,9 +164,14 @@ export function useConversacionesIA(agenteId) {
           .update({ leida: true })
           .eq('id', conv.id)
         if (!error) {
-          setConversaciones(prev =>
-            prev.map(c => c.id === conv.id ? { ...c, leida: true } : c)
-          )
+          setConversaciones(prev => {
+            const updated = prev.map(c => c.id === conv.id ? { ...c, leida: true } : c)
+            // Recalculate unread count
+            const unread = updated.filter(c => !c.leida).length
+            unreadCountRef.current = unread
+            updateTitleBadge(unread)
+            return updated
+          })
         }
       }
     } else {
@@ -251,6 +291,12 @@ export function useConversacionesIA(agenteId) {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             cargarConversaciones()
+            // New conversation = new inbound lead, play beep
+            if (payload.new && !payload.new.leida) {
+              playNotificationBeep()
+              unreadCountRef.current += 1
+              updateTitleBadge(unreadCountRef.current)
+            }
           } else if (payload.eventType === 'UPDATE') {
             // Merge UPDATE without overwriting joined `lead` data
             setConversaciones(prev =>
@@ -303,6 +349,12 @@ export function useConversacionesIA(agenteId) {
             if (prev.some(m => m.id === payload.new.id)) return prev
             return [...prev, payload.new]
           })
+          // Play notification sound for inbound messages
+          if (payload.new.direction === 'inbound') {
+            playNotificationBeep()
+            unreadCountRef.current += 1
+            updateTitleBadge(unreadCountRef.current)
+          }
         }
       )
       .on(

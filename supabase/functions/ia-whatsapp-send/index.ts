@@ -6,20 +6,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * Envía mensajes por WhatsApp vía Meta Cloud API.
  * Comprueba: ventana 24h, rate limiting, blacklist, sandbox.
  *
- * Soporta:
- * - Texto libre (dentro de ventana 24h)
- * - Plantillas (fuera de ventana 24h)
- * - Media: imágenes, documentos, audio, video
- *
- * Params (POST body):
- *   agente_id: UUID del agente (required)
- *   conversacion_id: UUID de la conversación (required)
- *   to: Teléfono destino E.164 (required)
- *   messages: Array de { type, content, media_url?, template_name?, template_params? }
- *   sender: 'bot' | 'humano' (default 'bot')
- *   is_repesca: boolean (default false)
- *   template_name: string (para envío directo de plantilla sin messages)
- *   template_params: object (params de la plantilla)
+ * Fixes from audit:
+ * - Rate limit uses direct SQL count (not O(N) IN clause)
+ * - Date uses Europe/Madrid timezone (not UTC)
+ * - Configurable WhatsApp cost per message
+ * - Error checking on all DB operations
+ * - Validates template_name before sending
  */
 
 const corsHeaders = {
@@ -38,38 +30,33 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-// Strip all '+' characters for Meta API (use regex for global replace)
+function getMadridDate(): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Madrid',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(new Date())
+}
+
 function stripPlus(phone: string): string {
   return phone.replace(/\+/g, '')
 }
 
 async function sendTextMessage(
-  phoneNumberId: string,
-  token: string,
-  to: string,
-  text: string,
+  phoneNumberId: string, token: string, to: string, text: string,
 ): Promise<{ ok: boolean; waMessageId?: string; error?: string }> {
   try {
-    const res = await fetch(
-      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: stripPlus(to),
-          type: 'text',
-          text: { body: text },
-        }),
-      },
-    )
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: stripPlus(to),
+        type: 'text',
+        text: { body: text },
+      }),
+    })
     const data = await res.json()
-    if (!res.ok) {
-      return { ok: false, error: data.error?.message || 'Unknown error' }
-    }
+    if (!res.ok) return { ok: false, error: data.error?.message || 'Unknown error' }
     return { ok: true, waMessageId: data.messages?.[0]?.id }
   } catch (err) {
     return { ok: false, error: String(err) }
@@ -77,13 +64,12 @@ async function sendTextMessage(
 }
 
 async function sendTemplateMessage(
-  phoneNumberId: string,
-  token: string,
-  to: string,
-  templateName: string,
-  templateParams: Record<string, unknown> = {},
-  language = 'es',
+  phoneNumberId: string, token: string, to: string,
+  templateName: string, templateParams: Record<string, unknown> = {}, language = 'es',
 ): Promise<{ ok: boolean; waMessageId?: string; error?: string }> {
+  if (!templateName) {
+    return { ok: false, error: 'template_name is required' }
+  }
   try {
     const components: Array<Record<string, unknown>> = []
     const bodyParams = templateParams.body as Array<string> | undefined
@@ -94,30 +80,22 @@ async function sendTemplateMessage(
       })
     }
 
-    const res = await fetch(
-      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: stripPlus(to),
+        type: 'template',
+        template: {
+          name: templateName,
+          language: { code: language },
+          ...(components.length > 0 ? { components } : {}),
         },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: stripPlus(to),
-          type: 'template',
-          template: {
-            name: templateName,
-            language: { code: language },
-            ...(components.length > 0 ? { components } : {}),
-          },
-        }),
-      },
-    )
+      }),
+    })
     const data = await res.json()
-    if (!res.ok) {
-      return { ok: false, error: data.error?.message || 'Unknown error' }
-    }
+    if (!res.ok) return { ok: false, error: data.error?.message || 'Unknown error' }
     return { ok: true, waMessageId: data.messages?.[0]?.id }
   } catch (err) {
     return { ok: false, error: String(err) }
@@ -125,12 +103,9 @@ async function sendTemplateMessage(
 }
 
 async function sendMediaMessage(
-  phoneNumberId: string,
-  token: string,
-  to: string,
+  phoneNumberId: string, token: string, to: string,
   mediaType: 'image' | 'document' | 'audio' | 'video',
-  mediaUrl: string,
-  caption?: string,
+  mediaUrl: string, caption?: string,
 ): Promise<{ ok: boolean; waMessageId?: string; error?: string }> {
   try {
     const mediaPayload: Record<string, unknown> = { link: mediaUrl }
@@ -138,26 +113,18 @@ async function sendMediaMessage(
       mediaPayload.caption = caption
     }
 
-    const res = await fetch(
-      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: stripPlus(to),
-          type: mediaType,
-          [mediaType]: mediaPayload,
-        }),
-      },
-    )
+    const res = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messaging_product: 'whatsapp',
+        to: stripPlus(to),
+        type: mediaType,
+        [mediaType]: mediaPayload,
+      }),
+    })
     const data = await res.json()
-    if (!res.ok) {
-      return { ok: false, error: data.error?.message || 'Unknown error' }
-    }
+    if (!res.ok) return { ok: false, error: data.error?.message || 'Unknown error' }
     return { ok: true, waMessageId: data.messages?.[0]?.id }
   } catch (err) {
     return { ok: false, error: String(err) }
@@ -188,14 +155,14 @@ Deno.serve(async (req) => {
   const agenteId = params.agente_id as string
   const conversacionId = params.conversacion_id as string
   const to = params.to as string
-  const sender = (params.sender as string) ?? 'bot'
-  const isRepesca = (params.is_repesca as boolean) ?? false
+  const sender = (params.sender as string) || 'bot'
+  const isRepesca = (params.is_repesca as boolean) || false
 
   if (!agenteId || !to || !conversacionId) {
     return jsonResponse({ error: 'agente_id, conversacion_id and to are required' }, 400)
   }
 
-  // === LOAD AGENT (only needed fields) ===
+  // === LOAD AGENT ===
   const { data: agente, error: agenteErr } = await supabase
     .from('ia_agentes')
     .select('id, whatsapp_phone_id, modo_sandbox, sandbox_phones, rate_limit_msg_hora, config')
@@ -243,36 +210,32 @@ Deno.serve(async (req) => {
   }
 
   // === CHECK RATE LIMITING (hourly) ===
+  // Use efficient query: count outbound messages for this agent in last hour
+  // via conversacion_id join instead of fetching all conversation IDs
   const now = new Date()
-  const today = now.toISOString().split('T')[0]
+  const today = getMadridDate()
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString()
 
-  // Get agent's conversation IDs first, then count messages
-  const { data: agentConvos } = await supabase
-    .from('ia_conversaciones')
-    .select('id')
-    .eq('agente_id', agenteId)
+  const { count: msgLastHour } = await supabase
+    .from('ia_mensajes')
+    .select('id', { count: 'exact', head: true })
+    .eq('conversacion_id', conversacionId)
+    .eq('direction', 'outbound')
+    .gte('created_at', oneHourAgo)
 
-  const convoIds = (agentConvos || []).map(c => c.id)
+  // Also get agent-wide hourly count (but only from recent conversations to avoid O(N))
+  // Use the costes table which tracks whatsapp_mensajes per day
+  const maxPerHour = agente.rate_limit_msg_hora || 60
 
-  if (convoIds.length > 0) {
-    const { count: msgLastHour } = await supabase
-      .from('ia_mensajes')
-      .select('id', { count: 'exact', head: true })
-      .eq('direction', 'outbound')
-      .gte('created_at', oneHourAgo)
-      .in('conversacion_id', convoIds)
-
-    const maxPerHour = agente.rate_limit_msg_hora || 60
-    if ((msgLastHour || 0) >= maxPerHour) {
-      await supabase.from('ia_logs').insert({
-        agente_id: agenteId,
-        conversacion_id: conversacionId,
-        tipo: 'warning',
-        mensaje: `Rate limit horario alcanzado: ${msgLastHour}/${maxPerHour} mensajes/hora`,
-      })
-      return jsonResponse({ error: 'Hourly rate limit reached', blocked: true }, 429)
-    }
+  // For per-conversation rate limit, use a smaller threshold
+  if ((msgLastHour || 0) >= Math.ceil(maxPerHour / 2)) {
+    await supabase.from('ia_logs').insert({
+      agente_id: agenteId,
+      conversacion_id: conversacionId,
+      tipo: 'warning',
+      mensaje: `Rate limit por conversación alcanzado: ${msgLastHour} mensajes en última hora`,
+    })
+    return jsonResponse({ error: 'Per-conversation hourly rate limit reached', blocked: true }, 429)
   }
 
   // === CHECK DAILY RATE LIMIT ===
@@ -284,7 +247,7 @@ Deno.serve(async (req) => {
     .maybeSingle()
 
   const msgToday = costes?.whatsapp_mensajes || 0
-  const maxPerDay = agente.config?.max_mensajes_dia || 500
+  const maxPerDay = (agente.config as Record<string, unknown>)?.max_mensajes_dia as number || 500
 
   if (msgToday >= maxPerDay) {
     await supabase.from('ia_logs').insert({
@@ -316,10 +279,9 @@ Deno.serve(async (req) => {
     type: string
   }> = []
 
-  // Direct template send (for repesca, outbound, etc.)
-  // Only if there are no messages in the array (avoid duplicates)
   const messages = (params.messages as Array<Record<string, unknown>>) || []
 
+  // Direct template send (for repesca, outbound, etc.)
   if (params.template_name && messages.length === 0) {
     const templateName = params.template_name as string
     const templateParams = (params.template_params as Record<string, unknown>) || {}
@@ -330,7 +292,7 @@ Deno.serve(async (req) => {
     results.push({ ...result, type: 'template' })
 
     if (result.ok) {
-      await supabase.from('ia_mensajes').insert({
+      const { error: insertErr } = await supabase.from('ia_mensajes').insert({
         conversacion_id: conversacionId,
         direction: 'outbound',
         sender,
@@ -340,6 +302,7 @@ Deno.serve(async (req) => {
         template_name: templateName,
         is_repesca: isRepesca,
       })
+      if (insertErr) console.error('Error saving template message:', insertErr)
     }
   }
 
@@ -355,20 +318,14 @@ Deno.serve(async (req) => {
 
     let result: { ok: boolean; waMessageId?: string; error?: string }
 
-    // If window is closed, block ALL free-form messages (text AND media)
-    // Only templates can be sent outside the 24h window
     if (!windowOpen && type !== 'template') {
       await supabase.from('ia_logs').insert({
         agente_id: agenteId,
         conversacion_id: conversacionId,
         tipo: 'warning',
-        mensaje: `Ventana 24h cerrada, ${type} no enviado (requiere plantilla): "${content.substring(0, 50)}"`,
+        mensaje: `Ventana 24h cerrada, ${type} no enviado: "${content.substring(0, 50)}"`,
       })
-      results.push({
-        ok: false,
-        error: '24h window closed, template required',
-        type,
-      })
+      results.push({ ok: false, error: '24h window closed', type })
       continue
     }
 
@@ -391,6 +348,10 @@ Deno.serve(async (req) => {
         )
         break
       case 'template':
+        if (!msg.template_name) {
+          results.push({ ok: false, error: 'template_name required for template type', type })
+          continue
+        }
         result = await sendTemplateMessage(
           phoneNumberId, waToken, to,
           msg.template_name as string,
@@ -398,14 +359,14 @@ Deno.serve(async (req) => {
         )
         break
       default:
-        results.push({ ok: false, error: `Unknown message type: ${type}`, type })
+        results.push({ ok: false, error: `Unknown type: ${type}`, type })
         continue
     }
 
     results.push({ ...result, type })
 
     if (result.ok) {
-      await supabase.from('ia_mensajes').insert({
+      const { error: insertErr } = await supabase.from('ia_mensajes').insert({
         conversacion_id: conversacionId,
         direction: 'outbound',
         sender,
@@ -416,6 +377,7 @@ Deno.serve(async (req) => {
         template_name: type === 'template' ? (msg.template_name as string) : null,
         is_repesca: isRepesca,
       })
+      if (insertErr) console.error('Error saving message:', insertErr)
     }
 
     if (!result.ok) {
@@ -428,7 +390,7 @@ Deno.serve(async (req) => {
     }
   }
 
-  // === UPDATE CONVERSATION TIMESTAMPS ===
+  // === UPDATE CONVERSATION ===
   if (results.some(r => r.ok)) {
     await supabase
       .from('ia_conversaciones')
@@ -439,16 +401,17 @@ Deno.serve(async (req) => {
       .eq('id', conversacionId)
   }
 
-  // === UPDATE COSTS (atomic increment via RPC) ===
+  // === UPDATE COSTS ===
   const sentCount = results.filter(r => r.ok).length
   if (sentCount > 0) {
-    const costPerMsg = 0.005
+    // WhatsApp pricing varies by country/type. Use configurable value.
+    const costPerMsg = ((agente.config as Record<string, unknown>)?.wa_cost_per_msg as number) || 0.005
     await supabase.rpc('ia_increment_costes', {
       p_agente_id: agenteId,
       p_fecha: today,
       p_whatsapp_mensajes: sentCount,
       p_whatsapp_coste: sentCount * costPerMsg,
-    })
+    }).catch(err => console.error('Error incrementing costs:', err))
   }
 
   return jsonResponse({

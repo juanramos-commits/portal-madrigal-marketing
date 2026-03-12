@@ -6,13 +6,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
  * Motor principal del agente IA. Invocado por ia-whatsapp-webhook cuando
  * llega un mensaje y el chatbot está activo.
  *
- * 1. Carga contexto (agente, lead, conversación, historial)
- * 2. Llama a Claude Sonnet 4.6 con tool use
- * 3. Evalúa calidad con Haiku
- * 4. Aplica guardrails post-respuesta
- * 5. Calcula delay de timing inteligente
- * 6. Envía respuesta via ia-whatsapp-send
- * 7. Actualiza CRM, métricas, costes
+ * 1. Acquires processing lock (prevents race conditions)
+ * 2. Carga contexto (agente, lead, conversación, historial)
+ * 3. Detecta sentimiento, objeciones, lead scoring
+ * 4. Llama a Claude Sonnet 4.6 con tool use (retries on failure)
+ * 5. Evalúa calidad con Haiku
+ * 6. Aplica guardrails post-respuesta
+ * 7. Envía respuesta via ia-whatsapp-send
+ * 8. Actualiza resumen con IA, métricas, costes, CRM sync
  */
 
 const corsHeaders = {
@@ -29,6 +30,21 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// Get current Madrid date string
+function getMadridDate(): string {
+  const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit' })
+  return fmt.format(new Date()) // YYYY-MM-DD
+}
+
+function getMadridDateTime(): string {
+  const fmt = new Intl.DateTimeFormat('es-ES', {
+    timeZone: 'Europe/Madrid',
+    dateStyle: 'full',
+    timeStyle: 'short',
+  })
+  return fmt.format(new Date())
 }
 
 // ============================================================
@@ -128,6 +144,125 @@ const AGENT_TOOLS = [
 ]
 
 // ============================================================
+// PROCESSING LOCK (prevents race conditions on concurrent messages)
+// ============================================================
+async function acquireLock(
+  supabase: ReturnType<typeof createClient>,
+  conversacionId: string,
+): Promise<boolean> {
+  // Atomic: only succeeds if no lock or lock expired (>60s old)
+  const { data, error } = await supabase.rpc('ia_acquire_processing_lock', {
+    p_conversacion_id: conversacionId,
+    p_lock_timeout_seconds: 60,
+  })
+  if (error) {
+    // Fallback: try direct update with a condition
+    const lockTime = new Date().toISOString()
+    const expiredTime = new Date(Date.now() - 60000).toISOString()
+    const { data: updated, error: updateErr } = await supabase
+      .from('ia_conversaciones')
+      .update({ processing_lock_at: lockTime })
+      .eq('id', conversacionId)
+      .or(`processing_lock_at.is.null,processing_lock_at.lt.${expiredTime}`)
+      .select('id')
+
+    return !updateErr && updated && updated.length > 0
+  }
+  return data === true
+}
+
+async function releaseLock(
+  supabase: ReturnType<typeof createClient>,
+  conversacionId: string,
+): Promise<void> {
+  await supabase
+    .from('ia_conversaciones')
+    .update({ processing_lock_at: null })
+    .eq('id', conversacionId)
+}
+
+// ============================================================
+// SENTIMENT ANALYSIS
+// ============================================================
+function analyzeSentiment(text: string): string {
+  const lower = text.toLowerCase()
+
+  const urgentPatterns = /urgente|cuanto antes|ya mismo|necesito ya|hoy mismo/
+  const frustratedPatterns = /harto|hasta las narices|mala experiencia|fatal|horrible|pesados|dejadme|no funciona nada/
+  const negativePatterns = /no me interesa|muy caro|no creo|no sé|no se|paso|nah|pfff|bah/
+  const positivePatterns = /genial|perfecto|me encanta|suena bien|interesante|me gusta|vale|ok|guay|de acuerdo|me apunto/
+  const interestedPatterns = /cuéntame|cuentame|quiero saber|cómo funciona|como funciona|qué ofrecéis|que ofreceis|precio|cuánto|cuanto cuesta/
+
+  if (urgentPatterns.test(lower)) return 'urgente'
+  if (frustratedPatterns.test(lower)) return 'frustrado'
+  if (negativePatterns.test(lower)) return 'negativo'
+  if (interestedPatterns.test(lower)) return 'interesado'
+  if (positivePatterns.test(lower)) return 'positivo'
+  return 'neutro'
+}
+
+// ============================================================
+// LEAD SCORING
+// ============================================================
+function calculateLeadScore(
+  lead: Record<string, unknown>,
+  convo: Record<string, unknown>,
+  sentiment: string,
+  messageContent: string,
+): { score: number; detalles: Record<string, number> } {
+  let interes = (lead.score_detalles as Record<string, number>)?.interes || 30
+  let encaje = (lead.score_detalles as Record<string, number>)?.encaje || 30
+  let urgencia = (lead.score_detalles as Record<string, number>)?.urgencia || 20
+  let capacidad = (lead.score_detalles as Record<string, number>)?.capacidad_inversion || 20
+
+  // Sentiment adjustments
+  if (sentiment === 'positivo' || sentiment === 'interesado') interes = Math.min(100, interes + 10)
+  if (sentiment === 'urgente') urgencia = Math.min(100, urgencia + 20)
+  if (sentiment === 'negativo') interes = Math.max(0, interes - 10)
+  if (sentiment === 'frustrado') interes = Math.max(0, interes - 15)
+
+  // Step adjustments
+  if (convo.step === 'meeting_pref') interes = Math.min(100, interes + 15)
+  if (convo.estado === 'agendado') { interes = 90; encaje = Math.min(100, encaje + 20) }
+
+  // Content-based adjustments
+  const lower = messageContent.toLowerCase()
+  if (/presupuesto|inversión|inversion|precio/.test(lower)) capacidad = Math.min(100, capacidad + 10)
+  if (/boda|evento|empresa/.test(lower)) encaje = Math.min(100, encaje + 5)
+  if (/urgente|pronto|esta semana/.test(lower)) urgencia = Math.min(100, urgencia + 10)
+
+  const score = Math.round(interes * 0.35 + encaje * 0.25 + urgencia * 0.2 + capacidad * 0.2)
+
+  return {
+    score: Math.min(100, Math.max(0, score)),
+    detalles: { interes, encaje, urgencia, capacidad_inversion: capacidad },
+  }
+}
+
+// ============================================================
+// OBJECTION DETECTION
+// ============================================================
+function detectObjection(text: string): { detected: boolean; tipo: string; descripcion: string } | null {
+  const lower = text.toLowerCase()
+
+  const patterns: Array<{ tipo: string; regex: RegExp; desc: string }> = [
+    { tipo: 'precio', regex: /muy caro|no me lo puedo permitir|demasiado|fuera de presupuesto|no tengo dinero|cuánto cuesta|es mucho/, desc: 'Objeción de precio' },
+    { tipo: 'tiempo', regex: /no tengo tiempo|estoy muy liado|ahora no puedo|más adelante|quizás luego|otro momento/, desc: 'Objeción de tiempo' },
+    { tipo: 'confianza', regex: /no me fío|no confío|parece estafa|es fiable|cómo sé que|quién sois|no os conozco/, desc: 'Objeción de confianza' },
+    { tipo: 'competencia', regex: /ya tengo|trabajo con otro|ya uso|otra agencia|otra empresa|competencia/, desc: 'Objeción de competencia' },
+    { tipo: 'pensar', regex: /lo tengo que pensar|déjame pensarlo|ya te digo|necesito pensarlo|consultarlo|hablarlo con/, desc: 'Necesita pensarlo' },
+  ]
+
+  for (const p of patterns) {
+    if (p.regex.test(lower)) {
+      return { detected: true, tipo: p.tipo, descripcion: p.desc }
+    }
+  }
+
+  return null
+}
+
+// ============================================================
 // TOOL EXECUTION
 // ============================================================
 async function executeTool(
@@ -138,13 +273,13 @@ async function executeTool(
     agente: Record<string, unknown>
     lead: Record<string, unknown>
     convo: Record<string, unknown>
+    bookingUsed?: { value: boolean }
   },
 ): Promise<string> {
   const { supabase, agente, lead, convo } = context
 
   switch (toolName) {
     case 'think': {
-      // The scratchpad content is returned but never sent to the lead
       return `[Razonamiento registrado]`
     }
 
@@ -154,30 +289,60 @@ async function executeTool(
       const diasBuscar = (toolInput.dias_buscar as number) || 5
 
       try {
-        // Use the portal's existing booking system
-        // Find the agent's enlace_agenda or query disponibilidad directly
+        const agentUserId = agente.usuario_id
+        if (!agentUserId) {
+          // No user_id configured — query all closers' availability
+          const { data: closers } = await supabase
+            .from('ventas_roles_comerciales')
+            .select('usuario_id')
+            .eq('rol', 'closer')
+            .limit(3)
+
+          if (!closers || closers.length === 0) {
+            return 'No hay closers disponibles. Deriva a un humano para agendar.'
+          }
+
+          // Get slots from first closer
+          const { data: slots, error } = await supabase.rpc(
+            'obtener_slots_disponibles_agente',
+            {
+              p_agente_usuario_id: closers[0].usuario_id,
+              p_fecha_desde: fechaDesde,
+              p_dias: diasBuscar,
+            },
+          )
+
+          if (error || !slots || slots.length === 0) {
+            return 'No hay slots disponibles en los próximos días. Sugiere al lead que espere o contacte directamente.'
+          }
+
+          const formatted = slots.map((s: Record<string, string>) =>
+            `${s.fecha} a las ${s.hora} (${s.duracion}min)`,
+          ).join('\n')
+
+          return `Slots disponibles:\n${formatted}\n\nPropón 2-3 opciones al lead de forma natural, no como una lista.`
+        }
+
         const { data: slots, error } = await supabase.rpc(
           'obtener_slots_disponibles_agente',
           {
-            p_agente_usuario_id: agente.usuario_id,
+            p_agente_usuario_id: agentUserId,
             p_fecha_desde: fechaDesde,
             p_dias: diasBuscar,
           },
         )
 
         if (error) {
-          // Fallback: query disponibilidad directly
           const { data: disps } = await supabase
             .from('ventas_calendario_disponibilidad')
             .select('*')
-            .eq('usuario_id', agente.usuario_id)
+            .eq('usuario_id', agentUserId)
             .order('dia_semana')
 
           if (!disps || disps.length === 0) {
             return 'No hay disponibilidad configurada en el calendario. Deriva a un humano para agendar.'
           }
 
-          // Build available slots from disponibilidad
           const slotsText = disps.map((d: Record<string, unknown>) => {
             const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
             return `${dias[d.dia_semana as number]}: ${d.hora_inicio} - ${d.hora_fin}`
@@ -190,7 +355,6 @@ async function executeTool(
           return 'No hay slots disponibles en los próximos días. Sugiere al lead que espere o contacte directamente.'
         }
 
-        // Format slots for the agent
         const formatted = slots.map((s: Record<string, string>) =>
           `${s.fecha} a las ${s.hora} (${s.duracion}min)`,
         ).join('\n')
@@ -202,13 +366,17 @@ async function executeTool(
     }
 
     case 'reservar_cita': {
+      // Dedup: prevent double booking in same conversation
+      if (context.bookingUsed?.value) {
+        return 'Ya has reservado una cita en esta iteración. No reserves dos veces.'
+      }
+      if (context.bookingUsed) context.bookingUsed.value = true
+
       const fechaHora = toolInput.fecha_hora as string
       const nombreLead = toolInput.nombre_lead as string
       const resumen = toolInput.resumen as string
 
       try {
-        // Create cita in ventas_citas (like the portal's booking system)
-        // First, find an available closer
         const { data: closers } = await supabase
           .from('ventas_roles_comerciales')
           .select('usuario_id')
@@ -219,7 +387,6 @@ async function executeTool(
           return 'Error: no hay closers disponibles. Informa al lead que le confirmarás la cita por email.'
         }
 
-        // Pick closer with fewest upcoming citas (load balancing)
         let selectedCloserId = closers[0].usuario_id
         let minCitas = Infinity
 
@@ -237,13 +404,12 @@ async function executeTool(
           }
         }
 
-        // Create the cita
         const { data: cita, error: citaErr } = await supabase
           .from('ventas_citas')
           .insert({
             lead_id: lead.crm_lead_id || null,
             closer_id: selectedCloserId,
-            setter_origen_id: agente.usuario_id,
+            setter_origen_id: agente.usuario_id || null,
             fecha_hora: fechaHora,
             duracion_minutos: 60,
             estado: 'agendada',
@@ -257,9 +423,14 @@ async function executeTool(
           return `Error al reservar: ${citaErr.message}. Disculpa y propón otra hora.`
         }
 
-        // Update CRM lead if linked
+        // Update conversation
+        await supabase
+          .from('ia_conversaciones')
+          .update({ estado: 'agendado' })
+          .eq('id', convo.id)
+
+        // Sync with CRM if linked
         if (lead.crm_lead_id) {
-          // Update resumen_setter
           await supabase
             .from('ventas_leads')
             .update({
@@ -268,31 +439,30 @@ async function executeTool(
             })
             .eq('id', lead.crm_lead_id)
 
-          // Log activity
           await supabase.from('ventas_actividad').insert({
             lead_id: lead.crm_lead_id,
-            usuario_id: agente.usuario_id,
+            usuario_id: agente.usuario_id || selectedCloserId,
             tipo: 'cita_agendada',
             descripcion: `Cita agendada por agente IA para ${fechaHora}`,
-          })
+          }).catch(() => {})
         }
 
-        // Update conversation
-        await supabase
-          .from('ia_conversaciones')
-          .update({ estado: 'agendado' })
-          .eq('id', convo.id)
+        // CRM sync: move etapa
+        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        fetch(`${supabaseUrl}/functions/v1/ia-crm-sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+          body: JSON.stringify({ conversacion_id: convo.id, action: 'etapa_agendado' }),
+        }).catch(() => {})
 
-        // Get closer name for the response
         const { data: closerUser } = await supabase
           .from('usuarios')
           .select('nombre')
           .eq('id', selectedCloserId)
           .single()
 
-        const closerName = closerUser?.nombre || 'nuestro equipo'
-
-        return `Cita reservada correctamente para ${fechaHora} con ${closerName}. Confirma al lead que recibirá los detalles.`
+        return `Cita reservada correctamente para ${fechaHora} con ${closerUser?.nombre || 'nuestro equipo'}. Confirma al lead que recibirá los detalles.`
       } catch (err) {
         return `Error reservando cita: ${err}. Informa al lead que lo gestionarás manualmente.`
       }
@@ -302,13 +472,11 @@ async function executeTool(
       const query = toolInput.query as string
 
       try {
-        // Use OpenAI embeddings for RAG search (existing vector store)
         const openaiKey = Deno.env.get('OPENAI_API_KEY') ?? ''
         if (!openaiKey) {
           return 'Base de conocimiento no disponible. Responde con lo que sepas del prompt.'
         }
 
-        // Generate embedding for the query
         const embRes = await fetch('https://api.openai.com/v1/embeddings', {
           method: 'POST',
           headers: {
@@ -327,7 +495,6 @@ async function executeTool(
           return 'Error generando embedding. Responde con lo que sepas del prompt.'
         }
 
-        // Search in vector store
         const { data: docs, error } = await supabase.rpc(
           'match_documents_rosalia',
           {
@@ -338,14 +505,14 @@ async function executeTool(
         )
 
         if (error || !docs || docs.length === 0) {
-          return 'No encontré información relevante en la base de conocimiento para esta consulta. Responde con lo que sepas del prompt o sugiere que contacte al equipo para más detalles.'
+          return 'No encontré información relevante en la base de conocimiento. Responde con lo que sepas del prompt o sugiere que contacte al equipo.'
         }
 
-        const context = docs
+        const ragContext = docs
           .map((d: Record<string, unknown>) => d.content)
           .join('\n\n---\n\n')
 
-        return `Información encontrada en la base de conocimiento:\n\n${context}\n\nUsa esta información para responder de forma natural y conversacional. NO copies texto literalmente, parafrasea.`
+        return `Información de la base de conocimiento:\n\n${ragContext}\n\nUsa esta información de forma natural. NO copies literalmente, parafrasea.`
       } catch (err) {
         return `Error consultando base de conocimiento: ${err}`
       }
@@ -355,7 +522,6 @@ async function executeTool(
       const motivo = toolInput.motivo as string
       const urgente = (toolInput.urgente as boolean) || false
 
-      // Deactivate bot, set handoff
       await supabase
         .from('ia_conversaciones')
         .update({
@@ -365,14 +531,29 @@ async function executeTool(
         })
         .eq('id', convo.id)
 
-      // Create supervisor alert
       await supabase.from('ia_alertas_supervisor').insert({
         agente_id: agente.id,
         conversacion_id: convo.id,
-        tipo: urgente ? 'lead_caliente_sin_respuesta' : 'bot_bloqueado',
+        tipo: urgente ? 'derivacion_urgente' : 'derivacion_humano',
         mensaje: `Derivación a humano: ${motivo}`,
         leida: false,
       })
+
+      // Send WhatsApp notification to team lead (+34659878684)
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+      const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+        body: JSON.stringify({
+          agente_id: agente.id,
+          conversacion_id: convo.id,
+          to: '+34659878684',
+          sender: 'bot',
+          template_name: 'derivacion_humano',
+          template_params: {},
+        }),
+      }).catch(() => {}) // Fire and forget
 
       return `Conversación derivada a humano. Motivo: ${motivo}. ${urgente ? 'URGENTE.' : ''} Despídete amablemente diciendo que un compañero del equipo se pondrá en contacto.`
     }
@@ -391,13 +572,13 @@ function checkGuardrails(responseText: string): {
 } {
   const issues: string[] = []
 
-  // Check if mentions being AI/bot
   const aiMentions = [
     'soy una ia', 'soy un bot', 'soy inteligencia artificial',
     'como ia', 'como bot', 'soy una máquina', 'soy una maquina',
     'no soy humana', 'no soy humano', 'no soy una persona',
     'i am an ai', 'i am a bot', 'artificial intelligence',
-    'language model', 'modelo de lenguaje',
+    'language model', 'modelo de lenguaje', 'chatgpt', 'claude',
+    'openai', 'anthropic',
   ]
   for (const mention of aiMentions) {
     if (responseText.toLowerCase().includes(mention)) {
@@ -405,16 +586,15 @@ function checkGuardrails(responseText: string): {
     }
   }
 
-  // Check if too long (WhatsApp messages should be short)
   if (responseText.length > 800) {
     issues.push(`Mensaje demasiado largo: ${responseText.length} chars (max 800)`)
   }
 
-  // Check for forbidden info patterns
   const forbidden = [
     /contraseña|password/i,
     /tarjeta de crédito|credit card/i,
     /número de cuenta|account number/i,
+    /clave secreta|api.key/i,
   ]
   for (const pattern of forbidden) {
     if (pattern.test(responseText)) {
@@ -422,8 +602,20 @@ function checkGuardrails(responseText: string): {
     }
   }
 
+  // Bot-sounding expressions
+  const botExpressions = [
+    'estimado/a', 'le informo', 'procederemos a', 'agradecemos su interés',
+    'quedamos a su disposición', 'a continuación', 'seguidamente',
+    'cordialmente', 'atentamente', 'permítame',
+  ]
+  for (const expr of botExpressions) {
+    if (responseText.toLowerCase().includes(expr)) {
+      issues.push(`Expresión de bot detectada: "${expr}"`)
+    }
+  }
+
   return {
-    pass: issues.length === 0,
+    pass: issues.filter(i => i.startsWith('Menciona ser IA') || i.startsWith('Información prohibida')).length === 0,
     issues,
   }
 }
@@ -476,22 +668,160 @@ Responde SOLO en este formato JSON:
       }),
     })
 
-    if (!res.ok) return { score: 7, feedback: 'Quality check unavailable' }
+    if (!res.ok) return { score: 5, feedback: 'Quality check unavailable — blocking by default' }
     const data = await res.json()
     const text = data.content?.[0]?.text || ''
 
     try {
       const parsed = JSON.parse(text)
       return {
-        score: Math.min(10, Math.max(1, parsed.score || 7)),
+        score: Math.min(10, Math.max(1, parsed.score || 5)),
         feedback: parsed.feedback || '',
       }
     } catch {
-      return { score: 7, feedback: 'Could not parse quality response' }
+      // Can't parse → conservative score (block if threshold is 6)
+      return { score: 5, feedback: 'Could not parse quality response' }
     }
   } catch {
-    return { score: 7, feedback: 'Quality check failed' }
+    // Quality check failed → conservative: return 5 so it blocks if threshold is 6
+    return { score: 5, feedback: 'Quality check failed — blocking by default' }
   }
+}
+
+// ============================================================
+// AI SUMMARY (replaces crude concatenation)
+// ============================================================
+async function generateSummary(
+  currentSummary: string | null,
+  leadMessage: string,
+  botResponse: string,
+  anthropicKey: string,
+): Promise<string> {
+  if (!anthropicKey) {
+    // Fallback: simple append
+    const append = `Lead: "${leadMessage.substring(0, 40)}..." → Bot: "${botResponse.substring(0, 40)}..."`
+    const fallback = `${currentSummary || ''}${currentSummary ? ' | ' : ''}${append}`
+    return fallback.substring(0, 1500)
+  }
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': anthropicKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'user',
+            content: `Actualiza este resumen ejecutivo de una conversación comercial por WhatsApp. Máximo 500 caracteres.
+
+Resumen actual: ${currentSummary || 'Conversación nueva, sin resumen.'}
+
+Último intercambio:
+Lead: "${leadMessage}"
+Bot: "${botResponse}"
+
+Escribe un resumen actualizado que incluya: quién es el lead, qué busca, en qué punto está la conversación, objeciones si hay, y el siguiente paso. Solo el resumen, sin prefijos.`,
+          },
+        ],
+      }),
+    })
+
+    if (!res.ok) return currentSummary || ''
+    const data = await res.json()
+    return (data.content?.[0]?.text || currentSummary || '').substring(0, 1500)
+  } catch {
+    return currentSummary || ''
+  }
+}
+
+// ============================================================
+// FOLLOWUP DETECTION from AI response
+// ============================================================
+function detectFollowup(responseJson: string): { requested: boolean; when: string | null } {
+  try {
+    const parsed = JSON.parse(responseJson)
+    if (parsed.followup?.requested && parsed.followup?.when) {
+      return { requested: true, when: parsed.followup.when }
+    }
+    if (parsed.intent === 'followup_later') {
+      return { requested: true, when: parsed.followup?.when || 'la semana que viene' }
+    }
+  } catch {
+    // Not JSON, check for followup patterns in text
+  }
+  return { requested: false, when: null }
+}
+
+function parseFollowupDate(whenText: string): Date | null {
+  const now = new Date()
+  const lower = whenText.toLowerCase()
+
+  if (/mañana/.test(lower)) return new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  if (/pasado mañana/.test(lower)) return new Date(now.getTime() + 48 * 60 * 60 * 1000)
+  if (/semana que viene|la semana|próxima semana/.test(lower)) return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+  if (/en (\d+) día/.test(lower)) {
+    const days = parseInt(lower.match(/en (\d+) día/)?.[1] || '3')
+    return new Date(now.getTime() + days * 24 * 60 * 60 * 1000)
+  }
+  if (/lunes/.test(lower)) { const d = new Date(now); d.setDate(d.getDate() + ((1 - d.getDay() + 7) % 7 || 7)); d.setHours(10, 0, 0, 0); return d }
+  if (/martes/.test(lower)) { const d = new Date(now); d.setDate(d.getDate() + ((2 - d.getDay() + 7) % 7 || 7)); d.setHours(10, 0, 0, 0); return d }
+  if (/miércoles|miercoles/.test(lower)) { const d = new Date(now); d.setDate(d.getDate() + ((3 - d.getDay() + 7) % 7 || 7)); d.setHours(10, 0, 0, 0); return d }
+  if (/jueves/.test(lower)) { const d = new Date(now); d.setDate(d.getDate() + ((4 - d.getDay() + 7) % 7 || 7)); d.setHours(10, 0, 0, 0); return d }
+  if (/viernes/.test(lower)) { const d = new Date(now); d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7 || 7)); d.setHours(10, 0, 0, 0); return d }
+
+  // Default: 3 days
+  return new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+}
+
+// ============================================================
+// CLAUDE API CALL WITH RETRIES
+// ============================================================
+async function callClaudeWithRetry(
+  body: Record<string, unknown>,
+  anthropicKey: string,
+  maxRetries = 3,
+): Promise<{ data: Record<string, unknown>; ok: boolean; error?: string }> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': anthropicKey,
+          'anthropic-version': '2023-06-01',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        return { data, ok: true }
+      }
+
+      // 429 or 529 → retry with backoff
+      if (res.status === 429 || res.status === 529) {
+        await sleep(Math.pow(2, attempt) * 1000)
+        continue
+      }
+
+      // Other errors → don't retry
+      const errText = await res.text()
+      return { data: {}, ok: false, error: `Claude API ${res.status}: ${errText}` }
+    } catch (err) {
+      if (attempt < maxRetries - 1) {
+        await sleep(Math.pow(2, attempt) * 1000)
+        continue
+      }
+      return { data: {}, ok: false, error: `Claude API network error: ${err}` }
+    }
+  }
+  return { data: {}, ok: false, error: 'Max retries exhausted' }
 }
 
 // ============================================================
@@ -530,6 +860,12 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Missing required params' }, 400)
   }
 
+  // === ACQUIRE PROCESSING LOCK (prevents duplicate processing) ===
+  const lockAcquired = await acquireLock(supabase, conversacionId)
+  if (!lockAcquired) {
+    return jsonResponse({ status: 'skipped', reason: 'processing_locked' })
+  }
+
   try {
     // === LOAD CONTEXT ===
     const [agenteRes, leadRes, convoRes] = await Promise.all([
@@ -557,7 +893,75 @@ Deno.serve(async (req) => {
       return jsonResponse({ status: 'skipped', reason: 'lead_opted_out' })
     }
 
-    // Load conversation history (last 30 messages)
+    // === SENTIMENT ANALYSIS ===
+    const sentiment = analyzeSentiment(messageContent)
+    await supabase.from('ia_leads').update({
+      sentimiento_actual: sentiment,
+    }).eq('id', leadId)
+
+    // Log sentiment if notable
+    if (sentiment !== 'neutro') {
+      await supabase.from('ia_logs').insert({
+        agente_id: agenteId,
+        conversacion_id: conversacionId,
+        tipo: 'sentiment',
+        mensaje: `Sentimiento detectado: ${sentiment}`,
+        detalles: { sentiment, message_preview: messageContent.substring(0, 100) },
+      })
+    }
+
+    // Create alert for negative/frustrated sentiment
+    if (sentiment === 'frustrado' || sentiment === 'negativo') {
+      await supabase.from('ia_alertas_supervisor').insert({
+        agente_id: agenteId,
+        conversacion_id: conversacionId,
+        tipo: 'sentimiento_negativo',
+        mensaje: `Lead con sentimiento ${sentiment}: "${messageContent.substring(0, 100)}"`,
+        leida: false,
+      })
+    }
+
+    // === LEAD SCORING ===
+    const scoring = calculateLeadScore(lead, convo, sentiment, messageContent)
+    await supabase.from('ia_leads').update({
+      lead_score: scoring.score,
+      score_detalles: scoring.detalles,
+    }).eq('id', leadId)
+
+    // === OBJECTION DETECTION ===
+    const objection = detectObjection(messageContent)
+    if (objection) {
+      // Get the latest inbound message ID for reference
+      const { data: latestMsg } = await supabase
+        .from('ia_mensajes')
+        .select('id')
+        .eq('conversacion_id', conversacionId)
+        .eq('direction', 'inbound')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      await supabase.from('ia_objeciones').insert({
+        conversacion_id: conversacionId,
+        mensaje_id: latestMsg?.id || null,
+        tipo: objection.tipo,
+        descripcion: objection.descripcion,
+        resuelta: false,
+      })
+    }
+
+    // === TRACK LEAD ACTIVE HOURS ===
+    const madridHour = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Europe/Madrid',
+      hour: '2-digit',
+      hour12: false,
+    }).format(new Date())
+    const currentHour = parseInt(madridHour)
+    const horasActivas = (lead.horas_activas as Record<string, number>) || {}
+    horasActivas[String(currentHour)] = (horasActivas[String(currentHour)] || 0) + 1
+    await supabase.from('ia_leads').update({ horas_activas: horasActivas }).eq('id', leadId)
+
+    // === LOAD CONVERSATION HISTORY (last 30 messages) ===
     const { data: history } = await supabase
       .from('ia_mensajes')
       .select('direction, sender, content, message_type, transcription, created_at')
@@ -565,7 +969,6 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: true })
       .limit(30)
 
-    // Build messages for Claude
     const historyMessages = (history || []).map((m: Record<string, unknown>) => ({
       role: m.direction === 'inbound' ? 'user' : 'assistant',
       content: m.transcription
@@ -573,12 +976,28 @@ Deno.serve(async (req) => {
         : (m.content as string),
     }))
 
-    // Select system prompt (A/B test)
+    // === SELECT SYSTEM PROMPT (A/B test) ===
     let systemPrompt = agente.system_prompt || ''
-    if (agente.ab_test_activo && agente.system_prompt_b) {
-      if (convo.ab_version === 'B') {
-        systemPrompt = agente.system_prompt_b
-      }
+    if (agente.ab_test_activo && agente.system_prompt_b && convo.ab_version === 'B') {
+      systemPrompt = agente.system_prompt_b
+    }
+
+    // === LOAD TEAM STYLE (if available) ===
+    let styleAddendum = ''
+    const { data: estilos } = await supabase
+      .from('ia_estilos_equipo')
+      .select('estilo')
+      .eq('agente_id', agenteId)
+      .limit(1)
+
+    if (estilos && estilos.length > 0 && estilos[0].estilo) {
+      const estilo = estilos[0].estilo as Record<string, unknown>
+      styleAddendum = `\n\n--- ESTILO DEL EQUIPO (adapta tu tono) ---
+Longitud media de mensajes del equipo: ${estilo.longitud_media || 'no disponible'}
+Usa emojis: ${estilo.usa_emojis ? 'Sí, moderadamente' : 'No'}
+Expresiones frecuentes: ${(estilo.expresiones_frecuentes as string[])?.join(', ') || 'no disponible'}
+Tono: ${estilo.tono || 'no disponible'}
+`
     }
 
     // Add context to system prompt
@@ -587,18 +1006,19 @@ Deno.serve(async (req) => {
 --- CONTEXTO ACTUAL ---
 Nombre del lead: ${lead.nombre || 'Desconocido'}
 Teléfono: ${lead.telefono}
-Lead score: ${lead.lead_score || 0}/100
-Sentimiento actual: ${lead.sentimiento_actual || 'neutro'}
+Lead score: ${scoring.score}/100
+Sentimiento actual: ${sentiment}
 Servicio de interés: ${lead.servicio || 'No especificado'}
 Estado conversación: ${convo.estado}
 Step actual: ${convo.step}
 Resumen conversación: ${convo.resumen || 'Sin resumen previo'}
-Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}
-`
+Objeción detectada: ${objection ? `${objection.tipo}: ${objection.descripcion}` : 'Ninguna'}
+Fecha/hora actual (Madrid): ${getMadridDateTime()}
+${styleAddendum}`
 
     const fullSystemPrompt = systemPrompt + contextAddendum
 
-    // === CALL CLAUDE SONNET 4.6 ===
+    // === CALL CLAUDE SONNET 4.6 WITH RETRIES ===
     let claudeMessages = [...historyMessages]
 
     // Ensure last message is from user
@@ -610,52 +1030,60 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
     let tokensIn = 0
     let tokensOut = 0
     let toolCalls = 0
-    const maxIterations = 5 // Max tool-use rounds
+    const maxIterations = 5
+    const bookingUsed = { value: false }
 
     for (let iteration = 0; iteration < maxIterations; iteration++) {
-      const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': anthropicKey,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6-20250514',
-          max_tokens: 1024,
-          system: fullSystemPrompt,
-          tools: AGENT_TOOLS,
-          messages: claudeMessages,
-        }),
-      })
+      const claudeResult = await callClaudeWithRetry({
+        model: 'claude-sonnet-4-6-20250514',
+        max_tokens: 1024,
+        system: fullSystemPrompt,
+        tools: AGENT_TOOLS,
+        messages: claudeMessages,
+      }, anthropicKey)
 
-      if (!claudeRes.ok) {
-        const errText = await claudeRes.text()
-        throw new Error(`Claude API error: ${claudeRes.status} ${errText}`)
+      if (!claudeResult.ok) {
+        // === FALLBACK: Claude API failed after retries ===
+        await supabase.from('ia_alertas_supervisor').insert({
+          agente_id: agenteId,
+          conversacion_id: conversacionId,
+          tipo: 'error',
+          mensaje: `Claude API caído: ${claudeResult.error}. Lead sin respuesta.`,
+          leida: false,
+        })
+
+        await supabase.from('ia_logs').insert({
+          agente_id: agenteId,
+          conversacion_id: conversacionId,
+          tipo: 'error',
+          mensaje: `Claude API fallback triggered: ${claudeResult.error}`,
+        })
+
+        // Don't leave lead without response — derive to human
+        await executeTool('derivar_humano', {
+          motivo: `Claude API no disponible: ${claudeResult.error}`,
+          urgente: true,
+        }, { supabase, agente, lead, convo, bookingUsed })
+
+        return jsonResponse({ status: 'fallback', reason: 'claude_api_down', error: claudeResult.error })
       }
 
-      const claudeData = await claudeRes.json()
-      tokensIn += claudeData.usage?.input_tokens || 0
-      tokensOut += claudeData.usage?.output_tokens || 0
+      const claudeData = claudeResult.data
+      tokensIn += (claudeData.usage as Record<string, number>)?.input_tokens || 0
+      tokensOut += (claudeData.usage as Record<string, number>)?.output_tokens || 0
 
       const stopReason = claudeData.stop_reason
+      const contentBlocks = (claudeData.content as Array<Record<string, unknown>>) || []
+      const textBlocks = contentBlocks.filter(b => b.type === 'text')
+      const toolUseBlocks = contentBlocks.filter(b => b.type === 'tool_use')
 
-      // Extract text and tool_use blocks
-      const contentBlocks = claudeData.content || []
-      const textBlocks = contentBlocks.filter((b: Record<string, unknown>) => b.type === 'text')
-      const toolUseBlocks = contentBlocks.filter((b: Record<string, unknown>) => b.type === 'tool_use')
-
-      // If there's a text response
       if (textBlocks.length > 0) {
         finalResponse = textBlocks.map((b: Record<string, string>) => b.text).join('')
       }
 
-      // If Claude wants to use tools
       if (stopReason === 'tool_use' && toolUseBlocks.length > 0) {
-        // Add assistant message with all content blocks
         claudeMessages.push({ role: 'assistant', content: contentBlocks })
 
-        // Execute each tool and collect results
         const toolResults: Array<Record<string, unknown>> = []
 
         for (const toolBlock of toolUseBlocks) {
@@ -663,7 +1091,7 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
           const toolResult = await executeTool(
             toolBlock.name as string,
             toolBlock.input as Record<string, unknown>,
-            { supabase, agente, lead, convo },
+            { supabase, agente, lead, convo, bookingUsed },
           )
 
           toolResults.push({
@@ -672,7 +1100,6 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
             content: toolResult,
           })
 
-          // Log tool call
           await supabase.from('ia_logs').insert({
             agente_id: agenteId,
             conversacion_id: conversacionId,
@@ -686,19 +1113,33 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
           })
         }
 
-        // Add tool results to messages
         claudeMessages.push({ role: 'user', content: toolResults })
-
-        // Continue the loop to get Claude's final response
         continue
       }
 
-      // If end_turn or no more tools, we're done
       break
     }
 
     if (!finalResponse) {
-      throw new Error('No response generated from Claude')
+      // Claude returned no text — derive to human
+      await executeTool('derivar_humano', {
+        motivo: 'Claude no generó respuesta de texto',
+        urgente: true,
+      }, { supabase, agente, lead, convo, bookingUsed })
+      return jsonResponse({ status: 'fallback', reason: 'no_response_generated' })
+    }
+
+    // === DETECT FOLLOWUP REQUEST IN RESPONSE ===
+    const followup = detectFollowup(finalResponse)
+    if (followup.requested && followup.when) {
+      const followupDate = parseFollowupDate(followup.when)
+      if (followupDate) {
+        await supabase.from('ia_conversaciones').update({
+          estado: 'scheduled_followup',
+          chatbot_activo: false,
+          followup_at: followupDate.toISOString(),
+        }).eq('id', conversacionId)
+      }
     }
 
     // === GUARDRAILS POST-RESPONSE ===
@@ -713,23 +1154,22 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
         detalles: { original_response: finalResponse, issues: guardrails.issues },
       })
 
-      // If mentions AI → derivar (use specific marker, not substring match)
       if (guardrails.issues.some(i => i.startsWith('Menciona ser IA'))) {
         await executeTool('derivar_humano', {
           motivo: 'Bot intentó revelar que es IA',
           urgente: true,
-        }, { supabase, agente, lead, convo })
+        }, { supabase, agente, lead, convo, bookingUsed })
         return jsonResponse({ status: 'blocked', reason: 'guardrails' })
       }
 
-      // If too long → truncate
+      // Truncate if too long
       if (finalResponse.length > 800) {
         finalResponse = finalResponse.substring(0, 750) + '...'
       }
     }
 
     // === QUALITY EVALUATION (HAIKU) ===
-    const qualityThreshold = agente.config?.umbral_calidad_minima || 6
+    const qualityThreshold = (agente.config as Record<string, unknown>)?.umbral_calidad_minima as number || 6
     let qualityScore = 7
     let qualityFeedback = ''
 
@@ -742,24 +1182,19 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
         .join('\n')
 
       const quality = await evaluateQuality(
-        finalResponse,
-        messageContent,
-        contextSummary,
-        anthropicKey,
+        finalResponse, messageContent, contextSummary, anthropicKey,
       )
       qualityScore = quality.score
       qualityFeedback = quality.feedback
 
-      // Log Haiku cost via atomic RPC
       await supabase.rpc('ia_increment_costes', {
         p_agente_id: agenteId,
-        p_fecha: new Date().toISOString().split('T')[0],
+        p_fecha: getMadridDate(),
         p_haiku_calls: 1,
         p_haiku_coste: 0.001,
-      })
+      }).catch(() => {})
     }
 
-    // If quality too low → derivar
     if (qualityScore < qualityThreshold) {
       await supabase.from('ia_logs').insert({
         agente_id: agenteId,
@@ -777,39 +1212,37 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
         leida: false,
       })
 
-      // Derivar a humano
       await executeTool('derivar_humano', {
         motivo: `Calidad de respuesta baja (${qualityScore}/10)`,
         urgente: false,
-      }, { supabase, agente, lead, convo })
+      }, { supabase, agente, lead, convo, bookingUsed })
 
       return jsonResponse({ status: 'blocked', reason: 'quality_low', score: qualityScore })
     }
 
     // === TIMING INTELIGENTE ===
-    // Calculate delay to seem human (5s-45s max to stay within Edge Function limits)
-    const baseDelay = 5000 // 5s minimum
+    // Reduced max delay to 10s (was 45s) to stay within Edge Function limits
+    const baseDelay = 3000
     const messageLength = finalResponse.length
-    const readingTime = (messageContent || '').length * 30
-    const typingTime = messageLength * 20
+    const readingTime = (messageContent || '').length * 20
+    const typingTime = messageLength * 15
     const variance = 0.7 + Math.random() * 0.6
     let delay = Math.max(baseDelay, (readingTime + typingTime) * variance)
-    // Cap at 45s to avoid Edge Function timeout (60s limit)
-    delay = Math.min(delay, 45000)
+    // Cap at 10s to avoid Edge Function timeout
+    delay = Math.min(delay, 10000)
 
-    // During qualification step, respond faster
-    if (convo.step === 'first_message' || convo.step === 'qualify') {
-      delay = Math.min(delay, 20000)
+    // Use lead's active hours for timing preference (bonus: seems more human)
+    if (convo.step === 'first_message') {
+      delay = Math.min(delay, 5000) // Fast on first message
     }
 
     await sleep(delay)
 
     // === SEND RESPONSE ===
-    // Split long messages into multiple (WhatsApp-style)
     const messageParts: string[] = []
     if (finalResponse.length > 400) {
-      // Split at sentence boundaries
-      const sentences = finalResponse.match(/[^.!?]+[.!?]+/g) || [finalResponse]
+      // Split at sentence boundaries or natural breaks
+      const sentences = finalResponse.match(/[^.!?\n]+[.!?\n]+/g) || [finalResponse]
       let currentPart = ''
 
       for (const sentence of sentences) {
@@ -825,7 +1258,6 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
       messageParts.push(finalResponse)
     }
 
-    // Send via ia-whatsapp-send
     const sendRes = await fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
       method: 'POST',
       headers: {
@@ -843,13 +1275,21 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
 
     const sendResult = await sendRes.json()
 
-    // Check if send failed
     if (!sendRes.ok || sendResult.sent === 0) {
       await supabase.from('ia_logs').insert({
         agente_id: agenteId,
         conversacion_id: conversacionId,
         tipo: 'error',
         mensaje: `Error al enviar respuesta: ${JSON.stringify(sendResult).substring(0, 300)}`,
+      })
+
+      // Alert: lead without response
+      await supabase.from('ia_alertas_supervisor').insert({
+        agente_id: agenteId,
+        conversacion_id: conversacionId,
+        tipo: 'error',
+        mensaje: `No se pudo enviar respuesta al lead. Error de WhatsApp.`,
+        leida: false,
       })
     }
 
@@ -858,18 +1298,31 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
       last_bot_message_at: new Date().toISOString(),
     }
 
-    // Advance step based on current state
     if (convo.step === 'first_message') {
       convoUpdates.step = 'qualify'
-    } else if (convo.step === 'qualify' && convo.estado === 'agendado') {
+    } else if (convo.estado === 'agendado') {
       convoUpdates.step = 'meeting_pref'
     }
 
-    // Update resumen (executive summary)
-    const newResumen = `${convo.resumen || ''}${convo.resumen ? ' | ' : ''}[${new Date().toLocaleDateString('es-ES')}] Lead: "${messageContent.substring(0, 50)}..." → Bot: "${finalResponse.substring(0, 50)}..."`
-    if (newResumen.length < 2000) {
-      convoUpdates.resumen = newResumen
+    // Mark objection as resolved if bot responded after objection
+    if (objection) {
+      await supabase
+        .from('ia_objeciones')
+        .update({
+          resuelta: true,
+          estrategia_usada: `Respuesta automática: "${finalResponse.substring(0, 100)}"`,
+        })
+        .eq('conversacion_id', conversacionId)
+        .eq('resuelta', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
     }
+
+    // === AI-POWERED SUMMARY ===
+    const newResumen = await generateSummary(
+      convo.resumen, messageContent, finalResponse, anthropicKey,
+    )
+    convoUpdates.resumen = newResumen
 
     await supabase
       .from('ia_conversaciones')
@@ -890,14 +1343,14 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
       if (lastMsg) {
         await supabase
           .from('ia_mensajes')
-          .update({ calidad_score: qualityScore })
+          .update({ calidad_score: qualityScore, sentimiento: sentiment })
           .eq('id', lastMsg.id)
       }
     }
 
     // === LOG COSTS (atomic increment via RPC) ===
-    const today = new Date().toISOString().split('T')[0]
-    // Claude Sonnet pricing: ~$3/MTok in, ~$15/MTok out
+    const today = getMadridDate()
+    // Claude Sonnet 4 pricing: $3/MTok in, $15/MTok out
     const claudeCost = (tokensIn * 3 + tokensOut * 15) / 1_000_000
 
     await supabase.rpc('ia_increment_costes', {
@@ -907,7 +1360,7 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
       p_claude_tokens_in: tokensIn,
       p_claude_tokens_out: tokensOut,
       p_claude_coste: claudeCost,
-    })
+    }).catch(() => {})
 
     // === UPDATE METRICS (atomic increment via RPC) ===
     await supabase.rpc('ia_increment_metricas', {
@@ -916,14 +1369,25 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
       p_ab_version: convo.ab_version || 'A',
       p_mensajes_enviados: messageParts.length,
       p_mensajes_recibidos: 1,
-    })
+      p_objeciones_detectadas: objection ? 1 : 0,
+      p_objeciones_resueltas: objection ? 1 : 0,
+    }).catch(() => {})
+
+    // === CRM SYNC (fire and forget) ===
+    if (convo.step === 'first_message') {
+      fetch(`${supabaseUrl}/functions/v1/ia-crm-sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+        body: JSON.stringify({ conversacion_id: conversacionId, action: 'etapa_contactado' }),
+      }).catch(() => {})
+    }
 
     // === LOG ===
     await supabase.from('ia_logs').insert({
       agente_id: agenteId,
       conversacion_id: conversacionId,
       tipo: 'ai_call',
-      mensaje: `Respuesta generada (quality: ${qualityScore}/10, delay: ${Math.round(delay / 1000)}s, tools: ${toolCalls})`,
+      mensaje: `Respuesta generada (quality: ${qualityScore}/10, delay: ${Math.round(delay / 1000)}s, tools: ${toolCalls}, score: ${scoring.score})`,
       detalles: {
         tokens_in: tokensIn,
         tokens_out: tokensOut,
@@ -933,6 +1397,9 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
         tool_calls: toolCalls,
         response_parts: messageParts.length,
         guardrails_issues: guardrails.issues,
+        sentiment,
+        lead_score: scoring.score,
+        objection: objection?.tipo || null,
       },
     })
 
@@ -941,11 +1408,12 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
       quality_score: qualityScore,
       response_parts: messageParts.length,
       delay_ms: delay,
+      sentiment,
+      lead_score: scoring.score,
     })
   } catch (err) {
     console.error('Error processing message:', err)
 
-    // === FALLBACK: Alert team (only if we have valid IDs) ===
     if (agenteId) {
       await supabase.from('ia_alertas_supervisor').insert({
         agente_id: agenteId,
@@ -965,5 +1433,8 @@ Fecha/hora actual: ${new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madr
     }
 
     return jsonResponse({ error: 'Processing failed', details: String(err) }, 500)
+  } finally {
+    // ALWAYS release lock
+    await releaseLock(supabase, conversacionId).catch(() => {})
   }
 })

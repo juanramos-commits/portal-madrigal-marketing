@@ -1,0 +1,179 @@
+import { useState } from 'react'
+import { supabase } from '../../lib/supabase'
+import { Send, AlertCircle, CheckCircle, X } from 'lucide-react'
+import '../../styles/agentes-ia.css'
+
+function validarE164(telefono) {
+  return /^\+[1-9]\d{6,14}$/.test(telefono)
+}
+
+export default function ContactoManualModal({ open, onClose, agenteId }) {
+  const [form, setForm] = useState({
+    telefono: '',
+    nombre: '',
+    email: '',
+    servicio: '',
+  })
+  const [sending, setSending] = useState(false)
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
+
+  if (!open) return null
+
+  const update = (key, value) => {
+    setForm(prev => ({ ...prev, [key]: value }))
+    setError(null)
+  }
+
+  const handleEnviar = async (e) => {
+    e.preventDefault()
+    if (!form.telefono.trim()) {
+      setError('El telefono es obligatorio')
+      return
+    }
+    if (!validarE164(form.telefono.trim())) {
+      setError('El telefono debe estar en formato E.164 (ej: +34612345678)')
+      return
+    }
+
+    setSending(true)
+    setError(null)
+    setResult(null)
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const session = sessionData?.session
+      if (!session?.access_token) {
+        throw new Error('Sesion expirada, recarga la pagina')
+      }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      if (!supabaseUrl) {
+        throw new Error('VITE_SUPABASE_URL no configurado')
+      }
+
+      const res = await fetch(
+        `${supabaseUrl}/functions/v1/ia-outbound-primer-mensaje`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            agente_id: agenteId,
+            telefono: form.telefono.trim(),
+            nombre: form.nombre.trim() || null,
+            email: form.email.trim() || null,
+            servicio: form.servicio.trim() || null,
+          }),
+        }
+      )
+
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Error enviando primer mensaje')
+      }
+
+      setResult(data)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleClose = () => {
+    setForm({ telefono: '', nombre: '', email: '', servicio: '' })
+    setResult(null)
+    setError(null)
+    onClose()
+  }
+
+  return (
+    <div className="ia-modal-overlay" onClick={handleClose}>
+      <div className="ia-modal" onClick={e => e.stopPropagation()}>
+        <div className="ia-modal-header">
+          <h2>Contacto manual</h2>
+          <button className="ia-modal-close" onClick={handleClose}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {result ? (
+          <div className="ia-import-result">
+            <CheckCircle size={40} style={{ color: '#10b981' }} />
+            <h3>Mensaje enviado</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center' }}>
+              {result.message || 'El primer mensaje ha sido enviado correctamente.'}
+            </p>
+            <button className="ia-btn ia-btn-primary" onClick={handleClose} style={{ marginTop: 12 }}>
+              Cerrar
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleEnviar}>
+            <div className="ia-field">
+              <label>Telefono (E.164) *</label>
+              <input
+                type="tel"
+                value={form.telefono}
+                onChange={e => update('telefono', e.target.value)}
+                placeholder="+34612345678"
+                autoFocus
+              />
+            </div>
+            <div className="ia-field">
+              <label>Nombre</label>
+              <input
+                type="text"
+                value={form.nombre}
+                onChange={e => update('nombre', e.target.value)}
+                placeholder="Nombre del contacto"
+              />
+            </div>
+            <div className="ia-field">
+              <label>Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={e => update('email', e.target.value)}
+                placeholder="email@ejemplo.com"
+              />
+            </div>
+            <div className="ia-field">
+              <label>Servicio</label>
+              <input
+                type="text"
+                value={form.servicio}
+                onChange={e => update('servicio', e.target.value)}
+                placeholder="Servicio de interes"
+              />
+            </div>
+
+            {error && (
+              <div className="ia-import-error">
+                <AlertCircle size={16} />
+                {error}
+              </div>
+            )}
+
+            <div className="ia-modal-actions">
+              <button type="button" className="ia-btn ia-btn-secondary" onClick={handleClose}>
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="ia-btn ia-btn-primary"
+                disabled={sending || !form.telefono.trim()}
+              >
+                <Send size={14} />
+                {sending ? 'Enviando...' : 'Enviar primer mensaje'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}

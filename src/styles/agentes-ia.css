@@ -1986,3 +1986,174 @@
   justify-content: center;
   padding: 12px;
 }
+
+/* =====================================================
+   Supervisor IA
+   ===================================================== */
+
+.ia-supervisor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ia-supervisor-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.ia-supervisor-section-title svg {
+  color: var(--text-secondary);
+}
+
+/* Alert badges */
+.ia-alerta-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* =====================================================
+   Import Modal
+   ===================================================== */
+
+.ia-modal-wide {
+  max-width: 600px;
+}
+
+.ia-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.ia-modal-header h2 {
+  margin: 0;
+}
+
+.ia-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.ia-modal-close:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.ia-import-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  margin-bottom: 16px;
+}
+
+.ia-import-dropzone:hover {
+  border-color: var(--primary);
+}
+
+.ia-import-dropzone p {
+  font-size: 14px;
+  color: var(--text);
+  margin: 0;
+  font-weight: 500;
+}
+
+.ia-import-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #ef444415;
+  color: #ef4444;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.ia-import-preview {
+  margin-bottom: 16px;
+}
+
+.ia-import-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0;
+}
+
+.ia-import-result h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.ia-import-result-stats {
+  display: flex;
+  gap: 24px;
+  margin: 12px 0;
+}
+
+.ia-import-result-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.ia-import-result-value {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.ia-import-result-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* =====================================================
+   Notification Badge Counter
+   ===================================================== */
+
+.ia-notif-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--error);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}

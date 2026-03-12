@@ -171,6 +171,11 @@ const Icons = {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 8V4H8"/><rect x="2" y="8" width="20" height="12" rx="2"/><path d="M6 12h.01"/><path d="M18 12h.01"/><path d="M10 16h4"/>
     </svg>
+  ),
+  Eye: () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+    </svg>
   )
 }
 
@@ -325,6 +330,7 @@ export default memo(function Sidebar() {
       { name: 'Email Marketing', href: '/ventas/email', icon: Icons.Mail, permiso: 'ventas.email.ver' },
       { name: 'Ajustes', href: '/ventas/ajustes', icon: Icons.Settings, permiso: 'ventas.ajustes.ver' },
       { name: 'Agentes IA', href: '/ventas/agentes-ia', icon: Icons.Bot, permiso: 'ventas.agentes_ia.ver' },
+      { name: 'Supervisor IA', href: '/ventas/agentes-ia/supervisor', icon: Icons.Eye, permiso: 'ventas.agentes_ia.ver' },
     ]},
     { id: 'por-organizar', name: 'Por organizar', href: '/por-organizar', icon: Icons.Folder, permiso: null, type: 'submenu', children: [
       { name: 'Dashboard', href: '/dashboard', icon: Icons.Dashboard, permiso: 'dashboard.ver' },
