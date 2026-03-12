@@ -330,7 +330,7 @@
 .ia-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--bg-overlay, rgba(0, 0, 0, 0.6));
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -339,14 +339,14 @@
 }
 
 .ia-modal {
-  background: #1a1a2e;
-  border: 1px solid var(--border);
+  background: var(--bg-elevated, #1a1a1b);
+  border: 1px solid var(--border-hover, rgba(255, 255, 255, 0.15));
   border-radius: 16px;
   padding: 24px;
   width: 100%;
   max-width: 440px;
   margin: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 .ia-modal h2 {
