@@ -112,7 +112,7 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -136,22 +136,24 @@
 }
 
 .ia-btn-secondary {
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.06);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .ia-btn-secondary:hover:not(:disabled) {
-  background: var(--border);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .ia-btn-danger {
-  background: var(--error);
-  color: var(--text-inverse);
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .ia-btn-danger:hover:not(:disabled) {
-  opacity: 0.9;
+  background: rgba(239, 68, 68, 0.25);
 }
 
 /* Table */
@@ -384,24 +386,25 @@
 
 .ia-field label {
   display: block;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 6px;
+  letter-spacing: 0.02em;
 }
 
 .ia-field input,
 .ia-field select,
 .ia-field textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
   font-size: 14px;
   color: var(--text);
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.04);
   outline: none;
-  transition: border-color 0.15s;
+  transition: all 0.15s;
   color-scheme: dark;
 }
 
@@ -419,13 +422,15 @@
 .ia-field input:focus,
 .ia-field select:focus,
 .ia-field textarea:focus {
-  border-color: var(--border-focus, rgba(255, 255, 255, 0.2));
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .ia-field textarea {
   min-height: 120px;
   resize: vertical;
   font-family: inherit;
+  line-height: 1.5;
 }
 
 .ia-modal-actions {
@@ -439,10 +444,10 @@
 .ia-tabs {
   display: flex;
   gap: 2px;
-  background: var(--bg);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
   padding: 3px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .ia-tab {
@@ -452,7 +457,7 @@
   justify-content: center;
   gap: 6px;
   padding: 10px 16px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -464,12 +469,12 @@
 
 .ia-tab:hover {
   color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .ia-tab.active {
-  background: var(--card);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Back button */
@@ -494,21 +499,32 @@
 
 /* Config sections */
 .ia-config-section {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 24px;
   margin-bottom: 16px;
+  transition: border-color 0.15s;
+}
+
+.ia-config-section:hover {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .ia-config-section h3 {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text);
-  margin: 0 0 16px;
+  margin: 0 0 20px;
   display: flex;
   align-items: center;
   gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ia-config-section h3 svg {
+  color: var(--text-secondary);
 }
 
 .ia-config-row {
@@ -528,8 +544,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .ia-toggle-row:last-child {
@@ -539,7 +555,7 @@
 .ia-toggle-label {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .ia-toggle-label span:first-child {
@@ -551,6 +567,7 @@
 .ia-toggle-label span:last-child {
   font-size: 12px;
   color: var(--text-secondary);
+  opacity: 0.8;
 }
 
 .ia-switch {
@@ -558,12 +575,12 @@
   width: 44px;
   min-width: 44px;
   height: 24px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   cursor: pointer;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 0;
-  transition: background 0.2s;
+  transition: all 0.2s;
   flex-shrink: 0;
 }
 
@@ -2378,20 +2395,20 @@
 .ia-logs {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .ia-logs-filters {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 16px 20px;
 }
 
 .ia-logs-filters-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -2406,19 +2423,19 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 5px 12px;
+  border-radius: 8px;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   background: transparent;
   color: var(--text-secondary);
   transition: all 0.15s;
 }
 
 .ia-logs-tipo-pill:hover {
-  border-color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .ia-logs-tipo-pill.active {
@@ -2432,36 +2449,45 @@
 }
 
 .ia-logs-date-input {
-  padding: 5px 8px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
   font-size: 12px;
   color: var(--text);
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.04);
   outline: none;
+  color-scheme: dark;
+  transition: border-color 0.15s;
+}
+
+.ia-logs-date-input:focus {
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .ia-logs-clear-btn {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
-  border: none;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 11px;
+  transition: all 0.15s;
 }
 
 .ia-logs-clear-btn:hover {
   color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* Logs table */
 .ia-logs-table-wrap {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
   overflow: hidden;
 }
 
@@ -2472,14 +2498,14 @@
 
 .ia-logs-th {
   text-align: left;
-  padding: 10px 12px;
+  padding: 12px 14px;
   font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .ia-logs-row {
@@ -2488,14 +2514,14 @@
 }
 
 .ia-logs-row:hover {
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .ia-logs-cell {
-  padding: 8px 12px;
+  padding: 10px 14px;
   font-size: 13px;
   color: var(--text);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: top;
 }
 
@@ -2509,6 +2535,7 @@
   font-size: 12px;
   color: var(--text-secondary);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .ia-logs-cell-tipo {
@@ -2520,37 +2547,37 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  opacity: 0.85;
 }
 
 .ia-logs-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 3px 10px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
-  color: white;
 }
 
 /* Expandable detail */
 .ia-logs-row-detail td {
   padding: 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .ia-logs-detail {
-  padding: 12px 16px;
-  background: var(--bg);
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.02);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .ia-logs-detail-section {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
 }
 
 .ia-logs-detail-label {
@@ -2558,40 +2585,50 @@
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.04em;
 }
 
 .ia-logs-detail-value {
   font-size: 12px;
   color: var(--text);
-  font-family: monospace;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  opacity: 0.9;
 }
 
 .ia-logs-detail-pre {
   font-size: 12px;
   color: var(--text);
-  background: var(--card);
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
   margin: 0;
-  font-family: monospace;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  line-height: 1.5;
 }
 
 .ia-logs-empty {
-  padding: 40px;
+  padding: 60px 20px;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.ia-logs-empty svg {
+  opacity: 0.3;
 }
 
 .ia-logs-load-more {
   display: flex;
   justify-content: center;
-  padding: 12px;
+  padding: 16px;
 }
 
 /* =====================================================
@@ -3521,11 +3558,16 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--bg);
-  min-width: 160px;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  min-width: 180px;
+  transition: border-color 0.15s;
+}
+
+.ia-logs-search-filter:focus-within {
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .ia-logs-search-input {
@@ -3540,12 +3582,7 @@
 
 .ia-logs-search-input::placeholder {
   color: var(--text-secondary);
-}
-
-.ia-logs-date-filter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  opacity: 0.6;
 }
 
 .ia-logs-date-input {
@@ -4166,8 +4203,9 @@
 
 .ia-templates-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .ia-templates-table {
@@ -4182,9 +4220,9 @@
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.3px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
   white-space: nowrap;
 }
 
@@ -4192,7 +4230,7 @@
   padding: 10px 14px;
   font-size: 13px;
   color: var(--text);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   vertical-align: top;
 }
 
@@ -4201,7 +4239,7 @@
 }
 
 .ia-templates-table tr:hover {
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .ia-templates-name {
@@ -4214,17 +4252,17 @@
 
 .ia-templates-category-badge {
   display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 4px;
+  padding: 3px 10px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
-  background: #10b98118;
+  background: rgba(16, 185, 129, 0.1);
   color: #10b981;
   white-space: nowrap;
 }
 
 .ia-templates-msg {
-  max-width: 280px;
+  max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
