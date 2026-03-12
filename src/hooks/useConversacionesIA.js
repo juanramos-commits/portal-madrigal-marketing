@@ -40,6 +40,7 @@ const ESTADO_ORDER = {
   agendado: 6,
   no_response: 7,
   descartado: 8,
+  queued: 9,
 }
 
 export function useConversacionesIA(agenteId) {

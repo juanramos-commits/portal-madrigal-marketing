@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 
 const ESTADO_LABELS = {
+  queued: 'En cola',
   needs_reply: 'Necesita respuesta',
   waiting_reply: 'Esperando respuesta',
   agendado: 'Reunión agendada',
@@ -23,6 +24,7 @@ const ESTADO_LABELS = {
 }
 
 const ESTADO_COLORS = {
+  queued: 'var(--text-secondary)',
   needs_reply: 'var(--error)',
   waiting_reply: 'var(--warning, #ffa94d)',
   agendado: 'var(--success, #2ee59d)',
@@ -48,6 +50,7 @@ const FILTROS = [
   { id: 'humano', label: 'Humano' },
   { id: 'agendado', label: 'Agendados' },
   { id: 'descartado', label: 'Descartados' },
+  { id: 'queued', label: 'En cola' },
 ]
 
 function formatTime(dateStr) {

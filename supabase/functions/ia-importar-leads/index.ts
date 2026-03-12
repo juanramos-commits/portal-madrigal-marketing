@@ -118,25 +118,28 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Agent has no WhatsApp phone configured' }, 400)
     }
 
-    // === CHECK DAILY LIMIT BEFORE STARTING ===
+    // === CHECK DAILY LIMIT BEFORE STARTING (only for immediate-send flow) ===
     const today = new Date().toISOString().split('T')[0]
     const maxNuevos = agente.rate_limit_nuevos_dia || 50
+    let dailyCount = 0
 
-    const { count: convosHoy } = await supabase
-      .from('ia_conversaciones')
-      .select('id', { count: 'exact', head: true })
-      .eq('agente_id', agenteId)
-      .gte('created_at', today + 'T00:00:00.000Z')
+    if (!isQueueFlow) {
+      const { count: convosHoy } = await supabase
+        .from('ia_conversaciones')
+        .select('id', { count: 'exact', head: true })
+        .eq('agente_id', agenteId)
+        .gte('created_at', today + 'T00:00:00.000Z')
 
-    let dailyCount = convosHoy || 0
+      dailyCount = convosHoy || 0
 
-    if (dailyCount >= maxNuevos) {
-      await supabase.from('ia_logs').insert({
-        agente_id: agenteId,
-        tipo: 'warning',
-        mensaje: `Importacion bloqueada: rate limit diario alcanzado ${dailyCount}/${maxNuevos}`,
-      })
-      return jsonResponse({ error: 'Daily new leads rate limit already reached', blocked: true }, 429)
+      if (dailyCount >= maxNuevos) {
+        await supabase.from('ia_logs').insert({
+          agente_id: agenteId,
+          tipo: 'warning',
+          mensaje: `Importacion bloqueada: rate limit diario alcanzado ${dailyCount}/${maxNuevos}`,
+        })
+        return jsonResponse({ error: 'Daily new leads rate limit already reached', blocked: true }, 429)
+      }
     }
 
     // === LOAD BLACKLIST (batch) ===
@@ -154,28 +157,14 @@ Deno.serve(async (req) => {
 
     const blacklistSet = new Set((blacklistEntries || []).map(b => b.telefono))
 
-    // === SELECT TEMPLATE BASED ON AGENT TYPE ===
-    let templateName: string
-    let templateParamsFn: (nombre: string | null) => Record<string, unknown>
+    // === DETERMINE FLOW: queue vs send immediately ===
+    // Repescadora / outbound_frio → queue leads, cron sends daily at configured rate
+    // Setter → send first message immediately
+    const isQueueFlow = agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio'
 
-    switch (agente.tipo) {
-      case 'setter':
-        templateName = 'primer_mensaje_formulario'
-        templateParamsFn = (nombre) => ({ body: [nombre || 'amigo/a'] })
-        break
-      case 'repescadora':
-        templateName = 're_contacto_rosalia_1'
-        templateParamsFn = () => ({})
-        break
-      case 'outbound_frio':
-        templateName = 're_contacto_rosalia_1'
-        templateParamsFn = () => ({})
-        break
-      default:
-        templateName = 'primer_mensaje_formulario'
-        templateParamsFn = (nombre) => ({ body: [nombre || 'amigo/a'] })
-        break
-    }
+    // Template config only needed for immediate-send flow (setter)
+    let templateName = 'primer_mensaje_formulario'
+    let templateParamsFn: (nombre: string | null) => Record<string, unknown> = (nombre) => ({ body: [nombre || 'amigo/a'] })
 
     // === PROCESS EACH LEAD ===
     const details: LeadResult[] = []
@@ -184,8 +173,8 @@ Deno.serve(async (req) => {
     let errors = 0
 
     for (const leadInput of leads) {
-      // Check daily limit during processing
-      if (dailyCount >= maxNuevos) {
+      // Check daily limit during processing (only for immediate-send flow)
+      if (!isQueueFlow && dailyCount >= maxNuevos) {
         details.push({
           telefono: leadInput.telefono,
           status: 'skipped',
@@ -331,10 +320,10 @@ Deno.serve(async (req) => {
           .insert({
             agente_id: agenteId,
             lead_id: leadId,
-            estado: 'waiting_reply',
+            estado: isQueueFlow ? 'queued' : 'waiting_reply',
             step: 'first_message',
             chatbot_activo: true,
-            first_message_sent_at: new Date().toISOString(),
+            first_message_sent_at: isQueueFlow ? null : new Date().toISOString(),
             ab_version: abVersion,
             wa_window_expires_at: null,
           })
@@ -353,68 +342,8 @@ Deno.serve(async (req) => {
 
         const conversacionId = convo.id
 
-        // Send first message via ia-whatsapp-send
-        const sendRes = await fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${serviceKey}`,
-          },
-          body: JSON.stringify({
-            agente_id: agenteId,
-            conversacion_id: conversacionId,
-            to: telefono,
-            sender: 'bot',
-            template_name: templateName,
-            template_params: templateParamsFn(nombre),
-          }),
-        })
-
-        const sendResult = await sendRes.json()
-
-        if (!sendRes.ok || sendResult.error) {
-          await supabase.from('ia_logs').insert({
-            agente_id: agenteId,
-            conversacion_id: conversacionId,
-            tipo: 'error',
-            mensaje: `Error enviando primer mensaje importado a ${telefono}: ${sendResult.error || 'Unknown'}`,
-            detalles: sendResult,
-          })
-
-          details.push({
-            telefono,
-            status: 'error',
-            reason: `Failed to send first message: ${sendResult.error || 'Unknown'}`,
-            lead_id: leadId,
-            conversacion_id: conversacionId,
-          })
-          errors++
-        } else {
-          // Increment metrics
-          await supabase.rpc('ia_increment_metricas', {
-            p_agente_id: agenteId,
-            p_fecha: today,
-            p_ab_version: abVersion,
-            p_leads_contactados: 1,
-            p_mensajes_enviados: 1,
-          })
-
-          // Schedule outbound sequence for repescadora / outbound_frio
-          if (agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio') {
-            const agentConfig = (agente.config || {}) as Record<string, unknown>
-            const delays: number[] = (agentConfig.secuencia_delays as number[]) || [172800000, 172800000]
-            const firstDelay = delays[0] || 172800000
-            const nextAt = new Date(Date.now() + firstDelay).toISOString()
-
-            await supabase
-              .from('ia_conversaciones')
-              .update({
-                secuencia_outbound_step: 0,
-                secuencia_outbound_next_at: nextAt,
-              })
-              .eq('id', conversacionId)
-          }
-
+        if (isQueueFlow) {
+          // Queue flow: don't send now, cron will handle daily sending
           details.push({
             telefono,
             status: 'imported',
@@ -422,11 +351,68 @@ Deno.serve(async (req) => {
             conversacion_id: conversacionId,
           })
           imported++
-          dailyCount++
+        } else {
+          // Immediate flow (setter): send first message now
+          const sendRes = await fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${serviceKey}`,
+            },
+            body: JSON.stringify({
+              agente_id: agenteId,
+              conversacion_id: conversacionId,
+              to: telefono,
+              sender: 'bot',
+              template_name: templateName,
+              template_params: templateParamsFn(nombre),
+            }),
+          })
+
+          const sendResult = await sendRes.json()
+
+          if (!sendRes.ok || sendResult.error) {
+            await supabase.from('ia_logs').insert({
+              agente_id: agenteId,
+              conversacion_id: conversacionId,
+              tipo: 'error',
+              mensaje: `Error enviando primer mensaje importado a ${telefono}: ${sendResult.error || 'Unknown'}`,
+              detalles: sendResult,
+            })
+
+            details.push({
+              telefono,
+              status: 'error',
+              reason: `Failed to send first message: ${sendResult.error || 'Unknown'}`,
+              lead_id: leadId,
+              conversacion_id: conversacionId,
+            })
+            errors++
+          } else {
+            // Increment metrics
+            await supabase.rpc('ia_increment_metricas', {
+              p_agente_id: agenteId,
+              p_fecha: today,
+              p_ab_version: abVersion,
+              p_leads_contactados: 1,
+              p_mensajes_enviados: 1,
+            })
+
+            details.push({
+              telefono,
+              status: 'imported',
+              lead_id: leadId,
+              conversacion_id: conversacionId,
+            })
+            imported++
+            dailyCount++
+          }
         }
 
-        // Delay between sends to avoid rate limiting (1s + random jitter)
-        await sleep(1000 + Math.random() * 500)
+        // Delay between sends to avoid rate limiting (only for immediate-send)
+        if (!isQueueFlow) {
+          await sleep(1000 + Math.random() * 500)
+        }
       } catch (leadErr) {
         details.push({
           telefono,
@@ -441,7 +427,7 @@ Deno.serve(async (req) => {
     await supabase.from('ia_logs').insert({
       agente_id: agenteId,
       tipo: 'info',
-      mensaje: `Importacion completada: ${imported} importados, ${skipped} omitidos, ${errors} errores (de ${leads.length} total)`,
+      mensaje: `Importacion completada: ${imported} ${isQueueFlow ? 'en cola' : 'importados'}, ${skipped} omitidos, ${errors} errores (de ${leads.length} total)`,
       detalles: {
         total: leads.length,
         imported,
