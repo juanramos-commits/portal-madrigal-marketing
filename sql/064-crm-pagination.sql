@@ -28,7 +28,8 @@ DECLARE
   v_leads JSONB;
   v_counts JSONB;
   v_result JSONB;
-  v_role TEXT;
+  v_is_setter BOOLEAN := FALSE;
+  v_is_closer BOOLEAN := FALSE;
   v_sanitized_search TEXT;
 BEGIN
   -- Get pipeline info
@@ -69,11 +70,11 @@ BEGIN
     END IF;
 
     IF NOT p_es_admin THEN
-      SELECT rol INTO v_role
-      FROM ventas_roles_comerciales
-      WHERE usuario_id = p_user_id AND activo = true
-        AND rol IN ('setter', 'closer')
-      LIMIT 1;
+      -- Check ALL roles the user has (not just one via LIMIT 1)
+      SELECT
+        EXISTS(SELECT 1 FROM ventas_roles_comerciales WHERE usuario_id = p_user_id AND activo = true AND rol = 'setter'),
+        EXISTS(SELECT 1 FROM ventas_roles_comerciales WHERE usuario_id = p_user_id AND activo = true AND rol = 'closer')
+      INTO v_is_setter, v_is_closer;
     END IF;
   END IF;
 
@@ -95,8 +96,8 @@ BEGIN
         OR p_user_id IS NULL
         OR (
           CASE
-            WHEN lower(v_pipeline.nombre) LIKE '%setter%' AND v_role = 'setter' THEN l.setter_asignado_id = p_user_id
-            WHEN lower(v_pipeline.nombre) LIKE '%closer%' AND v_role = 'closer' THEN l.closer_asignado_id = p_user_id
+            WHEN lower(v_pipeline.nombre) LIKE '%setter%' AND v_is_setter THEN l.setter_asignado_id = p_user_id
+            WHEN lower(v_pipeline.nombre) LIKE '%closer%' AND v_is_closer THEN l.closer_asignado_id = p_user_id
             ELSE FALSE
           END
         )
@@ -173,8 +174,8 @@ BEGIN
           OR p_user_id IS NULL
           OR (
             CASE
-              WHEN lower(v_pipeline.nombre) LIKE '%setter%' AND v_role = 'setter' THEN l.setter_asignado_id = p_user_id
-              WHEN lower(v_pipeline.nombre) LIKE '%closer%' AND v_role = 'closer' THEN l.closer_asignado_id = p_user_id
+              WHEN lower(v_pipeline.nombre) LIKE '%setter%' AND v_is_setter THEN l.setter_asignado_id = p_user_id
+              WHEN lower(v_pipeline.nombre) LIKE '%closer%' AND v_is_closer THEN l.closer_asignado_id = p_user_id
               ELSE FALSE
             END
           )
