@@ -182,11 +182,12 @@ async function processWebhookAsync(
       const metadata = value.metadata as Record<string, string>
       const phoneNumberId = metadata?.phone_number_id
 
-      // Load agent — include activo filter
+      // Load agent — only active agents
       const { data: agente } = await supabase
         .from('ia_agentes')
         .select('id, activo, modo_sandbox, sandbox_phones, rate_limit_msg_hora, rate_limit_nuevos_dia')
         .eq('whatsapp_phone_id', phoneNumberId)
+        .eq('activo', true)
         .single()
 
       if (!agente) continue
