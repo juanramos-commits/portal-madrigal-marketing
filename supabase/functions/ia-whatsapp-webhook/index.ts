@@ -192,22 +192,12 @@ async function processWebhookAsync(
 
       if (!agente) continue
 
-      // === STATUS UPDATES ===
+      // === STATUS UPDATES (handled synchronously before return 200) ===
+      // Only log failures here; sent/delivered/read already processed in sync block
       const statuses = (value.statuses as Array<Record<string, unknown>>) || []
       for (const status of statuses) {
         const waMessageId = status.id as string
         const waStatus = status.status as string
-
-        if (['sent', 'delivered', 'read'].includes(waStatus)) {
-          const { error: updateErr } = await supabase
-            .from('ia_mensajes')
-            .update({ wa_status: waStatus })
-            .eq('wa_message_id', waMessageId)
-
-          if (updateErr) {
-            console.error('Error updating wa_status:', updateErr)
-          }
-        }
 
         if (waStatus === 'failed') {
           const errors = (status.errors as Array<Record<string, unknown>>) || []
@@ -792,8 +782,38 @@ Deno.serve(async (req) => {
     console.error('WA_APP_SECRET not set — SECURITY RISK: webhook signature verification DISABLED')
   }
 
-  // === RETURN 200 IMMEDIATELY (Meta requires <5s) ===
-  // Process everything async — but await the promise so the runtime doesn't kill it
+  // === PROCESS STATUS UPDATES SYNCHRONOUSLY (fast, just DB updates) ===
+  try {
+    const parsedBody = JSON.parse(rawBody)
+    const supabaseSync = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    )
+    const entries = (parsedBody.entry as Array<Record<string, unknown>>) || []
+    for (const entry of entries) {
+      const changes = (entry.changes as Array<Record<string, unknown>>) || []
+      for (const change of changes) {
+        const value = change.value as Record<string, unknown>
+        if (!value) continue
+        const statuses = (value.statuses as Array<Record<string, unknown>>) || []
+        for (const status of statuses) {
+          const waMessageId = status.id as string
+          const waStatus = status.status as string
+          if (waMessageId && ['sent', 'delivered', 'read'].includes(waStatus)) {
+            console.log(`[status-sync] Updating ${waMessageId} → ${waStatus}`)
+            await supabaseSync
+              .from('ia_mensajes')
+              .update({ wa_status: waStatus })
+              .eq('wa_message_id', waMessageId)
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error processing status updates sync:', err)
+  }
+
+  // === PROCESS MESSAGES ASYNC (heavy — AI, replies, etc.) ===
   const processingPromise = processWebhookAsync(rawBody, appSecret, waToken, openaiKey)
     .catch(err => console.error('Async webhook processing error:', err))
 
