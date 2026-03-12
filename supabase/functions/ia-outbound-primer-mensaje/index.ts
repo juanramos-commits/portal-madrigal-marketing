@@ -60,11 +60,20 @@ Deno.serve(async (req) => {
   }
 
   // === NORMALIZE PHONE ===
-  telefono = telefono.replace(/[\s\-\(\)]/g, '')
-  if (!telefono.startsWith('+')) {
+  telefono = telefono.replace(/[\s\-\(\)\.]/g, '').replace(/^["']+|["']+$/g, '')
+  if (telefono.startsWith('+')) {
+    // Already has country code
+  } else if (telefono.startsWith('00')) {
+    telefono = '+' + telefono.slice(2)
+  } else if (/^[67]\d{8}$/.test(telefono)) {
+    telefono = '+34' + telefono
+  } else if (/^9\d{8}$/.test(telefono)) {
+    telefono = '+34' + telefono
+  } else if (/^34[679]\d{8}$/.test(telefono)) {
+    telefono = '+' + telefono
+  } else {
     telefono = '+' + telefono
   }
-  // Basic E.164 validation
   if (!/^\+\d{7,15}$/.test(telefono)) {
     return jsonResponse({ error: 'Invalid phone format' }, 400)
   }

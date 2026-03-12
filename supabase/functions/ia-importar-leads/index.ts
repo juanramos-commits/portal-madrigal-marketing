@@ -36,15 +36,35 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-/** Normalize phone: strip spaces, ensure + prefix, basic E.164 validation */
+/** Normalize phone: strip spaces, auto-add +34 for Spanish numbers, E.164 validation */
 function normalizePhone(raw: string): { ok: boolean; phone: string; error?: string } {
-  let phone = raw.replace(/[\s\-\(\)]/g, '')
-  if (!phone.startsWith('+')) {
+  let phone = raw.replace(/[\s\-\(\)\.]/g, '')
+
+  // Strip leading quotes
+  phone = phone.replace(/^["']+|["']+$/g, '')
+
+  if (phone.startsWith('+')) {
+    // Already has country code
+  } else if (phone.startsWith('00')) {
+    // International format 0034...
+    phone = '+' + phone.slice(2)
+  } else if (/^[67]\d{8}$/.test(phone)) {
+    // Spanish mobile: 6xx or 7xx, 9 digits → +34
+    phone = '+34' + phone
+  } else if (/^9\d{8}$/.test(phone)) {
+    // Spanish landline: 9xx, 9 digits → +34
+    phone = '+34' + phone
+  } else if (/^34[679]\d{8}$/.test(phone)) {
+    // Missing + prefix: 34612345678
+    phone = '+' + phone
+  } else {
+    // Fallback: prepend +
     phone = '+' + phone
   }
+
   // Basic E.164 check: + followed by 7-15 digits
   if (!/^\+\d{7,15}$/.test(phone)) {
-    return { ok: false, phone, error: `Invalid phone format: ${raw}` }
+    return { ok: false, phone, error: `Formato de teléfono inválido: ${raw}` }
   }
   return { ok: true, phone }
 }
@@ -118,6 +138,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Agent has no WhatsApp phone configured' }, 400)
     }
 
+    // === DETERMINE FLOW: queue vs send immediately ===
+    // Repescadora / outbound_frio → queue leads, cron sends daily at configured rate
+    // Setter → send first message immediately
+    const isQueueFlow = agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio'
+
     // === CHECK DAILY LIMIT BEFORE STARTING (only for immediate-send flow) ===
     const today = new Date().toISOString().split('T')[0]
     const maxNuevos = agente.rate_limit_nuevos_dia || 50
@@ -156,11 +181,6 @@ Deno.serve(async (req) => {
       .in('telefono', allPhones)
 
     const blacklistSet = new Set((blacklistEntries || []).map(b => b.telefono))
-
-    // === DETERMINE FLOW: queue vs send immediately ===
-    // Repescadora / outbound_frio → queue leads, cron sends daily at configured rate
-    // Setter → send first message immediately
-    const isQueueFlow = agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio'
 
     // Template config only needed for immediate-send flow (setter)
     let templateName = 'primer_mensaje_formulario'
