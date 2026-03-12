@@ -638,7 +638,7 @@ async function evaluateQuality(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-haiku-4-5-20250414',
         max_tokens: 200,
         messages: [
           {
@@ -713,7 +713,7 @@ async function generateSummary(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: 'claude-haiku-4-5-20250414',
         max_tokens: 300,
         messages: [
           {
@@ -1035,7 +1035,7 @@ ${styleAddendum}`
 
     for (let iteration = 0; iteration < maxIterations; iteration++) {
       const claudeResult = await callClaudeWithRetry({
-        model: 'claude-sonnet-4-5-20241022',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
         system: fullSystemPrompt,
         tools: AGENT_TOOLS,
