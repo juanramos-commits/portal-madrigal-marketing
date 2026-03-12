@@ -184,47 +184,25 @@ export function useConversacionesIA(agenteId) {
     if (!conversacionActiva || !texto.trim()) return
     setSending(true)
     try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const session = sessionData?.session
-      if (!session?.access_token) {
-        throw new Error('Sesión expirada, recarga la página')
+      const { data, error } = await supabase.functions.invoke('ia-whatsapp-send', {
+        body: {
+          agente_id: agenteId,
+          conversacion_id: conversacionActiva.id,
+          to: conversacionActiva.lead?.telefono,
+          sender: 'humano',
+          messages: [{ type: 'text', content: texto }],
+        },
+      })
+      if (error) {
+        console.warn('Error edge function:', error.message)
+      } else if (data?.error) {
+        console.warn('Respuesta edge function:', data.error)
       }
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      if (!supabaseUrl) {
-        throw new Error('VITE_SUPABASE_URL no configurado')
-      }
-      try {
-        const res = await fetch(
-          `${supabaseUrl}/functions/v1/ia-whatsapp-send`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({
-              agente_id: agenteId,
-              conversacion_id: conversacionActiva.id,
-              to: conversacionActiva.lead?.telefono,
-              sender: 'humano',
-              messages: [{ type: 'text', content: texto }],
-            }),
-          }
-        )
-        const result = await res.json()
-        if (!res.ok || result.error) {
-          console.warn('Respuesta edge function:', result.error || res.status)
-        }
-      } catch (fetchErr) {
-        // "Failed to fetch" / network errors — the message likely sent anyway
-        // Don't throw, just log and reload messages to check
-        console.warn('Fetch error (mensaje probablemente enviado):', fetchErr.message)
-      }
-      // Always reload messages — the message may have been sent even if fetch failed
+      // Reload messages after a short delay
       setTimeout(() => cargarMensajes(conversacionActiva.id), 1000)
     } catch (err) {
       console.error('Error enviando mensaje:', err)
-      throw err
+      // Don't throw — message may have sent anyway
     } finally {
       setSending(false)
     }
@@ -389,48 +367,27 @@ export function useConversacionesIA(agenteId) {
   // Send message with optional media attachment
   const enviarMensajeConMedia = useCallback(async (texto, mediaUrl, mediaType) => {
     if (!conversacionActiva) return
-    if (!texto.trim() && !mediaUrl) return
+    if (!texto?.trim() && !mediaUrl) return
     setSending(true)
     try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const session = sessionData?.session
-      if (!session?.access_token) {
-        throw new Error('Sesión expirada, recarga la página')
-      }
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      if (!supabaseUrl) {
-        throw new Error('VITE_SUPABASE_URL no configurado')
-      }
-      const body = {
+      const payload = {
         agente_id: agenteId,
         conversacion_id: conversacionActiva.id,
         to: conversacionActiva.lead?.telefono,
         sender: 'humano',
-        messages: [{ type: mediaType || 'text', content: texto || '' }],
+        messages: [{ type: mediaType || 'text', content: texto || '', media_url: mediaUrl || undefined }],
       }
-      if (mediaUrl) {
-        body.media_url = mediaUrl
-        body.media_type = mediaType
+      const { data, error } = await supabase.functions.invoke('ia-whatsapp-send', {
+        body: payload,
+      })
+      if (error) {
+        console.warn('Error edge function:', error.message)
+      } else if (data?.error) {
+        console.warn('Respuesta edge function:', data.error)
       }
-      const res = await fetch(
-        `${supabaseUrl}/functions/v1/ia-whatsapp-send`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify(body),
-        }
-      )
-      const result = await res.json()
-      if (!res.ok || result.error) {
-        throw new Error(result.error || 'Error enviando mensaje')
-      }
-      await cargarMensajes(conversacionActiva.id)
+      setTimeout(() => cargarMensajes(conversacionActiva.id), 1000)
     } catch (err) {
       console.error('Error enviando mensaje con media:', err)
-      throw err
     } finally {
       setSending(false)
     }
