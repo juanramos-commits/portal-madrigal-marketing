@@ -216,8 +216,8 @@ function calculateLeadScore(
   let capacidad = (lead.score_detalles as Record<string, number>)?.capacidad_inversion || 20
 
   // Sentiment adjustments
-  if (sentiment === 'positivo' || sentiment === 'interesado') interes = Math.min(100, interes + 10)
-  if (sentiment === 'urgente') urgencia = Math.min(100, urgencia + 20)
+  if (sentiment === 'positivo' || sentiment === 'interesado') interes = Math.min(100, interes + 15)
+  if (sentiment === 'urgente') urgencia = Math.min(100, urgencia + 25)
   if (sentiment === 'negativo') interes = Math.max(0, interes - 10)
   if (sentiment === 'frustrado') interes = Math.max(0, interes - 15)
 
@@ -225,11 +225,15 @@ function calculateLeadScore(
   if (convo.step === 'meeting_pref') interes = Math.min(100, interes + 15)
   if (convo.estado === 'agendado') { interes = 90; encaje = Math.min(100, encaje + 20) }
 
-  // Content-based adjustments
+  // Content-based adjustments — score aggressively when lead shares business details
   const lower = messageContent.toLowerCase()
-  if (/presupuesto|inversión|inversion|precio/.test(lower)) capacidad = Math.min(100, capacidad + 10)
-  if (/boda|evento|empresa/.test(lower)) encaje = Math.min(100, encaje + 5)
-  if (/urgente|pronto|esta semana/.test(lower)) urgencia = Math.min(100, urgencia + 10)
+  if (/presupuesto|inversión|inversion|precio|€|\d+\s*euros?/.test(lower)) capacidad = Math.min(100, capacidad + 20)
+  if (/boda|evento|empresa|negocio|autónomo|autonomo|fotógraf|fotografo|wedding|sector/.test(lower)) encaje = Math.min(100, encaje + 15)
+  if (/urgente|pronto|esta semana|necesito|lo antes posible/.test(lower)) urgencia = Math.min(100, urgencia + 15)
+  // Any substantive reply shows interest (lead is engaging)
+  if (messageContent.length > 15) interes = Math.min(100, interes + 5)
+  // Numbers in reply often mean they're sharing data (volume, prices, etc.)
+  if (/\d+/.test(messageContent)) encaje = Math.min(100, encaje + 10)
 
   const score = Math.round(interes * 0.35 + encaje * 0.25 + urgencia * 0.2 + capacidad * 0.2)
 
@@ -1103,10 +1107,11 @@ DEBES usar la herramienta consultar_base_conocimiento en tu PRIMERA interacción
 Step actual: "${convo.step}" | Lead score: ${scoring.score}/${agentConfig.umbral_score_reunion || 60}
 
 SI step = "qualify":
-- Tu ÚNICO objetivo es hacer preguntas para entender al lead
+- Cualifica rápido en 2-3 intercambios máximo. Necesitas saber: a qué se dedica, qué volumen maneja, y qué problema tiene
 - PROHIBIDO mencionar videollamada, reunión, cita, llamada o agendar
-- Haz preguntas sobre su negocio, situación, qué necesita, qué ha probado
-- NO tengas prisa, necesitas entender bien al lead antes de proponer nada
+- Combina validación + pregunta en un solo mensaje. Ejemplo: "Genial, 20 bodas está muy bien. Y qué ticket medio manejas más o menos?"
+- NO hagas una pregunta por mensaje si puedes combinar. Sé eficiente
+- Cuando tengas los 2-3 datos clave, el sistema avanzará automáticamente al siguiente paso
 
 SI step = "meeting_pref":
 - PRIMERO pregunta si le parece bien hacer una videollamada corta (NO asumas que sí)
@@ -1522,14 +1527,14 @@ ${styleAddendum}`
     }
 
     // Advance qualify → meeting_pref when score is high enough and enough exchanges happened
-    const meetingScoreThreshold = (agentConfig.umbral_score_reunion as number) || 60
+    const meetingScoreThreshold = (agentConfig.umbral_score_reunion as number) || 40
     const { count: exchangeCount } = await supabase
       .from('ia_mensajes')
       .select('id', { count: 'exact', head: true })
       .eq('conversacion_id', conversacionId)
       .eq('direction', 'inbound')
 
-    if (convo.step === 'qualify' && scoring.score >= meetingScoreThreshold && (exchangeCount || 0) >= 4) {
+    if (convo.step === 'qualify' && scoring.score >= meetingScoreThreshold && (exchangeCount || 0) >= 2) {
       convoUpdates.step = 'meeting_pref'
     }
 
