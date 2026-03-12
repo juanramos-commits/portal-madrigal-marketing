@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAgentesIA, TIPO_LABELS, DEFAULT_CONFIG } from '../../hooks/useAgentesIA'
 import { Bot, ArrowLeft, Settings, MessageSquare, BarChart3, ScrollText, Power, Save, Trash2 } from 'lucide-react'
+import TabConversaciones from '../../components/ventas/TabConversaciones'
+import TabMetricas from '../../components/ventas/TabMetricas'
+import TabLogs from '../../components/ventas/TabLogs'
 import '../../styles/agentes-ia.css'
 
 const TABS = [
@@ -401,9 +404,9 @@ export default function AgenteIADetalle() {
       {activeTab === 'config' && (
         <TabConfig agente={agente} onSave={handleSave} saving={saving} tienePermiso={tienePermiso} />
       )}
-      {activeTab === 'conversaciones' && <TabPlaceholder title="Conversaciones" />}
-      {activeTab === 'metricas' && <TabPlaceholder title="Métricas" />}
-      {activeTab === 'logs' && <TabPlaceholder title="Logs" />}
+      {activeTab === 'conversaciones' && <TabConversaciones agenteId={id} />}
+      {activeTab === 'metricas' && <TabMetricas agenteId={id} agente={agente} />}
+      {activeTab === 'logs' && <TabLogs agenteId={id} />}
     </div>
   )
 }
