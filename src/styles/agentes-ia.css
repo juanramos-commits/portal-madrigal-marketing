@@ -383,6 +383,10 @@
   color-scheme: dark;
 }
 
+.ia-field select {
+  padding-right: 32px;
+}
+
 .ia-field input:focus,
 .ia-field select:focus,
 .ia-field textarea:focus {
