@@ -41,11 +41,22 @@ const SEQUENCE_TEMPLATES: Record<number, string> = {
   2: 're_contacto_rosalia_3',
 }
 
-// First message template per agent type
-const FIRST_MESSAGE_TEMPLATES: Record<string, { template: string; paramsFn: (nombre: string | null) => Record<string, unknown> }> = {
-  repescadora: { template: 're_contacto_rosalia_1', paramsFn: () => ({}) },
-  outbound_frio: { template: 're_contacto_rosalia_1', paramsFn: () => ({}) },
-  setter: { template: 'primer_mensaje_formulario', paramsFn: (nombre) => ({ body: { nombre: nombre || 'amigo/a' } }) },
+// First contact: all 3 templates sent as rapid-fire messages with typing delay
+// ia-whatsapp-send handles the typing simulation between messages
+const FIRST_CONTACT_MESSAGES: Record<string, (nombre: string | null) => Array<Record<string, unknown>>> = {
+  repescadora: () => [
+    { type: 'template', template_name: 're_contacto_rosalia_1', template_params: {} },
+    { type: 'template', template_name: 're_contacto_rosalia_2', template_params: {} },
+    { type: 'template', template_name: 're_contacto_rosalia_3', template_params: {} },
+  ],
+  outbound_frio: () => [
+    { type: 'template', template_name: 're_contacto_rosalia_1', template_params: {} },
+    { type: 'template', template_name: 're_contacto_rosalia_2', template_params: {} },
+    { type: 'template', template_name: 're_contacto_rosalia_3', template_params: {} },
+  ],
+  setter: (nombre) => [
+    { type: 'template', template_name: 'primer_mensaje_formulario', template_params: { body: { nombre: nombre || 'amigo/a' } } },
+  ],
 }
 
 const DEFAULT_DELAYS = [172800000, 172800000] // 2 days each in ms
@@ -263,7 +274,7 @@ Deno.serve(async (req) => {
               mensaje: `Outbound cron: error cargando queued: ${queuedErr.message}`,
             }) } catch (_e) { /* ignore */ }
           } else if (queued && queued.length > 0) {
-            const tmplConfig = FIRST_MESSAGE_TEMPLATES[agente.tipo] || FIRST_MESSAGE_TEMPLATES['repescadora']
+            const buildMessages = FIRST_CONTACT_MESSAGES[agente.tipo] || FIRST_CONTACT_MESSAGES['repescadora']
 
             for (const qConvo of queued) {
               try {
@@ -283,7 +294,8 @@ Deno.serve(async (req) => {
                   continue
                 }
 
-                // Send first message
+                // Send all 3 templates as rapid-fire messages (typing delay handled by ia-whatsapp-send)
+                const messages = buildMessages(qLead.nombre)
                 const sendRes = await fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
                   method: 'POST',
                   headers: {
@@ -295,8 +307,7 @@ Deno.serve(async (req) => {
                     conversacion_id: qConvo.id,
                     to: qLead.telefono,
                     sender: 'bot',
-                    template_name: tmplConfig.template,
-                    template_params: tmplConfig.paramsFn(qLead.nombre),
+                    messages,
                   }),
                 })
 
@@ -307,32 +318,31 @@ Deno.serve(async (req) => {
                     agente_id: agente.id,
                     conversacion_id: qConvo.id,
                     tipo: 'error',
-                    mensaje: `Outbound cron: error enviando primer mensaje a ${qLead.telefono}: ${sendResult.error || 'unknown'}`,
+                    mensaje: `Outbound cron: error enviando primer contacto a ${qLead.telefono}: ${sendResult.error || 'unknown'}`,
                   }) } catch (_e) { /* ignore */ }
                   agentErrors++
                   continue
                 }
 
-                // Update conversation: queued → waiting_reply, schedule sequence
-                const nextAt = new Date(Date.now() + delays[0]).toISOString()
+                // Update conversation: queued → waiting_reply
+                // No outbound sequence — repesca-cron handles follow-ups (ests_por_aqui, ojitos, etc.)
                 await supabase
                   .from('ia_conversaciones')
                   .update({
                     estado: 'waiting_reply',
                     first_message_sent_at: new Date().toISOString(),
-                    secuencia_outbound_step: 0,
-                    secuencia_outbound_next_at: nextAt,
                   })
                   .eq('id', qConvo.id)
 
                 // Increment metrics
+                const sentCount = sendResult.sent || messages.length
                 const abV = qConvo.ab_version || 'A'
                 try { await supabase.rpc('ia_increment_metricas', {
                   p_agente_id: agente.id,
                   p_fecha: today,
                   p_ab_version: abV,
                   p_leads_contactados: 1,
-                  p_mensajes_enviados: 1,
+                  p_mensajes_enviados: sentCount,
                 }) } catch (_e) { /* ignore */ }
 
                 agentSent++

@@ -239,25 +239,32 @@ Deno.serve(async (req) => {
 
     const conversacionId = convo.id
 
-    // === SELECT TEMPLATE BASED ON AGENT TYPE ===
-    let templateName: string
-    let templateParams: Record<string, unknown> = {}
+    // === BUILD MESSAGES BASED ON AGENT TYPE ===
+    // Repescadora/outbound_frio: 3 rapid-fire templates with typing delay
+    // Setter: single template with name param
+    let sendBody: Record<string, unknown>
 
-    switch (agente.tipo) {
-      case 'setter':
-        templateName = 'primer_mensaje_formulario'
-        templateParams = { body: { nombre: nombre || 'amigo/a' } }
-        break
-      case 'repescadora':
-        templateName = 're_contacto_rosalia_1'
-        break
-      case 'outbound_frio':
-        templateName = 're_contacto_rosalia_1'
-        break
-      default:
-        templateName = 'primer_mensaje_formulario'
-        templateParams = { body: { nombre: nombre || 'amigo/a' } }
-        break
+    if (agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio') {
+      sendBody = {
+        agente_id: agenteId,
+        conversacion_id: conversacionId,
+        to: telefono,
+        sender: 'bot',
+        messages: [
+          { type: 'template', template_name: 're_contacto_rosalia_1', template_params: {} },
+          { type: 'template', template_name: 're_contacto_rosalia_2', template_params: {} },
+          { type: 'template', template_name: 're_contacto_rosalia_3', template_params: {} },
+        ],
+      }
+    } else {
+      sendBody = {
+        agente_id: agenteId,
+        conversacion_id: conversacionId,
+        to: telefono,
+        sender: 'bot',
+        template_name: 'primer_mensaje_formulario',
+        template_params: { body: { nombre: nombre || 'amigo/a' } },
+      }
     }
 
     // === SEND VIA ia-whatsapp-send ===
@@ -267,14 +274,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${serviceKey}`,
       },
-      body: JSON.stringify({
-        agente_id: agenteId,
-        conversacion_id: conversacionId,
-        to: telefono,
-        sender: 'bot',
-        template_name: templateName,
-        template_params: templateParams,
-      }),
+      body: JSON.stringify(sendBody),
     })
 
     const sendResult = await sendRes.json()
@@ -295,31 +295,17 @@ Deno.serve(async (req) => {
       }, 502)
     }
 
-    // === SCHEDULE OUTBOUND SEQUENCE for repescadora / outbound_frio ===
-    if (agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio') {
-      const agentConfig = (agente as Record<string, unknown>).config as Record<string, unknown> | undefined
-      const delays: number[] = (agentConfig?.secuencia_delays as number[]) || [172800000, 172800000] // 2 days default
-      const firstDelay = delays[0] || 172800000
-      const nextAt = new Date(Date.now() + firstDelay).toISOString()
-
-      await supabase
-        .from('ia_conversaciones')
-        .update({
-          secuencia_outbound_step: 0,
-          secuencia_outbound_next_at: nextAt,
-        })
-        .eq('id', conversacionId)
-    }
-
     // === LOG ===
+    const templateDesc = (agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio')
+      ? 're_contacto_rosalia_1+2+3'
+      : 'primer_mensaje_formulario'
     await supabase.from('ia_logs').insert({
       agente_id: agenteId,
       conversacion_id: conversacionId,
       tipo: 'info',
-      mensaje: `Primer mensaje enviado a ${telefono} (plantilla: ${templateName}, ab: ${abVersion})`,
+      mensaje: `Primer mensaje enviado a ${telefono} (plantilla: ${templateDesc}, ab: ${abVersion})`,
       detalles: {
-        template_name: templateName,
-        template_params: templateParams,
+        tipo: agente.tipo,
         origen,
         ab_version: abVersion,
       },
