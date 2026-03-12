@@ -1,25 +1,87 @@
 import { useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
-import { Upload, FileText, AlertCircle, CheckCircle, X } from 'lucide-react'
+import { Upload, FileText, AlertCircle, CheckCircle, X, Download } from 'lucide-react'
 import '../../styles/agentes-ia.css'
 
-function parseCSV(text) {
-  const lines = text.trim().split('\n')
-  if (lines.length < 2) return { headers: [], rows: [] }
+/** Strip accents and lowercase for header matching */
+function normalizeHeader(h) {
+  return h
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/^["']|["']$/g, '') // strip surrounding quotes
+}
 
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+/** Map common Spanish header variants to canonical names */
+const HEADER_ALIASES = {
+  telefono: 'telefono',
+  teléfono: 'telefono',
+  phone: 'telefono',
+  tel: 'telefono',
+  movil: 'telefono',
+  móvil: 'telefono',
+  nombre: 'nombre',
+  name: 'nombre',
+  empresa: 'nombre',
+  negocio: 'nombre',
+  email: 'email',
+  correo: 'email',
+  'correo electronico': 'email',
+  mail: 'email',
+  servicio: 'servicio',
+  sector: 'servicio',
+  categoria: 'servicio',
+  categoría: 'servicio',
+}
+
+function resolveHeader(raw) {
+  const norm = normalizeHeader(raw)
+  return HEADER_ALIASES[norm] || norm
+}
+
+/** Detect separator: try tab, semicolon, comma */
+function detectSeparator(firstLine) {
+  if (firstLine.includes('\t')) return '\t'
+  if (firstLine.includes(';')) return ';'
+  return ','
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/)
+  if (lines.length < 2) return { headers: [], rows: [], rawHeaders: [] }
+
+  const sep = detectSeparator(lines[0])
+  const rawHeaders = lines[0].split(sep).map(h => h.trim().replace(/^["']|["']$/g, ''))
+  const headers = rawHeaders.map(resolveHeader)
   const rows = []
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(v => v.trim())
+    const line = lines[i].trim()
+    if (!line) continue
+    const values = line.split(sep).map(v => v.trim().replace(/^["']|["']$/g, ''))
     const row = {}
     headers.forEach((h, idx) => {
       row[h] = values[idx] || ''
     })
-    rows.push(row)
+    // Skip rows without telefono
+    if (row.telefono) {
+      rows.push(row)
+    }
   }
 
-  return { headers, rows }
+  return { headers, rows, rawHeaders }
+}
+
+function downloadTemplate() {
+  const csv = 'telefono,nombre,email,servicio\n+34600000000,Ejemplo Negocio,ejemplo@email.com,Fotografía\n'
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'plantilla_importar_leads.csv'
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 export default function ImportarLeadsModal({ open, onClose, agenteId }) {
@@ -159,16 +221,24 @@ export default function ImportarLeadsModal({ open, onClose, agenteId }) {
               <input
                 ref={inputRef}
                 type="file"
-                accept=".csv,.xlsx"
+                accept=".csv,.tsv,.txt"
                 onChange={handleFile}
                 style={{ display: 'none' }}
               />
               <Upload size={32} style={{ color: 'var(--text-secondary)', opacity: 0.5 }} />
-              <p>{file ? file.name : 'Selecciona un archivo CSV o XLSX'}</p>
+              <p>{file ? file.name : 'Selecciona un archivo CSV'}</p>
               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                Formato: telefono,nombre,email,servicio
+                Columnas: telefono, nombre, email, servicio (separador: coma, punto y coma, o tab)
               </span>
             </div>
+            <button
+              type="button"
+              className="ia-import-template-btn"
+              onClick={(e) => { e.stopPropagation(); downloadTemplate() }}
+            >
+              <Download size={14} />
+              Descargar plantilla CSV
+            </button>
 
             {error && (
               <div className="ia-import-error">
