@@ -638,7 +638,7 @@ async function evaluateQuality(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20250414',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 200,
         messages: [
           {
@@ -713,7 +713,7 @@ async function generateSummary(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-haiku-4-5-20250414',
+        model: 'claude-3-5-haiku-20241022',
         max_tokens: 300,
         messages: [
           {
