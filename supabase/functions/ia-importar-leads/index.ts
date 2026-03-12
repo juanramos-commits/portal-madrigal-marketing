@@ -130,7 +130,9 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Agent not found' }, 404)
     }
 
-    if (!agente.activo) {
+    // For queue flow (repescadora/outbound_frio), allow importing even if inactive
+    // Leads just go to queue, sending only happens when agent is active
+    if (!agente.activo && !(agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio')) {
       return jsonResponse({ error: 'Agent is inactive' }, 400)
     }
 

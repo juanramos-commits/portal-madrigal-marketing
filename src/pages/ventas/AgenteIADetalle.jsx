@@ -323,7 +323,24 @@ function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onCo
             />
           </div>
         </div>
-        {/* Max conversaciones/mensajes removed — no artificial caps */}
+        {(form.tipo === 'repescadora' || form.tipo === 'outbound_frio') && (
+          <div className="ia-config-row" style={{ marginTop: 12 }}>
+            <div className="ia-field">
+              <label>Máx. contactos nuevos por día</label>
+              <input
+                type="number"
+                min="1"
+                max="500"
+                value={form.rate_limit_nuevos_dia || 20}
+                onChange={e => update('rate_limit_nuevos_dia', parseInt(e.target.value) || 20)}
+                disabled={!canEdit}
+              />
+              <span style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 4, display: 'block' }}>
+                Los leads importados se encolan y se contactan a este ritmo, repartidos en el horario
+              </span>
+            </div>
+          </div>
+        )}
         <div className="ia-config-row">
           <div className="ia-field">
             <label>Umbral lead score para reunión (0-100)</label>
