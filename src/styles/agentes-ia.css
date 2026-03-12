@@ -9,21 +9,26 @@
   min-height: 100%;
 }
 
-/* Compact mode when conversaciones tab is active */
+/* Compact mode when conversaciones tab is active — fill all vertical space */
 .ia-page.conversaciones-active {
-  gap: 8px;
+  gap: 4px;
+  height: calc(100dvh - 64px);
+  overflow: hidden;
 }
 
 .ia-page.conversaciones-active .ia-back {
-  margin-bottom: 4px;
+  margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .ia-page.conversaciones-active .ia-header {
   margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 .ia-page.conversaciones-active .ia-tabs {
   margin-bottom: 0;
+  flex-shrink: 0;
 }
 
 /* Header */
@@ -602,8 +607,8 @@
   border-radius: 8px;
   overflow: hidden;
   background: var(--card);
-  min-height: 500px;
-  height: calc(100vh - 220px);
+  min-height: 400px;
+  flex: 1;
 }
 
 .ia-inbox-list {
