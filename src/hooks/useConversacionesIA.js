@@ -179,9 +179,9 @@ export function useConversacionesIA(agenteId) {
     }
   }, [cargarMensajes])
 
-  // Send a message as human
+  // Send a message as human — returns { ok, error } for UI feedback
   const enviarMensaje = useCallback(async (texto) => {
-    if (!conversacionActiva || !texto.trim()) return
+    if (!conversacionActiva || !texto.trim()) return { ok: false, error: 'Sin conversación o texto' }
     const convId = conversacionActiva.id
     setSending(true)
     try {
@@ -195,9 +195,10 @@ export function useConversacionesIA(agenteId) {
         },
       })
       if (error) {
-        console.warn('Error edge function:', error.message)
-      } else if (data?.error) {
-        console.warn('Respuesta edge function:', data.error)
+        return { ok: false, error: error.message || 'Error al enviar' }
+      }
+      if (data?.error) {
+        return { ok: false, error: data.error }
       }
       // Reload messages after a short delay, only if still on the same conversation
       setTimeout(() => {
@@ -205,8 +206,10 @@ export function useConversacionesIA(agenteId) {
           cargarMensajes(convId)
         }
       }, 1000)
+      return { ok: true }
     } catch (err) {
       console.error('Error enviando mensaje:', err)
+      return { ok: false, error: err.message || 'Error de conexión' }
     } finally {
       setSending(false)
     }
@@ -368,10 +371,10 @@ export function useConversacionesIA(agenteId) {
     }
   }, [conversacionActiva?.id])
 
-  // Send message with optional media attachment
+  // Send message with optional media attachment — returns { ok, error }
   const enviarMensajeConMedia = useCallback(async (texto, mediaUrl, mediaType) => {
-    if (!conversacionActiva) return
-    if (!texto?.trim() && !mediaUrl) return
+    if (!conversacionActiva) return { ok: false, error: 'Sin conversación' }
+    if (!texto?.trim() && !mediaUrl) return { ok: false, error: 'Sin contenido' }
     const convId = conversacionActiva.id
     setSending(true)
     try {
@@ -386,17 +389,20 @@ export function useConversacionesIA(agenteId) {
         body: payload,
       })
       if (error) {
-        console.warn('Error edge function:', error.message)
-      } else if (data?.error) {
-        console.warn('Respuesta edge function:', data.error)
+        return { ok: false, error: error.message || 'Error al enviar' }
+      }
+      if (data?.error) {
+        return { ok: false, error: data.error }
       }
       setTimeout(() => {
         if (conversacionActivaRef.current?.id === convId) {
           cargarMensajes(convId)
         }
       }, 1000)
+      return { ok: true }
     } catch (err) {
       console.error('Error enviando mensaje con media:', err)
+      return { ok: false, error: err.message || 'Error de conexión' }
     } finally {
       setSending(false)
     }

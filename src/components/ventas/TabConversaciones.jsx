@@ -904,20 +904,16 @@ export default function TabConversaciones({ agenteId }) {
   }
 
   const handleSend = async (texto) => {
-    try {
-      await enviarMensaje(texto)
-    } catch (err) {
-      showToast(err.message || 'Error enviando mensaje', 'error')
-      throw err
+    const result = await enviarMensaje(texto)
+    if (result && !result.ok) {
+      showToast(result.error || 'Error enviando mensaje', 'error')
     }
   }
 
   const handleSendMedia = async (texto, mediaUrl, mediaType) => {
-    try {
-      await enviarMensajeConMedia(texto, mediaUrl, mediaType)
-    } catch (err) {
-      showToast(err.message || 'Error enviando media', 'error')
-      throw err
+    const result = await enviarMensajeConMedia(texto, mediaUrl, mediaType)
+    if (result && !result.ok) {
+      showToast(result.error || 'Error enviando media', 'error')
     }
   }
 
