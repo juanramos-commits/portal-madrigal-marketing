@@ -388,16 +388,6 @@ function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onCo
         </div>
       </div>
 
-      {/* Save button */}
-      {canEdit && dirty && (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
-          <button className="ia-btn ia-btn-primary" onClick={handleSave} disabled={saving}>
-            <Save size={14} />
-            {saving ? 'Guardando...' : 'Guardar cambios'}
-          </button>
-        </div>
-      )}
-
       {/* Acciones de leads */}
       {canEdit && (
         <div className="ia-config-section">
@@ -459,6 +449,16 @@ function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onCo
 
       {/* Blacklist Global */}
       {canEdit && <BlacklistSection />}
+
+      {/* Save button - fixed at bottom */}
+      {canEdit && dirty && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+          <button className="ia-btn ia-btn-primary" onClick={handleSave} disabled={saving}>
+            <Save size={14} />
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
