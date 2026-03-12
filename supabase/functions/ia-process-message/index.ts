@@ -225,15 +225,47 @@ function calculateLeadScore(
   if (convo.step === 'meeting_pref') interes = Math.min(100, interes + 15)
   if (convo.estado === 'agendado') { interes = 90; encaje = Math.min(100, encaje + 20) }
 
-  // Content-based adjustments — score aggressively when lead shares business details
+  // Content-based adjustments — detect real buying signals
   const lower = messageContent.toLowerCase()
-  if (/presupuesto|inversión|inversion|precio|€|\d+\s*euros?/.test(lower)) capacidad = Math.min(100, capacidad + 20)
-  if (/boda|evento|empresa|negocio|autónomo|autonomo|fotógraf|fotografo|wedding|sector/.test(lower)) encaje = Math.min(100, encaje + 15)
-  if (/urgente|pronto|esta semana|necesito|lo antes posible/.test(lower)) urgencia = Math.min(100, urgencia + 15)
-  // Any substantive reply shows interest (lead is engaging)
+
+  // === SEÑAL FUERTE: Interés en captación/marketing/clientes ===
+  if (/captaci[oó]n|conseguir.*cliente|m[aá]s\s*cliente|nuevos\s*cliente|captar|marketing|publicidad|visibilidad|posicionamiento|redes\s*sociales|instagram|google\s*ads|seo|embudo|funnel/.test(lower)) {
+    interes = Math.min(100, interes + 25)
+    encaje = Math.min(100, encaje + 15)
+  }
+
+  // === SEÑAL FUERTE: Tiene presupuesto / habla de inversión ===
+  if (/presupuesto|inversi[oó]n|inversion|invertir|gastar|pagar|€|\d+\s*euros?|cuánto\s*(cuesta|cobr|vale)|cu[aá]nto\s*hay\s*que|precio/.test(lower)) {
+    capacidad = Math.min(100, capacidad + 25)
+    interes = Math.min(100, interes + 10)
+  }
+
+  // === SEÑAL FUERTE: Comparte datos de negocio (volumen, facturación) ===
+  if (/\d+/.test(messageContent) && /boda|evento|mes|año|semana|factur|ticket|paquete|servicio/.test(lower)) {
+    encaje = Math.min(100, encaje + 20)
+    capacidad = Math.min(100, capacidad + 10)
+  }
+
+  // === Encaje sector ===
+  if (/boda|evento|empresa|negocio|aut[oó]nomo|fot[oó]graf|wedding|sector|florist|dj|catering|wedding\s*planner|videograf/.test(lower)) {
+    encaje = Math.min(100, encaje + 15)
+  }
+
+  // === Urgencia ===
+  if (/urgente|pronto|esta semana|necesito|lo antes posible|temporada|ya mismo|cuanto antes/.test(lower)) {
+    urgencia = Math.min(100, urgencia + 20)
+  }
+
+  // === Señales de problema / dolor ===
+  if (/no\s*(me\s*)?llegan|poca?s?\s*client|dependo\s*del?\s*boca|boca\s*a\s*boca|no\s*s[eé]\s*c[oó]mo|estancad|bajon|bajada|menos\s*trabajo|temporada\s*baja/.test(lower)) {
+    interes = Math.min(100, interes + 20)
+    urgencia = Math.min(100, urgencia + 10)
+  }
+
+  // Any substantive reply shows engagement
   if (messageContent.length > 15) interes = Math.min(100, interes + 5)
-  // Numbers in reply often mean they're sharing data (volume, prices, etc.)
-  if (/\d+/.test(messageContent)) encaje = Math.min(100, encaje + 10)
+  // Numbers = sharing real data
+  if (/\d+/.test(messageContent)) encaje = Math.min(100, encaje + 5)
 
   const score = Math.round(interes * 0.35 + encaje * 0.25 + urgencia * 0.2 + capacidad * 0.2)
 
@@ -1107,11 +1139,15 @@ DEBES usar la herramienta consultar_base_conocimiento en tu PRIMERA interacción
 Step actual: "${convo.step}" | Lead score: ${scoring.score}/${agentConfig.umbral_score_reunion || 60}
 
 SI step = "qualify":
-- Cualifica rápido en 2-3 intercambios máximo. Necesitas saber: a qué se dedica, qué volumen maneja, y qué problema tiene
+- Cualifica en 2-3 intercambios máximo. Lo que necesitas detectar:
+  1. Interés REAL en conseguir más clientes o mejorar su captación
+  2. Que tenga capacidad de inversión (pregunta de forma natural, no directa)
+  3. Que encaje en el sector (bodas, eventos, profesional independiente)
 - PROHIBIDO mencionar videollamada, reunión, cita, llamada o agendar
-- Combina validación + pregunta en un solo mensaje. Ejemplo: "Genial, 20 bodas está muy bien. Y qué ticket medio manejas más o menos?"
-- NO hagas una pregunta por mensaje si puedes combinar. Sé eficiente
-- Cuando tengas los 2-3 datos clave, el sistema avanzará automáticamente al siguiente paso
+- Si el lead MUESTRA interés activo (pregunta cómo funciona, habla de su problema de captación, menciona presupuesto) → no necesitas más preguntas, el sistema avanzará solo
+- Combina validación + pregunta: "Genial, 20 bodas está muy bien. Y cómo los consigues ahora mismo, boca a boca?"
+- Detecta DOLOR: si dice que depende del boca a boca, que le faltan clientes, que no sabe cómo captar → eso es señal de compra, valídalo y avanza
+- NO hagas preguntas genéricas tipo "a qué te dedicas" si ya lo sabes por el contexto
 
 SI step = "meeting_pref":
 - PRIMERO pregunta si le parece bien hacer una videollamada corta (NO asumas que sí)
