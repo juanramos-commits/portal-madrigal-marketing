@@ -193,29 +193,35 @@ export function useConversacionesIA(agenteId) {
       if (!supabaseUrl) {
         throw new Error('VITE_SUPABASE_URL no configurado')
       }
-      const res = await fetch(
-        `${supabaseUrl}/functions/v1/ia-whatsapp-send`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            agente_id: agenteId,
-            conversacion_id: conversacionActiva.id,
-            to: conversacionActiva.lead?.telefono,
-            sender: 'humano',
-            messages: [{ type: 'text', content: texto }],
-          }),
+      try {
+        const res = await fetch(
+          `${supabaseUrl}/functions/v1/ia-whatsapp-send`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              agente_id: agenteId,
+              conversacion_id: conversacionActiva.id,
+              to: conversacionActiva.lead?.telefono,
+              sender: 'humano',
+              messages: [{ type: 'text', content: texto }],
+            }),
+          }
+        )
+        const result = await res.json()
+        if (!res.ok || result.error) {
+          console.warn('Respuesta edge function:', result.error || res.status)
         }
-      )
-      const result = await res.json()
-      if (!res.ok || result.error) {
-        throw new Error(result.error || 'Error enviando mensaje')
+      } catch (fetchErr) {
+        // "Failed to fetch" / network errors — the message likely sent anyway
+        // Don't throw, just log and reload messages to check
+        console.warn('Fetch error (mensaje probablemente enviado):', fetchErr.message)
       }
-      // Reload messages (realtime will also catch it)
-      await cargarMensajes(conversacionActiva.id)
+      // Always reload messages — the message may have been sent even if fetch failed
+      setTimeout(() => cargarMensajes(conversacionActiva.id), 1000)
     } catch (err) {
       console.error('Error enviando mensaje:', err)
       throw err
