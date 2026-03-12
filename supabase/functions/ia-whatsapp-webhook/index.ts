@@ -482,10 +482,48 @@ async function processWebhookAsync(
             case 'document': {
               messageType = 'document'
               const docInfo = message.document as Record<string, string>
-              content = `[Documento: ${docInfo?.filename || 'archivo'}]`
+              const docFilename = docInfo?.filename || 'archivo'
+              const docMime = docInfo?.mime_type || ''
+              content = `[Documento: ${docFilename}]`
               if (docInfo?.id) {
                 const media = await downloadMedia(docInfo.id, waToken, supabase)
-                if (media) mediaUrl = media.url
+                if (media) {
+                  mediaUrl = media.url
+                  // Attempt text extraction for PDFs and text files
+                  if (docMime === 'application/pdf' || docMime.startsWith('text/')) {
+                    try {
+                      const docRes = await fetch(media.url)
+                      if (docRes.ok) {
+                        if (docMime.startsWith('text/')) {
+                          const text = await docRes.text()
+                          transcription = text.substring(0, 2000)
+                          content = `[Documento: ${docFilename}] Contenido: ${transcription.substring(0, 200)}...`
+                        } else if (docMime === 'application/pdf') {
+                          // For PDFs, extract readable text by filtering binary data
+                          const buf = await docRes.arrayBuffer()
+                          const bytes = new Uint8Array(buf)
+                          const raw = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
+                          // Extract text between BT/ET markers (PDF text objects)
+                          const textParts: string[] = []
+                          const tjRegex = /\(([^)]+)\)/g
+                          let match
+                          while ((match = tjRegex.exec(raw)) !== null) {
+                            const part = match[1].replace(/\\[nrt]/g, ' ').trim()
+                            if (part.length > 2 && /[a-zA-ZáéíóúñÁÉÍÓÚÑ]/.test(part)) {
+                              textParts.push(part)
+                            }
+                          }
+                          if (textParts.length > 0) {
+                            transcription = textParts.join(' ').substring(0, 2000)
+                            content = `[Documento PDF: ${docFilename}] Contenido extraído: ${transcription.substring(0, 200)}...`
+                          }
+                        }
+                      }
+                    } catch (extractErr) {
+                      console.error('Document text extraction error:', extractErr)
+                    }
+                  }
+                }
               }
               break
             }
@@ -553,7 +591,7 @@ async function processWebhookAsync(
           }
 
           // === SAVE INBOUND MESSAGE ===
-          const { error: msgErr } = await supabase.from('ia_mensajes').insert({
+          const { data: savedMsg, error: msgErr } = await supabase.from('ia_mensajes').insert({
             conversacion_id: convo.id,
             direction: 'inbound',
             sender: 'lead',
@@ -562,7 +600,7 @@ async function processWebhookAsync(
             media_url: mediaUrl,
             transcription,
             wa_message_id: waMessageId,
-          })
+          }).select('id').single()
 
           if (msgErr) {
             console.error('Error saving message:', msgErr)
@@ -577,41 +615,106 @@ async function processWebhookAsync(
             p_mensajes_recibidos: 1,
           }).catch(() => {})
 
-          // === TRIGGER AI PROCESSING (fire and forget) ===
-          const { data: freshConvo } = await supabase
-            .from('ia_conversaciones')
-            .select('chatbot_activo')
-            .eq('id', convo.id)
-            .single()
+          // === TRIGGER AI PROCESSING WITH DEBOUNCE (7s batching) ===
+          // Insert into message queue for batching multiple rapid messages
+          const savedMsgId = savedMsg?.id
+          if (savedMsgId) {
+            const { data: queueEntry } = await supabase.from('ia_message_queue').insert({
+              conversacion_id: convo.id,
+              mensaje_id: savedMsgId,
+            }).select('id, created_at').single()
 
-          if (freshConvo?.chatbot_activo && agente.activo) {
-            const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-            const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+            if (queueEntry) {
+              const { data: freshConvo } = await supabase
+                .from('ia_conversaciones')
+                .select('chatbot_activo')
+                .eq('id', convo.id)
+                .single()
 
-            // Fire and forget — don't await
-            fetch(`${supabaseUrl}/functions/v1/ia-process-message`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${serviceKey}`,
-              },
-              body: JSON.stringify({
-                conversacion_id: convo.id,
-                agente_id: agente.id,
-                lead_id: lead.id,
-                message_content: content,
-                message_type: messageType,
-              }),
-            }).catch(err => {
-              console.error('Error triggering ia-process-message:', err)
-              supabase.from('ia_alertas_supervisor').insert({
-                agente_id: agente.id,
-                conversacion_id: convo.id as string,
-                tipo: 'error',
-                mensaje: `Error al invocar procesamiento IA: ${err}`,
-                leida: false,
-              }).catch(() => {})
-            })
+              if (freshConvo?.chatbot_activo && agente.activo) {
+                const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+                const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+                const convId = convo.id as string
+                const agenteIdLocal = agente.id as string
+                const leadIdLocal = lead.id as string
+                const queueCreatedAt = queueEntry.created_at as string
+
+                // Fire and forget — debounce: wait 7s, then check if still latest
+                ;(async () => {
+                  try {
+                    // Wait 7 seconds to allow more messages to arrive
+                    await new Promise(resolve => setTimeout(resolve, 7000))
+
+                    // Re-create client for the async context
+                    const sb = createClient(supabaseUrl, serviceKey)
+
+                    // Check if there are newer unprocessed messages for this conversation
+                    const { count: newerCount } = await sb
+                      .from('ia_message_queue')
+                      .select('id', { count: 'exact', head: true })
+                      .eq('conversacion_id', convId)
+                      .eq('processed', false)
+                      .gt('created_at', queueCreatedAt)
+
+                    if ((newerCount || 0) > 0) {
+                      // A newer message exists — skip, it will handle processing
+                      console.log(`[debounce] Skipping for conv ${convId}: ${newerCount} newer msg(s) in queue`)
+                      return
+                    }
+
+                    // This is the latest message — mark all unprocessed as processed
+                    await sb
+                      .from('ia_message_queue')
+                      .update({ processed: true })
+                      .eq('conversacion_id', convId)
+                      .eq('processed', false)
+
+                    // Collect recent unprocessed inbound messages for concatenated context
+                    const { data: batchedMsgs } = await sb
+                      .from('ia_mensajes')
+                      .select('content, message_type')
+                      .eq('conversacion_id', convId)
+                      .eq('direction', 'inbound')
+                      .order('created_at', { ascending: false })
+                      .limit(10)
+
+                    // Build concatenated content (oldest first)
+                    const recentInbound = (batchedMsgs || []).reverse()
+                    const batchedContent = recentInbound.length > 1
+                      ? recentInbound.map(m => m.content).join('\n')
+                      : recentInbound[0]?.content || ''
+
+                    console.log(`[debounce] Processing ${recentInbound.length} batched msg(s) for conv ${convId}`)
+
+                    // Call ia-process-message with batched content
+                    await fetch(`${supabaseUrl}/functions/v1/ia-process-message`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${serviceKey}`,
+                      },
+                      body: JSON.stringify({
+                        conversacion_id: convId,
+                        agente_id: agenteIdLocal,
+                        lead_id: leadIdLocal,
+                        message_content: batchedContent,
+                        message_type: recentInbound.length > 1 ? 'batched' : (recentInbound[0]?.message_type || 'text'),
+                      }),
+                    })
+                  } catch (err) {
+                    console.error('[debounce] Error in debounced processing:', err)
+                    const sb = createClient(supabaseUrl, serviceKey)
+                    await sb.from('ia_alertas_supervisor').insert({
+                      agente_id: agenteIdLocal,
+                      conversacion_id: convId,
+                      tipo: 'error',
+                      mensaje: `Error al invocar procesamiento IA (debounce): ${err}`,
+                      leida: false,
+                    }).catch(() => {})
+                  }
+                })()
+              }
+            }
           }
 
           // Log

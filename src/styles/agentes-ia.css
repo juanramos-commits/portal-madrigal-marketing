@@ -3535,3 +3535,285 @@
   background: #ef444415;
   color: #ef4444;
 }
+
+/* =====================================================
+   WhatsApp Templates Section
+   ===================================================== */
+
+.ia-templates-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.ia-templates-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ia-templates-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  white-space: nowrap;
+}
+
+.ia-templates-table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.ia-templates-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ia-templates-table tr:hover {
+  background: var(--bg);
+}
+
+.ia-templates-name {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  white-space: nowrap;
+}
+
+.ia-templates-category-badge {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #10b98118;
+  color: #10b981;
+  white-space: nowrap;
+}
+
+.ia-templates-msg {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.ia-templates-usage {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* =====================================================
+   Asignar Leads CRM Modal
+   ===================================================== */
+
+.ia-modal-crm {
+  max-width: 800px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ia-crm-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  margin-bottom: 12px;
+}
+
+.ia-crm-search svg {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.ia-crm-search input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+
+.ia-crm-search input::placeholder {
+  color: var(--text-secondary);
+}
+
+.ia-crm-table-wrap {
+  overflow: auto;
+  max-height: 400px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.ia-crm-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ia-crm-table th {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.ia-crm-table td {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.ia-crm-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ia-crm-table tbody tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.ia-crm-table tbody tr:hover {
+  background: var(--bg);
+}
+
+.ia-crm-table tbody tr.selected {
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+}
+
+.ia-crm-table input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.ia-crm-phone {
+  font-family: monospace;
+  font-weight: 500;
+}
+
+.ia-crm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-secondary);
+  gap: 8px;
+}
+
+.ia-crm-empty svg {
+  opacity: 0.3;
+}
+
+.ia-crm-empty p {
+  font-size: 14px;
+  margin: 0;
+}
+
+.ia-crm-errors-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 120px;
+  overflow-y: auto;
+  width: 100%;
+  padding: 0 16px;
+}
+
+.ia-crm-error-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #ef444410;
+  color: #ef4444;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* =====================================================
+   Reparto Automatico Section
+   ===================================================== */
+
+.ia-reparto-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ia-reparto-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ia-reparto-percentage {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ia-reparto-percentage-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ia-reparto-percentage-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ia-reparto-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.ia-reparto-link:hover {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+}

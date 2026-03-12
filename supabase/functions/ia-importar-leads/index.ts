@@ -257,6 +257,30 @@ Deno.serve(async (req) => {
             continue
           }
 
+          // === CROSS-AGENT DUPLICATE CHECK ===
+          const { data: crossAgentConvo } = await supabase
+            .from('ia_conversaciones')
+            .select('id, agente_id, ia_agentes(nombre)')
+            .eq('lead_id', leadId)
+            .neq('agente_id', agenteId)
+            .not('estado', 'in', '("descartado","no_response")')
+            .eq('chatbot_activo', true)
+            .limit(1)
+            .maybeSingle()
+
+          if (crossAgentConvo) {
+            const otherAgentName = (crossAgentConvo.ia_agentes as Record<string, string>)?.nombre || crossAgentConvo.agente_id
+            details.push({
+              telefono,
+              status: 'skipped',
+              reason: `active_conversation_other_agent: ${otherAgentName}`,
+              lead_id: leadId,
+              conversacion_id: crossAgentConvo.id,
+            })
+            skipped++
+            continue
+          }
+
           // Update lead info if provided
           if (nombre || email || servicio) {
             const updates: Record<string, unknown> = {}

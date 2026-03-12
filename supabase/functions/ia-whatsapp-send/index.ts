@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
   // === LOAD AGENT ===
   const { data: agente, error: agenteErr } = await supabase
     .from('ia_agentes')
-    .select('id, whatsapp_phone_id, modo_sandbox, sandbox_phones, rate_limit_msg_hora, config')
+    .select('id, whatsapp_phone_id, modo_sandbox, sandbox_phones, rate_limit_msg_hora, config, created_at')
     .eq('id', agenteId)
     .single()
 
@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Per-conversation hourly rate limit reached', blocked: true }, 429)
   }
 
-  // === CHECK DAILY RATE LIMIT ===
+  // === CHECK DAILY RATE LIMIT (with warm-up) ===
   const { data: costes } = await supabase
     .from('ia_costes')
     .select('whatsapp_mensajes')
@@ -247,16 +247,44 @@ Deno.serve(async (req) => {
     .maybeSingle()
 
   const msgToday = costes?.whatsapp_mensajes || 0
-  const maxPerDay = (agente.config as Record<string, unknown>)?.max_mensajes_dia as number || 500
+  const configuredMaxPerDay = (agente.config as Record<string, unknown>)?.max_mensajes_dia as number || 500
+
+  // === WARM-UP: Gradual limit increase for new WhatsApp numbers ===
+  const agentConfig = (agente.config || {}) as Record<string, unknown>
+  const warmupSchedule = (agentConfig.warmup_schedule as Array<{ max_days: number; limit: number }>) || [
+    { max_days: 3, limit: 20 },
+    { max_days: 7, limit: 50 },
+    { max_days: 14, limit: 100 },
+    { max_days: 30, limit: 250 },
+  ]
+
+  let warmupLimit = configuredMaxPerDay
+  if (agente.created_at) {
+    const daysActive = Math.floor((Date.now() - new Date(agente.created_at).getTime()) / (1000 * 60 * 60 * 24))
+    for (const tier of warmupSchedule) {
+      if (daysActive < tier.max_days) {
+        warmupLimit = tier.limit
+        break
+      }
+    }
+    // Day 31+ (past all tiers): use configuredMaxPerDay (warmupLimit stays as default)
+  }
+
+  const maxPerDay = Math.min(warmupLimit, configuredMaxPerDay)
+
+  if (warmupLimit < configuredMaxPerDay) {
+    console.log(`[warmup] Agent ${agenteId}: days_active=${Math.floor((Date.now() - new Date(agente.created_at).getTime()) / 86400000)}, warmup_limit=${warmupLimit}, effective_max=${maxPerDay}`)
+  }
 
   if (msgToday >= maxPerDay) {
+    const isWarmup = warmupLimit < configuredMaxPerDay
     await supabase.from('ia_logs').insert({
       agente_id: agenteId,
       conversacion_id: conversacionId,
       tipo: 'warning',
-      mensaje: `Rate limit diario alcanzado: ${msgToday}/${maxPerDay} mensajes`,
+      mensaje: `Rate limit diario alcanzado: ${msgToday}/${maxPerDay} mensajes${isWarmup ? ' (warm-up activo)' : ''}`,
     })
-    return jsonResponse({ error: 'Daily rate limit reached', blocked: true }, 429)
+    return jsonResponse({ error: 'Daily rate limit reached', blocked: true, warmup_active: warmupLimit < configuredMaxPerDay }, 429)
   }
 
   // === CHECK 24H WINDOW ===

@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useAgentesIA, TIPO_LABELS, DEFAULT_CONFIG } from '../../hooks/useAgentesIA'
 import { supabase } from '../../lib/supabase'
-import { Bot, ArrowLeft, Settings, MessageSquare, BarChart3, ScrollText, Power, Save, Trash2, Upload, UserPlus, ShieldBan, Plus, X, AlertCircle } from 'lucide-react'
+import { Bot, ArrowLeft, Settings, MessageSquare, BarChart3, ScrollText, Power, Save, Trash2, Upload, UserPlus, ShieldBan, Plus, X, AlertCircle, Users, ExternalLink, ToggleLeft, ToggleRight, MessageCircle } from 'lucide-react'
 import TabConversaciones from '../../components/ventas/TabConversaciones'
 import TabMetricas from '../../components/ventas/TabMetricas'
 import TabLogs from '../../components/ventas/TabLogs'
 import ImportarLeadsModal from '../../components/ventas/ImportarLeadsModal'
 import ContactoManualModal from '../../components/ventas/ContactoManualModal'
+import AsignarLeadsCRMModal from '../../components/ventas/AsignarLeadsCRMModal'
 import '../../styles/agentes-ia.css'
 
 const TABS = [
@@ -18,7 +19,111 @@ const TABS = [
   { id: 'logs', label: 'Logs', icon: ScrollText },
 ]
 
-function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onContactoManual }) {
+const WHATSAPP_TEMPLATES = [
+  { nombre: 'primer_mensaje_formulario', mensaje: 'Hola {{nombre}}, soy Rosalia de Madrigal Marketing...', usadoPor: 'Setter (primer contacto)' },
+  { nombre: 'hola_he_visto_que_nos_has_v', mensaje: 'Hola! He visto que nos has visitado...', usadoPor: 'Repescadora' },
+  { nombre: 'ests_por_aqui', mensaje: 'Estas por aqui?', usadoPor: 'Repesca nivel 1' },
+  { nombre: 'ojitos', mensaje: '\u{1F440}', usadoPor: 'Repesca nivel 2' },
+  { nombre: 'ultimo_toque_y_no_molesto_m', mensaje: 'Ultimo toque y no molesto mas...', usadoPor: 'Repesca nivel 3' },
+  { nombre: 'follow_up', mensaje: 'Hola!! Te parece si retomamos...', usadoPor: 'Followup programado' },
+  { nombre: 're_contacto_rosalia_1', mensaje: 'Hola! Soy Rosalia de Madrigal...', usadoPor: 'Outbound frio paso 1' },
+  { nombre: 're_contacto_rosalia_2', mensaje: 'He visto que en su momento...', usadoPor: 'Outbound frio paso 2' },
+  { nombre: 're_contacto_rosalia_3', mensaje: 'Un saludo!', usadoPor: 'Outbound frio paso 3' },
+]
+
+function RepartoSection({ agente }) {
+  const [repartoEntry, setRepartoEntry] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [toggling, setToggling] = useState(false)
+
+  const cargarReparto = useCallback(async () => {
+    setLoading(true)
+    // The reparto table uses setter_id as the user id column
+    // For bot agents, we need to check if there's an entry for this agent
+    // We look for entries matching the agent's associated user id or name
+    const { data, error } = await supabase
+      .from('ventas_reparto_config')
+      .select('*')
+    if (!error && data) {
+      // Find entry matching this agent - agents may be linked by setter_id
+      const entry = data.find(r => r.setter_id === agente.id)
+      setRepartoEntry(entry || null)
+    }
+    setLoading(false)
+  }, [agente.id])
+
+  useEffect(() => {
+    cargarReparto()
+  }, [cargarReparto])
+
+  const handleToggle = async () => {
+    setToggling(true)
+    try {
+      if (repartoEntry) {
+        // Delete the entry to remove from reparto
+        await supabase
+          .from('ventas_reparto_config')
+          .delete()
+          .eq('id', repartoEntry.id)
+        setRepartoEntry(null)
+      } else {
+        // Insert with 0% (admin needs to adjust in reparto settings)
+        const { data, error } = await supabase
+          .from('ventas_reparto_config')
+          .insert({ setter_id: agente.id, porcentaje: 0 })
+          .select()
+          .single()
+        if (!error) setRepartoEntry(data)
+      }
+    } catch (err) {
+      console.error('Error toggling reparto:', err)
+    }
+    setToggling(false)
+  }
+
+  return (
+    <div className="ia-config-section">
+      <h3>
+        <Users size={16} />
+        Reparto automatico
+      </h3>
+      {loading ? (
+        <div className="ia-loading" style={{ padding: 16 }}>
+          <div className="ia-spinner" />
+        </div>
+      ) : (
+        <div className="ia-reparto-content">
+          <div className="ia-toggle-row">
+            <div className="ia-toggle-label">
+              <span>Participar en reparto automatico</span>
+              <span>Este agente recibira leads del reparto general</span>
+            </div>
+            <button
+              className={`ia-switch ${repartoEntry ? 'on' : ''}`}
+              onClick={handleToggle}
+              disabled={toggling}
+            />
+          </div>
+          {repartoEntry && (
+            <div className="ia-reparto-info">
+              <div className="ia-reparto-percentage">
+                <span className="ia-reparto-percentage-label">Porcentaje asignado</span>
+                <span className="ia-reparto-percentage-value">{repartoEntry.porcentaje || 0}%</span>
+              </div>
+              <a href="/ventas/ajustes" className="ia-reparto-link">
+                <Settings size={12} />
+                Configurar porcentajes en Ajustes
+                <ExternalLink size={10} />
+              </a>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onContactoManual, onAsignarCRM }) {
   const [form, setForm] = useState({})
   const [dirty, setDirty] = useState(false)
 
@@ -308,9 +413,49 @@ function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onCo
               <UserPlus size={14} />
               Contacto manual
             </button>
+            <button className="ia-btn ia-btn-secondary" onClick={onAsignarCRM}>
+              <Users size={14} />
+              Asignar leads del CRM
+            </button>
           </div>
         </div>
       )}
+
+      {/* Plantillas WhatsApp */}
+      <div className="ia-config-section">
+        <h3>
+          <MessageCircle size={16} />
+          Plantillas WhatsApp
+        </h3>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 12px' }}>
+          Plantillas aprobadas en Meta Business — solo lectura.
+        </p>
+        <div className="ia-templates-table-wrap">
+          <table className="ia-templates-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Categoria</th>
+                <th>Mensaje</th>
+                <th>Usado por</th>
+              </tr>
+            </thead>
+            <tbody>
+              {WHATSAPP_TEMPLATES.map(t => (
+                <tr key={t.nombre}>
+                  <td className="ia-templates-name">{t.nombre}</td>
+                  <td><span className="ia-templates-category-badge">Marketing</span></td>
+                  <td className="ia-templates-msg">{t.mensaje}</td>
+                  <td className="ia-templates-usage">{t.usadoPor}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Reparto automatico */}
+      {canEdit && <RepartoSection agente={agente} />}
 
       {/* Blacklist Global */}
       {canEdit && <BlacklistSection />}
@@ -510,6 +655,7 @@ export default function AgenteIADetalle() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [importarModalOpen, setImportarModalOpen] = useState(false)
   const [contactoModalOpen, setContactoModalOpen] = useState(false)
+  const [asignarCRMModalOpen, setAsignarCRMModalOpen] = useState(false)
 
   useEffect(() => {
     if (id) cargarAgente(id)
@@ -610,6 +756,7 @@ export default function AgenteIADetalle() {
           tienePermiso={tienePermiso}
           onImportarLeads={() => setImportarModalOpen(true)}
           onContactoManual={() => setContactoModalOpen(true)}
+          onAsignarCRM={() => setAsignarCRMModalOpen(true)}
         />
       )}
       {activeTab === 'conversaciones' && <TabConversaciones agenteId={id} />}
@@ -624,6 +771,11 @@ export default function AgenteIADetalle() {
       <ContactoManualModal
         open={contactoModalOpen}
         onClose={() => setContactoModalOpen(false)}
+        agenteId={id}
+      />
+      <AsignarLeadsCRMModal
+        open={asignarCRMModalOpen}
+        onClose={() => setAsignarCRMModalOpen(false)}
         agenteId={id}
       />
     </div>

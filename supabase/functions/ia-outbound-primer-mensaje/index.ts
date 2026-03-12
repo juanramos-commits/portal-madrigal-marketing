@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     // === LOAD AGENT ===
     const { data: agente, error: agenteErr } = await supabase
       .from('ia_agentes')
-      .select('id, tipo, activo, ab_test_activo, ab_split, rate_limit_nuevos_dia, whatsapp_phone_id')
+      .select('id, tipo, activo, ab_test_activo, ab_split, rate_limit_nuevos_dia, whatsapp_phone_id, nombre, usuario_id')
       .eq('id', agenteId)
       .single()
 
@@ -158,6 +158,40 @@ Deno.serve(async (req) => {
           reason: 'active_conversation_exists',
           lead_id: leadId,
           conversacion_id: existingConvo.id,
+        })
+      }
+
+      // === CROSS-AGENT DUPLICATE CHECK ===
+      // Check if this lead has an active conversation with ANY other agent
+      const { data: crossAgentConvos } = await supabase
+        .from('ia_conversaciones')
+        .select('id, agente_id, ia_agentes(nombre)')
+        .eq('lead_id', leadId)
+        .neq('agente_id', agenteId)
+        .not('estado', 'in', '("descartado","no_response")')
+        .eq('chatbot_activo', true)
+        .limit(1)
+        .maybeSingle()
+
+      if (crossAgentConvos) {
+        const otherAgentName = (crossAgentConvos.ia_agentes as Record<string, string>)?.nombre || crossAgentConvos.agente_id
+        await supabase.from('ia_logs').insert({
+          agente_id: agenteId,
+          tipo: 'warning',
+          mensaje: `Primer mensaje bloqueado: ${telefono} ya tiene conversacion activa con agente "${otherAgentName}"`,
+          detalles: {
+            other_agente_id: crossAgentConvos.agente_id,
+            other_conversacion_id: crossAgentConvos.id,
+            other_agente_nombre: otherAgentName,
+          },
+        })
+        return jsonResponse({
+          status: 'skipped',
+          reason: 'active_conversation_other_agent',
+          other_agent_name: otherAgentName,
+          other_agente_id: crossAgentConvos.agente_id,
+          other_conversacion_id: crossAgentConvos.id,
+          lead_id: leadId,
         })
       }
 
