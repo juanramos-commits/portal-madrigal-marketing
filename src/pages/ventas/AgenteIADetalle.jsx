@@ -655,7 +655,7 @@ export default function AgenteIADetalle() {
   }
 
   return (
-    <div className="ia-page">
+    <div className={`ia-page ${activeTab === 'conversaciones' ? 'conversaciones-active' : ''}`}>
       <button className="ia-back" onClick={() => navigate('/ventas/agentes-ia')}>
         <ArrowLeft size={16} />
         Volver a agentes

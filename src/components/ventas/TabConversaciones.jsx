@@ -569,49 +569,77 @@ function FileUploadButton({ agenteId, conversacionId, onUploaded, disabled }) {
 }
 
 // ─── Conversation List ───────────────────────────────
+function getAvatarColor(nombre) {
+  if (!nombre) return '#6b7280'
+  const colors = ['#06b6d4', '#8b5cf6', '#ec4899', '#f97316', '#10b981', '#6366f1', '#ef4444', '#14b8a6', '#f59e0b', '#a855f7']
+  let hash = 0
+  for (let i = 0; i < nombre.length; i++) hash = nombre.charCodeAt(i) + ((hash << 5) - hash)
+  return colors[Math.abs(hash) % colors.length]
+}
+
 function ConversationItem({ conv, isActive, onClick, usuarios }) {
   const lead = conv.lead || {}
   const nombre = lead.nombre || lead.telefono || 'Desconocido'
   const sentimiento = SENTIMIENTO_CONFIG[lead.sentimiento_actual]
   const SentIcon = sentimiento?.icon
+  const avatarColor = getAvatarColor(nombre)
 
   // Find assigned user
   const asignado = conv.asignado_a
     ? (usuarios || []).find(u => u.id === conv.asignado_a)
     : null
 
+  // Last message preview
+  const lastMsg = conv.ultimo_mensaje || conv.last_message_preview || ''
+
   return (
     <div
       className={`ia-inbox-item ${isActive ? 'active' : ''} ${!conv.leida ? 'unread' : ''}`}
       onClick={onClick}
     >
-      <div className="ia-inbox-item-avatar">
-        {conv.handoff_humano ? <User size={16} /> : <Bot size={16} />}
+      <div className="ia-inbox-item-avatar" style={{ background: `${avatarColor}22`, color: avatarColor }}>
+        {getInitials(nombre)}
+        {conv.handoff_humano && <span className="ia-inbox-avatar-badge ia-badge-humano" title="Modo humano" />}
+        {!conv.handoff_humano && conv.chatbot_activo && <span className="ia-inbox-avatar-badge ia-badge-bot" title="Bot activo" />}
       </div>
       <div className="ia-inbox-item-body">
         <div className="ia-inbox-item-top">
           <span className="ia-inbox-item-name">{nombre}</span>
-          <span className="ia-inbox-item-time">{formatTime(conv.updated_at)}</span>
+          <span className={`ia-inbox-item-time ${!conv.leida ? 'unread' : ''}`}>{formatTime(conv.updated_at)}</span>
         </div>
-        <div className="ia-inbox-item-bottom">
-          <span
-            className="ia-inbox-item-estado"
-            style={{ color: ESTADO_COLORS[conv.estado] }}
-          >
-            {ESTADO_LABELS[conv.estado] || conv.estado}
-          </span>
-          {SentIcon && <SentIcon size={10} style={{ color: sentimiento.color }} />}
-          {lead.lead_score != null && lead.lead_score > 0 && (
-            <span className="ia-inbox-item-score">{lead.lead_score}</span>
-          )}
-          {!conv.leida && <span className="ia-inbox-unread-dot" />}
-          {conv.favorita && <Star size={10} fill="var(--warning, #ffa94d)" stroke="var(--warning, #ffa94d)" />}
-          {asignado && (
-            <span className="ia-inbox-item-assigned" title={asignado.nombre || asignado.email}>
-              {getInitials(asignado.nombre || asignado.email)}
+        <div className="ia-inbox-item-preview">
+          {lastMsg ? (
+            <span className="ia-inbox-item-preview-text">{lastMsg}</span>
+          ) : (
+            <span
+              className="ia-inbox-item-estado"
+              style={{ color: ESTADO_COLORS[conv.estado] }}
+            >
+              {ESTADO_LABELS[conv.estado] || conv.estado}
             </span>
           )}
+          <div className="ia-inbox-item-badges">
+            {!conv.leida && <span className="ia-inbox-unread-dot" />}
+            {conv.favorita && <Star size={12} fill="var(--warning, #ffa94d)" stroke="var(--warning, #ffa94d)" />}
+            {lead.lead_score != null && lead.lead_score > 0 && (
+              <span className="ia-inbox-item-score" style={{ color: getScoreColor(lead.lead_score) }}>{lead.lead_score}</span>
+            )}
+          </div>
         </div>
+        {(SentIcon || asignado) && (
+          <div className="ia-inbox-item-meta">
+            {SentIcon && (
+              <span className="ia-inbox-item-sentimiento" style={{ color: sentimiento.color }}>
+                <SentIcon size={10} /> {sentimiento.text}
+              </span>
+            )}
+            {asignado && (
+              <span className="ia-inbox-item-assigned" title={asignado.nombre || asignado.email}>
+                {getInitials(asignado.nombre || asignado.email)}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -678,8 +706,11 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
   if (!conv) {
     return (
       <div className="ia-chat-empty">
-        <MessageSquare size={48} strokeWidth={1} />
-        <p>Selecciona una conversacion</p>
+        <div className="ia-chat-empty-icon">
+          <MessageSquare size={56} strokeWidth={1} />
+        </div>
+        <h3>Selecciona una conversacion</h3>
+        <p>Elige un lead de la lista para ver sus mensajes</p>
       </div>
     )
   }
@@ -689,20 +720,25 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
       {/* Header */}
       <div className="ia-chat-header">
         <div className="ia-chat-header-info">
-          <span className="ia-chat-header-name">{lead.nombre || lead.telefono || 'Lead'}</span>
-          <div className="ia-chat-header-meta">
-            {lead.telefono && (
-              <span><Phone size={11} /> {lead.telefono}</span>
-            )}
-            <span
-              className="ia-chat-estado-badge"
-              style={{ color: ESTADO_COLORS[conv.estado], borderColor: ESTADO_COLORS[conv.estado] }}
-            >
-              {ESTADO_LABELS[conv.estado] || conv.estado}
-            </span>
-            {lead.lead_score != null && (
-              <span className="ia-chat-score">Score: {lead.lead_score}</span>
-            )}
+          <div className="ia-chat-header-avatar" style={{ background: `${getAvatarColor(lead.nombre || lead.telefono)}22`, color: getAvatarColor(lead.nombre || lead.telefono) }}>
+            {getInitials(lead.nombre || lead.telefono || 'L')}
+          </div>
+          <div className="ia-chat-header-text">
+            <span className="ia-chat-header-name">{lead.nombre || lead.telefono || 'Lead'}</span>
+            <div className="ia-chat-header-meta">
+              {lead.telefono && (
+                <span><Phone size={11} /> {lead.telefono}</span>
+              )}
+              <span
+                className="ia-chat-estado-badge"
+                style={{ color: ESTADO_COLORS[conv.estado], borderColor: ESTADO_COLORS[conv.estado] }}
+              >
+                {ESTADO_LABELS[conv.estado] || conv.estado}
+              </span>
+              {lead.lead_score != null && (
+                <span className="ia-chat-score" style={{ color: getScoreColor(lead.lead_score) }}>Score: {lead.lead_score}</span>
+              )}
+            </div>
           </div>
         </div>
         <div className="ia-chat-header-actions">
@@ -847,10 +883,10 @@ function ChatPanel({ conv, mensajes, loading, sending, onSend, onNote, onToggleC
         />
         <button
           type="submit"
-          className="ia-btn ia-btn-primary ia-btn-sm"
+          className="ia-chat-send-btn"
           disabled={!texto.trim() || sending}
         >
-          {sending ? <Clock size={14} /> : modo === 'nota' ? <StickyNote size={14} /> : <Send size={14} />}
+          {sending ? <Clock size={18} /> : modo === 'nota' ? <StickyNote size={18} /> : <Send size={18} />}
         </button>
       </form>
     </div>
