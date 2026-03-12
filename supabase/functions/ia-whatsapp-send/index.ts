@@ -312,6 +312,14 @@ Deno.serve(async (req) => {
   const maxPerHour = agente.rate_limit_msg_hora || 60
 
   if ((msgLastHour || 0) >= Math.ceil(maxPerHour / 2)) {
+    // Alert supervisor — lead waiting without response
+    await supabase.from('ia_alertas_supervisor').insert({
+      agente_id: agenteId,
+      conversacion_id: conversacionId,
+      tipo: 'warning',
+      mensaje: `Rate limit por hora alcanzado (${msgLastHour}/${maxPerHour}). Lead ${to} esperando respuesta.`,
+      leida: false,
+    })
     return jsonResponse(
       { error: 'Per-conversation hourly rate limit reached', blocked: true },
       429,
@@ -332,6 +340,13 @@ Deno.serve(async (req) => {
     (agentConfig.max_mensajes_dia as number) || 500
 
   if (msgToday >= configuredMaxPerDay) {
+    // Alert supervisor — daily limit hit
+    await supabase.from('ia_alertas_supervisor').insert({
+      agente_id: agenteId,
+      tipo: 'warning',
+      mensaje: `Límite diario de mensajes alcanzado (${msgToday}/${configuredMaxPerDay}). Nuevos leads sin respuesta hasta mañana.`,
+      leida: false,
+    })
     return jsonResponse({ error: 'Daily rate limit reached', blocked: true }, 429)
   }
 

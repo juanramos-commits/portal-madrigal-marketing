@@ -121,6 +121,13 @@ Deno.serve(async (req) => {
         tipo: 'warning',
         mensaje: `Rate limit diario de nuevos leads alcanzado: ${convosHoy}/${maxNuevos}`,
       })
+      // Alert supervisor
+      await supabase.from('ia_alertas_supervisor').insert({
+        agente_id: agenteId,
+        tipo: 'warning',
+        mensaje: `Límite diario de nuevos contactos alcanzado (${convosHoy}/${maxNuevos}). Lead ${telefono} NO recibió primer mensaje. Considerar aumentar el límite.`,
+        leida: false,
+      })
       return jsonResponse({ error: 'Daily new leads rate limit reached', blocked: true }, 429)
     }
 
