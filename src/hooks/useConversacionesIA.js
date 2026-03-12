@@ -182,12 +182,13 @@ export function useConversacionesIA(agenteId) {
   // Send a message as human
   const enviarMensaje = useCallback(async (texto) => {
     if (!conversacionActiva || !texto.trim()) return
+    const convId = conversacionActiva.id
     setSending(true)
     try {
       const { data, error } = await supabase.functions.invoke('ia-whatsapp-send', {
         body: {
           agente_id: agenteId,
-          conversacion_id: conversacionActiva.id,
+          conversacion_id: convId,
           to: conversacionActiva.lead?.telefono,
           sender: 'humano',
           messages: [{ type: 'text', content: texto }],
@@ -198,11 +199,14 @@ export function useConversacionesIA(agenteId) {
       } else if (data?.error) {
         console.warn('Respuesta edge function:', data.error)
       }
-      // Reload messages after a short delay
-      setTimeout(() => cargarMensajes(conversacionActiva.id), 1000)
+      // Reload messages after a short delay, only if still on the same conversation
+      setTimeout(() => {
+        if (conversacionActivaRef.current?.id === convId) {
+          cargarMensajes(convId)
+        }
+      }, 1000)
     } catch (err) {
       console.error('Error enviando mensaje:', err)
-      // Don't throw — message may have sent anyway
     } finally {
       setSending(false)
     }
@@ -368,11 +372,12 @@ export function useConversacionesIA(agenteId) {
   const enviarMensajeConMedia = useCallback(async (texto, mediaUrl, mediaType) => {
     if (!conversacionActiva) return
     if (!texto?.trim() && !mediaUrl) return
+    const convId = conversacionActiva.id
     setSending(true)
     try {
       const payload = {
         agente_id: agenteId,
-        conversacion_id: conversacionActiva.id,
+        conversacion_id: convId,
         to: conversacionActiva.lead?.telefono,
         sender: 'humano',
         messages: [{ type: mediaType || 'text', content: texto || '', media_url: mediaUrl || undefined }],
@@ -385,7 +390,11 @@ export function useConversacionesIA(agenteId) {
       } else if (data?.error) {
         console.warn('Respuesta edge function:', data.error)
       }
-      setTimeout(() => cargarMensajes(conversacionActiva.id), 1000)
+      setTimeout(() => {
+        if (conversacionActivaRef.current?.id === convId) {
+          cargarMensajes(convId)
+        }
+      }, 1000)
     } catch (err) {
       console.error('Error enviando mensaje con media:', err)
     } finally {
