@@ -1057,10 +1057,22 @@ Tono: ${estilo.tono || 'no disponible'}
 
     const contextAddendum = `
 
---- REGLAS ADICIONALES ---
-- NUNCA abras un mensaje con signo de interrogación (¿). Haz una afirmación o comentario primero, luego la pregunta.
+--- REGLAS ADICIONALES DE FORMATO (OBLIGATORIO) ---
+
+FORMATO WHATSAPP: Escribe como una persona real en WhatsApp. NUNCA envíes un bloque largo.
+- Separa cada mensaje con "---" en línea aparte. Máximo 4 mensajes.
+- Cada mensaje debe ser corto (1-2 frases máximo).
+- NUNCA uses signos de apertura: ¿ ¡ — están PROHIBIDOS. Solo usa ? y ! al final.
+- NUNCA termines un mensaje con punto final.
 - NUNCA te presentes si la plantilla inicial ya lo hizo — el lead ya sabe quién eres.
-- El primer mensaje en el historial es una plantilla que TÚ ya enviaste. Lee su contenido y continúa desde ahí sin repetir lo que ya dijiste.
+- El primer mensaje en el historial es una plantilla que TÚ ya enviaste. Lee su contenido y continúa la conversación desde ahí sin repetir nada.
+
+Ejemplo correcto:
+Perfecto, eso es justo lo que hacemos
+---
+Ayudamos a profesionales como tú a conseguir clientes de forma constante
+---
+Cuéntame, a qué te dedicas exactamente
 
 --- CONTEXTO DEL AGENTE ---
 Nombre del agente: ${agente.nombre || 'Asistente'}
@@ -1099,7 +1111,7 @@ ${styleAddendum}`
 
     for (let iteration = 0; iteration < maxIterations; iteration++) {
       const claudeResult = await callClaudeWithRetry({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6-20250514',
         max_tokens: 1024,
         system: fullSystemPrompt,
         tools: AGENT_TOOLS,
@@ -1183,6 +1195,14 @@ ${styleAddendum}`
 
       break
     }
+
+    // === POST-PROCESS: clean up formatting ===
+    // Remove ¿ ¡ (opening punctuation) and trailing periods
+    finalResponse = finalResponse
+      .replace(/¿/g, '')
+      .replace(/¡/g, '')
+      .replace(/\.(\s*\n|$)/g, '$1')  // Remove period at end of lines
+      .replace(/\.\s*$/g, '')          // Remove trailing period
 
     if (!finalResponse) {
       // Claude returned no text — derive to human
@@ -1303,24 +1323,12 @@ ${styleAddendum}`
     await sleep(delay)
 
     // === SEND RESPONSE ===
-    const messageParts: string[] = []
-    if (finalResponse.length > 400) {
-      // Split at sentence boundaries or natural breaks
-      const sentences = finalResponse.match(/[^.!?\n]+[.!?\n]+/g) || [finalResponse]
-      let currentPart = ''
-
-      for (const sentence of sentences) {
-        if ((currentPart + sentence).length > 350 && currentPart) {
-          messageParts.push(currentPart.trim())
-          currentPart = sentence
-        } else {
-          currentPart += sentence
-        }
-      }
-      if (currentPart.trim()) messageParts.push(currentPart.trim())
-    } else {
-      messageParts.push(finalResponse)
-    }
+    // Split by "---" delimiter (Claude writes multiple short messages separated by ---)
+    const messageParts: string[] = finalResponse
+      .split(/\n---\n|^---\n|\n---$/gm)
+      .map(p => p.trim())
+      .filter(p => p.length > 0)
+      .slice(0, 4) // Max 4 messages
 
     const sendRes = await fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
       method: 'POST',
