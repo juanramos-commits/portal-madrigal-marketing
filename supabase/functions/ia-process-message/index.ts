@@ -1110,20 +1110,32 @@ SI step = "meeting_pref":
 --- REGLAS ADICIONALES DE FORMATO (OBLIGATORIO) ---
 
 FORMATO WHATSAPP: Escribe como una persona real en WhatsApp. NUNCA envíes un bloque largo.
-- Separa cada mensaje con "---" en línea aparte. Máximo 4 mensajes.
-- Cada mensaje debe ser corto (1-2 frases máximo).
+- SIEMPRE divide tu respuesta en 2-3 mensajes cortos separados por "---" en su propia línea.
+- Cada mensaje debe tener 1-2 frases máximo (como mensajes reales de WhatsApp).
+- NUNCA escribas un párrafo largo. Si tu respuesta tiene más de 2 frases, DEBES separarla con ---.
 - NUNCA uses signos de apertura: ¿ ¡ — están PROHIBIDOS. Solo usa ? y ! al final.
 - NUNCA termines un mensaje con punto final.
 - NUNCA uses dos puntos (:) en medio de frase — suena a bot. Reformula la frase.
 - NUNCA te presentes si la plantilla inicial ya lo hizo — el lead ya sabe quién eres.
 - El primer mensaje en el historial es una plantilla que TÚ ya enviaste. Lee su contenido y continúa la conversación desde ahí sin repetir nada.
 
-Ejemplo correcto:
+IMPORTANTE: El separador --- DEBE estar solo en su propia línea, con un salto de línea antes y después. Así:
+
+mensaje 1
+---
+mensaje 2
+---
+mensaje 3
+
+Ejemplo CORRECTO (3 mensajes separados):
 Perfecto, eso es justo lo que hacemos
 ---
 Ayudamos a profesionales como tú a conseguir clientes de forma constante
 ---
 Cuéntame, a qué te dedicas exactamente
+
+Ejemplo INCORRECTO (un solo bloque largo):
+Perfecto, eso es justo lo que hacemos. Ayudamos a profesionales como tú a conseguir clientes de forma constante. Cuéntame, a qué te dedicas exactamente
 
 --- CONTEXTO DEL AGENTE ---
 Nombre del agente: ${agente.nombre || 'Asistente'}
@@ -1405,12 +1417,40 @@ ${styleAddendum}`
     await sleep(delay)
 
     // === SEND RESPONSE ===
-    // Split ONLY by "---" delimiter (not \n\n to avoid over-fragmentation)
-    const messageParts: string[] = finalResponse
-      .split(/\n---\n|^---\n|\n---$/gm)
-      .map(p => p.replace(/\n+/g, ' ').trim()) // Collapse newlines within each part
+    // Split by "---" delimiter first, then fallback to smart splitting
+    let messageParts: string[] = finalResponse
+      .split(/\n\s*---\s*\n|^\s*---\s*\n|\n\s*---\s*$/gm)
+      .map(p => p.replace(/\n+/g, ' ').trim())
       .filter(p => p.length > 0)
-      .slice(0, 4) // Max 4 messages
+
+    // Fallback: if no --- delimiter found and response is long, split on double newlines
+    if (messageParts.length <= 1 && finalResponse.length > 100) {
+      messageParts = finalResponse
+        .split(/\n\n+/)
+        .map(p => p.replace(/\n+/g, ' ').trim())
+        .filter(p => p.length > 0)
+    }
+
+    // Fallback 2: if still one block and very long, split on sentence boundaries
+    if (messageParts.length <= 1 && finalResponse.length > 120) {
+      const text = messageParts[0] || finalResponse
+      // Split after sentence-ending punctuation followed by space
+      const sentences = text.split(/(?<=[.!?])\s+/).filter(s => s.length > 0)
+      if (sentences.length >= 3) {
+        // Group sentences into 2-3 messages
+        const perMsg = Math.ceil(sentences.length / 3)
+        messageParts = []
+        for (let s = 0; s < sentences.length; s += perMsg) {
+          messageParts.push(sentences.slice(s, s + perMsg).join(' ').trim())
+        }
+      } else if (sentences.length === 2) {
+        messageParts = sentences.map(s => s.trim())
+      }
+    }
+
+    messageParts = messageParts.filter(p => p.length > 0).slice(0, 4) // Max 4 messages
+
+    console.log(`[split] Response split into ${messageParts.length} parts:`, messageParts.map(p => p.substring(0, 50)))
 
     const sendRes = await fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
       method: 'POST',

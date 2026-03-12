@@ -393,10 +393,13 @@ Deno.serve(async (req) => {
     const mediaUrl = msg.media_url as string | undefined
 
     if (i > 0) {
-      // Simulate typing: ~30ms per character + random variance (2-6 seconds typical)
+      // Simulate typing: ~50ms per character + random 3-6s "reading" pause
+      // Typical delay: 5-15 seconds (feels like reading + typing)
+      const readingPause = 3000 + Math.random() * 3000
+      const typingTime = content.length * 50
       const typingDelay = Math.min(
-        7000,
-        Math.max(2000, content.length * 30 + (Math.random() * 2000 - 500)),
+        15000,
+        Math.max(4000, readingPause + typingTime),
       )
       await sleep(typingDelay)
     }
