@@ -1109,7 +1109,7 @@ ${styleAddendum}`
     let tokensIn = 0
     let tokensOut = 0
     let toolCalls = 0
-    const maxIterations = 5
+    const maxIterations = 10
     const bookingUsed = { value: false }
 
     for (let iteration = 0; iteration < maxIterations; iteration++) {
