@@ -297,58 +297,8 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Rate limit (hourly)
   const now = new Date()
   const today = getMadridDate()
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString()
-
-  const { count: msgLastHour } = await supabase
-    .from('ia_mensajes')
-    .select('id', { count: 'exact', head: true })
-    .eq('conversacion_id', conversacionId)
-    .eq('direction', 'outbound')
-    .gte('created_at', oneHourAgo)
-
-  const maxPerHour = agente.rate_limit_msg_hora || 60
-
-  if ((msgLastHour || 0) >= Math.ceil(maxPerHour / 2)) {
-    // Alert supervisor — lead waiting without response
-    await supabase.from('ia_alertas_supervisor').insert({
-      agente_id: agenteId,
-      conversacion_id: conversacionId,
-      tipo: 'warning',
-      mensaje: `Rate limit por hora alcanzado (${msgLastHour}/${maxPerHour}). Lead ${to} esperando respuesta.`,
-      leida: false,
-    })
-    return jsonResponse(
-      { error: 'Per-conversation hourly rate limit reached', blocked: true },
-      429,
-    )
-  }
-
-  // Daily rate limit
-  const { data: costes } = await supabase
-    .from('ia_costes')
-    .select('whatsapp_mensajes')
-    .eq('agente_id', agenteId)
-    .eq('fecha', today)
-    .maybeSingle()
-
-  const msgToday = costes?.whatsapp_mensajes || 0
-  const agentConfig = (agente.config || {}) as Record<string, unknown>
-  const configuredMaxPerDay =
-    (agentConfig.max_mensajes_dia as number) || 500
-
-  if (msgToday >= configuredMaxPerDay) {
-    // Alert supervisor — daily limit hit
-    await supabase.from('ia_alertas_supervisor').insert({
-      agente_id: agenteId,
-      tipo: 'warning',
-      mensaje: `Límite diario de mensajes alcanzado (${msgToday}/${configuredMaxPerDay}). Nuevos leads sin respuesta hasta mañana.`,
-      leida: false,
-    })
-    return jsonResponse({ error: 'Daily rate limit reached', blocked: true }, 429)
-  }
 
   // Check 24h window
   const { data: convo } = await supabase

@@ -297,26 +297,7 @@ function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onCo
           </div>
         )}
 
-        <div className="ia-config-row" style={{ marginTop: 12 }}>
-          <div className="ia-field">
-            <label>Máx. mensajes por hora</label>
-            <input
-              type="number"
-              value={form.rate_limit_msg_hora || 60}
-              onChange={e => update('rate_limit_msg_hora', e.target.value)}
-              disabled={!canEdit}
-            />
-          </div>
-          <div className="ia-field">
-            <label>Máx. nuevos contactos por día</label>
-            <input
-              type="number"
-              value={form.rate_limit_nuevos_dia || 50}
-              onChange={e => update('rate_limit_nuevos_dia', e.target.value)}
-              disabled={!canEdit}
-            />
-          </div>
-        </div>
+        {/* Rate limits removed — no artificial caps */}
       </div>
 
       {/* Operativa */}
@@ -342,26 +323,7 @@ function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onCo
             />
           </div>
         </div>
-        <div className="ia-config-row">
-          <div className="ia-field">
-            <label>Máx. conversaciones simultáneas</label>
-            <input
-              type="number"
-              value={config.max_conversaciones || 100}
-              onChange={e => updateConfig('max_conversaciones', parseInt(e.target.value) || 100)}
-              disabled={!canEdit}
-            />
-          </div>
-          <div className="ia-field">
-            <label>Máx. mensajes por día</label>
-            <input
-              type="number"
-              value={config.max_mensajes_dia || 500}
-              onChange={e => updateConfig('max_mensajes_dia', parseInt(e.target.value) || 500)}
-              disabled={!canEdit}
-            />
-          </div>
-        </div>
+        {/* Max conversaciones/mensajes removed — no artificial caps */}
         <div className="ia-config-row">
           <div className="ia-field">
             <label>Umbral lead score para reunión (0-100)</label>
@@ -444,8 +406,7 @@ function TabConfig({ agente, onSave, saving, tienePermiso, onImportarLeads, onCo
         </div>
       </div>
 
-      {/* Reparto automatico */}
-      {canEdit && <RepartoSection agente={agente} />}
+      {/* Reparto automatico — se gestiona desde Ajustes */}
 
       {/* Blacklist Global */}
       {canEdit && <BlacklistSection />}

@@ -105,31 +105,8 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Phone is blacklisted', blocked: true }, 403)
     }
 
-    // === RATE LIMIT: nuevos leads por dia ===
+    // Rate limits removed — no artificial caps on new contacts
     const today = new Date().toISOString().split('T')[0]
-    const maxNuevos = agente.rate_limit_nuevos_dia || 50
-
-    const { count: convosHoy } = await supabase
-      .from('ia_conversaciones')
-      .select('id', { count: 'exact', head: true })
-      .eq('agente_id', agenteId)
-      .gte('created_at', today + 'T00:00:00.000Z')
-
-    if ((convosHoy || 0) >= maxNuevos) {
-      await supabase.from('ia_logs').insert({
-        agente_id: agenteId,
-        tipo: 'warning',
-        mensaje: `Rate limit diario de nuevos leads alcanzado: ${convosHoy}/${maxNuevos}`,
-      })
-      // Alert supervisor
-      await supabase.from('ia_alertas_supervisor').insert({
-        agente_id: agenteId,
-        tipo: 'warning',
-        mensaje: `Límite diario de nuevos contactos alcanzado (${convosHoy}/${maxNuevos}). Lead ${telefono} NO recibió primer mensaje. Considerar aumentar el límite.`,
-        leida: false,
-      })
-      return jsonResponse({ error: 'Daily new leads rate limit reached', blocked: true }, 429)
-    }
 
     // === CHECK EXISTING LEAD ===
     const { data: existingLead } = await supabase
