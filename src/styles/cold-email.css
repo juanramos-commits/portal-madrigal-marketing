@@ -1510,7 +1510,7 @@
 
 .ce-sequence-stats {
   display: flex;
-  gap: 0;
+  gap: 6px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
@@ -1520,8 +1520,8 @@
   flex-direction: column;
   gap: 4px;
   flex: 1;
-  min-width: 70px;
-  padding: 10px 12px;
+  min-width: 72px;
+  padding: 10px 8px;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.02);
   text-align: center;
@@ -2482,10 +2482,11 @@
 }
 
 .ce-account-email {
-  font-size: var(--font-base);
-  font-weight: var(--weight-semibold);
+  font-size: var(--font-md);
+  font-weight: var(--weight-bold);
   margin: 0;
   color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .ce-account-warmup {
