@@ -1,9 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCEEnvios } from '../../hooks/useCEEnvios'
 import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
-
-const PAGE_SIZE = 25
 
 const ESTADO_LABELS = {
   pendiente: 'Pendiente',
@@ -21,42 +19,27 @@ export default function ColdEmailEnvios() {
   const { showToast: addToast } = useToast()
 
   const [tab, setTab] = useState('cola')
-  const [busquedaLog, setBusquedaLog] = useState('')
-  const [fechaDesde, setFechaDesde] = useState('')
-  const [fechaHasta, setFechaHasta] = useState('')
-  const [paginaCola, setPaginaCola] = useState(1)
-  const [paginaLog, setPaginaLog] = useState(1)
 
   const {
+    envios,
     cola,
-    totalCola,
-    log,
-    totalLog,
-    pausaGlobal,
     loading,
     error,
-    pausarEnvio,
+    total,
+    page,
+    setPage,
+    setSearch,
+    setDateRange,
+    cargarCola,
     cancelarEnvio,
-  } = useCEEnvios({
-    busquedaLog,
-    fechaDesde: fechaDesde || null,
-    fechaHasta: fechaHasta || null,
-    paginaCola,
-    paginaLog,
-    porPagina: PAGE_SIZE,
-  })
+    pageSize: PAGE_SIZE,
+  } = useCEEnvios()
 
-  const totalPagesCola = Math.ceil((totalCola || 0) / PAGE_SIZE)
-  const totalPagesLog = Math.ceil((totalLog || 0) / PAGE_SIZE)
+  useEffect(() => {
+    cargarCola()
+  }, [cargarCola])
 
-  const handlePausarEnvio = async (envioId) => {
-    try {
-      await pausarEnvio(envioId)
-      addToast('Envio pausado', 'success')
-    } catch (err) {
-      addToast(`Error: ${err.message}`, 'error')
-    }
-  }
+  const totalPagesLog = Math.ceil((total || 0) / PAGE_SIZE)
 
   const handleCancelarEnvio = async (envioId) => {
     if (!window.confirm('Cancelar este envio?')) return
@@ -93,29 +76,19 @@ export default function ColdEmailEnvios() {
         <h1 className="ce-page-title">Envios</h1>
       </div>
 
-      {/* Global Pause Banner */}
-      {pausaGlobal && (
-        <div className="ce-banner ce-banner-warning">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" /><line x1="10" y1="15" x2="10" y2="9" /><line x1="14" y1="15" x2="14" y2="9" />
-          </svg>
-          <span>Pausa global activada. No se estan enviando emails.</span>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="ce-tabs">
         <button
           className={`ce-tab ${tab === 'cola' ? 'ce-tab-active' : ''}`}
           onClick={() => setTab('cola')}
         >
-          Cola ({totalCola || 0})
+          Cola ({cola?.length || 0})
         </button>
         <button
           className={`ce-tab ${tab === 'log' ? 'ce-tab-active' : ''}`}
           onClick={() => setTab('log')}
         >
-          Log ({totalLog || 0})
+          Log ({total || 0})
         </button>
       </div>
 
@@ -140,10 +113,10 @@ export default function ColdEmailEnvios() {
                     <tbody>
                       {cola.map((e) => (
                         <tr key={e.id}>
-                          <td className="ce-td-name">{e.contacto_nombre || e.contacto_email}</td>
-                          <td>{e.secuencia_nombre || '---'}</td>
-                          <td>Paso {e.paso_numero || '?'}</td>
-                          <td>{e.cuenta_email || '---'}</td>
+                          <td className="ce-td-name">{e.contacto?.nombre || e.contacto?.email || '---'}</td>
+                          <td>{e.secuencia?.nombre || '---'}</td>
+                          <td>Paso {e.paso?.orden || e.paso_actual || '?'}</td>
+                          <td>---</td>
                           <td className="ce-text-muted">
                             {e.proximo_envio_at
                               ? new Date(e.proximo_envio_at).toLocaleString('es-ES')
@@ -151,12 +124,6 @@ export default function ColdEmailEnvios() {
                           </td>
                           <td>
                             <div className="ce-action-btns">
-                              <button
-                                className="ce-btn ce-btn-sm ce-btn-warning"
-                                onClick={() => handlePausarEnvio(e.id)}
-                              >
-                                Pausar
-                              </button>
                               <button
                                 className="ce-btn ce-btn-sm ce-btn-danger"
                                 onClick={() => handleCancelarEnvio(e.id)}
@@ -171,25 +138,6 @@ export default function ColdEmailEnvios() {
                   </table>
                 </div>
 
-                <div className="ce-pagination">
-                  <button
-                    className="ce-btn ce-btn-sm"
-                    disabled={paginaCola <= 1}
-                    onClick={() => setPaginaCola((p) => p - 1)}
-                  >
-                    Anterior
-                  </button>
-                  <span className="ce-pagination-info">
-                    Pagina {paginaCola} de {totalPagesCola}
-                  </span>
-                  <button
-                    className="ce-btn ce-btn-sm"
-                    disabled={paginaCola >= totalPagesCola}
-                    onClick={() => setPaginaCola((p) => p + 1)}
-                  >
-                    Siguiente
-                  </button>
-                </div>
               </>
             ) : (
               <div className="ce-empty">
@@ -210,8 +158,7 @@ export default function ColdEmailEnvios() {
                 type="text"
                 className="ce-search-input"
                 placeholder="Buscar por email o asunto..."
-                value={busquedaLog}
-                onChange={(e) => { setBusquedaLog(e.target.value); setPaginaLog(1) }}
+                onChange={(e) => { setSearch(e.target.value); setPage(0) }}
               />
               <div className="ce-date-filters">
                 <div className="ce-form-field-inline">
@@ -219,8 +166,7 @@ export default function ColdEmailEnvios() {
                   <input
                     type="date"
                     className="ce-input ce-input-sm"
-                    value={fechaDesde}
-                    onChange={(e) => { setFechaDesde(e.target.value); setPaginaLog(1) }}
+                    onChange={(e) => { setDateRange(prev => ({ ...prev, desde: e.target.value })); setPage(0) }}
                   />
                 </div>
                 <div className="ce-form-field-inline">
@@ -228,14 +174,13 @@ export default function ColdEmailEnvios() {
                   <input
                     type="date"
                     className="ce-input ce-input-sm"
-                    value={fechaHasta}
-                    onChange={(e) => { setFechaHasta(e.target.value); setPaginaLog(1) }}
+                    onChange={(e) => { setDateRange(prev => ({ ...prev, hasta: e.target.value })); setPage(0) }}
                   />
                 </div>
               </div>
             </div>
 
-            {log?.length > 0 ? (
+            {envios?.length > 0 ? (
               <>
                 <div className="ce-table-wrapper">
                   <table className="ce-table">
@@ -251,11 +196,11 @@ export default function ColdEmailEnvios() {
                       </tr>
                     </thead>
                     <tbody>
-                      {log.map((e) => (
+                      {envios.map((e) => (
                         <tr key={e.id}>
-                          <td className="ce-td-name">{e.contacto_nombre || e.contacto_email}</td>
-                          <td>{e.asunto || '---'}</td>
-                          <td>{e.cuenta_email || '---'}</td>
+                          <td className="ce-td-name">{e.contacto?.nombre || e.contacto?.email || '---'}</td>
+                          <td>{e.paso?.asunto_a || '---'}</td>
+                          <td>{e.cuenta?.email || '---'}</td>
                           <td>
                             <span className={`ce-badge ce-badge-${e.estado}`}>
                               {ESTADO_LABELS[e.estado] || e.estado}
@@ -279,18 +224,18 @@ export default function ColdEmailEnvios() {
                 <div className="ce-pagination">
                   <button
                     className="ce-btn ce-btn-sm"
-                    disabled={paginaLog <= 1}
-                    onClick={() => setPaginaLog((p) => p - 1)}
+                    disabled={page <= 0}
+                    onClick={() => setPage((p) => p - 1)}
                   >
                     Anterior
                   </button>
                   <span className="ce-pagination-info">
-                    Pagina {paginaLog} de {totalPagesLog} ({totalLog} envios)
+                    Pagina {page + 1} de {totalPagesLog || 1} ({total} envios)
                   </span>
                   <button
                     className="ce-btn ce-btn-sm"
-                    disabled={paginaLog >= totalPagesLog}
-                    onClick={() => setPaginaLog((p) => p + 1)}
+                    disabled={page + 1 >= totalPagesLog}
+                    onClick={() => setPage((p) => p + 1)}
                   >
                     Siguiente
                   </button>
@@ -301,7 +246,7 @@ export default function ColdEmailEnvios() {
                 <div className="ce-empty-icon">
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 </div>
-                <p>No hay envios registrados{busquedaLog ? ' para esta busqueda' : ''}.</p>
+                <p>No hay envios registrados.</p>
               </div>
             )}
           </>

@@ -29,9 +29,9 @@ export default function ColdEmailPlantillas() {
     plantillas,
     loading,
     error,
-    crearPlantilla,
-    actualizarPlantilla,
-    eliminarPlantilla,
+    crear: crearPlantilla,
+    actualizar: actualizarPlantilla,
+    eliminar: eliminarPlantilla,
   } = useCEPlantillas()
 
   const [showModal, setShowModal] = useState(false)

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useCEContactos } from '../../hooks/useCEContactos'
 import { useToast } from '../../contexts/ToastContext'
@@ -10,50 +10,60 @@ export default function ColdEmailContactoDetalle() {
   const navigate = useNavigate()
   const { showToast: addToast } = useToast()
 
-  const {
-    contacto,
-    historial,
-    loading,
-    error,
-    cargarContacto,
-    actualizarContacto,
-    guardarNotas,
-  } = useCEContactos({ contactoId: id })
+  const { cargarDetalle, actualizar } = useCEContactos()
+
+  const [contacto, setContacto] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const [tab, setTab] = useState('Info')
   const [editData, setEditData] = useState(null)
   const [notas, setNotas] = useState('')
   const [guardando, setGuardando] = useState(false)
 
-  useEffect(() => {
-    if (id) cargarContacto(id)
-  }, [id, cargarContacto])
+  const loadContacto = useCallback(async () => {
+    if (!id) return
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await cargarDetalle(id)
+      setContacto(data)
+      setEditData({
+        nombre: data.nombre || '',
+        email: data.email || '',
+        empresa: data.empresa || '',
+        cargo: data.cargo || '',
+        telefono: data.telefono || '',
+        etiquetas: (data.etiquetas || []).join(', '),
+        campos_custom: data.campos_custom || {},
+      })
+      setNotas(data.notas || '')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [id, cargarDetalle])
 
   useEffect(() => {
-    if (contacto) {
-      setEditData({
-        nombre: contacto.nombre || '',
-        email: contacto.email || '',
-        empresa: contacto.empresa || '',
-        cargo: contacto.cargo || '',
-        telefono: contacto.telefono || '',
-        etiquetas: (contacto.etiquetas || []).join(', '),
-        campos_custom: contacto.campos_custom || {},
-      })
-      setNotas(contacto.notas || '')
-    }
-  }, [contacto])
+    loadContacto()
+  }, [loadContacto])
 
   const handleSaveInfo = async () => {
     if (!editData) return
     setGuardando(true)
     try {
-      await actualizarContacto(id, {
-        ...editData,
+      await actualizar(id, {
+        nombre: editData.nombre,
+        email: editData.email,
+        empresa: editData.empresa,
+        cargo: editData.cargo,
+        telefono: editData.telefono,
         etiquetas: editData.etiquetas
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
+        campos_custom: editData.campos_custom,
       })
       addToast('Contacto actualizado', 'success')
     } catch (err) {
@@ -66,7 +76,7 @@ export default function ColdEmailContactoDetalle() {
   const handleSaveNotas = async () => {
     setGuardando(true)
     try {
-      await guardarNotas(id, notas)
+      await actualizar(id, { notas })
       addToast('Notas guardadas', 'success')
     } catch (err) {
       addToast(`Error: ${err.message}`, 'error')
@@ -251,29 +261,25 @@ export default function ColdEmailContactoDetalle() {
         {/* Historial Tab */}
         {tab === 'Historial' && (
           <div className="ce-timeline">
-            {historial?.length > 0 ? (
-              historial.map((h, i) => (
-                <div key={h.id || i} className="ce-timeline-item">
+            {contacto?.ce_envios?.length > 0 ? (
+              contacto.ce_envios.map((e, i) => (
+                <div key={e.id || i} className="ce-timeline-item">
                   <div className="ce-timeline-dot" />
                   <div className="ce-timeline-content">
                     <div className="ce-timeline-header">
-                      <span className={`ce-badge ce-badge-${h.tipo || 'info'}`}>{h.tipo}</span>
+                      <span className={`ce-badge ce-badge-${e.estado || 'info'}`}>{e.estado}</span>
                       <span className="ce-timeline-date">
-                        {h.created_at ? new Date(h.created_at).toLocaleString('es-ES') : ''}
+                        {e.created_at ? new Date(e.created_at).toLocaleString('es-ES') : ''}
                       </span>
                     </div>
-                    <p className="ce-timeline-text">{h.descripcion}</p>
-                    {h.secuencia_nombre && (
-                      <span className="ce-text-muted">Secuencia: {h.secuencia_nombre}</span>
-                    )}
-                    {h.paso_numero != null && (
-                      <span className="ce-text-muted"> | Paso #{h.paso_numero}</span>
-                    )}
+                    <p className="ce-timeline-text">
+                      {e.ce_pasos?.asunto_a || e.ce_pasos?.asunto_b || 'Envio'}
+                    </p>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="ce-empty">Sin historial para este contacto.</div>
+              <div className="ce-empty">Sin historial de envios para este contacto.</div>
             )}
           </div>
         )}

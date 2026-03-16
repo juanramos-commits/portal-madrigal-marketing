@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useCERespuestas } from '../../hooks/useCERespuestas'
 import { useToast } from '../../contexts/ToastContext'
 import { useNavigate } from 'react-router-dom'
@@ -9,33 +9,37 @@ export default function ColdEmailRespuestas() {
   const { showToast: addToast } = useToast()
   const navigate = useNavigate()
 
-  const [busqueda, setBusqueda] = useState('')
   const [filtro, setFiltro] = useState('todas')
-  const [selectedThread, setSelectedThread] = useState(null)
 
   const {
-    threads,
-    threadMessages,
+    respuestas,
+    respuestaActiva,
     loading,
     error,
-    cargarThread,
+    setFiltroClasificacion,
+    setSearch,
+    seleccionar,
     clasificar,
     crearLeadCRM,
-  } = useCERespuestas({
-    busqueda,
-    clasificacion: filtro === 'todas' ? null : filtro,
-  })
+  } = useCERespuestas()
 
-  useEffect(() => {
-    if (selectedThread) {
-      cargarThread(selectedThread.id)
+  const handleFiltro = (f) => {
+    setFiltro(f)
+    setFiltroClasificacion(f === 'todas' ? '' : f)
+  }
+
+  const handleSelect = async (r) => {
+    try {
+      await seleccionar(r.id)
+    } catch (err) {
+      addToast(`Error: ${err.message}`, 'error')
     }
-  }, [selectedThread, cargarThread])
+  }
 
   const handleClasificar = async (clasificacion) => {
-    if (!selectedThread) return
+    if (!respuestaActiva) return
     try {
-      await clasificar(selectedThread.id, clasificacion)
+      await clasificar(respuestaActiva.id, clasificacion)
       addToast(`Clasificado como "${clasificacion}"`, 'success')
     } catch (err) {
       addToast(`Error: ${err.message}`, 'error')
@@ -43,9 +47,9 @@ export default function ColdEmailRespuestas() {
   }
 
   const handleCrearLead = async () => {
-    if (!selectedThread) return
+    if (!respuestaActiva) return
     try {
-      const lead = await crearLeadCRM(selectedThread.id)
+      const lead = await crearLeadCRM(respuestaActiva.id)
       addToast('Lead creado en CRM', 'success')
       if (lead?.id) {
         navigate(`/ventas/crm/leads/${lead.id}`)
@@ -55,7 +59,7 @@ export default function ColdEmailRespuestas() {
     }
   }
 
-  if (loading && !threads?.length) {
+  if (loading && !respuestas?.length) {
     return (
       <div className="ce-page">
         <div className="ce-loading" role="status">
@@ -74,6 +78,49 @@ export default function ColdEmailRespuestas() {
     )
   }
 
+  // Build thread messages from respuestaActiva
+  const threadMessages = []
+  if (respuestaActiva) {
+    // Add outbound envios from thread
+    if (respuestaActiva._threadEnvios) {
+      for (const e of respuestaActiva._threadEnvios) {
+        threadMessages.push({
+          id: 'envio-' + e.id,
+          direccion: 'outbound',
+          asunto: null,
+          cuerpo: e.asunto_a || 'Email enviado',
+          created_at: e.enviado_at || e.created_at,
+        })
+      }
+    }
+    // Add inbound responses from thread
+    if (respuestaActiva._thread) {
+      for (const r of respuestaActiva._thread) {
+        threadMessages.push({
+          id: r.id,
+          direccion: 'inbound',
+          de_nombre: r.de,
+          asunto: r.asunto,
+          cuerpo: r.cuerpo,
+          created_at: r.created_at,
+        })
+      }
+    }
+    // Sort by date
+    threadMessages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    // If no thread, show just the response itself
+    if (threadMessages.length === 0) {
+      threadMessages.push({
+        id: respuestaActiva.id,
+        direccion: 'inbound',
+        de_nombre: respuestaActiva.de,
+        asunto: respuestaActiva.asunto,
+        cuerpo: respuestaActiva.cuerpo,
+        created_at: respuestaActiva.created_at,
+      })
+    }
+  }
+
   return (
     <div className="ce-page">
       <div className="ce-page-header">
@@ -88,15 +135,14 @@ export default function ColdEmailRespuestas() {
               type="text"
               className="ce-search-input"
               placeholder="Buscar..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
             />
             <div className="ce-filter-pills ce-filter-pills-compact">
               {CLASIFICACIONES.map((c) => (
                 <button
                   key={c}
                   className={`ce-pill ce-pill-sm ${filtro === c ? 'ce-pill-active' : ''}`}
-                  onClick={() => setFiltro(c)}
+                  onClick={() => handleFiltro(c)}
                 >
                   {c === 'todas' ? 'Todas' : c.replace('_', ' ')}
                 </button>
@@ -105,34 +151,34 @@ export default function ColdEmailRespuestas() {
           </div>
 
           <div className="ce-inbox-threads">
-            {threads?.length > 0 ? (
-              threads.map((t) => (
+            {respuestas?.length > 0 ? (
+              respuestas.map((r) => (
                 <div
-                  key={t.id}
-                  className={`ce-thread-item ${selectedThread?.id === t.id ? 'ce-thread-item-active' : ''} ${t.no_leido ? 'ce-thread-item-unread' : ''}`}
-                  onClick={() => setSelectedThread(t)}
+                  key={r.id}
+                  className={`ce-thread-item ${respuestaActiva?.id === r.id ? 'ce-thread-item-active' : ''} ${!r.leida ? 'ce-thread-item-unread' : ''}`}
+                  onClick={() => handleSelect(r)}
                 >
                   <div className="ce-thread-avatar">
-                    {(t.contacto_nombre || t.de_email || '?').charAt(0).toUpperCase()}
+                    {(r.contacto?.nombre || r.de || '?').charAt(0).toUpperCase()}
                   </div>
                   <div className="ce-thread-info">
                     <div className="ce-thread-top">
-                      <span className="ce-thread-name">{t.contacto_nombre || t.de_email}</span>
+                      <span className="ce-thread-name">{r.contacto?.nombre || r.de}</span>
                       <span className="ce-thread-time">
-                        {t.ultimo_mensaje_at
-                          ? new Date(t.ultimo_mensaje_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+                        {r.created_at
+                          ? new Date(r.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
                           : ''}
                       </span>
                     </div>
-                    <div className="ce-thread-subject">{t.asunto || '(sin asunto)'}</div>
-                    <div className="ce-thread-snippet">{t.snippet || ''}</div>
+                    <div className="ce-thread-subject">{r.asunto || '(sin asunto)'}</div>
+                    <div className="ce-thread-snippet">{(r.cuerpo || '').slice(0, 80)}</div>
                     <div className="ce-thread-meta">
-                      {t.clasificacion && (
-                        <span className={`ce-badge ce-badge-sm ce-badge-${t.clasificacion}`}>
-                          {t.clasificacion.replace('_', ' ')}
+                      {r.clasificacion && (
+                        <span className={`ce-badge ce-badge-sm ce-badge-${r.clasificacion}`}>
+                          {r.clasificacion.replace('_', ' ')}
                         </span>
                       )}
-                      {t.no_leido && <span className="ce-unread-dot" />}
+                      {!r.leida && <span className="ce-unread-dot" />}
                     </div>
                   </div>
                 </div>
@@ -150,17 +196,17 @@ export default function ColdEmailRespuestas() {
 
         {/* Right: Thread Detail */}
         <div className="ce-inbox-detail">
-          {selectedThread ? (
+          {respuestaActiva ? (
             <>
               <div className="ce-inbox-detail-header">
                 <div>
-                  <h2 className="ce-inbox-detail-name">{selectedThread.contacto_nombre || selectedThread.de_email}</h2>
-                  <p className="ce-text-muted">{selectedThread.de_email}</p>
+                  <h2 className="ce-inbox-detail-name">{respuestaActiva.contacto?.nombre || respuestaActiva.de}</h2>
+                  <p className="ce-text-muted">{respuestaActiva.contacto?.email || respuestaActiva.de}</p>
                 </div>
                 <div className="ce-inbox-detail-actions">
                   <select
                     className="ce-select ce-select-sm"
-                    value={selectedThread.clasificacion || ''}
+                    value={respuestaActiva.clasificacion || ''}
                     onChange={(e) => handleClasificar(e.target.value)}
                   >
                     <option value="">Sin clasificar</option>
@@ -176,7 +222,7 @@ export default function ColdEmailRespuestas() {
 
               {/* Messages */}
               <div className="ce-inbox-messages">
-                {threadMessages?.length > 0 ? (
+                {threadMessages.length > 0 ? (
                   threadMessages.map((msg) => (
                     <div
                       key={msg.id}
@@ -184,7 +230,7 @@ export default function ColdEmailRespuestas() {
                     >
                       <div className="ce-message-header">
                         <span className="ce-message-from">
-                          {msg.direccion === 'inbound' ? (msg.de_nombre || msg.de_email) : 'Tu'}
+                          {msg.direccion === 'inbound' ? (msg.de_nombre || 'Contacto') : 'Tu'}
                         </span>
                         <span className="ce-message-time">
                           {msg.created_at ? new Date(msg.created_at).toLocaleString('es-ES') : ''}
@@ -213,7 +259,7 @@ export default function ColdEmailRespuestas() {
                     </button>
                   ))}
                 </div>
-                {selectedThread.clasificacion === 'interesado' && (
+                {respuestaActiva.clasificacion === 'interesado' && (
                   <button className="ce-btn ce-btn-sm ce-btn-success" onClick={handleCrearLead}>
                     Crear Lead CRM
                   </button>
