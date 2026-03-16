@@ -70,7 +70,8 @@ export default function ColdEmailDashboard() {
     },
   ]
 
-  const maxBarValue = chartData?.length
+  const totalEnviados = chartData?.reduce((sum, d) => sum + (d.enviados || 0), 0) || 0
+  const maxBarValue = totalEnviados > 0
     ? Math.max(...chartData.map(d => d.enviados || 0), 1)
     : 1
 
@@ -102,7 +103,7 @@ export default function ColdEmailDashboard() {
       <div className="ce-section">
         <h2 className="ce-section-title">Volumen de envios (30 dias)</h2>
         <div className="ce-chart-container">
-          {chartData?.length > 0 ? (
+          {chartData?.length > 0 && totalEnviados > 0 ? (
             <div className="ce-bar-chart">
               {chartData.map((d, i) => (
                 <div key={i} className="ce-bar-col" title={`${d.fecha}: ${d.enviados} enviados`}>
