@@ -23,7 +23,7 @@ const emptyForm = {
 
 export default function ColdEmailPlantillas() {
   const { tienePermiso } = useAuth()
-  const { addToast } = useToast()
+  const { showToast: addToast } = useToast()
 
   const {
     plantillas,

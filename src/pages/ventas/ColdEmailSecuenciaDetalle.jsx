@@ -15,7 +15,7 @@ const formatPct = (n) => `${Number(n || 0).toFixed(1)}%`
 export default function ColdEmailSecuenciaDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { addToast } = useToast()
+  const { showToast: addToast } = useToast()
   const { tienePermiso } = useAuth()
 
   const {

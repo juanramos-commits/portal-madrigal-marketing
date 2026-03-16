@@ -24,7 +24,7 @@ const emptyBlacklistForm = {
 
 export default function ColdEmailConfig() {
   const { tienePermiso } = useAuth()
-  const { addToast } = useToast()
+  const { showToast: addToast } = useToast()
 
   const {
     cuentas,

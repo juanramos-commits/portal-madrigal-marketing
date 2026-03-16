@@ -18,7 +18,7 @@ const ESTADO_LABELS = {
 
 export default function ColdEmailEnvios() {
   const { tienePermiso } = useAuth()
-  const { addToast } = useToast()
+  const { showToast: addToast } = useToast()
 
   const [tab, setTab] = useState('cola')
   const [busquedaLog, setBusquedaLog] = useState('')

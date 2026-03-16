@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 const CLASIFICACIONES = ['todas', 'pendiente', 'interesado', 'no_ahora', 'baja', 'negativo', 'irrelevante']
 
 export default function ColdEmailRespuestas() {
-  const { addToast } = useToast()
+  const { showToast: addToast } = useToast()
   const navigate = useNavigate()
 
   const [busqueda, setBusqueda] = useState('')

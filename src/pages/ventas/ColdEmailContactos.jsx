@@ -9,7 +9,7 @@ const PAGE_SIZE = 25
 
 export default function ColdEmailContactos() {
   const { tienePermiso } = useAuth()
-  const { addToast } = useToast()
+  const { showToast: addToast } = useToast()
   const navigate = useNavigate()
 
   const [busqueda, setBusqueda] = useState('')

@@ -8,7 +8,7 @@ const TABS = ['Info', 'Historial', 'Notas']
 export default function ColdEmailContactoDetalle() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { addToast } = useToast()
+  const { showToast: addToast } = useToast()
 
   const {
     contacto,

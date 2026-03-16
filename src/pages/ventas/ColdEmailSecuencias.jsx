@@ -11,7 +11,7 @@ const formatPct = (n) => `${Number(n || 0).toFixed(1)}%`
 
 export default function ColdEmailSecuencias() {
   const { tienePermiso } = useAuth()
-  const { addToast } = useToast()
+  const { showToast: addToast } = useToast()
   const navigate = useNavigate()
   const [filtroEstado, setFiltroEstado] = useState('todas')
 
