@@ -95,11 +95,18 @@ export default function ColdEmailConfig() {
     }
     setGuardando(true)
     try {
+      // Only send columns that exist in ce_cuentas table
+      const payload = {
+        nombre: cuentaForm.nombre,
+        email: cuentaForm.email,
+        resend_api_key: cuentaForm.resend_api_key,
+        warmup_max: Number(cuentaForm.warmup_max) || 50,
+      }
       if (editingCuentaId) {
-        await actualizarCuenta(editingCuentaId, cuentaForm)
+        await actualizarCuenta(editingCuentaId, payload)
         addToast('Cuenta actualizada', 'success')
       } else {
-        await crearCuenta(cuentaForm)
+        await crearCuenta(payload)
         addToast('Cuenta creada', 'success')
       }
       setShowCuentaModal(false)
