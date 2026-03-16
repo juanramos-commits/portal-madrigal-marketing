@@ -3181,9 +3181,13 @@
 .ce-blacklist-add {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 20px;
+}
+
+.ce-blacklist-add .ce-input {
+  flex: 1;
+  min-width: 150px;
 }
 
 .ce-blacklist-select {
@@ -3227,6 +3231,11 @@
   text-align: center;
   padding: 32px;
   color: var(--text-muted);
+}
+
+/* Compact empty states inside config tabs */
+.ce-tab-content .ce-empty {
+  padding: 40px 24px;
 }
 
 .ce-blacklist-table-wrapper {
@@ -3294,11 +3303,12 @@
    GENERAL CONFIG  (ColdEmailConfig.jsx - General tab)
    ========================================================================== */
 .ce-general-config {
-  max-width: 780px;
+  max-width: 100%;
 }
 
 .ce-general-config .ce-form-grid {
-  gap: 20px;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr 1fr;
 }
 
 .ce-general-config .ce-form-field {
@@ -3308,9 +3318,10 @@
   border-radius: var(--radius-sm);
 }
 
-.ce-general-config .ce-form-field:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-  max-width: 50%;
+.ce-general-config .ce-form-toggles {
+  padding: 16px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
 .ce-cuentas {
