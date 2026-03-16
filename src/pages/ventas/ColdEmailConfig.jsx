@@ -485,12 +485,7 @@ export default function ColdEmailConfig() {
                 </table>
               </div>
             ) : (
-              <div className="ce-empty">
-                <div className="ce-empty-icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
-                </div>
-                <p>No hay entradas en la blacklist.</p>
-              </div>
+              <p className="ce-text-muted" style={{ textAlign: 'center', padding: '32px 0' }}>No hay entradas en la blacklist.</p>
             )}
           </div>
         )}
