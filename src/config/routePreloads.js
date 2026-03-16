@@ -14,8 +14,6 @@ const preloads = {
   '/ventas/ajustes': () => import('../pages/ventas/VentasAjustes'),
   '/ventas/enlaces': () => import('../pages/ventas/VentasEnlaces'),
   '/ventas/email': () => import('../pages/ventas/EmailDashboard'),
-  '/ventas/outreach': () => import('../pages/ventas/OutreachDashboard'),
-
   // Admin / general
   '/dashboard': () => import('../pages/Dashboard'),
   '/clientes': () => import('../pages/TablaClientesAvanzada'),
