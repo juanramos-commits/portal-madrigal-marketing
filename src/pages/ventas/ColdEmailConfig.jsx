@@ -30,9 +30,9 @@ export default function ColdEmailConfig() {
     cuentas,
     loading: cuentasLoading,
     error: cuentasError,
-    crearCuenta,
-    actualizarCuenta,
-    eliminarCuenta,
+    crear: crearCuenta,
+    actualizar: actualizarCuenta,
+    eliminar: eliminarCuenta,
   } = useCECuentas()
 
   const {
@@ -40,8 +40,8 @@ export default function ColdEmailConfig() {
     blacklist,
     loading: configLoading,
     error: configError,
-    actualizarConfig,
-    agregarBlacklist,
+    guardarConfig: actualizarConfig,
+    añadirBlacklist: agregarBlacklist,
     eliminarBlacklist,
   } = useCEConfig()
 
