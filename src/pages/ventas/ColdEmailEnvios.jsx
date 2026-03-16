@@ -115,8 +115,8 @@ export default function ColdEmailEnvios() {
                         <tr key={e.id}>
                           <td className="ce-td-name">{e.contacto?.nombre || e.contacto?.email || '---'}</td>
                           <td>{e.secuencia?.nombre || '---'}</td>
-                          <td>Paso {e.paso?.orden || e.paso_actual || '?'}</td>
-                          <td>---</td>
+                          <td>Paso {e.paso_actual || '?'}</td>
+                          <td className="ce-text-muted">---</td>
                           <td className="ce-text-muted">
                             {e.proximo_envio_at
                               ? new Date(e.proximo_envio_at).toLocaleString('es-ES')

@@ -77,8 +77,7 @@ export function useCEEnvios() {
         .select(`
           *,
           contacto:ce_contactos(nombre, email),
-          secuencia:ce_secuencias(nombre),
-          paso:ce_pasos(asunto_a, orden)
+          secuencia:ce_secuencias(nombre)
         `)
         .eq('estado', 'activo')
         .not('proximo_envio_at', 'is', null)
