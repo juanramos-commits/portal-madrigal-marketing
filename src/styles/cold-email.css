@@ -495,6 +495,13 @@
   color: var(--text-placeholder);
 }
 
+/* Dark color scheme for date/time inputs */
+.ce-input[type="date"],
+.ce-input[type="datetime-local"],
+.ce-input[type="time"] {
+  color-scheme: dark;
+}
+
 .ce-input-sm,
 .ce-form-input--small {
   padding: 6px 10px;
@@ -587,25 +594,38 @@
 }
 
 .ce-file-input {
+  width: 100%;
+  padding: 10px 12px;
   font-size: var(--font-sm-md);
   color: var(--text-muted);
+  background: var(--bg-input);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.ce-file-input:hover {
+  border-color: #2ee59d;
 }
 
 .ce-file-input::file-selector-button {
-  padding: 6px 12px;
+  padding: 7px 16px;
   font-size: var(--font-sm);
+  font-weight: var(--weight-medium);
   font-family: inherit;
-  background: var(--bg-card);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs-sm);
+  background: rgba(46, 229, 157, 0.12);
+  color: #2ee59d;
+  border: 1px solid rgba(46, 229, 157, 0.25);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  margin-right: 10px;
-  transition: background var(--transition-fast);
+  margin-right: 12px;
+  transition: all var(--transition-fast);
 }
 
 .ce-file-input::file-selector-button:hover {
-  background: var(--bg-card-hover);
+  background: rgba(46, 229, 157, 0.2);
+  border-color: rgba(46, 229, 157, 0.4);
 }
 
 /* ==========================================================================
@@ -682,10 +702,34 @@
 }
 
 .ce-toggle-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--success);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
   cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.ce-toggle-label input[type="checkbox"]:checked {
+  background: #2ee59d;
+  border-color: #2ee59d;
+}
+
+.ce-toggle-label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid #0a0a0a;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .ce-toggle-label span {
@@ -718,10 +762,34 @@
 }
 
 .ce-checkbox-label input[type="checkbox"] {
-  width: 15px;
-  height: 15px;
-  accent-color: var(--success);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-input);
   cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.ce-checkbox-label input[type="checkbox"]:checked {
+  background: #2ee59d;
+  border-color: #2ee59d;
+}
+
+.ce-checkbox-label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #0a0a0a;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .ce-form-inline {
@@ -2724,10 +2792,34 @@
 }
 
 .ce-contactos-checkbox {
-  width: 15px;
-  height: 15px;
-  accent-color: var(--success);
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-input);
   cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.ce-contactos-checkbox:checked {
+  background: #2ee59d;
+  border-color: #2ee59d;
+}
+
+.ce-contactos-checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #0a0a0a;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .ce-contactos-tags {
@@ -3213,6 +3305,11 @@
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+}
+
+.ce-general-config .ce-form-field:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+  max-width: 50%;
 }
 
 .ce-cuentas {
