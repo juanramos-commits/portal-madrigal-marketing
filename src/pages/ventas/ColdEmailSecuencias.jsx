@@ -139,6 +139,9 @@ export default function ColdEmailSecuencias() {
         </div>
       ) : (
         <div className="ce-empty">
+          <div className="ce-empty-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+          </div>
           <p>No hay secuencias{filtroEstado !== 'todas' ? ` con estado "${filtroEstado}"` : ''}.</p>
           {tienePermiso('cold_email.secuencias.crear') && filtroEstado === 'todas' && (
             <button className="ce-btn ce-btn-primary" onClick={handleNueva}>

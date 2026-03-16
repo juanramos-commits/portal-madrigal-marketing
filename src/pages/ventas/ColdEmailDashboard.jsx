@@ -115,7 +115,12 @@ export default function ColdEmailDashboard() {
               ))}
             </div>
           ) : (
-            <div className="ce-empty">Sin datos de envios en los ultimos 30 dias</div>
+            <div className="ce-empty">
+              <div className="ce-empty-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+              </div>
+              <p>Sin datos de envios en los ultimos 30 dias</p>
+            </div>
           )}
         </div>
       </div>
@@ -151,7 +156,12 @@ export default function ColdEmailDashboard() {
             </table>
           </div>
         ) : (
-          <div className="ce-empty">No hay secuencias activas</div>
+          <div className="ce-empty">
+            <div className="ce-empty-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+            </div>
+            <p>No hay secuencias activas</p>
+          </div>
         )}
       </div>
 
@@ -175,7 +185,12 @@ export default function ColdEmailDashboard() {
             ))}
           </div>
         ) : (
-          <div className="ce-empty">No hay respuestas pendientes</div>
+          <div className="ce-empty">
+            <div className="ce-empty-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <p>No hay respuestas pendientes</p>
+          </div>
         )}
       </div>
     </div>

@@ -301,6 +301,9 @@ export default function ColdEmailConfig() {
               </div>
             ) : (
               <div className="ce-empty">
+                <div className="ce-empty-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9.5h20"/></svg>
+                </div>
                 <p>No hay cuentas configuradas.</p>
                 {tienePermiso('cold_email.config.editar') && (
                   <button className="ce-btn ce-btn-primary" onClick={openNewCuenta}>
@@ -482,7 +485,12 @@ export default function ColdEmailConfig() {
                 </table>
               </div>
             ) : (
-              <div className="ce-empty">No hay entradas en la blacklist.</div>
+              <div className="ce-empty">
+                <div className="ce-empty-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
+                </div>
+                <p>No hay entradas en la blacklist.</p>
+              </div>
             )}
           </div>
         )}

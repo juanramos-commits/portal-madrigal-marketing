@@ -172,6 +172,8 @@
   font-weight: var(--weight-semibold);
   color: var(--text);
   margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
 .ce-section-header {
@@ -225,9 +227,30 @@
 
 .ce-empty {
   text-align: center;
-  padding: 48px 24px;
+  padding: 64px 32px;
   color: var(--text-muted);
   font-size: var(--font-base);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  margin-top: 8px;
+}
+
+.ce-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-tertiary);
+}
+
+.ce-empty-icon svg {
+  width: 28px;
+  height: 28px;
 }
 
 .ce-empty p {
@@ -787,9 +810,9 @@
 }
 
 .ce-pill-active {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(46, 229, 157, 0.12);
+  color: #2ee59d;
+  border-color: rgba(46, 229, 157, 0.3);
 }
 
 .ce-pill-sm {
@@ -873,8 +896,8 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-muted);
+  background: rgba(46, 229, 157, 0.1);
+  color: #2ee59d;
   flex-shrink: 0;
 }
 
@@ -922,6 +945,13 @@
   border-radius: var(--radius-md);
 }
 
+.ce-chart-container .ce-empty {
+  padding: 40px 24px;
+  border: none;
+  background: transparent;
+  margin-top: 0;
+}
+
 .ce-bar-chart {
   display: flex;
   align-items: flex-end;
@@ -945,8 +975,13 @@
   max-width: 20px;
   background: linear-gradient(180deg, #2ee59d 0%, rgba(46, 229, 157, 0.5) 100%);
   border-radius: 3px 3px 0 0;
-  min-height: 2px;
+  min-height: 3px;
   transition: height 0.3s ease;
+  opacity: 0.7;
+}
+
+.ce-bar:hover {
+  opacity: 1;
 }
 
 .ce-bar-label {
@@ -2269,6 +2304,7 @@
   flex-direction: column;
   gap: 12px;
   transition: background var(--transition-fast), border-color var(--transition-fast);
+  overflow: hidden;
 }
 
 .ce-account-card:hover {
@@ -3015,6 +3051,10 @@
 }
 
 .ce-blacklist-form {
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   margin-bottom: 20px;
 }
 
@@ -3134,7 +3174,18 @@
    GENERAL CONFIG  (ColdEmailConfig.jsx - General tab)
    ========================================================================== */
 .ce-general-config {
-  max-width: 720px;
+  max-width: 780px;
+}
+
+.ce-general-config .ce-form-grid {
+  gap: 20px;
+}
+
+.ce-general-config .ce-form-field {
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
 }
 
 .ce-cuentas {

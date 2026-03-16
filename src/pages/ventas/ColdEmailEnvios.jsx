@@ -192,7 +192,12 @@ export default function ColdEmailEnvios() {
                 </div>
               </>
             ) : (
-              <div className="ce-empty">No hay envios en cola.</div>
+              <div className="ce-empty">
+                <div className="ce-empty-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9z"/></svg>
+                </div>
+                <p>No hay envios en cola.</p>
+              </div>
             )}
           </>
         )}
@@ -292,7 +297,12 @@ export default function ColdEmailEnvios() {
                 </div>
               </>
             ) : (
-              <div className="ce-empty">No hay envios registrados{busquedaLog ? ' para esta busqueda' : ''}.</div>
+              <div className="ce-empty">
+                <div className="ce-empty-icon">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <p>No hay envios registrados{busquedaLog ? ' para esta busqueda' : ''}.</p>
+              </div>
             )}
           </>
         )}
