@@ -28,6 +28,7 @@ export default function ColdEmailSecuenciaDetalle() {
     pausarEnrollment,
     reanudarEnrollment,
     desenrollar,
+    asignarCuentas,
   } = useCESecuencias()
 
   const { contactos: contactosList } = useCEContactos()
@@ -44,7 +45,7 @@ export default function ColdEmailSecuenciaDetalle() {
   const [editingName, setEditingName] = useState(false)
   const [nombre, setNombre] = useState('')
   const [editingStep, setEditingStep] = useState(null)
-  const [stepForm, setStepForm] = useState({ asunto: '', cuerpo: '', delay_horas: 24 })
+  const [stepForm, setStepForm] = useState({ asunto: '', cuerpo: '', delay_dias: 1 })
   const [showEnrollModal, setShowEnrollModal] = useState(false)
   const [selectedContactIds, setSelectedContactIds] = useState([])
   const [enrollBusqueda, setEnrollBusqueda] = useState('')
@@ -80,14 +81,15 @@ export default function ColdEmailSecuenciaDetalle() {
   useEffect(() => {
     if (secuencia) {
       setNombre(secuencia.nombre || '')
+      const cuentasAsignadas = (secuencia.ce_secuencias_cuentas || []).map(sc => sc.cuenta_id)
       setConfigForm({
         timezone: secuencia.timezone || 'America/Mexico_City',
         dias_envio: secuencia.dias_envio || [1, 2, 3, 4, 5],
         hora_inicio: secuencia.hora_inicio || '09:00',
         hora_fin: secuencia.hora_fin || '18:00',
         ab_testing: secuencia.ab_testing || false,
-        ia_personalizar: secuencia.ia_personalizar || false,
-        cuentas_ids: secuencia.cuentas_ids || [],
+        ia_personalizar_primero: secuencia.ia_personalizar_primero || false,
+        cuentas_ids: cuentasAsignadas,
       })
     }
   }, [secuencia])
@@ -118,7 +120,7 @@ export default function ColdEmailSecuenciaDetalle() {
       const paso = await crearPaso(id, {
         asunto_a: 'Nuevo paso',
         cuerpo_a: '',
-        delay_horas: 24,
+        delay_dias: 1,
         orden: (pasos?.length || 0) + 1,
       })
       setPasos(prev => [...prev, paso])
@@ -135,7 +137,7 @@ export default function ColdEmailSecuenciaDetalle() {
       const updated = await actualizarPasoHook(editingStep, {
         asunto_a: stepForm.asunto,
         cuerpo_a: stepForm.cuerpo,
-        delay_horas: stepForm.delay_horas,
+        delay_dias: stepForm.delay_dias,
       })
       setPasos(prev => prev.map(p => p.id === editingStep ? updated : p))
       setEditingStep(null)
@@ -178,7 +180,9 @@ export default function ColdEmailSecuenciaDetalle() {
     if (!configForm) return
     setGuardando(true)
     try {
-      await actualizar(id, configForm)
+      const { cuentas_ids, ...secuenciaFields } = configForm
+      await actualizar(id, secuenciaFields)
+      await asignarCuentas(id, cuentas_ids)
       addToast('Configuracion guardada', 'success')
     } catch (err) {
       addToast(`Error: ${err.message}`, 'error')
@@ -326,11 +330,9 @@ export default function ColdEmailSecuenciaDetalle() {
                   <div key={paso.id} className="ce-step-card">
                     <div className="ce-step-badge">
                       <span className="ce-step-number">{i + 1}</span>
-                      {paso.delay_horas > 0 && (
+                      {paso.delay_dias > 0 && (
                         <span className="ce-step-delay">
-                          {paso.delay_horas >= 24
-                            ? `${Math.floor(paso.delay_horas / 24)}d`
-                            : `${paso.delay_horas}h`}
+                          {`${paso.delay_dias || 0}d`}
                         </span>
                       )}
                     </div>
@@ -338,13 +340,13 @@ export default function ColdEmailSecuenciaDetalle() {
                     {editingStep === paso.id ? (
                       <div className="ce-step-edit">
                         <div className="ce-form-field">
-                          <label className="ce-label">Delay (horas)</label>
+                          <label className="ce-label">Delay (dias)</label>
                           <input
                             type="number"
                             className="ce-input ce-input-sm"
-                            value={stepForm.delay_horas}
+                            value={stepForm.delay_dias}
                             min={0}
-                            onChange={(e) => setStepForm({ ...stepForm, delay_horas: parseInt(e.target.value) || 0 })}
+                            onChange={(e) => setStepForm({ ...stepForm, delay_dias: parseInt(e.target.value) || 0 })}
                           />
                         </div>
                         <div className="ce-form-field">
@@ -388,7 +390,7 @@ export default function ColdEmailSecuenciaDetalle() {
                           setStepForm({
                             asunto: paso.asunto_a || '',
                             cuerpo: paso.cuerpo_a || '',
-                            delay_horas: paso.delay_horas || 0,
+                            delay_dias: paso.delay_dias || 0,
                           })
                         }}
                       >
@@ -641,8 +643,8 @@ export default function ColdEmailSecuenciaDetalle() {
               <label className="ce-toggle-label">
                 <input
                   type="checkbox"
-                  checked={configForm.ia_personalizar}
-                  onChange={(e) => setConfigForm({ ...configForm, ia_personalizar: e.target.checked })}
+                  checked={configForm.ia_personalizar_primero}
+                  onChange={(e) => setConfigForm({ ...configForm, ia_personalizar_primero: e.target.checked })}
                 />
                 <span>IA personalizar primer email</span>
               </label>
@@ -707,9 +709,7 @@ export default function ColdEmailSecuenciaDetalle() {
                     <div className="ce-preview-step-header">
                       <span className="ce-step-number">{i + 1}</span>
                       <span className="ce-step-delay">
-                        {paso.delay_horas >= 24
-                          ? `Esperar ${Math.floor(paso.delay_horas / 24)} dia(s)`
-                          : `Esperar ${paso.delay_horas}h`}
+                        {`Esperar ${paso.delay_dias || 0} dia(s)`}
                       </span>
                     </div>
                     <div className="ce-preview-email">
