@@ -114,13 +114,18 @@ export function useCESecuencias() {
         .from('ce_secuencias')
         .select(`
           *,
-          ce_pasos(* order by orden),
+          ce_pasos(*),
           ce_enrollments(*, ce_contactos(nombre, email, estado)),
           ce_secuencias_cuentas(cuenta_id, ce_cuentas(nombre, email, estado))
         `)
         .eq('id', id)
         .single()
       if (err) throw err
+
+      // Sort pasos by orden client-side
+      if (data.ce_pasos) {
+        data.ce_pasos.sort((a, b) => (a.orden || 0) - (b.orden || 0))
+      }
 
       // Load stats via RPC
       const { data: stats, error: statsErr } = await supabase
