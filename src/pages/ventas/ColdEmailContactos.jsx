@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 
 const ESTADOS = ['todos', 'activo', 'respondido', 'rebotado', 'baja', 'no_contactar']
-const PAGE_SIZE = 25
+const PAGE_SIZE = 50
 
 export default function ColdEmailContactos() {
   const { tienePermiso } = useAuth()
@@ -14,8 +14,6 @@ export default function ColdEmailContactos() {
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('todos')
-  const [filtroTag, setFiltroTag] = useState('')
-  const [pagina, setPagina] = useState(1)
   const [showImportCSV, setShowImportCSV] = useState(false)
   const [showImportSheets, setShowImportSheets] = useState(false)
   const [csvFile, setCsvFile] = useState(null)
@@ -25,32 +23,55 @@ export default function ColdEmailContactos() {
   const {
     contactos,
     total,
-    tags,
     loading,
     error,
-    importarCSV,
-    importarSheets,
-  } = useCEContactos({
-    busqueda,
-    estado: filtroEstado === 'todos' ? null : filtroEstado,
-    tag: filtroTag || null,
-    pagina,
-    porPagina: PAGE_SIZE,
-  })
+    importarCSV: importarRows,
+    buscar,
+    filtrarEstado,
+    filtrarTag,
+    page,
+    setPage,
+  } = useCEContactos()
 
   const totalPages = Math.ceil((total || 0) / PAGE_SIZE)
 
   const handleSearch = useCallback((e) => {
-    setBusqueda(e.target.value)
-    setPagina(1)
-  }, [])
+    const val = e.target.value
+    setBusqueda(val)
+    buscar(val)
+  }, [buscar])
+
+  const handleFiltroEstado = useCallback((estado) => {
+    setFiltroEstado(estado)
+    filtrarEstado(estado === 'todos' ? '' : estado)
+  }, [filtrarEstado])
+
+  const parseCSV = (text) => {
+    const lines = text.trim().split('\n')
+    if (lines.length < 2) return []
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+    return lines.slice(1).map(line => {
+      const vals = line.split(',').map(v => v.trim())
+      const row = {}
+      headers.forEach((h, i) => {
+        if (vals[i]) row[h] = vals[i]
+      })
+      return row
+    }).filter(r => r.email)
+  }
 
   const handleImportCSV = async () => {
     if (!csvFile) return
     setImportando(true)
     try {
-      const result = await importarCSV(csvFile)
-      addToast(`${result?.importados ?? 0} contactos importados`, 'success')
+      const text = await csvFile.text()
+      const rows = parseCSV(text)
+      if (rows.length === 0) {
+        addToast('No se encontraron contactos validos en el CSV', 'error')
+        return
+      }
+      const result = await importarRows(rows)
+      addToast(`${result?.length ?? 0} contactos importados`, 'success')
       setShowImportCSV(false)
       setCsvFile(null)
     } catch (err) {
@@ -61,18 +82,7 @@ export default function ColdEmailContactos() {
   }
 
   const handleImportSheets = async () => {
-    if (!sheetsUrl.trim()) return
-    setImportando(true)
-    try {
-      const result = await importarSheets(sheetsUrl.trim())
-      addToast(`${result?.importados ?? 0} contactos importados`, 'success')
-      setShowImportSheets(false)
-      setSheetsUrl('')
-    } catch (err) {
-      addToast(`Error al importar: ${err.message}`, 'error')
-    } finally {
-      setImportando(false)
-    }
+    addToast('Importacion desde Sheets no disponible aun', 'warning')
   }
 
   if (!tienePermiso('cold_email.contactos.ver')) {
@@ -134,24 +144,12 @@ export default function ColdEmailContactos() {
             <button
               key={e}
               className={`ce-pill ${filtroEstado === e ? 'ce-pill-active' : ''}`}
-              onClick={() => { setFiltroEstado(e); setPagina(1) }}
+              onClick={() => handleFiltroEstado(e)}
             >
               {e === 'todos' ? 'Todos' : e.replace('_', ' ')}
             </button>
           ))}
         </div>
-        {tags?.length > 0 && (
-          <select
-            className="ce-select"
-            value={filtroTag}
-            onChange={(e) => { setFiltroTag(e.target.value); setPagina(1) }}
-          >
-            <option value="">Todas las etiquetas</option>
-            {tags.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        )}
       </div>
 
       {/* Table */}
@@ -201,9 +199,11 @@ export default function ColdEmailContactos() {
                       {c.mx_valido == null && <span className="ce-text-muted">---</span>}
                     </td>
                     <td className="ce-text-muted">
-                      {c.ultima_actividad
-                        ? new Date(c.ultima_actividad).toLocaleDateString('es-ES')
-                        : '---'}
+                      {c.updated_at
+                        ? new Date(c.updated_at).toLocaleDateString('es-ES')
+                        : c.created_at
+                          ? new Date(c.created_at).toLocaleDateString('es-ES')
+                          : '---'}
                     </td>
                   </tr>
                 ))}
@@ -215,18 +215,18 @@ export default function ColdEmailContactos() {
           <div className="ce-pagination">
             <button
               className="ce-btn ce-btn-sm"
-              disabled={pagina <= 1}
-              onClick={() => setPagina((p) => p - 1)}
+              disabled={page <= 0}
+              onClick={() => setPage((p) => p - 1)}
             >
               Anterior
             </button>
             <span className="ce-pagination-info">
-              Pagina {pagina} de {totalPages} ({total} contactos)
+              Pagina {page + 1} de {totalPages || 1} ({total} contactos)
             </span>
             <button
               className="ce-btn ce-btn-sm"
-              disabled={pagina >= totalPages}
-              onClick={() => setPagina((p) => p + 1)}
+              disabled={page + 1 >= totalPages}
+              onClick={() => setPage((p) => p + 1)}
             >
               Siguiente
             </button>

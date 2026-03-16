@@ -19,12 +19,19 @@ export default function ColdEmailSecuencias() {
     secuencias,
     loading,
     error,
-    crearSecuencia,
-  } = useCESecuencias({ estado: filtroEstado === 'todas' ? null : filtroEstado })
+    crear,
+    setFiltroEstado: setHookFiltro,
+  } = useCESecuencias()
+
+  // Sync filter state to hook
+  const handleFiltro = (estado) => {
+    setFiltroEstado(estado)
+    setHookFiltro(estado === 'todas' ? '' : estado)
+  }
 
   const handleNueva = async () => {
     try {
-      const nueva = await crearSecuencia({ nombre: 'Nueva Secuencia', estado: 'borrador' })
+      const nueva = await crear({ nombre: 'Nueva Secuencia', estado: 'borrador' })
       if (nueva?.id) {
         navigate(`/cold-email/secuencias/${nueva.id}`)
       }
@@ -77,7 +84,7 @@ export default function ColdEmailSecuencias() {
           <button
             key={e}
             className={`ce-pill ${filtroEstado === e ? 'ce-pill-active' : ''}`}
-            onClick={() => setFiltroEstado(e)}
+            onClick={() => handleFiltro(e)}
           >
             {e.charAt(0).toUpperCase() + e.slice(1)}
           </button>
