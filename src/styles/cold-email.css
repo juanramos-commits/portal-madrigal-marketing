@@ -137,6 +137,14 @@
   min-width: 0;
 }
 
+/* When content holds inbox layout, use flex to fill height and reduce padding */
+.ce-content:has(.ce-inbox-layout) {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  overflow: hidden;
+}
+
 /* ==========================================================================
    PAGE LAYOUT
    ========================================================================== */
@@ -1992,6 +2000,18 @@
 /* ==========================================================================
    INBOX LAYOUT  (ColdEmailRespuestas.jsx)
    ========================================================================== */
+/* Make the Respuestas page fill full height */
+.ce-page:has(.ce-inbox-layout) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: none;
+}
+
+.ce-page:has(.ce-inbox-layout) .ce-page-header {
+  margin-bottom: 12px;
+}
+
 .ce-inbox-layout {
   display: grid;
   grid-template-columns: 400px 1fr;
@@ -1999,8 +2019,8 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  min-height: 500px;
-  max-height: calc(100vh - 180px);
+  flex: 1;
+  min-height: 0;
 }
 
 /* Thread list (left) */
