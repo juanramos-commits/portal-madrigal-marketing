@@ -17,12 +17,12 @@ export function useVentasPermisos() {
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // Cargar todos los permisos ventas.*
+  // Cargar todos los permisos ventas.* y cold_email.*
   const cargarPermisos = useCallback(async () => {
     const { data } = await supabase
       .from('permisos')
       .select('id, codigo, modulo, nombre, descripcion, orden')
-      .like('codigo', 'ventas.%')
+      .or('codigo.like.ventas.%,codigo.like.cold_email.%')
       .order('orden')
     setPermisos(data || [])
     return data || []
