@@ -31,9 +31,10 @@
   background: var(--border-hover);
 }
 
-/* Remove parent .page padding when Cold Email shell is present */
+/* Remove parent .page padding and make it fill height when Cold Email shell is present */
 .page:has(.ce-shell) {
   padding: 0;
+  overflow: hidden;
 }
 
 /* ==========================================================================
@@ -41,7 +42,8 @@
    ========================================================================== */
 .ce-shell {
   display: flex;
-  height: calc(100vh - 64px);
+  height: 100%;
+  min-height: calc(100vh - 64px);
   overflow: hidden;
   background: var(--bg);
   color: var(--text);
@@ -844,7 +846,7 @@
 .ce-filters {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 20px;
   flex-wrap: wrap;
 }
@@ -853,7 +855,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 20px;
 }
 
 .ce-filter-pills-compact {
@@ -921,6 +922,7 @@
   cursor: pointer;
   transition: color var(--transition-fast), border-color var(--transition-fast);
   white-space: nowrap;
+  outline: none;
 }
 
 .ce-tab:hover {
@@ -1992,13 +1994,13 @@
    ========================================================================== */
 .ce-inbox-layout {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 400px 1fr;
   gap: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
   min-height: 500px;
-  max-height: calc(100vh - 240px);
+  max-height: calc(100vh - 180px);
 }
 
 /* Thread list (left) */
@@ -3170,11 +3172,10 @@
 }
 
 .ce-blacklist-form {
-  padding: 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  margin-bottom: 20px;
+  padding: 12px 0;
+  background: transparent;
+  border: none;
+  margin-bottom: 16px;
 }
 
 .ce-blacklist-add {
