@@ -58,6 +58,18 @@ const EmailAnalytics = lazy(() => import('./pages/ventas/EmailAnalytics'))
 const EmailSettings = lazy(() => import('./pages/ventas/EmailSettings'))
 const EmailPreferences = lazy(() => import('./components/ventas/email/PreferencesForm'))
 
+// Páginas de Cold Email
+const ColdEmail = lazy(() => import('./pages/ventas/ColdEmail'))
+const ColdEmailDashboard = lazy(() => import('./pages/ventas/ColdEmailDashboard'))
+const ColdEmailContactos = lazy(() => import('./pages/ventas/ColdEmailContactos'))
+const ColdEmailContactoDetalle = lazy(() => import('./pages/ventas/ColdEmailContactoDetalle'))
+const ColdEmailSecuencias = lazy(() => import('./pages/ventas/ColdEmailSecuencias'))
+const ColdEmailSecuenciaDetalle = lazy(() => import('./pages/ventas/ColdEmailSecuenciaDetalle'))
+const ColdEmailRespuestas = lazy(() => import('./pages/ventas/ColdEmailRespuestas'))
+const ColdEmailPlantillas = lazy(() => import('./pages/ventas/ColdEmailPlantillas'))
+const ColdEmailEnvios = lazy(() => import('./pages/ventas/ColdEmailEnvios'))
+const ColdEmailConfig = lazy(() => import('./pages/ventas/ColdEmailConfig'))
+
 // Páginas de Agentes IA
 const AgentesIA = lazy(() => import('./pages/ventas/AgentesIA'))
 const AgenteIADetalle = lazy(() => import('./pages/ventas/AgenteIADetalle'))
@@ -175,6 +187,17 @@ function App() {
             <Route path="ventas/email/automaciones" element={<PermissionRoute permiso="ventas.email.automaciones.ver"><EmailAutomations /></PermissionRoute>} />
             <Route path="ventas/email/analytics" element={<PermissionRoute permiso="ventas.email.analytics.ver"><EmailAnalytics /></PermissionRoute>} />
             <Route path="ventas/email/ajustes" element={<PermissionRoute permiso="ventas.email.ajustes.ver"><EmailSettings /></PermissionRoute>} />
+            <Route path="cold-email" element={<PermissionRoute permiso="cold_email.ver"><ColdEmail /></PermissionRoute>}>
+              <Route index element={<ColdEmailDashboard />} />
+              <Route path="contactos" element={<ColdEmailContactos />} />
+              <Route path="contactos/:id" element={<ColdEmailContactoDetalle />} />
+              <Route path="secuencias" element={<ColdEmailSecuencias />} />
+              <Route path="secuencias/:id" element={<ColdEmailSecuenciaDetalle />} />
+              <Route path="respuestas" element={<ColdEmailRespuestas />} />
+              <Route path="plantillas" element={<ColdEmailPlantillas />} />
+              <Route path="envios" element={<ColdEmailEnvios />} />
+              <Route path="config" element={<ColdEmailConfig />} />
+            </Route>
             <Route path="ventas/agentes-ia" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><AgentesIA /></PermissionRoute>} />
             <Route path="ventas/agentes-ia/supervisor" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><SupervisorIA /></PermissionRoute>} />
             <Route path="ventas/agentes-ia/:id" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><AgenteIADetalle /></PermissionRoute>} />
