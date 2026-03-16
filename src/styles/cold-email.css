@@ -3168,7 +3168,7 @@
    BLACKLIST  (BlacklistTabla.jsx, ColdEmailConfig.jsx)
    ========================================================================== */
 .ce-blacklist {
-  max-width: 900px;
+  max-width: 100%;
 }
 
 .ce-blacklist-form {
