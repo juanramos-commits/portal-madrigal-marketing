@@ -19,24 +19,26 @@ export default function ColdEmailSecuenciaDetalle() {
   const { tienePermiso } = useAuth()
 
   const {
-    secuencia,
-    pasos,
-    enrollments,
-    statsSecuencia,
-    loading,
-    error,
-    cargarSecuencia,
-    actualizarSecuencia,
-    agregarPaso,
-    actualizarPaso,
-    eliminarPaso,
-    reordenarPasos,
-    enrollarContactos,
-    actualizarEnrollment,
-  } = useCESecuencias({ secuenciaId: id })
+    actualizar,
+    cargarDetalle,
+    crearPaso,
+    actualizarPaso: actualizarPasoHook,
+    eliminarPaso: eliminarPasoHook,
+    enrollar,
+    pausarEnrollment,
+    reanudarEnrollment,
+    desenrollar,
+  } = useCESecuencias()
 
-  const { contactos: contactosList } = useCEContactos({ porPagina: 100 })
+  const { contactos: contactosList } = useCEContactos()
   const { cuentas } = useCECuentas()
+
+  const [secuencia, setSecuencia] = useState(null)
+  const [pasos, setPasos] = useState([])
+  const [enrollments, setEnrollments] = useState([])
+  const [statsSecuencia, setStatsSecuencia] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const [tab, setTab] = useState('Pasos')
   const [editingName, setEditingName] = useState(false)
@@ -50,9 +52,30 @@ export default function ColdEmailSecuenciaDetalle() {
   const [configForm, setConfigForm] = useState(null)
   const [guardando, setGuardando] = useState(false)
 
+  const loadDetail = useCallback(async () => {
+    if (!id) return
+    setLoading(true)
+    setError(null)
+    try {
+      const data = await cargarDetalle(id)
+      setSecuencia(data)
+      setPasos(data.ce_pasos || [])
+      setEnrollments((data.ce_enrollments || []).map(en => ({
+        ...en,
+        contacto_nombre: en.ce_contactos?.nombre,
+        contacto_email: en.ce_contactos?.email,
+      })))
+      setStatsSecuencia(data.stats || null)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [id, cargarDetalle])
+
   useEffect(() => {
-    if (id) cargarSecuencia(id)
-  }, [id, cargarSecuencia])
+    loadDetail()
+  }, [loadDetail])
 
   useEffect(() => {
     if (secuencia) {
@@ -71,7 +94,8 @@ export default function ColdEmailSecuenciaDetalle() {
 
   const handleSaveName = async () => {
     try {
-      await actualizarSecuencia(id, { nombre })
+      await actualizar(id, { nombre })
+      setSecuencia(prev => ({ ...prev, nombre }))
       setEditingName(false)
       addToast('Nombre actualizado', 'success')
     } catch (err) {
@@ -81,7 +105,8 @@ export default function ColdEmailSecuenciaDetalle() {
 
   const handleToggleEstado = async (nuevoEstado) => {
     try {
-      await actualizarSecuencia(id, { estado: nuevoEstado })
+      await actualizar(id, { estado: nuevoEstado })
+      setSecuencia(prev => ({ ...prev, estado: nuevoEstado }))
       addToast(`Secuencia ${nuevoEstado}`, 'success')
     } catch (err) {
       addToast(`Error: ${err.message}`, 'error')
@@ -90,12 +115,13 @@ export default function ColdEmailSecuenciaDetalle() {
 
   const handleAddStep = async () => {
     try {
-      await agregarPaso(id, {
-        asunto: 'Nuevo paso',
-        cuerpo: '',
+      const paso = await crearPaso(id, {
+        asunto_a: 'Nuevo paso',
+        cuerpo_a: '',
         delay_horas: 24,
         orden: (pasos?.length || 0) + 1,
       })
+      setPasos(prev => [...prev, paso])
       addToast('Paso agregado', 'success')
     } catch (err) {
       addToast(`Error: ${err.message}`, 'error')
@@ -106,7 +132,12 @@ export default function ColdEmailSecuenciaDetalle() {
     if (!editingStep) return
     setGuardando(true)
     try {
-      await actualizarPaso(editingStep, stepForm)
+      const updated = await actualizarPasoHook(editingStep, {
+        asunto_a: stepForm.asunto,
+        cuerpo_a: stepForm.cuerpo,
+        delay_horas: stepForm.delay_horas,
+      })
+      setPasos(prev => prev.map(p => p.id === editingStep ? updated : p))
       setEditingStep(null)
       addToast('Paso guardado', 'success')
     } catch (err) {
@@ -119,7 +150,8 @@ export default function ColdEmailSecuenciaDetalle() {
   const handleDeleteStep = async (pasoId) => {
     if (!window.confirm('Eliminar este paso?')) return
     try {
-      await eliminarPaso(pasoId)
+      await eliminarPasoHook(pasoId)
+      setPasos(prev => prev.filter(p => p.id !== pasoId))
       addToast('Paso eliminado', 'success')
     } catch (err) {
       addToast(`Error: ${err.message}`, 'error')
@@ -130,10 +162,11 @@ export default function ColdEmailSecuenciaDetalle() {
     if (selectedContactIds.length === 0) return
     setGuardando(true)
     try {
-      await enrollarContactos(id, selectedContactIds)
+      await enrollar(id, selectedContactIds)
       addToast(`${selectedContactIds.length} contactos enrollados`, 'success')
       setShowEnrollModal(false)
       setSelectedContactIds([])
+      await loadDetail()
     } catch (err) {
       addToast(`Error: ${err.message}`, 'error')
     } finally {
@@ -145,7 +178,7 @@ export default function ColdEmailSecuenciaDetalle() {
     if (!configForm) return
     setGuardando(true)
     try {
-      await actualizarSecuencia(id, configForm)
+      await actualizar(id, configForm)
       addToast('Configuracion guardada', 'success')
     } catch (err) {
       addToast(`Error: ${err.message}`, 'error')
@@ -332,7 +365,7 @@ export default function ColdEmailSecuenciaDetalle() {
                             onChange={(e) => setStepForm({ ...stepForm, cuerpo: e.target.value })}
                           />
                         </div>
-                        {paso.ab_variante_b && (
+                        {paso.asunto_b && (
                           <div className="ce-step-ab">
                             <span className="ce-badge ce-badge-info">A/B Testing activo</span>
                           </div>
@@ -353,17 +386,17 @@ export default function ColdEmailSecuenciaDetalle() {
                           if (!tienePermiso('cold_email.secuencias.editar')) return
                           setEditingStep(paso.id)
                           setStepForm({
-                            asunto: paso.asunto || '',
-                            cuerpo: paso.cuerpo || '',
+                            asunto: paso.asunto_a || '',
+                            cuerpo: paso.cuerpo_a || '',
                             delay_horas: paso.delay_horas || 0,
                           })
                         }}
                       >
-                        <div className="ce-step-asunto">{paso.asunto || '(sin asunto)'}</div>
+                        <div className="ce-step-asunto">{paso.asunto_a || '(sin asunto)'}</div>
                         <div className="ce-step-cuerpo-preview">
-                          {(paso.cuerpo || '').slice(0, 120)}{(paso.cuerpo || '').length > 120 ? '...' : ''}
+                          {(paso.cuerpo_a || '').slice(0, 120)}{(paso.cuerpo_a || '').length > 120 ? '...' : ''}
                         </div>
-                        {paso.ab_variante_b && (
+                        {paso.asunto_b && (
                           <span className="ce-badge ce-badge-info ce-badge-sm">A/B</span>
                         )}
                       </div>
@@ -430,14 +463,14 @@ export default function ColdEmailSecuenciaDetalle() {
                         </td>
                         <td>{en.paso_actual || '---'}</td>
                         <td className="ce-text-muted">
-                          {en.proximo_envio ? new Date(en.proximo_envio).toLocaleString('es-ES') : '---'}
+                          {en.proximo_envio_at ? new Date(en.proximo_envio_at).toLocaleString('es-ES') : '---'}
                         </td>
                         <td>
                           <div className="ce-action-btns">
                             {en.estado === 'activo' && (
                               <button
                                 className="ce-btn ce-btn-sm ce-btn-warning"
-                                onClick={() => actualizarEnrollment(en.id, { estado: 'pausado' })}
+                                onClick={async () => { await pausarEnrollment(en.id); await loadDetail() }}
                               >
                                 Pausar
                               </button>
@@ -445,16 +478,17 @@ export default function ColdEmailSecuenciaDetalle() {
                             {en.estado === 'pausado' && (
                               <button
                                 className="ce-btn ce-btn-sm ce-btn-success"
-                                onClick={() => actualizarEnrollment(en.id, { estado: 'activo' })}
+                                onClick={async () => { await reanudarEnrollment(en.id); await loadDetail() }}
                               >
                                 Reanudar
                               </button>
                             )}
                             <button
                               className="ce-btn ce-btn-sm ce-btn-danger"
-                              onClick={() => {
+                              onClick={async () => {
                                 if (window.confirm('Remover este contacto del enrollment?')) {
-                                  actualizarEnrollment(en.id, { estado: 'removido' })
+                                  await desenrollar(en.id)
+                                  await loadDetail()
                                 }
                               }}
                             >
@@ -680,10 +714,10 @@ export default function ColdEmailSecuenciaDetalle() {
                     </div>
                     <div className="ce-preview-email">
                       <div className="ce-preview-asunto">
-                        <strong>Asunto:</strong> {previewContact ? replaceVars(paso.asunto, previewContact) : paso.asunto}
+                        <strong>Asunto:</strong> {previewContact ? replaceVars(paso.asunto_a, previewContact) : paso.asunto_a}
                       </div>
                       <div className="ce-preview-cuerpo">
-                        {previewContact ? replaceVars(paso.cuerpo, previewContact) : paso.cuerpo}
+                        {previewContact ? replaceVars(paso.cuerpo_a, previewContact) : paso.cuerpo_a}
                       </div>
                     </div>
                   </div>
