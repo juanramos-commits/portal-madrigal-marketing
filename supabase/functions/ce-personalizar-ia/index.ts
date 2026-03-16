@@ -68,10 +68,10 @@ Deno.serve(async (req) => {
 
     const contacto = enrollment.ce_contactos as any;
 
-    // ── 3-4. Build prompt and call OpenAI ────────────────────────────
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiKey) {
-      return jsonResponse({ error: "OPENAI_API_KEY no configurada" }, 500);
+    // ── 3-4. Build prompt and call Claude ─────────────────────────────
+    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!anthropicKey) {
+      return jsonResponse({ error: "ANTHROPIC_API_KEY no configurada" }, 500);
     }
 
     const systemPrompt = `You are an expert cold email copywriter. Rewrite the following cold email to be personally relevant to the recipient.
@@ -118,18 +118,19 @@ RECIPIENT INFO:
 ${contactInfo}${customFieldsInfo}`;
 
     const aiResponse = await fetch(
-      "https://api.openai.com/v1/chat/completions",
+      "https://api.anthropic.com/v1/messages",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${openaiKey}`,
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          temperature: 0.7,
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 1024,
+          system: systemPrompt,
           messages: [
-            { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
         }),
@@ -139,13 +140,13 @@ ${contactInfo}${customFieldsInfo}`;
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
       return jsonResponse(
-        { error: "OpenAI API error", detail: errText },
+        { error: "Anthropic API error", detail: errText },
         502,
       );
     }
 
     const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content ?? "";
+    const rawContent = aiData.content?.[0]?.text ?? "";
 
     // ── 5. Parse response ────────────────────────────────────────────
     let parsed: { asunto: string; cuerpo: string };

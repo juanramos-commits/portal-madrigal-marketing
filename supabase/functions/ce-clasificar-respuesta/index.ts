@@ -101,24 +101,25 @@ Email: ${contacto.email}
 THEIR REPLY:
 ${replyCuerpo}`;
 
-    const openaiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiKey) {
-      return jsonResponse({ error: "OPENAI_API_KEY no configurada" }, 500);
+    const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!anthropicKey) {
+      return jsonResponse({ error: "ANTHROPIC_API_KEY no configurada" }, 500);
     }
 
     const aiResponse = await fetch(
-      "https://api.openai.com/v1/chat/completions",
+      "https://api.anthropic.com/v1/messages",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${openaiKey}`,
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          temperature: 0.1,
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 256,
+          system: systemPrompt,
           messages: [
-            { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
         }),
@@ -128,13 +129,13 @@ ${replyCuerpo}`;
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
       return jsonResponse(
-        { error: "OpenAI API error", detail: errText },
+        { error: "Anthropic API error", detail: errText },
         502,
       );
     }
 
     const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content ?? "";
+    const rawContent = aiData.content?.[0]?.text ?? "";
 
     // ── 4. Parse AI response ─────────────────────────────────────────
     let parsed: { clasificacion: string; confianza: number; razon: string };

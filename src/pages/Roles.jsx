@@ -66,6 +66,7 @@ const MODULOS = {
   paquetes: { nombre: 'Paquetes', icono: '📦' },
   notas: { nombre: 'Notas', icono: '📝' },
   historial: { nombre: 'Historial', icono: '🕐' },
+  cold_email: { nombre: 'Cold Email', icono: '📨' },
   ventas_agentes_ia: { nombre: 'Agentes IA', icono: '🤖' },
 }
 
