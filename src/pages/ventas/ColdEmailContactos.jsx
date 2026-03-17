@@ -256,12 +256,31 @@ export default function ColdEmailContactos() {
               <p className="ce-text-muted">
                 El CSV debe contener columnas: email (requerido), nombre, empresa, cargo, telefono, etiquetas.
               </p>
-              <input
-                type="file"
-                accept=".csv"
-                className="ce-file-input"
-                onChange={(e) => setCsvFile(e.target.files[0] || null)}
-              />
+              <div className="ce-csv-upload">
+                <input
+                  type="file"
+                  accept=".csv"
+                  className="ce-file-input"
+                  onChange={(e) => setCsvFile(e.target.files[0] || null)}
+                />
+                <button
+                  type="button"
+                  className="ce-btn--link"
+                  onClick={() => {
+                    const header = 'email,nombre,empresa,cargo,telefono'
+                    const example = 'juan@ejemplo.com,Juan Garcia,Acme Corp,Director,+34600000000'
+                    const blob = new Blob([header + '\n' + example + '\n'], { type: 'text/csv' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = 'plantilla_contactos.csv'
+                    a.click()
+                    URL.revokeObjectURL(url)
+                  }}
+                >
+                  Descargar plantilla CSV
+                </button>
+              </div>
             </div>
             <div className="ce-modal-footer">
               <button className="ce-btn ce-btn-secondary" onClick={() => setShowImportCSV(false)}>
