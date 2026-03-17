@@ -63,6 +63,8 @@ export function replaceVariables(
   if (contacto.empresa != null) values.empresa = String(contacto.empresa);
   if (contacto.cargo != null) values.cargo = String(contacto.cargo);
   if (contacto.email != null) values.email = String(contacto.email);
+  if (contacto.categoria != null) values.categoria = String(contacto.categoria);
+  if (contacto.zona != null) values.zona = String(contacto.zona);
 
   // Derived: dominio_empresa.
   if (contacto.email) {

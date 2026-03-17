@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       .select(`
         id, contacto_id, secuencia_id, paso_actual, estado, cuenta_id, metadata,
         contacto:ce_contactos!contacto_id (
-          id, email, nombre, empresa, cargo, telefono, etiquetas, campos_custom, estado
+          id, email, nombre, empresa, cargo, telefono, categoria, zona, etiquetas, campos_custom, estado
         ),
         secuencia:ce_secuencias!secuencia_id (
           id, nombre, estado, timezone, dias_envio, hora_inicio, hora_fin, ab_testing

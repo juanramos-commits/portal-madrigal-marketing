@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useCESecuencias } from '../../hooks/useCESecuencias'
 import { useCEContactos } from '../../hooks/useCEContactos'
 import { useCECuentas } from '../../hooks/useCECuentas'
+import { useCEPlantillas } from '../../hooks/useCEPlantillas'
 import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -33,6 +34,7 @@ export default function ColdEmailSecuenciaDetalle() {
 
   const { contactos: contactosList } = useCEContactos()
   const { cuentas } = useCECuentas()
+  const { plantillas } = useCEPlantillas()
 
   const [secuencia, setSecuencia] = useState(null)
   const [pasos, setPasos] = useState([])
@@ -214,6 +216,8 @@ export default function ColdEmailSecuenciaDetalle() {
       .replace(/\{\{empresa\}\}/g, contact.empresa || '')
       .replace(/\{\{cargo\}\}/g, contact.cargo || '')
       .replace(/\{\{email\}\}/g, contact.email || '')
+      .replace(/\{\{categoria\}\}/g, contact.categoria || '')
+      .replace(/\{\{zona\}\}/g, contact.zona || '')
   }, [])
 
   const previewContact = contactosList?.find((c) => c.id === previewContactId) || null
@@ -349,6 +353,28 @@ export default function ColdEmailSecuenciaDetalle() {
                             onChange={(e) => setStepForm({ ...stepForm, delay_dias: parseInt(e.target.value) || 0 })}
                           />
                         </div>
+                        {plantillas?.length > 0 && (
+                          <div className="ce-form-field">
+                            <label className="ce-label">Usar plantilla</label>
+                            <select
+                              className="ce-select"
+                              value=""
+                              onChange={(e) => {
+                                const pl = plantillas.find((p) => p.id === e.target.value)
+                                if (pl) {
+                                  setStepForm({ ...stepForm, asunto: pl.asunto || '', cuerpo: pl.cuerpo || '' })
+                                }
+                              }}
+                            >
+                              <option value="">-- Seleccionar plantilla --</option>
+                              {plantillas.map((pl) => (
+                                <option key={pl.id} value={pl.id}>
+                                  {pl.nombre} {pl.categoria ? `(${pl.categoria})` : ''}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
                         <div className="ce-form-field">
                           <label className="ce-label">Asunto</label>
                           <input

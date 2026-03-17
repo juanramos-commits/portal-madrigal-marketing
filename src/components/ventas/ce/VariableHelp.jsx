@@ -6,6 +6,8 @@ const VARIABLES = [
   { key: 'cargo', label: '{{cargo}}' },
   { key: 'email', label: '{{email}}' },
   { key: 'dominio_empresa', label: '{{dominio_empresa}}' },
+  { key: 'categoria', label: '{{categoria}}' },
+  { key: 'zona', label: '{{zona}}' },
 ];
 
 function VariableHelp({ onInsert }) {

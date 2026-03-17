@@ -34,6 +34,8 @@ export default function ColdEmailContactoDetalle() {
         empresa: data.empresa || '',
         cargo: data.cargo || '',
         telefono: data.telefono || '',
+        categoria: data.categoria || '',
+        zona: data.zona || '',
         etiquetas: (data.etiquetas || []).join(', '),
         campos_custom: data.campos_custom || {},
       })
@@ -59,6 +61,8 @@ export default function ColdEmailContactoDetalle() {
         empresa: editData.empresa,
         cargo: editData.cargo,
         telefono: editData.telefono,
+        categoria: editData.categoria,
+        zona: editData.zona,
         etiquetas: editData.etiquetas
           .split(',')
           .map((t) => t.trim())
@@ -208,6 +212,24 @@ export default function ColdEmailContactoDetalle() {
                   className="ce-input"
                   value={editData.telefono}
                   onChange={(e) => setEditData({ ...editData, telefono: e.target.value })}
+                />
+              </div>
+              <div className="ce-form-field">
+                <label className="ce-label">Categoria</label>
+                <input
+                  type="text"
+                  className="ce-input"
+                  value={editData.categoria}
+                  onChange={(e) => setEditData({ ...editData, categoria: e.target.value })}
+                />
+              </div>
+              <div className="ce-form-field">
+                <label className="ce-label">Zona</label>
+                <input
+                  type="text"
+                  className="ce-input"
+                  value={editData.zona}
+                  onChange={(e) => setEditData({ ...editData, zona: e.target.value })}
                 />
               </div>
               <div className="ce-form-field">
