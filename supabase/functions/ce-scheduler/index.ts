@@ -265,10 +265,10 @@ async function pickAccount(
 
   const cuentaIds = cuentasLink.map((c: any) => c.cuenta_id)
 
-  // Get account details with daily limits
+  // Get account details
   const { data: cuentas, error: cErr } = await supabase
     .from('ce_cuentas')
-    .select('id, estado, ce_enviados_hoy, ce_limite_efectivo')
+    .select('id, estado')
     .in('id', cuentaIds)
     .in('estado', ['ramping', 'resting'])
 
@@ -276,17 +276,26 @@ async function pickAccount(
     return null
   }
 
-  // Filter accounts that haven't reached their daily limit
-  const available = cuentas.filter(
-    (c: any) => (c.ce_enviados_hoy ?? 0) < (c.ce_limite_efectivo ?? 0),
-  )
+  // Check limits via SQL functions for each account
+  const available: { id: string; enviados: number }[] = []
+  for (const cuenta of cuentas) {
+    const [{ data: limite }, { data: enviados }] = await Promise.all([
+      supabase.rpc('ce_limite_efectivo', { p_cuenta_id: cuenta.id }),
+      supabase.rpc('ce_enviados_hoy', { p_cuenta_id: cuenta.id }),
+    ])
+    const limiteVal = limite ?? 0
+    const enviadosVal = enviados ?? 0
+    if (enviadosVal < limiteVal) {
+      available.push({ id: cuenta.id, enviados: enviadosVal })
+    }
+  }
 
   if (available.length === 0) {
     return null
   }
 
   // Pick the one with fewest sends today (spread the load)
-  available.sort((a: any, b: any) => (a.ce_enviados_hoy ?? 0) - (b.ce_enviados_hoy ?? 0))
+  available.sort((a, b) => a.enviados - b.enviados)
   const picked = available[0]
 
   // Save cuenta_id to enrollment for threading consistency
@@ -307,14 +316,19 @@ async function accountCanSend(
 ): Promise<boolean> {
   const { data: cuenta, error } = await supabase
     .from('ce_cuentas')
-    .select('estado, ce_enviados_hoy, ce_limite_efectivo')
+    .select('estado')
     .eq('id', cuentaId)
     .maybeSingle()
 
   if (error || !cuenta) return false
-
   if (!['ramping', 'resting'].includes(cuenta.estado)) return false
-  if ((cuenta.ce_enviados_hoy ?? 0) >= (cuenta.ce_limite_efectivo ?? 0)) return false
+
+  const [{ data: limite }, { data: enviados }] = await Promise.all([
+    supabase.rpc('ce_limite_efectivo', { p_cuenta_id: cuentaId }),
+    supabase.rpc('ce_enviados_hoy', { p_cuenta_id: cuentaId }),
+  ])
+
+  if ((enviados ?? 0) >= (limite ?? 0)) return false
 
   return true
 }
