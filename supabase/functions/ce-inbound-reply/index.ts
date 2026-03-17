@@ -11,6 +11,36 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// ── Webhook signature verification ──────────────────────────────────────────
+
+async function verifyResendSignature(
+  body: string,
+  signatureHeader: string | null,
+  secret: string,
+): Promise<boolean> {
+  if (!secret || !signatureHeader) return true // Skip if not configured
+
+  try {
+    const encoder = new TextEncoder()
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign'],
+    )
+    const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(body))
+    const expected = Array.from(new Uint8Array(signature))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+
+    return signatureHeader === expected
+  } catch (err) {
+    console.warn('Signature verification failed:', err)
+    return false
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'content-type, authorization',
@@ -113,12 +143,14 @@ Deno.serve(async (req) => {
     const bodyText = await req.text()
 
     // ── Webhook signature verification ─────────────────────────────
-    const webhookSecret = Deno.env.get('RESEND_WEBHOOK_SECRET')
+    const webhookSecret = Deno.env.get('RESEND_WEBHOOK_SECRET') ?? ''
+    const signatureHeader = req.headers.get('resend-signature') ?? req.headers.get('svix-signature')
+
     if (webhookSecret) {
-      const sig = req.headers.get('resend-signature') || req.headers.get('svix-signature')
-      if (!sig) {
-        console.warn('ce-inbound-reply: missing signature header')
-        return jsonResponse({ ok: true, skipped: true, reason: 'missing signature' })
+      const valid = await verifyResendSignature(bodyText, signatureHeader, webhookSecret)
+      if (!valid) {
+        console.warn('ce-inbound-reply: invalid signature')
+        return jsonResponse({ ok: true, skipped: true, reason: 'invalid signature' })
       }
     }
 

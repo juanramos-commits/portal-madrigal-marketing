@@ -65,7 +65,7 @@ export function useCERespuestas() {
         .from('ce_respuestas')
         .select(`
           *,
-          contacto:ce_contactos(nombre, email, empresa, telefono),
+          contacto:ce_contactos(nombre, email, empresa, telefono, cargo, categoria, zona),
           envio:ce_envios(*, paso:ce_pasos(asunto_a, asunto_b))
         `)
         .eq('id', id)

@@ -13,7 +13,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { sendEmail, generateMessageId } from '../_shared/resend-client.ts'
 import { checkAccountLimit, checkDomainLimit, isPausedGlobally } from '../_shared/rate-limiter.ts'
 import { isBlacklisted } from '../_shared/blacklist-checker.ts'
-import { replaceVariables } from '../_shared/variable-replacer.ts'
+import { replaceVariables, stripLinks } from '../_shared/variable-replacer.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -148,9 +148,9 @@ Deno.serve(async (req) => {
     const rawAsunto = variante === 'b' ? paso.asunto_b : paso.asunto_a
     const rawCuerpo = variante === 'b' ? paso.cuerpo_b : paso.cuerpo_a
 
-    // ── 11. Replace variables ────────────────────────────────────────
-    const asunto = replaceVariables(rawAsunto, contacto)
-    const cuerpo = replaceVariables(rawCuerpo, contacto)
+    // ── 11. Replace variables & strip links (anti-spam) ──────────────
+    const asunto = stripLinks(replaceVariables(rawAsunto, contacto))
+    const cuerpo = stripLinks(replaceVariables(rawCuerpo, contacto))
 
     // ── 12. Build threading headers ──────────────────────────────────
     let threadKey: string

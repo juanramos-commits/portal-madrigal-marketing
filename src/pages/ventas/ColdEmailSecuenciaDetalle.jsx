@@ -393,6 +393,9 @@ export default function ColdEmailSecuenciaDetalle() {
                             value={stepForm.cuerpo}
                             onChange={(e) => setStepForm({ ...stepForm, cuerpo: e.target.value })}
                           />
+                          {/(?:https?:\/\/|www\.)[^\s]+/i.test(stepForm.cuerpo || '') && (
+                            <div className="ce-warning-inline">Los enlaces se eliminan automaticamente al enviar para evitar filtros de spam.</div>
+                          )}
                         </div>
                         {paso.asunto_b && (
                           <div className="ce-step-ab">

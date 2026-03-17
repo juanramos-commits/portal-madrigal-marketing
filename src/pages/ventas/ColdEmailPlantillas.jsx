@@ -237,6 +237,9 @@ export default function ColdEmailPlantillas() {
                   onChange={(e) => setForm({ ...form, cuerpo: e.target.value })}
                   placeholder="Escribe el contenido del email..."
                 />
+                {/(?:https?:\/\/|www\.)[^\s]+/i.test(form.cuerpo || '') && (
+                  <div className="ce-warning-inline">Los enlaces se eliminan automaticamente al enviar para evitar filtros de spam.</div>
+                )}
               </div>
 
               {/* Variables helper */}

@@ -78,6 +78,23 @@ export default function ColdEmailRespuestas() {
     )
   }
 
+  // Replace template variables with contact data for display
+  const replaceVars = (text) => {
+    if (!text || !respuestaActiva?.contacto) return text
+    const c = respuestaActiva.contacto
+    const vars = {
+      nombre: c.nombre || '',
+      empresa: c.empresa || '',
+      cargo: c.cargo || '',
+      email: c.email || '',
+      telefono: c.telefono || '',
+      categoria: c.categoria || '',
+      zona: c.zona || '',
+      dominio_empresa: c.email ? c.email.split('@')[1] : '',
+    }
+    return text.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`)
+  }
+
   // Build thread messages from respuestaActiva
   const threadMessages = []
   if (respuestaActiva) {
@@ -87,8 +104,8 @@ export default function ColdEmailRespuestas() {
         threadMessages.push({
           id: 'envio-' + e.id,
           direccion: 'outbound',
-          asunto: e.paso?.asunto_a || null,
-          cuerpo: e.paso?.cuerpo_a || 'Email enviado',
+          asunto: replaceVars(e.paso?.asunto_a) || null,
+          cuerpo: replaceVars(e.paso?.cuerpo_a) || 'Email enviado',
           created_at: e.enviado_at || e.created_at,
         })
       }

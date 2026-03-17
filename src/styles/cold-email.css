@@ -583,6 +583,16 @@
   box-shadow: var(--focus-ring);
 }
 
+.ce-warning-inline {
+  margin-top: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 6px;
+}
+
 .ce-search-input {
   width: 100%;
   max-width: 400px;

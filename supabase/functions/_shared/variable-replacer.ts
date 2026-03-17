@@ -8,6 +8,28 @@
 /** Regex that matches {{variableName}} placeholders. */
 const VARIABLE_PATTERN = /\{\{(\w+)\}\}/g;
 
+/** Regex that matches URLs (http/https/www). */
+const URL_PATTERN = /(?:https?:\/\/|www\.)[^\s<>"\)]+/gi;
+
+/**
+ * Remove all hyperlinks/URLs from text to avoid spam filters.
+ * Replaces URLs with empty string and cleans up extra whitespace.
+ */
+export function stripLinks(text: string): string {
+  return text
+    .replace(URL_PATTERN, "")
+    .replace(/  +/g, " ")
+    .replace(/\n /g, "\n")
+    .trim();
+}
+
+/**
+ * Check if text contains any URLs/hyperlinks.
+ */
+export function containsLinks(text: string): boolean {
+  return URL_PATTERN.test(text);
+}
+
 /**
  * Extract the "company name" from an email domain.
  *
