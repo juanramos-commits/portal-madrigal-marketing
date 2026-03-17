@@ -234,33 +234,30 @@ ${replyCuerpo}`;
           .limit(1)
           .single();
 
-        // Fallback: query pipeline first, then etapa.
-        let etapaId = etapa?.id;
-        if (!etapaId) {
-          const { data: pipeline } = await supabase
-            .from("ventas_pipelines")
+        // Get first pipeline and its first etapa
+        const { data: pipeline } = await supabase
+          .from("ventas_pipelines")
+          .select("id")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .single();
+
+        if (pipeline) {
+          const { data: primeraEtapa } = await supabase
+            .from("ventas_etapas")
             .select("id")
-            .order("created_at", { ascending: true })
+            .eq("pipeline_id", pipeline.id)
+            .order("orden", { ascending: true })
             .limit(1)
             .single();
 
-          if (pipeline) {
-            const { data: etapaFallback } = await supabase
-              .from("ventas_etapas")
-              .select("id")
-              .eq("pipeline_id", pipeline.id)
-              .order("orden", { ascending: true })
-              .limit(1)
-              .single();
-            etapaId = etapaFallback?.id;
+          if (primeraEtapa) {
+            await supabase.from("ventas_lead_pipeline").insert({
+              lead_id: crmLeadId,
+              pipeline_id: pipeline.id,
+              etapa_id: primeraEtapa.id,
+            });
           }
-        }
-
-        if (etapaId) {
-          await supabase.from("ventas_lead_pipeline").insert({
-            lead_id: crmLeadId,
-            etapa_id: etapaId,
-          });
         }
 
         // Link lead back to respuesta and contacto.
