@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
 
       // Load ramping accounts and advance their warmup day.
       const { data: accounts, error: accErr } = await supabase
-        .from("ce_cuentas_email")
+        .from("ce_cuentas")
         .select("id, warmup_dia_actual, warmup_max")
         .eq("estado", "ramping");
 
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
           }
 
           const { error: updErr } = await supabase
-            .from("ce_cuentas_email")
+            .from("ce_cuentas")
             .update(update)
             .eq("id", acc.id);
 
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
 
       // Get active sending accounts.
       const { data: activeAccounts } = await supabase
-        .from("ce_cuentas_email")
+        .from("ce_cuentas")
         .select("id")
         .in("estado", ["ramping", "resting"]);
 
@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
             complaintRate > complaintThreshold
           ) {
             const { error: pauseErr } = await supabase
-              .from("ce_cuentas_email")
+              .from("ce_cuentas")
               .update({ estado: "paused" })
               .eq("id", acc.id);
 

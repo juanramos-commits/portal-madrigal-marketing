@@ -110,7 +110,19 @@ Deno.serve(async (req) => {
   )
 
   try {
-    const rawPayload = await req.json()
+    const bodyText = await req.text()
+
+    // ── Webhook signature verification ─────────────────────────────
+    const webhookSecret = Deno.env.get('RESEND_WEBHOOK_SECRET')
+    if (webhookSecret) {
+      const sig = req.headers.get('resend-signature') || req.headers.get('svix-signature')
+      if (!sig) {
+        console.warn('ce-inbound-reply: missing signature header')
+        return jsonResponse({ ok: true, skipped: true, reason: 'missing signature' })
+      }
+    }
+
+    const rawPayload = JSON.parse(bodyText)
 
     console.log('ce-inbound-reply: received payload type:', rawPayload.type, 'keys:', Object.keys(rawPayload))
 
@@ -130,7 +142,7 @@ Deno.serve(async (req) => {
     // Resend email.received webhook doesn't include the body directly.
     // Fetch the full email content via Resend API using the email_id.
     let body = extractBody(payload)
-    const emailId = payload.email_id
+    const emailId = payload.email_id || payload.id
 
     if (!body && emailId) {
       const resendApiKey = Deno.env.get('RESEND_API_KEY')

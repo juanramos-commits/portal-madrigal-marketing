@@ -196,6 +196,22 @@ ${replyCuerpo}`;
       .update(enrollmentUpdate)
       .eq("id", respuesta.enrollment_id);
 
+    // ── 6b. If "baja" → mark contact and add to blacklist ──────────
+    if (clasificacion === "baja") {
+      await supabase
+        .from("ce_contactos")
+        .update({ estado: "baja" })
+        .eq("id", contacto.id);
+
+      await supabase.from("ce_blacklist").insert({
+        tipo: "email",
+        valor: contacto.email.toLowerCase(),
+        motivo: `Solicitud de baja: ${parsed.razon || "clasificado por IA"}`,
+      }).then(() => {}).catch(() => {
+        // Ignore duplicate – already blacklisted
+      });
+    }
+
     // ── 7. If interested → create CRM lead ───────────────────────────
     let crmLeadId: string | null = null;
 
