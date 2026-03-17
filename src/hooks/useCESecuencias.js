@@ -216,14 +216,22 @@ export function useCESecuencias() {
   const enrollar = useCallback(async (secuenciaId, contactoIds) => {
     setError(null)
     try {
-      // Get first step to calculate proximo_envio_at
-      const { data: pasos, error: pasosErr } = await supabase
-        .from('ce_pasos')
-        .select('delay_dias')
-        .eq('secuencia_id', secuenciaId)
-        .order('orden', { ascending: true })
-        .limit(1)
+      // Get first step delay + assigned account
+      const [{ data: pasos, error: pasosErr }, { data: cuentasRel, error: cuentasErr }] = await Promise.all([
+        supabase
+          .from('ce_pasos')
+          .select('delay_dias')
+          .eq('secuencia_id', secuenciaId)
+          .order('orden', { ascending: true })
+          .limit(1),
+        supabase
+          .from('ce_secuencias_cuentas')
+          .select('cuenta_id')
+          .eq('secuencia_id', secuenciaId)
+          .limit(1),
+      ])
       if (pasosErr) throw pasosErr
+      if (cuentasErr) throw cuentasErr
 
       let proximoEnvio = null
       if (pasos?.length > 0) {
@@ -231,11 +239,14 @@ export function useCESecuencias() {
         proximoEnvio = new Date(Date.now() + delayMs).toISOString()
       }
 
+      const cuentaId = cuentasRel?.[0]?.cuenta_id || null
+
       const rows = contactoIds.map(contactoId => ({
         secuencia_id: secuenciaId,
         contacto_id: contactoId,
         estado: 'activo',
         proximo_envio_at: proximoEnvio,
+        cuenta_id: cuentaId,
       }))
       const { data, error: err } = await supabase
         .from('ce_enrollments')
