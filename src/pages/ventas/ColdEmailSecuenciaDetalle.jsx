@@ -358,7 +358,7 @@ export default function ColdEmailSecuenciaDetalle() {
                             <label className="ce-label">Usar plantilla</label>
                             <select
                               className="ce-select"
-                              value=""
+                              defaultValue=""
                               onChange={(e) => {
                                 const pl = plantillas.find((p) => p.id === e.target.value)
                                 if (pl) {
