@@ -5,6 +5,7 @@ const VARIABLES = [
   { key: 'empresa', label: '{{empresa}}' },
   { key: 'cargo', label: '{{cargo}}' },
   { key: 'email', label: '{{email}}' },
+  { key: 'telefono', label: '{{telefono}}' },
   { key: 'dominio_empresa', label: '{{dominio_empresa}}' },
   { key: 'categoria', label: '{{categoria}}' },
   { key: 'zona', label: '{{zona}}' },

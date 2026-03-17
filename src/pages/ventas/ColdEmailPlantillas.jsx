@@ -8,8 +8,10 @@ const VARIABLES = [
   { key: '{{empresa}}', desc: 'Empresa del contacto' },
   { key: '{{cargo}}', desc: 'Cargo del contacto' },
   { key: '{{email}}', desc: 'Email del contacto' },
-  { key: '{{dominio}}', desc: 'Dominio de la empresa' },
-  { key: '{{ciudad}}', desc: 'Ciudad' },
+  { key: '{{telefono}}', desc: 'Telefono del contacto' },
+  { key: '{{dominio_empresa}}', desc: 'Nombre derivado del dominio del email' },
+  { key: '{{categoria}}', desc: 'Categoria del contacto' },
+  { key: '{{zona}}', desc: 'Zona del contacto' },
 ]
 
 const CATEGORIAS = ['general', 'primer_contacto', 'seguimiento', 're_engagement', 'referencia']
