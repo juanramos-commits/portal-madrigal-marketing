@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 
-const KNOWN_COLUMNS = ['email', 'nombre', 'empresa', 'cargo', 'telefono'];
+const KNOWN_COLUMNS = ['email', 'nombre', 'empresa', 'cargo', 'telefono', 'categoria', 'zona'];
 
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
@@ -67,7 +67,7 @@ function applyMapping(rows, mapping) {
 
 function downloadTemplate() {
   const header = KNOWN_COLUMNS.join(',');
-  const example = 'juan@ejemplo.com,Juan Garcia,Acme Corp,Director,+34600000000';
+  const example = 'juan@ejemplo.com,Juan Garcia,Acme Corp,Director,+34600000000,Fotografo,Madrid';
   const blob = new Blob([header + '\n' + example + '\n'], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

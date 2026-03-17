@@ -254,7 +254,7 @@ export default function ColdEmailContactos() {
             </div>
             <div className="ce-modal-body">
               <p className="ce-text-muted">
-                El CSV debe contener columnas: email (requerido), nombre, empresa, cargo, telefono, etiquetas.
+                El CSV debe contener columnas: email (requerido), nombre, empresa, cargo, telefono, categoria, zona.
               </p>
               <div className="ce-csv-upload">
                 <input
@@ -267,8 +267,8 @@ export default function ColdEmailContactos() {
                   type="button"
                   className="ce-btn--link"
                   onClick={() => {
-                    const header = 'email,nombre,empresa,cargo,telefono'
-                    const example = 'juan@ejemplo.com,Juan Garcia,Acme Corp,Director,+34600000000'
+                    const header = 'email,nombre,empresa,cargo,telefono,categoria,zona'
+                    const example = 'juan@ejemplo.com,Juan Garcia,Acme Corp,Director,+34600000000,Fotografo,Madrid'
                     const blob = new Blob([header + '\n' + example + '\n'], { type: 'text/csv' })
                     const url = URL.createObjectURL(blob)
                     const a = document.createElement('a')
