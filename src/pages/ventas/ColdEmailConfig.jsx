@@ -246,7 +246,7 @@ export default function ColdEmailConfig() {
                       </div>
 
                       {/* Warmup progress */}
-                      {cuenta.warmup_activo && (
+                      {(cuenta.estado === 'ramping' || cuenta.warmup_dia_actual > 0) && (
                         <div className="ce-account-warmup">
                           <div className="ce-warmup-header">
                             <span className="ce-text-muted">Warm-up</span>
@@ -284,7 +284,7 @@ export default function ColdEmailConfig() {
                           >
                             Editar
                           </button>
-                          {cuenta.estado === 'activa' && (
+                          {(cuenta.estado === 'activa' || cuenta.estado === 'ramping') && (
                             <button
                               className="ce-btn ce-btn-sm ce-btn-warning"
                               onClick={() => handleToggleCuenta(cuenta, 'pausada')}
@@ -386,14 +386,6 @@ export default function ColdEmailConfig() {
                       </div>
                     </div>
 
-                    <label className="ce-toggle-label">
-                      <input
-                        type="checkbox"
-                        checked={cuentaForm.warmup_activo}
-                        onChange={(e) => setCuentaForm({ ...cuentaForm, warmup_activo: e.target.checked })}
-                      />
-                      <span>Warmup activo</span>
-                    </label>
                   </div>
                   <div className="ce-modal-footer">
                     <button className="ce-btn ce-btn-secondary" onClick={() => setShowCuentaModal(false)}>
