@@ -2980,7 +2980,25 @@
    CSV IMPORT  (ImportarCSVModal.jsx)
    ========================================================================== */
 .ce-csv-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
+}
+
+.ce-btn--link {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: var(--font-sm);
+  text-decoration: underline;
+  padding: 0;
+}
+
+.ce-btn--link:hover {
+  color: var(--primary-hover);
 }
 
 .ce-csv-file-input {

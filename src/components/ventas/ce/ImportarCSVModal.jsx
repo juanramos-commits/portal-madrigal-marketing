@@ -65,6 +65,18 @@ function applyMapping(rows, mapping) {
   });
 }
 
+function downloadTemplate() {
+  const header = KNOWN_COLUMNS.join(',');
+  const example = 'juan@ejemplo.com,Juan Garcia,Acme Corp,Director,+34600000000';
+  const blob = new Blob([header + '\n' + example + '\n'], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'plantilla_contactos.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ImportarCSVModal({ open, onClose, onImport }) {
   if (!open) return null;
 
@@ -149,6 +161,13 @@ export default function ImportarCSVModal({ open, onClose, onImport }) {
               className="ce-csv-file-input"
               onChange={handleFile}
             />
+            <button
+              type="button"
+              className="ce-btn ce-btn--link ce-btn-sm"
+              onClick={downloadTemplate}
+            >
+              Descargar plantilla CSV
+            </button>
           </div>
 
           {error && <div className="ce-csv-error">{error}</div>}

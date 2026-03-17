@@ -216,10 +216,26 @@ export function useCESecuencias() {
   const enrollar = useCallback(async (secuenciaId, contactoIds) => {
     setError(null)
     try {
+      // Get first step to calculate proximo_envio_at
+      const { data: pasos, error: pasosErr } = await supabase
+        .from('ce_pasos')
+        .select('delay_dias')
+        .eq('secuencia_id', secuenciaId)
+        .order('orden', { ascending: true })
+        .limit(1)
+      if (pasosErr) throw pasosErr
+
+      let proximoEnvio = null
+      if (pasos?.length > 0) {
+        const delayMs = (pasos[0].delay_dias || 0) * 24 * 60 * 60 * 1000
+        proximoEnvio = new Date(Date.now() + delayMs).toISOString()
+      }
+
       const rows = contactoIds.map(contactoId => ({
         secuencia_id: secuenciaId,
         contacto_id: contactoId,
         estado: 'activo',
+        proximo_envio_at: proximoEnvio,
       }))
       const { data, error: err } = await supabase
         .from('ce_enrollments')
