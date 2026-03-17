@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
         id, cuerpo, envio_id, enrollment_id, contacto_id,
         ce_envios!inner (
           id, paso_id,
-          ce_secuencia_pasos!inner ( asunto, cuerpo )
+          ce_pasos!inner ( asunto_a, cuerpo_a )
         ),
         ce_enrollments!inner ( id, secuencia_id ),
         ce_contactos!inner ( id, nombre, empresa, cargo, email, telefono )
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
     }
 
     const envio = respuesta.ce_envios as any;
-    const paso = envio.ce_secuencia_pasos as any;
+    const paso = envio.ce_pasos as any;
     const contacto = respuesta.ce_contactos as any;
     const replyCuerpo = respuesta.cuerpo ?? "";
 
@@ -88,9 +88,9 @@ Deno.serve(async (req) => {
 Reply with valid JSON only: {"clasificacion": "<category>", "confianza": <0.0-1.0>, "razon": "<brief reason in Spanish>"}`;
 
     const userPrompt = `ORIGINAL EMAIL SENT:
-Subject: ${paso.asunto}
+Subject: ${paso.asunto_a}
 Body:
-${paso.cuerpo}
+${paso.cuerpo_a}
 
 RECIPIENT INFO:
 Name: ${contacto.nombre ?? "N/A"}
@@ -205,7 +205,7 @@ ${replyCuerpo}`;
         .from("ventas_leads")
         .insert({
           nombre: contacto.nombre ?? contacto.email,
-          empresa: contacto.empresa,
+          nombre_negocio: contacto.empresa ?? null,
           email: contacto.email,
           telefono: contacto.telefono,
           fuente: "cold_email",

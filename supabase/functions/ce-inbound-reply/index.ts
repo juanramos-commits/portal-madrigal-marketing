@@ -110,23 +110,56 @@ Deno.serve(async (req) => {
   )
 
   try {
-    const payload = await req.json()
+    const rawPayload = await req.json()
 
-    console.log('ce-inbound-reply: received payload keys:', Object.keys(payload))
+    console.log('ce-inbound-reply: received payload type:', rawPayload.type, 'keys:', Object.keys(rawPayload))
+
+    // Resend wraps webhook data inside a "data" field
+    const payload = rawPayload.data || rawPayload
 
     // ── 1. Extract reply data ──────────────────────────────────────────
     const fromRaw: string = payload.from || payload.sender || ''
     const toRaw: string = Array.isArray(payload.to) ? payload.to[0] : (payload.to || '')
     const subject: string = payload.subject || ''
-    const body = extractBody(payload)
     const inReplyTo: string | null = payload.in_reply_to || payload.inReplyTo || payload.headers?.['in-reply-to'] || null
     const references: string | null = payload.references || payload.headers?.references || null
 
     const fromEmail = extractEmail(fromRaw)
     const toEmail = extractEmail(toRaw)
 
-    if (!fromEmail || !body) {
-      console.warn('ce-inbound-reply: missing from or body')
+    // Resend email.received webhook doesn't include the body directly.
+    // Fetch the full email content via Resend API using the email_id.
+    let body = extractBody(payload)
+    const emailId = payload.email_id
+
+    if (!body && emailId) {
+      const resendApiKey = Deno.env.get('RESEND_API_KEY')
+      if (resendApiKey) {
+        try {
+          const emailResp = await fetch(`https://api.resend.com/emails/${emailId}`, {
+            headers: { 'Authorization': `Bearer ${resendApiKey}` },
+          })
+          if (emailResp.ok) {
+            const emailData = await emailResp.json()
+            body = emailData.text || emailData.html?.replace(/<[^>]*>/g, '').trim() || ''
+            console.log('ce-inbound-reply: fetched email body from Resend API, length:', body.length)
+          } else {
+            console.warn('ce-inbound-reply: Resend API error:', emailResp.status)
+          }
+        } catch (fetchErr: any) {
+          console.warn('ce-inbound-reply: failed to fetch email from Resend:', fetchErr.message)
+        }
+      }
+    }
+
+    // If still no body, use the subject as fallback so we don't skip the reply
+    if (!body) {
+      body = subject || '(sin contenido)'
+      console.log('ce-inbound-reply: using subject/fallback as body')
+    }
+
+    if (!fromEmail) {
+      console.warn('ce-inbound-reply: missing from')
       return jsonResponse({ ok: true, skipped: true, reason: 'missing from or body' })
     }
 
