@@ -87,8 +87,8 @@ export default function ColdEmailRespuestas() {
         threadMessages.push({
           id: 'envio-' + e.id,
           direccion: 'outbound',
-          asunto: null,
-          cuerpo: e.asunto_a || 'Email enviado',
+          asunto: e.paso?.asunto_a || null,
+          cuerpo: e.paso?.cuerpo_a || 'Email enviado',
           created_at: e.enviado_at || e.created_at,
         })
       }

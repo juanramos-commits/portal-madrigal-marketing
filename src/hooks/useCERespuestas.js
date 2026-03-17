@@ -85,7 +85,7 @@ export function useCERespuestas() {
         // Also load envios in the same thread
         const { data: threadEnvios } = await supabase
           .from('ce_envios')
-          .select('*')
+          .select('*, paso:ce_pasos(asunto_a, cuerpo_a)')
           .eq('thread_key', data.thread_key)
           .order('created_at', { ascending: true })
         if (threadEnvios) {
