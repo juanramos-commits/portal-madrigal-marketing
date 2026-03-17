@@ -17,8 +17,10 @@ export default memo(function CRMKanbanColumn({
   onLoadMore,
   showAssignee = false,
   onMoverMobile,
+  isDropTarget = false,
+  isDragging = false,
 }) {
-  const { isOver, setNodeRef } = useDroppable({
+  const { setNodeRef } = useDroppable({
     id: etapa.id,
     data: { type: 'column', etapaId: etapa.id },
   })
@@ -41,7 +43,7 @@ export default memo(function CRMKanbanColumn({
   }, [hasMore, loadingMore, onLoadMore, etapa.id])
 
   return (
-    <div className={`crm-column${isOver ? ' drag-over' : ''}`} ref={setNodeRef} role="group" aria-label={`${etapa.nombre} — ${count} leads`} style={{ '--column-color': etapa.color || 'var(--text-muted)' }}>
+    <div className={`crm-column${isDropTarget ? ' drag-over' : ''}${isDragging ? ' drag-active' : ''}`} ref={setNodeRef} role="group" aria-label={`${etapa.nombre} — ${count} leads`} style={{ '--column-color': etapa.color || 'var(--text-muted)' }}>
       <div className="crm-column-header">
         <span className="crm-column-dot" style={{ background: etapa.color || 'var(--text-muted)' }} />
         <span className="crm-column-name">{etapa.nombre}</span>

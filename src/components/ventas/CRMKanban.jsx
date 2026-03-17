@@ -7,10 +7,78 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  rectIntersection,
 } from '@dnd-kit/core'
 import CRMKanbanColumn from './CRMKanbanColumn'
 import CRMLeadCard from './CRMLeadCard'
 import CRMBottomSheetMover from './CRMBottomSheetMover'
+
+// ── Custom collision detection for kanban boards ──────────────────────
+// closestCenter fails in horizontal kanbans because it matches elements
+// across ALL columns by geometric distance. This algorithm:
+// 1. Finds which column the pointer is physically inside (horizontal axis)
+// 2. Within that column, finds the closest card (vertical axis)
+// Result: drops always land in the column under the cursor.
+function kanbanCollisionDetection(args) {
+  const { droppableRects, droppableContainers, pointerCoordinates } = args
+
+  if (!pointerCoordinates) {
+    return closestCenter(args)
+  }
+
+  // Step 1: Find the column whose horizontal bounds contain the pointer
+  let targetColumn = null
+  let closestColumnDist = Infinity
+
+  for (const container of droppableContainers) {
+    if (container.data?.current?.type !== 'column') continue
+    const rect = droppableRects.get(container.id)
+    if (!rect) continue
+
+    // Pointer is inside this column's horizontal range
+    if (pointerCoordinates.x >= rect.left && pointerCoordinates.x <= rect.right) {
+      targetColumn = container
+      break
+    }
+
+    // Track closest column as fallback (when pointer is between columns)
+    const centerX = rect.left + rect.width / 2
+    const dist = Math.abs(pointerCoordinates.x - centerX)
+    if (dist < closestColumnDist) {
+      closestColumnDist = dist
+      targetColumn = container
+    }
+  }
+
+  if (!targetColumn) {
+    return rectIntersection(args)
+  }
+
+  // Step 2: Within that column, find the closest card by vertical distance
+  let closestCard = null
+  let closestCardDist = Infinity
+
+  for (const container of droppableContainers) {
+    if (container.data?.current?.type !== 'lead') continue
+    if (container.data?.current?.etapaId !== targetColumn.id) continue
+    const rect = droppableRects.get(container.id)
+    if (!rect) continue
+
+    const centerY = rect.top + rect.height / 2
+    const dist = Math.abs(pointerCoordinates.y - centerY)
+    if (dist < closestCardDist) {
+      closestCardDist = dist
+      closestCard = container
+    }
+  }
+
+  if (closestCard) {
+    return [{ id: closestCard.id }]
+  }
+
+  // Empty column — return the column itself
+  return [{ id: targetColumn.id }]
+}
 
 export default function CRMKanban({
   etapas = [],
@@ -27,6 +95,7 @@ export default function CRMKanban({
 }) {
   const [activeLead, setActiveLead] = useState(null)
   const [activeEtapa, setActiveEtapa] = useState(null)
+  const [overColumnId, setOverColumnId] = useState(null)
   const [moverSheetData, setMoverSheetData] = useState(null)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
 
@@ -50,8 +119,8 @@ export default function CRMKanban({
   }, [onMoverLead, onError])
 
   const activeSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
   )
   const noSensors = useSensors()
   const sensors = canMove ? activeSensors : noSensors
@@ -64,6 +133,8 @@ export default function CRMKanban({
     return null
   }, [etapas, leads])
 
+  const etapaIdSet = useMemo(() => new Set(etapas.map(e => e.id)), [etapas])
+
   const handleDragStart = useCallback((event) => {
     const { active } = event
     const result = findLeadEtapa(active.id)
@@ -73,10 +144,30 @@ export default function CRMKanban({
     }
   }, [findLeadEtapa, etapas])
 
+  // Track which column the dragged card is over (for visual highlight)
+  const handleDragOver = useCallback((event) => {
+    const { over } = event
+    if (!over) {
+      setOverColumnId(null)
+      return
+    }
+    // Over a column directly
+    if (etapaIdSet.has(over.id)) {
+      setOverColumnId(over.id)
+      return
+    }
+    // Over a card — resolve its column
+    const overData = over.data?.current
+    if (overData?.etapaId) {
+      setOverColumnId(overData.etapaId)
+    }
+  }, [etapaIdSet])
+
   const handleDragEnd = useCallback(async (event) => {
     const { active, over } = event
     setActiveLead(null)
     setActiveEtapa(null)
+    setOverColumnId(null)
 
     if (!over) return
 
@@ -88,16 +179,16 @@ export default function CRMKanban({
     let dropIndex = 0
 
     // Dropped on a column directly
-    if (etapas.find(e => e.id === over.id)) {
+    if (etapaIdSet.has(over.id)) {
       targetEtapaId = over.id
       dropIndex = (leads[over.id] || []).length // append at end
     }
     // Dropped on a lead card — find which column and position
     else {
-      const overResult = findLeadEtapa(over.id)
-      if (overResult) {
-        targetEtapaId = overResult.etapaId
-        const columnLeads = leads[overResult.etapaId] || []
+      const overData = over.data?.current
+      if (overData?.etapaId) {
+        targetEtapaId = overData.etapaId
+        const columnLeads = leads[overData.etapaId] || []
         const overIndex = columnLeads.findIndex(l => l.id === over.id)
         dropIndex = overIndex >= 0 ? overIndex : columnLeads.length
       }
@@ -110,11 +201,12 @@ export default function CRMKanban({
     } catch (err) {
       onError?.(err.message || 'Error al mover el lead')
     }
-  }, [findLeadEtapa, etapas, leads, onMoverLead, onError])
+  }, [findLeadEtapa, etapaIdSet, leads, onMoverLead, onError])
 
   const handleDragCancel = useCallback(() => {
     setActiveLead(null)
     setActiveEtapa(null)
+    setOverColumnId(null)
   }, [])
 
   // Stable empty array reference — prevents React.memo bypass on CRMKanbanColumn
@@ -176,8 +268,9 @@ export default function CRMKanban({
     <>
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={kanbanCollisionDetection}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
@@ -193,6 +286,8 @@ export default function CRMKanban({
             onLoadMore={onLoadMore}
             showAssignee={showAssignee}
             onMoverMobile={isMobile && canMove ? handleMoverMobile : undefined}
+            isDropTarget={overColumnId === etapa.id}
+            isDragging={!!activeLead}
           />
         ))}
       </div>
