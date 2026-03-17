@@ -357,6 +357,7 @@ export default function ColdEmailSecuenciaDetalle() {
                           <div className="ce-form-field">
                             <label className="ce-label">Usar plantilla</label>
                             <select
+                              key={editingStep}
                               className="ce-select"
                               defaultValue=""
                               onChange={(e) => {
