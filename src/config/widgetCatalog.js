@@ -295,13 +295,13 @@ export const WIDGET_CATALOG = {
   team_desglose_closers: {
     type: 'team_desglose_closers', label: 'Desglose closers', category: 'team',
     icon: Table2, dataKey: 'desglose_closers',
-    defaultSize: { w: 12, h: 5 }, minSize: { w: 8, h: 4 },
+    defaultSize: { w: 12, h: 4 }, minSize: { w: 8, h: 3 },
     roles: ['admin', 'director_ventas'],
   },
   team_desglose_setters: {
     type: 'team_desglose_setters', label: 'Desglose setters', category: 'team',
     icon: Table2, dataKey: 'desglose_setters',
-    defaultSize: { w: 12, h: 5 }, minSize: { w: 8, h: 4 },
+    defaultSize: { w: 12, h: 5 }, minSize: { w: 8, h: 3 },
     roles: ['admin', 'director_ventas'],
   },
 

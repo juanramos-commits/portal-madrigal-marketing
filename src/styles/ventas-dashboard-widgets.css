@@ -952,16 +952,19 @@
 
 /* ── Widget Conversion Table ───────────────────────────────────────────── */
 
-.db-wconv-tasa-high { color: var(--success); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; text-align: right; }
-.db-wconv-tasa-mid { color: var(--warning); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; text-align: right; }
-.db-wconv-tasa-low { color: var(--error); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; text-align: right; }
-
+.db-wconv-tasa-high,
+.db-wconv-tasa-mid,
+.db-wconv-tasa-low,
 .db-wconv-count {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-/* Align numeric column headers to the right in conversion & desglose tables */
+.db-wconv-tasa-high { color: var(--success); font-weight: var(--weight-semibold); }
+.db-wconv-tasa-mid { color: var(--warning); font-weight: var(--weight-semibold); }
+.db-wconv-tasa-low { color: var(--error); font-weight: var(--weight-semibold); }
+
+/* Align numeric column headers to the right in conversion tables */
 .db-wtable th.db-wconv-th-num {
   text-align: right;
 }
@@ -1003,13 +1006,13 @@
   font-size: var(--font-xs);
 }
 
-/* Nombre column takes remaining space */
+/* Nombre column left-aligned */
 .db-wtable--desglose th:first-child,
 .db-wtable--desglose td:first-child {
-  width: 100%;
+  text-align: left;
 }
 
-/* Numeric columns: right-aligned headers and cells */
+/* All numeric columns: right-aligned, consistent vertical alignment */
 .db-wtable--desglose th:not(:first-child) {
   text-align: right;
 }
@@ -1026,8 +1029,7 @@
 
 .db-wdesglose-totals td {
   border-top: 2px solid var(--text-muted);
-  background: rgba(255, 255, 255, 0.04);
-  font-weight: var(--weight-semibold);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* ── Widget Funnel ─────────────────────────────────────────────────────── */
