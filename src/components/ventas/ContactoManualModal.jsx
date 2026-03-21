@@ -61,6 +61,7 @@ export default function ContactoManualModal({ open, onClose, agenteId }) {
         throw new Error('VITE_SUPABASE_URL no configurado')
       }
 
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
       const res = await fetch(
         `${supabaseUrl}/functions/v1/ia-outbound-primer-mensaje`,
         {
@@ -68,6 +69,7 @@ export default function ContactoManualModal({ open, onClose, agenteId }) {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
+            'apikey': anonKey,
           },
           body: JSON.stringify({
             agente_id: agenteId,
