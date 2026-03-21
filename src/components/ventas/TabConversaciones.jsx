@@ -387,10 +387,12 @@ function QuickReplies({ agenteId, onSelect }) {
       .select('id, titulo, contenido')
       .eq('agente_id', agenteId)
       .order('orden')
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.error('Error loading quick replies:', error); return }
         setRespuestas(data || [])
         setLoaded(true)
       })
+      .catch(err => console.error('Quick replies fetch failed:', err))
   }, [agenteId, open])
 
   return (
@@ -893,7 +895,11 @@ export default function TabConversaciones({ agenteId }) {
       .select('id, nombre, email')
       .eq('activo', true)
       .order('nombre')
-      .then(({ data }) => setUsuarios(data || []))
+      .then(({ data, error }) => {
+        if (error) { console.error('Error loading team:', error); return }
+        setUsuarios(data || [])
+      })
+      .catch(err => console.error('Team fetch failed:', err))
   }, [])
 
   const handleSelectConv = (conv) => {
