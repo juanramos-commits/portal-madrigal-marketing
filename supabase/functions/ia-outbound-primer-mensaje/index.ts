@@ -17,7 +17,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type, authorization',
+  'Access-Control-Allow-Headers': 'content-type, authorization, apikey, x-client-info, x-supabase-api-version',
 }
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
@@ -340,10 +340,9 @@ Deno.serve(async (req) => {
       })
       sentCount++
 
-      // Typing delay between messages
+      // Brief pause between templates (1s) — no typing simulation needed for initial outreach
       if (i < templates.length - 1) {
-        const delay = 3000 + Math.random() * 3000 + (TEMPLATE_TEXTS[tplName]?.length || 50) * 50
-        await new Promise(r => setTimeout(r, Math.min(15000, Math.max(4000, delay))))
+        await new Promise(r => setTimeout(r, 1000))
       }
     }
 
