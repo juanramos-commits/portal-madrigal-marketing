@@ -1,4 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { resolveWaToken } from '../_shared/wa-token.ts'
 
 /**
  * ia-outbound-primer-mensaje
@@ -276,15 +277,14 @@ Deno.serve(async (req) => {
       }
     }
 
-    // === LOAD WA TOKEN (env → DB fallback) ===
-    let waToken = Deno.env.get('WA_ACCESS_TOKEN') ?? ''
-    if (!waToken || waToken.length < 100) {
-      const { data: configRow } = await supabase
-        .from('ia_config')
-        .select('value')
-        .eq('key', 'wa_access_token')
-        .maybeSingle()
-      if (configRow?.value) waToken = configRow.value
+    // === LOAD WA TOKEN ===
+    const waToken = await resolveWaToken(supabase)
+    if (!waToken) {
+      await supabase.from('ia_logs').insert({
+        agente_id: agenteId, conversacion_id: conversacionId, tipo: 'error',
+        mensaje: 'WA access token not available — check env var or ia_config table',
+      })
+      return jsonResponse({ error: 'WA access token not available' }, 500)
     }
 
     // === SEND TEMPLATES DIRECTLY TO META API ===

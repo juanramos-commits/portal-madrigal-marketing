@@ -764,7 +764,6 @@ Deno.serve(async (req) => {
   }
 
   const appSecret = Deno.env.get('WA_APP_SECRET') ?? ''
-  const waToken = Deno.env.get('WA_ACCESS_TOKEN') ?? ''
   const openaiKey = Deno.env.get('OPENAI_API_KEY') ?? ''
 
   const rawBody = await req.text()
@@ -812,6 +811,14 @@ Deno.serve(async (req) => {
   } catch (err) {
     console.error('Error processing status updates sync:', err)
   }
+
+  // === RESOLVE WA TOKEN (env → DB fallback) ===
+  const { resolveWaToken } = await import('../_shared/wa-token.ts')
+  const supabaseForToken = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+  )
+  const waToken = await resolveWaToken(supabaseForToken) || ''
 
   // === PROCESS MESSAGES ASYNC (heavy — AI, replies, etc.) ===
   const processingPromise = processWebhookAsync(rawBody, appSecret, waToken, openaiKey)

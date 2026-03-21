@@ -155,22 +155,23 @@ Deno.serve(async (req) => {
     const etapaNombre = ETAPA_MAP[action]
 
     // === 6. Find the target etapa in the pipeline ===
-    // First get the pipeline for this lead
-    const { data: ventasLead } = await supabase
-      .from('ventas_leads')
+    // First get the pipeline for this lead via ventas_lead_pipeline
+    const { data: leadPipeline } = await supabase
+      .from('ventas_lead_pipeline')
       .select('pipeline_id')
-      .eq('id', crmLeadId)
-      .single()
+      .eq('lead_id', crmLeadId)
+      .limit(1)
+      .maybeSingle()
 
-    if (!ventasLead?.pipeline_id) {
+    if (!leadPipeline?.pipeline_id) {
       return jsonResponse({ error: 'Lead has no pipeline assigned' }, 400)
     }
 
     const { data: etapa, error: etapaErr } = await supabase
-      .from('ventas_lead_pipeline')
+      .from('ventas_etapas')
       .select('id, nombre')
-      .eq('pipeline_id', ventasLead.pipeline_id)
-      .eq('nombre', etapaNombre)
+      .eq('pipeline_id', leadPipeline.pipeline_id)
+      .ilike('nombre', etapaNombre)
       .maybeSingle()
 
     if (etapaErr) {

@@ -1,4 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { resolveWaToken } from '../_shared/wa-token.ts'
 
 // Actual text of WhatsApp templates as approved in Meta
 // Used to store the real message in ia_mensajes so AI and UI can read it
@@ -239,7 +240,6 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_URL') ?? '',
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   )
-  // Token priority: body param (from caller) → env var → DB fallback
   let waToken = ''
 
   let params: Record<string, unknown>
@@ -249,16 +249,12 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Invalid JSON' }, 400)
   }
 
-  // Resolve WA token: body param → env var → DB fallback
-  waToken = (params._wa_token as string) || Deno.env.get('WA_ACCESS_TOKEN') || ''
-  if (!waToken || waToken.length < 100) {
-    const { data: configRow } = await supabase
-      .from('ia_config')
-      .select('value')
-      .eq('key', 'wa_access_token')
-      .maybeSingle()
-    if (configRow?.value) waToken = configRow.value
+  // Resolve WA token with shared fallback chain
+  const resolvedToken = await resolveWaToken(supabase, params._wa_token as string)
+  if (!resolvedToken) {
+    return jsonResponse({ error: 'WA access token not available. Check env var or ia_config table.' }, 500)
   }
+  waToken = resolvedToken
 
   const agenteId = params.agente_id as string
   const conversacionId = params.conversacion_id as string

@@ -1,4 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { resolveWaToken } from '../_shared/wa-token.ts'
 
 /**
  * ia-quality-check-cron
@@ -39,9 +40,9 @@ Deno.serve(async (req) => {
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   )
 
-  const waToken = Deno.env.get('WA_ACCESS_TOKEN') ?? ''
+  const waToken = await resolveWaToken(supabase)
   if (!waToken) {
-    return jsonResponse({ error: 'WA_ACCESS_TOKEN not configured' }, 500)
+    return jsonResponse({ error: 'WA access token not available' }, 500)
   }
 
   try {
