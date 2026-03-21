@@ -21,9 +21,9 @@ export default memo(function WidgetConversionTable({ widgetDef, data }) {
       <thead>
         <tr>
           <th scope="col">Nombre</th>
-          <th scope="col">{isCloser ? 'Citas' : 'Leads'}</th>
-          <th scope="col">{isCloser ? 'Ventas' : 'Citas'}</th>
-          <th scope="col">Tasa</th>
+          <th scope="col" className="db-wconv-th-num">{isCloser ? 'Citas' : 'Leads'}</th>
+          <th scope="col" className="db-wconv-th-num">{isCloser ? 'Ventas' : 'Citas'}</th>
+          <th scope="col" className="db-wconv-th-num">Tasa</th>
         </tr>
       </thead>
       <tbody>

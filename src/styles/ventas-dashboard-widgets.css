@@ -952,13 +952,18 @@
 
 /* ── Widget Conversion Table ───────────────────────────────────────────── */
 
-.db-wconv-tasa-high { color: var(--success); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
-.db-wconv-tasa-mid { color: var(--warning); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
-.db-wconv-tasa-low { color: var(--error); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; }
+.db-wconv-tasa-high { color: var(--success); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; text-align: right; }
+.db-wconv-tasa-mid { color: var(--warning); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; text-align: right; }
+.db-wconv-tasa-low { color: var(--error); font-weight: var(--weight-semibold); font-variant-numeric: tabular-nums; text-align: right; }
 
 .db-wconv-count {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* Align numeric column headers to the right in conversion & desglose tables */
+.db-wtable th.db-wconv-th-num {
+  text-align: right;
 }
 
 /* ── Widget Desglose ──────────────────────────────────────────────────── */
@@ -994,8 +999,23 @@
 .db-wtable--desglose th,
 .db-wtable--desglose td {
   white-space: nowrap;
-  padding: 6px 8px;
-  font-size: var(--text-xs);
+  padding: 8px 12px;
+  font-size: var(--font-xs);
+}
+
+/* Nombre column takes remaining space */
+.db-wtable--desglose th:first-child,
+.db-wtable--desglose td:first-child {
+  width: 100%;
+}
+
+/* Numeric columns: right-aligned headers and cells */
+.db-wtable--desglose th:not(:first-child) {
+  text-align: right;
+}
+.db-wtable--desglose td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .db-wtable--desglose thead th {
@@ -1005,8 +1025,9 @@
 }
 
 .db-wdesglose-totals td {
-  border-top: 2px solid var(--border);
-  background: var(--bg-secondary);
+  border-top: 2px solid var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: var(--weight-semibold);
 }
 
 /* ── Widget Funnel ─────────────────────────────────────────────────────── */
