@@ -56,6 +56,7 @@ export function useConversacionesIA(agenteId) {
   const msgSubscriptionRef = useRef(null)
   const conversacionActivaRef = useRef(null)
   const unreadCountRef = useRef(0)
+  const reloadTimerRef = useRef(null)
 
   // Keep ref in sync
   useEffect(() => {
@@ -202,7 +203,8 @@ export function useConversacionesIA(agenteId) {
         return { ok: false, error: data.error }
       }
       // Reload messages after a short delay, only if still on the same conversation
-      setTimeout(() => {
+      clearTimeout(reloadTimerRef.current)
+      reloadTimerRef.current = setTimeout(() => {
         if (conversacionActivaRef.current?.id === convId) {
           cargarMensajes(convId)
         }
@@ -369,6 +371,7 @@ export function useConversacionesIA(agenteId) {
       if (msgSubscriptionRef.current) {
         supabase.removeChannel(msgSubscriptionRef.current)
       }
+      clearTimeout(reloadTimerRef.current)
     }
   }, [conversacionActiva?.id])
 

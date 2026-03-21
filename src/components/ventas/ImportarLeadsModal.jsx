@@ -127,7 +127,7 @@ export default function ImportarLeadsModal({ open, onClose, agenteId }) {
   }
 
   const handleImportar = async () => {
-    if (!parsed || !agenteId) return
+    if (!parsed || !agenteId || importing) return
     setImporting(true)
     setError(null)
     setResult(null)
