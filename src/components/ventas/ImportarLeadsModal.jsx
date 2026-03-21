@@ -140,9 +140,7 @@ export default function ImportarLeadsModal({ open, onClose, agenteId }) {
       }
 
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      if (!supabaseUrl) {
-        throw new Error('VITE_SUPABASE_URL no configurado')
-      }
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
       const res = await fetch(
         `${supabaseUrl}/functions/v1/ia-importar-leads`,
@@ -150,7 +148,8 @@ export default function ImportarLeadsModal({ open, onClose, agenteId }) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
+            'Authorization': `Bearer ${anonKey}`,
+            'apikey': anonKey,
           },
           body: JSON.stringify({
             agente_id: agenteId,

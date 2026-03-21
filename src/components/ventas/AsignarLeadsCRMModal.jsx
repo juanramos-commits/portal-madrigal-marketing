@@ -118,17 +118,21 @@ export default function AsignarLeadsCRMModal({ open, onClose, agenteId }) {
           }
 
           // 2. Call outbound primer mensaje edge function
+          const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
           const res = await fetch(
             `${supabaseUrl}/functions/v1/ia-outbound-primer-mensaje`,
             {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${session.access_token}`,
+                'Authorization': `Bearer ${anonKey}`,
+                'apikey': anonKey,
               },
               body: JSON.stringify({
                 agente_id: agenteId,
-                lead_id: iaLead.id,
+                lead_id: iaLead?.id,
+                telefono: lead.telefono,
+                nombre: lead.nombre,
               }),
             }
           )
