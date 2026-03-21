@@ -50,18 +50,27 @@ export default function ContactoManualModal({ open, onClose, agenteId }) {
     setResult(null)
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('ia-outbound-primer-mensaje', {
-        body: {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/ia-outbound-primer-mensaje`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${anonKey}`,
+          'apikey': anonKey,
+        },
+        body: JSON.stringify({
           agente_id: agenteId,
           telefono: normalizarTelefono(form.telefono.trim()),
           nombre: form.nombre.trim() || null,
           email: form.email.trim() || null,
           servicio: form.servicio.trim() || null,
-        },
+        }),
       })
 
-      if (fnError) throw new Error(fnError.message || 'Error enviando primer mensaje')
-      if (data?.error) throw new Error(data.error)
+      const data = await res.json()
+      if (!res.ok || data.error) throw new Error(data.error || `Error ${res.status}`)
 
       setResult(data)
     } catch (err) {
