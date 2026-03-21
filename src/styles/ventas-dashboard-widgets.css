@@ -1016,16 +1016,16 @@
 /* Nombre column gets more space */
 .db-wtable--desglose col.col-name { width: 13%; }
 
-/* All columns: right-aligned */
-.db-wtable--desglose th,
-.db-wtable--desglose td {
+/* All columns: right-aligned (must override .db-wtable thead th text-align: left) */
+.db-wtable.db-wtable--desglose th,
+.db-wtable.db-wtable--desglose td {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
 /* Only Nombre column is left-aligned */
-.db-wtable--desglose th:first-child,
-.db-wtable--desglose td:first-child {
+.db-wtable.db-wtable--desglose th:first-child,
+.db-wtable.db-wtable--desglose td:first-child {
   text-align: left;
   font-variant-numeric: normal;
 }
