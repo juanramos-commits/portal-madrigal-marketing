@@ -107,6 +107,7 @@ async function fetchCrmCompleto(pipelineId, userId, esAdmin, filtros, busqueda, 
     p_filtro_fecha_desde: filtros.fecha_desde || null,
     p_filtro_fecha_hasta: filtros.fecha_hasta ? filtros.fecha_hasta + 'T23:59:59' : null,
     p_filtro_etapa_ids: (filtros.etapa_ids && filtros.etapa_ids.length > 0) ? filtros.etapa_ids : null,
+    p_filtro_etiqueta_ids: (filtros.etiqueta_ids && filtros.etiqueta_ids.length > 0) ? filtros.etiqueta_ids : null,
     p_busqueda: sanitizedSearch,
     p_limit: LEADS_PER_BATCH,
   }

@@ -13,6 +13,7 @@ export default function CRMFiltros({
   closers = [],
   categorias = [],
   etapas = [],
+  etiquetas = [],
   fuentes = [],
 }) {
   const panelRef = useRef(null)
@@ -113,6 +114,19 @@ export default function CRMFiltros({
               <option value="">Todas las fuentes</option>
               {fuentes.map(f => (
                 <option key={f} value={f}>{f}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="crm-field">
+            <label>Etiqueta</label>
+            <Select
+              value={(filtros.etiqueta_ids && filtros.etiqueta_ids[0]) || ''}
+              onChange={e => handleChange('etiqueta_ids', e.target.value ? [e.target.value] : null)}
+            >
+              <option value="">Todas las etiquetas</option>
+              {etiquetas.map(et => (
+                <option key={et.id} value={et.id}>{et.nombre}</option>
               ))}
             </Select>
           </div>

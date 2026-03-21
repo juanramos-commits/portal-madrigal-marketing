@@ -170,6 +170,7 @@ export default function VentasCRM() {
           closers={crm.closers}
           categorias={crm.categorias}
           etapas={crm.etapas}
+          etiquetas={crm.etiquetas}
           fuentes={crm.fuentes}
         />
       )}
