@@ -90,6 +90,10 @@ export default memo(function WidgetDesglose({ widgetDef, data }) {
           <caption className="sr-only">
             {isCloser ? 'Desglose por closer' : 'Desglose por setter'}
           </caption>
+          <colgroup>
+            <col className="col-name" />
+            {cols.map(c => <col key={c.key} />)}
+          </colgroup>
           <thead>
             <tr>
               <th scope="col">Nombre</th>

@@ -999,26 +999,35 @@
   min-height: 0;
 }
 
+.db-wtable--desglose {
+  table-layout: fixed;
+  width: 100%;
+}
+
 .db-wtable--desglose th,
 .db-wtable--desglose td {
   white-space: nowrap;
-  padding: 8px 12px;
+  padding: 8px 6px;
   font-size: var(--font-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Nombre column left-aligned */
+/* Nombre column gets more space */
+.db-wtable--desglose col.col-name { width: 13%; }
+
+/* All columns: right-aligned */
+.db-wtable--desglose th,
+.db-wtable--desglose td {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Only Nombre column is left-aligned */
 .db-wtable--desglose th:first-child,
 .db-wtable--desglose td:first-child {
   text-align: left;
-}
-
-/* All numeric columns: right-aligned, consistent vertical alignment */
-.db-wtable--desglose th:not(:first-child) {
-  text-align: right;
-}
-.db-wtable--desglose td:not(:first-child) {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: normal;
 }
 
 .db-wtable--desglose thead th {
