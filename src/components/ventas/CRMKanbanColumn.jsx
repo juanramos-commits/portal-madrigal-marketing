@@ -16,6 +16,7 @@ export default memo(function CRMKanbanColumn({
   loadingMore = false,
   onLoadMore,
   showAssignee = false,
+  pipelineNombre,
   onMoverMobile,
   isDropTarget = false,
   isDragging = false,
@@ -58,6 +59,7 @@ export default memo(function CRMKanbanColumn({
               lead={lead}
               etapa={etapa}
               showAssignee={showAssignee}
+              pipelineNombre={pipelineNombre}
               onMoverMobile={onMoverMobile}
             />
           ))}

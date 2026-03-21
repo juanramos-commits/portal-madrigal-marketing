@@ -141,6 +141,7 @@ export default function VentasCRM() {
           onLoadMore={crm.cargarMasLeads}
           onMoverLead={crm.moverLead}
           showAssignee={tienePermiso('ventas.crm.ver_todos')}
+          pipelineNombre={crm.pipelineActivo?.nombre}
           loading={crm.loading}
           onError={handleCRMError}
           canMove={tienePermiso('ventas.crm.mover_leads')}

@@ -39,7 +39,7 @@ function getAvatarColor(name) {
 }
 
 // PERF: memo prevents re-render of all cards when sibling leads change or column state updates
-export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMobile, virtualize = false }) {
+export default memo(function CRMLeadCard({ lead, etapa, showAssignee, pipelineNombre, onMoverMobile, virtualize = false }) {
   const navigate = useNavigate()
   const [isVisible, setIsVisible] = useState(!virtualize)
   const observerRef = useRef(null)
@@ -127,7 +127,8 @@ export default memo(function CRMLeadCard({ lead, etapa, showAssignee, onMoverMob
   }
 
   const showAttempts = etapa && (etapa.tipo === 'ghosting' || etapa.tipo === 'seguimiento')
-  const assignee = lead.setter || lead.closer
+  const esCloserPipeline = pipelineNombre?.toLowerCase().includes('closer')
+  const assignee = esCloserPipeline ? (lead.closer || lead.setter) : (lead.setter || lead.closer)
   const isHot = lead.lead_etiquetas?.some(le => le.etiqueta?.nombre === 'Hot Lead')
 
   return (

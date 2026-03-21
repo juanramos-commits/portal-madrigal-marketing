@@ -89,6 +89,7 @@ export default function CRMKanban({
   onLoadMore,
   onMoverLead,
   showAssignee,
+  pipelineNombre,
   loading,
   onError,
   canMove = true,
@@ -285,6 +286,7 @@ export default function CRMKanban({
             loadingMore={loadingMore[etapa.id]}
             onLoadMore={onLoadMore}
             showAssignee={showAssignee}
+            pipelineNombre={pipelineNombre}
             onMoverMobile={isMobile && canMove ? handleMoverMobile : undefined}
             isDropTarget={overColumnId === etapa.id}
             isDragging={!!activeLead}
@@ -299,6 +301,7 @@ export default function CRMKanban({
               lead={activeLead}
               etapa={activeEtapa}
               showAssignee={showAssignee}
+              pipelineNombre={pipelineNombre}
             />
           </div>
         ) : null}
