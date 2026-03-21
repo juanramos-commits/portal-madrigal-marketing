@@ -292,6 +292,18 @@ export const WIDGET_CATALOG = {
     defaultSize: { w: 6, h: 4 }, minSize: { w: 4, h: 3 },
     roles: ['admin', 'director_ventas'],
   },
+  team_desglose_closers: {
+    type: 'team_desglose_closers', label: 'Desglose closers', category: 'team',
+    icon: Table2, dataKey: 'desglose_closers',
+    defaultSize: { w: 12, h: 5 }, minSize: { w: 8, h: 4 },
+    roles: ['admin', 'director_ventas'],
+  },
+  team_desglose_setters: {
+    type: 'team_desglose_setters', label: 'Desglose setters', category: 'team',
+    icon: Table2, dataKey: 'desglose_setters',
+    defaultSize: { w: 12, h: 5 }, minSize: { w: 8, h: 4 },
+    roles: ['admin', 'director_ventas'],
+  },
 
   // ── Funnel (4) — Fase 3 ─────────────────────────────────
   funnel_setters: {

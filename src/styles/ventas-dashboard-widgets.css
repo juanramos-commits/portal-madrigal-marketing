@@ -961,6 +961,54 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Widget Desglose ──────────────────────────────────────────────────── */
+
+.db-wdesglose {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.db-wdesglose-export {
+  position: absolute;
+  top: -28px;
+  right: 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-xs);
+  z-index: 1;
+}
+.db-wdesglose-export:hover { color: var(--text-primary); background: var(--bg-active); }
+
+.db-wdesglose-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.db-wtable--desglose th,
+.db-wtable--desglose td {
+  white-space: nowrap;
+  padding: 6px 8px;
+  font-size: var(--text-xs);
+}
+
+.db-wtable--desglose thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.db-wdesglose-totals td {
+  border-top: 2px solid var(--border);
+  background: var(--bg-secondary);
+}
+
 /* ── Widget Funnel ─────────────────────────────────────────────────────── */
 
 .db-wfunnel {

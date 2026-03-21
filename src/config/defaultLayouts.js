@@ -22,6 +22,8 @@ export const DEFAULT_LAYOUTS = {
     // Row 18-22: Funnel + Activity
     { i: 'funnel_setters', type: 'funnel_setters', x: 0, y: 18, w: 6, h: 5 },
     { i: 'team_actividad_reciente', type: 'team_actividad_reciente', x: 6, y: 18, w: 6, h: 5 },
+    { i: 'team_desglose_closers', type: 'team_desglose_closers', x: 0, y: 23, w: 12, h: 5 },
+    { i: 'team_desglose_setters', type: 'team_desglose_setters', x: 0, y: 28, w: 12, h: 5 },
   ],
   director_ventas: [
     ...kpiRow(['kpi_total_leads', 'kpi_total_ventas', 'kpi_tasa_conversion', 'kpi_ingresos_totales'], 0),
@@ -32,6 +34,8 @@ export const DEFAULT_LAYOUTS = {
     { i: 'funnel_pipeline_resumen', type: 'funnel_pipeline_resumen', x: 0, y: 11, w: 12, h: 4 },
     { i: 'table_leads_recientes', type: 'table_leads_recientes', x: 0, y: 15, w: 6, h: 5 },
     { i: 'table_ventas_recientes', type: 'table_ventas_recientes', x: 6, y: 15, w: 6, h: 5 },
+    { i: 'team_desglose_closers', type: 'team_desglose_closers', x: 0, y: 20, w: 12, h: 5 },
+    { i: 'team_desglose_setters', type: 'team_desglose_setters', x: 0, y: 25, w: 12, h: 5 },
   ],
   closer: [
     ...kpiRow(['kpi_total_ventas', 'kpi_ventas_aprobadas', 'kpi_ingresos_totales', 'kpi_ticket_medio'], 0),

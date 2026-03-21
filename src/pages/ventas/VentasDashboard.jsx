@@ -15,6 +15,7 @@ import WidgetConversionTable from '../../components/ventas/dashboard/WidgetConve
 import WidgetFunnel from '../../components/ventas/dashboard/WidgetFunnel'
 import WidgetPipeline from '../../components/ventas/dashboard/WidgetPipeline'
 import WidgetGoal from '../../components/ventas/dashboard/WidgetGoal'
+import WidgetDesglose from '../../components/ventas/dashboard/WidgetDesglose'
 import 'react-grid-layout/css/styles.css'
 import '../../styles/ventas-dashboard-widgets.css'
 
@@ -33,6 +34,7 @@ function renderWidget(widgetDef, data, config) {
     if (dk === 'ranking_closers' || dk === 'ranking_setters') return <WidgetLeaderboard widgetDef={widgetDef} data={data} />
     if (dk === 'actividad_reciente') return <WidgetActivity widgetDef={widgetDef} data={data} />
     if (dk === 'conversion_por_closer' || dk === 'conversion_por_setter') return <WidgetConversionTable widgetDef={widgetDef} data={data} />
+    if (dk === 'desglose_closers' || dk === 'desglose_setters') return <WidgetDesglose widgetDef={widgetDef} data={data} />
   }
   if (cat === 'funnel') {
     if (dk === 'funnel_setters' || dk === 'funnel_closers') return <WidgetFunnel widgetDef={widgetDef} data={data} />
