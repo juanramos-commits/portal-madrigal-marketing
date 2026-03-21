@@ -433,9 +433,29 @@ export function useCalendario() {
   const cargarEnlaces = useCallback(async () => {
     const { data } = await supabase
       .from('ventas_enlaces_agenda')
-      .select('id, nombre, slug, activo, fuente, setter_id, closer_ids, created_at, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email), creado_por:usuarios!ventas_enlaces_agenda_creado_por_id_fkey(id, nombre)')
+      .select('id, nombre, slug, activo, fuente, setter_id, created_at, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email), creado_por:usuarios!ventas_enlaces_agenda_creado_por_id_fkey(id, nombre)')
       .order('created_at', { ascending: false })
-    setEnlaces(data || [])
+
+    const enlacesList = data || []
+
+    // Load closers from junction table
+    if (enlacesList.length > 0) {
+      const { data: vecData } = await supabase
+        .from('ventas_enlaces_closers')
+        .select('enlace_id, closer_id')
+        .in('enlace_id', enlacesList.map(e => e.id))
+
+      const closersByEnlace = {}
+      for (const vec of (vecData || [])) {
+        if (!closersByEnlace[vec.enlace_id]) closersByEnlace[vec.enlace_id] = []
+        closersByEnlace[vec.enlace_id].push(vec.closer_id)
+      }
+      for (const e of enlacesList) {
+        e.closer_ids = closersByEnlace[e.id] || []
+      }
+    }
+
+    setEnlaces(enlacesList)
   }, [])
 
   // Create enlace

@@ -9,9 +9,9 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
-import { supabase, smartRpc } from '../../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { logActividad } from '../../lib/logActividad'
-import { invalidatePipelineCache } from '../../hooks/useVentasCRM'
+import { cacheGet, cacheSet } from '../../lib/offlineCache'
 import Select from '../ui/Select'
 import ConfirmDialog from '../ui/ConfirmDialog'
 import WhatsAppIcon from '../icons/WhatsAppIcon'
@@ -19,9 +19,7 @@ import '../../styles/ventas-crm.css'
 
 function formatDateTime(d) {
   if (!d) return '-'
-  const parsed = new Date(d)
-  if (isNaN(parsed.getTime())) return '-'
-  return parsed.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return new Date(d).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 function formatRelative(d) {
@@ -78,38 +76,67 @@ const ACTIVITY_ICONS = {
 let _catalogCache = null
 let _catalogPromise = null
 
-// Module-level cache for last loaded lead — prevents skeleton flash on remount
-let _lastLeadCache = null // { id, data }
+// ── Prefetch cache: load lead data on hover so detail opens instantly ──
+const _prefetchCache = new Map() // Map<leadId, { promise, data, ts }>
+const PREFETCH_TTL = 30_000 // 30 seconds
 
-// RPC: 1 single SQL roundtrip for lead + pipeline_states + citas + etiquetas + actividad
-// Accepts optional AbortSignal to kill the HTTP request on navigation (frees connection pool)
-function fetchLeadDetail(leadId, signal) {
-  // smartRpc uses direct fetch with cached token if supabase-js isn't ready yet
-  return smartRpc('obtener_lead_detalle', { p_lead_id: leadId }, signal)
-    .then((data) => {
-      if (!data) return null
-      return {
-        ...data,
-        pipeline_states: data.pipeline_states || [],
-        citas: data.citas || [], // Already sorted DESC by RPC
-        lead_etiquetas: (data.lead_etiquetas || []).map(le => le.etiqueta).filter(Boolean),
-        actividad: data.actividad || [],
-      }
-    })
+function fetchLeadDetail(leadId) {
+  return Promise.all([
+    supabase.from('ventas_leads').select(`
+      *,
+      categoria:ventas_categorias(id, nombre),
+      setter:usuarios!ventas_leads_setter_asignado_id_fkey(id, nombre, email),
+      closer:usuarios!ventas_leads_closer_asignado_id_fkey(id, nombre, email)
+    `).eq('id', leadId).single(),
+    supabase.from('ventas_lead_pipeline').select(`
+      *, pipeline:ventas_pipelines(id, nombre),
+      etapa:ventas_etapas(id, nombre, color, tipo, max_intentos)
+    `).eq('lead_id', leadId),
+    supabase.from('ventas_citas').select(`
+      *, closer:usuarios!ventas_citas_closer_id_fkey(id, nombre),
+      estado_reunion:ventas_reunion_estados(id, nombre, color)
+    `).eq('lead_id', leadId).order('fecha_hora', { ascending: false }),
+    supabase.from('ventas_lead_etiquetas').select('*, etiqueta:ventas_etiquetas(*)').eq('lead_id', leadId),
+  ]).then(([leadRes, pipelineRes, citasRes, etiquetasRes]) => {
+    if (leadRes.error) throw leadRes.error
+    return {
+      ...leadRes.data,
+      pipeline_states: pipelineRes.data || [],
+      citas: citasRes.data || [],
+      lead_etiquetas: (etiquetasRes.data || []).map(le => le.etiqueta),
+    }
+  })
 }
 
-// Prefetch disabled — was causing connection exhaustion on rapid navigation
-export function prefetchLeadDetail() {}
+export function prefetchLeadDetail(leadId) {
+  if (!leadId) return
+  const cached = _prefetchCache.get(leadId)
+  if (cached && Date.now() - cached.ts < PREFETCH_TTL) return cached.promise
+  // Clean stale entries
+  for (const [k, v] of _prefetchCache) {
+    if (Date.now() - v.ts > PREFETCH_TTL) _prefetchCache.delete(k)
+  }
+  const promise = fetchLeadDetail(leadId).then(data => {
+    const entry = _prefetchCache.get(leadId)
+    if (entry) entry.data = data
+    return data
+  }).catch(() => {
+    _prefetchCache.delete(leadId)
+    return null
+  })
+  _prefetchCache.set(leadId, { promise, data: null, ts: Date.now() })
+  return promise
+}
 
 function loadCatalogs() {
   if (_catalogCache) return Promise.resolve(_catalogCache)
   if (_catalogPromise) return _catalogPromise
   _catalogPromise = Promise.all([
-    supabase.from('ventas_categorias').select('id, nombre, orden').eq('activo', true).order('orden').limit(100),
-    supabase.from('ventas_etiquetas').select('id, nombre, color').eq('activo', true).limit(200),
-    supabase.from('ventas_roles_comerciales').select('id, usuario_id, rol, activo, usuario:usuarios(id, nombre, email)').eq('activo', true).limit(100),
-    supabase.from('ventas_etapas').select('id, nombre, color, tipo, max_intentos, orden, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden').limit(200),
-    supabase.from('ventas_reunion_estados').select('id, nombre, color, orden').order('orden').limit(50),
+    supabase.from('ventas_categorias').select('*').eq('activo', true).order('orden'),
+    supabase.from('ventas_etiquetas').select('*').eq('activo', true),
+    supabase.from('ventas_roles_comerciales').select('*, usuario:usuarios(id, nombre, email)').eq('activo', true),
+    supabase.from('ventas_etapas').select('*, pipeline:ventas_pipelines(id, nombre)').eq('activo', true).order('orden'),
+    supabase.from('ventas_reunion_estados').select('*').order('orden'),
   ]).then(([cats, etqs, roles, etapasAll, reunionEstadosData]) => {
     _catalogCache = {
       categorias: cats.data || [],
@@ -119,6 +146,7 @@ function loadCatalogs() {
       reunionEstados: reunionEstadosData.data || [],
     }
     _catalogPromise = null
+    cacheSet('lead_detail_catalogs', _catalogCache).catch(() => {})
     return _catalogCache
   }).catch(err => {
     _catalogPromise = null
@@ -127,9 +155,14 @@ function loadCatalogs() {
   return _catalogPromise
 }
 
-// Simple: use module cache if available, otherwise fetch from network
-// No IndexedDB — it caused stale data bugs that required clearing browser data
 async function loadCatalogsWithOffline() {
+  if (_catalogCache) return _catalogCache
+  const cached = await cacheGet('lead_detail_catalogs').catch(() => null)
+  if (cached?.categorias?.length > 0) {
+    _catalogCache = cached
+    loadCatalogs().catch(() => {})
+    return cached
+  }
   return loadCatalogs()
 }
 
@@ -138,21 +171,18 @@ export default function CRMLeadDetalle() {
   const navigate = useNavigate()
   const { user, usuario, tienePermiso } = useAuth()
 
-  // Initialize from module cache if same lead — prevents skeleton flash on remount
-  const cachedLead = _lastLeadCache?.id === id ? _lastLeadCache.data : null
-
-  const [lead, setLead] = useState(cachedLead)
-  const [categorias, setCategorias] = useState(_catalogCache?.categorias || [])
-  const [etiquetasDisponibles, setEtiquetasDisponibles] = useState(_catalogCache?.etiquetas || [])
+  const [lead, setLead] = useState(null)
+  const [categorias, setCategorias] = useState([])
+  const [etiquetasDisponibles, setEtiquetasDisponibles] = useState([])
   const [actividad, setActividad] = useState([])
   const [actividadOffset, setActividadOffset] = useState(0)
   const [hasMoreActividad, setHasMoreActividad] = useState(true)
   const [loadingMoreActividad, setLoadingMoreActividad] = useState(false)
-  const [rolesComerciales, setRolesComerciales] = useState(_catalogCache?.roles || [])
-  const [allEtapas, setAllEtapas] = useState(_catalogCache?.etapas || [])
-  const [setters, setSetters] = useState(_catalogCache?.roles?.filter(r => r.rol === 'setter' && r.activo) || [])
-  const [closers, setClosers] = useState(_catalogCache?.roles?.filter(r => r.rol === 'closer' && r.activo) || [])
-  const [loading, setLoading] = useState(!cachedLead)
+  const [rolesComerciales, setRolesComerciales] = useState([])
+  const [allEtapas, setAllEtapas] = useState([])
+  const [setters, setSetters] = useState([])
+  const [closers, setClosers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showMenu, setShowMenu] = useState(false)
   const [showEtapaDropdown, setShowEtapaDropdown] = useState(null)
@@ -166,16 +196,14 @@ export default function CRMLeadDetalle() {
 
   const { showToast } = useToast()
   const savingActionRef = useRef(false)
+  const savingSetterRef = useRef(false)
+  const savingCloserRef = useRef(false)
   const isMountedRef = useRef(true)
   const debounceRefs = useRef({})
   const pendingFieldUpdatesRef = useRef({})
   const snapshotRef = useRef(null)
   const registroTimeoutRef = useRef(null)
-  const mountedRef = useRef(true)
-  useEffect(() => {
-    mountedRef.current = true
-    return () => { mountedRef.current = false }
-  }, [])
+  const loadDetailRef = useRef(0)
 
   const misRoles = rolesComerciales.filter(r => r.usuario_id === user?.id && r.activo)
   const esAdminODirector = tienePermiso('ventas.crm.ver_todos')
@@ -202,78 +230,103 @@ export default function CRMLeadDetalle() {
     }
   }, [])
 
-  // ── Refresh lead only (after actions like cambiarEtapa) ──────────
-  const refrescarLead = useCallback(async () => {
+  // ── Load lead-specific data (uses prefetch cache if available) ───
+  const cargarLeadData = useCallback(async (requestId) => {
+    // Check prefetch cache first
+    const cached = _prefetchCache.get(id)
+    if (cached) {
+      _prefetchCache.delete(id)
+      if (cached.data) return cached.data
+      try {
+        const data = await cached.promise
+        if (requestId !== loadDetailRef.current) return null
+        if (data) return data
+      } catch { /* fall through to fresh fetch */ }
+    }
+    return fetchLeadDetail(id).then(data => {
+      if (requestId !== loadDetailRef.current) return null
+      return data
+    })
+  }, [id])
+
+  // ── Full load (initial) ──────────────────────────────────────────
+  const cargarLead = useCallback(async () => {
+    const requestId = ++loadDetailRef.current
+
     try {
-      const leadResult = await fetchLeadDetail(id)
-      if (!isMountedRef.current || !leadResult) return
+      setLoading(true)
+      setError(null)
+
+      // Catalogs + lead data in parallel
+      const [, leadResult] = await Promise.all([
+        cargarCatalogos(),
+        cargarLeadData(requestId),
+      ])
+
+      if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
+
       setLead(leadResult)
       snapshotRef.current = null
-      _lastLeadCache = { id, data: leadResult }
-    } catch (err) {
-      if (!isMountedRef.current) return
-      showToast(err.message || 'Error al refrescar', 'error')
-    }
-  }, [id, showToast])
 
-  // ── Load on mount / id change — AbortController kills HTTP requests on navigation ──
+      // Load activity in background — don't block the lead from rendering
+      supabase.from('ventas_actividad')
+        .select('*, usuario:usuarios(id, nombre)')
+        .eq('lead_id', id)
+        .order('created_at', { ascending: false })
+        .range(0, 19)
+        .then(({ data: actData }) => {
+          if (requestId !== loadDetailRef.current || !isMountedRef.current) return
+          setActividad(actData || [])
+          setActividadOffset(20)
+          setHasMoreActividad((actData || []).length >= 20)
+        })
+        .catch(() => {}) // non-critical
+    } catch (err) {
+      // Ignore cancelled requests from rapid navigation
+      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
+      if (!isMountedRef.current) return
+      if (requestId === loadDetailRef.current) {
+        setError(err.message || 'Error al cargar el lead')
+      }
+    } finally {
+      if (requestId === loadDetailRef.current && isMountedRef.current) {
+        setLoading(false)
+      }
+    }
+  }, [id, cargarCatalogos, cargarLeadData])
+
+  // ── Refresh lead only (after actions like cambiarEtapa) ──────────
+  const refrescarLead = useCallback(async () => {
+    const requestId = ++loadDetailRef.current
+    try {
+      const leadResult = await cargarLeadData(requestId)
+      if (requestId !== loadDetailRef.current || !isMountedRef.current || !leadResult) return
+      setLead(leadResult)
+      snapshotRef.current = null
+    } catch (err) {
+      if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) return
+      if (!isMountedRef.current) return
+      if (requestId === loadDetailRef.current) {
+        showToast(err.message || 'Error al refrescar', 'error')
+      }
+    }
+  }, [cargarLeadData, showToast])
+
   useEffect(() => {
     if (!id) return
-    const controller = new AbortController()
-    const { signal } = controller
+    cargarLead()
+  }, [cargarLead])
 
-    // Reset state if navigating to a different lead
-    if (_lastLeadCache?.id !== id) {
-      setLead(null)
-      setActividad([])
-    }
-    setError(null)
-    setLoading(prev => _lastLeadCache?.id === id ? false : true)
-
-    // Safety timeout: if fetch hangs despite abort (shouldn't happen, but defensive)
-    const timeoutId = setTimeout(() => {
-      if (!signal.aborted) {
-        controller.abort()
-        setLoading(false)
-        setError('Tiempo de espera agotado. Pulsa para reintentar.')
-      }
-    }, 10000)
-
-    // RPC FIRST — catalogs AFTER. This prevents catalog requests (5 HTTP) from
-    // saturating the browser's 6-connection-per-domain limit before the critical
-    // lead data RPC can start. Catalogs are non-blocking and cached at module level.
-    fetchLeadDetail(id, signal).then(leadResult => {
-      clearTimeout(timeoutId)
-      if (signal.aborted || !isMountedRef.current) return
-      if (leadResult) {
-        // Extract actividad from RPC result, set separately
-        const actData = leadResult.actividad || []
-        delete leadResult.actividad
-        setLead(leadResult)
-        snapshotRef.current = null
-        _lastLeadCache = { id, data: leadResult }
-        setActividad(actData)
-        setActividadOffset(20)
-        setHasMoreActividad(actData.length >= 20)
-      }
+  // ── Safety net: force loading=false after timeout ──────────────────
+  useEffect(() => {
+    if (!loading) return
+    const timeout = setTimeout(() => {
+      console.error('[CRM Detail] Loading timeout — forcing loading=false')
       setLoading(false)
-      // Load catalogs AFTER lead data — non-blocking, module-level cached
-      cargarCatalogos()
-    }).catch(err => {
-      clearTimeout(timeoutId)
-      // AbortError is expected on navigation — don't show error
-      if (err?.name === 'AbortError' || signal.aborted) return
-      if (!isMountedRef.current) return
-      setError(err.message || 'Error al cargar el lead')
-      setLoading(false)
-    })
-
-    return () => {
-      console.log(`[Lead] useEffect cleanup for id=${id}, aborting`)
-      controller.abort()
-      clearTimeout(timeoutId)
-    }
-  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+      setError('La carga tardó demasiado. Intenta refrescar.')
+    }, 15000)
+    return () => clearTimeout(timeout)
+  }, [loading])
 
   // ── Snapshot for activity tracking ────────────────────────────────
   useEffect(() => {
@@ -291,7 +344,7 @@ export default function CRMLeadDetalle() {
     setLoadingMoreActividad(true)
     try {
       const { data } = await supabase.from('ventas_actividad')
-        .select('id, lead_id, tipo, descripcion, created_at, usuario:usuarios(id, nombre)')
+        .select('*, usuario:usuarios(id, nombre)')
         .eq('lead_id', id)
         .order('created_at', { ascending: false })
         .range(actividadOffset, actividadOffset + 19)
@@ -308,29 +361,33 @@ export default function CRMLeadDetalle() {
   }, [id, actividadOffset, loadingMoreActividad, showToast])
 
   // ── Update lead field with debounce ────────────────────────────────
+  // Track the original (pre-edit) value per field for correct rollback
+  const originalFieldValuesRef = useRef({})
+
   const updateField = (field, value) => {
     // Allow setter/closer to edit their own resumen fields
     const canEditResumen = (field === 'resumen_setter' && esMiLeadSetter) || (field === 'resumen_closer' && esMiLeadCloser)
     if (!puedeEditar && !canEditResumen) return
-    const prevValue = lead?.[field]
-    setLead(prev => {
-      const updated = { ...prev, [field]: value }
-      // Keep module cache in sync with optimistic edits
-      if (_lastLeadCache?.id === id) _lastLeadCache.data = updated
-      return updated
-    })
+
+    // Capture original value only on FIRST change (before any optimistic update)
+    if (!(field in originalFieldValuesRef.current)) {
+      originalFieldValuesRef.current[field] = lead?.[field]
+    }
+    setLead(prev => ({ ...prev, [field]: value }))
     pendingFieldUpdatesRef.current[field] = value
 
     if (debounceRefs.current[field]) clearTimeout(debounceRefs.current[field])
     debounceRefs.current[field] = setTimeout(async () => {
       const savedValue = pendingFieldUpdatesRef.current[field]
       delete pendingFieldUpdatesRef.current[field]
+      const rollbackValue = originalFieldValuesRef.current[field]
+      delete originalFieldValuesRef.current[field]
       try {
         const { error } = await supabase.from('ventas_leads').update({ [field]: savedValue ?? value }).eq('id', id)
         if (error) throw error
       } catch {
         if (!isMountedRef.current) return
-        setLead(prev => ({ ...prev, [field]: prevValue }))
+        setLead(prev => ({ ...prev, [field]: rollbackValue }))
         showToast('Error al guardar. El cambio se ha revertido.', 'error')
       }
     }, 800)
@@ -433,8 +490,6 @@ export default function CRMLeadDetalle() {
       const pending = { ...pendingFieldUpdatesRef.current }
       pendingFieldUpdatesRef.current = {}
       if (Object.keys(pending).length > 0) {
-        // Invalidate CRM cache so returning to kanban fetches fresh data
-        invalidatePipelineCache()
         supabase.from('ventas_leads').update(pending).eq('id', id)
           .then(({ error }) => { if (error) console.error('[CRM Detail] Unmount flush failed:', error) })
           .catch(() => {}) // swallow network errors on unmount
@@ -456,31 +511,46 @@ export default function CRMLeadDetalle() {
     if (savingActionRef.current) return
     savingActionRef.current = true
     setShowEtapaDropdown(null)
-    try {
-      const ps = lead.pipeline_states?.find(p => p.pipeline_id === pipelineId)
-      const etapaAnterior = ps?.etapa?.nombre || 'Sin etapa'
-      const etapaNueva = allEtapas.find(e => e.id === nuevaEtapaId)?.nombre || 'Sin etapa'
-      const pipelineNombre = ps?.pipeline?.nombre || ''
 
+    const ps = lead.pipeline_states?.find(p => p.pipeline_id === pipelineId)
+    const etapaAnterior = ps?.etapa?.nombre || 'Sin etapa'
+    const etapaNuevaObj = allEtapas.find(e => e.id === nuevaEtapaId)
+    const etapaNueva = etapaNuevaObj?.nombre || 'Sin etapa'
+    const pipelineNombre = ps?.pipeline?.nombre || ''
+    const prevPipelineStates = lead.pipeline_states
+
+    // Optimistic update — no refrescarLead needed
+    const fechaEntrada = new Date().toISOString()
+    setLead(prev => ({
+      ...prev,
+      pipeline_states: (prev.pipeline_states || []).map(p =>
+        p.pipeline_id === pipelineId
+          ? { ...p, etapa_id: nuevaEtapaId, etapa: etapaNuevaObj || p.etapa, fecha_entrada: fechaEntrada }
+          : p
+      ),
+    }))
+
+    try {
       const { error: etapaErr } = await supabase.from('ventas_lead_pipeline')
-        .update({ etapa_id: nuevaEtapaId, fecha_entrada: new Date().toISOString() })
+        .update({ etapa_id: nuevaEtapaId, fecha_entrada: fechaEntrada })
         .eq('lead_id', id)
         .eq('pipeline_id', pipelineId)
       if (etapaErr) throw etapaErr
 
-      await supabase.from('ventas_actividad').insert({
+      supabase.from('ventas_actividad').insert({
         lead_id: id, usuario_id: user.id, tipo: 'cambio_etapa',
         descripcion: `${pipelineNombre}: ${etapaAnterior} → ${etapaNueva}`,
         datos: { pipeline_id: pipelineId, etapa_anterior_id: ps?.etapa_id, etapa_nueva_id: nuevaEtapaId },
-      })
+      }).then(() => {})
 
       logActividad('crm', 'cambio_etapa', `${pipelineNombre}: ${etapaAnterior} → ${etapaNueva}`, { entidad: 'lead', entidad_id: id })
 
-      if (!isMountedRef.current) return
-      showToast('Etapa actualizada', 'success')
-      await refrescarLead()
+      if (isMountedRef.current) showToast('Etapa actualizada', 'success')
     } catch {
-      if (isMountedRef.current) showToast('Error al cambiar etapa', 'error')
+      if (isMountedRef.current) {
+        setLead(prev => ({ ...prev, pipeline_states: prevPipelineStates }))
+        showToast('Error al cambiar etapa', 'error')
+      }
     } finally {
       savingActionRef.current = false
     }
@@ -488,8 +558,8 @@ export default function CRMLeadDetalle() {
 
   // ── Assign setter/closer ───────────────────────────────────────────
   const asignarSetter = async (setterId) => {
-    if (savingActionRef.current) return
-    savingActionRef.current = true
+    if (savingSetterRef.current) return
+    savingSetterRef.current = true
     const prevSetter = lead.setter
     const prevSetterId = lead.setter_asignado_id
     const nuevoSetter = setters.find(s => s.usuario_id === setterId)
@@ -517,13 +587,13 @@ export default function CRMLeadDetalle() {
         showToast('Error al asignar setter', 'error')
       }
     } finally {
-      savingActionRef.current = false
+      savingSetterRef.current = false
     }
   }
 
   const asignarCloser = async (closerId) => {
-    if (savingActionRef.current) return
-    savingActionRef.current = true
+    if (savingCloserRef.current) return
+    savingCloserRef.current = true
     const prevCloser = lead.closer
     const prevCloserId = lead.closer_asignado_id
     const nuevoCloser = closers.find(c => c.usuario_id === closerId)
@@ -551,7 +621,7 @@ export default function CRMLeadDetalle() {
         showToast('Error al asignar closer', 'error')
       }
     } finally {
-      savingActionRef.current = false
+      savingCloserRef.current = false
     }
   }
 
@@ -624,30 +694,6 @@ export default function CRMLeadDetalle() {
         datos: { etiqueta_id: etiquetaId, accion: 'añadir' },
       }).then(() => {})
       logActividad('crm', 'etiqueta', `Etiqueta añadida: ${etiqueta.nombre}`, { entidad: 'lead', entidad_id: id })
-
-      // Auto-move to "lost" stage when "No Lead" tag is added
-      if (etiqueta.nombre === 'No Lead') {
-        const pipelineStates = lead.pipeline_states || []
-        for (const ps of pipelineStates) {
-          if (ps.etapa?.tipo === 'lost') continue // already in lost
-          const lostEtapa = allEtapas.find(e => e.pipeline?.id === ps.pipeline_id && e.tipo === 'lost')
-          if (lostEtapa) {
-            await supabase.from('ventas_lead_pipeline')
-              .update({ etapa_id: lostEtapa.id, fecha_entrada: new Date().toISOString() })
-              .eq('lead_id', id)
-              .eq('pipeline_id', ps.pipeline_id)
-            await supabase.from('ventas_actividad').insert({
-              lead_id: id, usuario_id: user.id, tipo: 'cambio_etapa',
-              descripcion: `${ps.pipeline?.nombre}: ${ps.etapa?.nombre} → ${lostEtapa.nombre} (auto: No Lead)`,
-              datos: { pipeline_id: ps.pipeline_id, etapa_anterior_id: ps.etapa_id, etapa_nueva_id: lostEtapa.id, auto: 'no_lead' },
-            })
-          }
-        }
-        if (isMountedRef.current) {
-          showToast('Lead movido a Lost automáticamente', 'info')
-          await refrescarLead()
-        }
-      }
     } catch (err) {
       // Rollback
       if (isMountedRef.current) {
@@ -749,9 +795,7 @@ export default function CRMLeadDetalle() {
   }, [showTagPicker])
 
   // ── Loading / Error states ─────────────────────────────────────────
-  // Only show skeleton when there's no lead data at all (first load)
-  // If we have data, show the content while refreshing silently in background
-  if (loading && !lead) {
+  if (loading) {
     return (
       <div className="crm-detail">
         <div className="crm-skeleton" style={{ width: 80, height: 16, marginBottom: 16 }} />
@@ -784,14 +828,7 @@ export default function CRMLeadDetalle() {
         </button>
         <div className="crm-error">
           <p>{error || 'Lead no encontrado'}</p>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 12 }}>
-            <button className="ui-btn ui-btn--primary ui-btn--md" onClick={() => {
-              setError(null)
-              setLoading(true)
-              refrescarLead()
-            }}>Reintentar</button>
-            <button className="ui-btn ui-btn--secondary ui-btn--md" onClick={() => navigate('/ventas/crm')}>Volver</button>
-          </div>
+          <button className="ui-btn ui-btn--secondary ui-btn--md" onClick={() => navigate('/ventas/crm')}>Volver</button>
         </div>
       </div>
     )
