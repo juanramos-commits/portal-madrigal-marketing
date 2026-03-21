@@ -82,14 +82,14 @@ test('contacto manual should send first message successfully', async ({ page }) 
     console.log('NO RESPONSE captured (timeout or no request)')
   }
 
-  // Wait for UI to update
-  await page.waitForTimeout(3000)
+  // Wait for UI to show success or error
+  await page.waitForTimeout(5000)
 
   await page.screenshot({ path: 'test-results/agente-modal-result.png' })
 
   // Check for success or error
-  const successIndicator = modal.locator('text=Mensaje enviado, text=enviado correctamente')
-  const errorIndicator = modal.locator('.ia-import-error')
+  const successIndicator = page.locator('h3:has-text("Mensaje enviado"), :text("enviado correctamente")')
+  const errorIndicator = page.locator('.ia-import-error')
 
   const hasSuccess = await successIndicator.count()
   const hasError = await errorIndicator.count()
