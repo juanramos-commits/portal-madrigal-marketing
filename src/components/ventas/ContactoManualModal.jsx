@@ -50,48 +50,18 @@ export default function ContactoManualModal({ open, onClose, agenteId }) {
     setResult(null)
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession()
-      const session = sessionData?.session
-      if (!session?.access_token) {
-        throw new Error('Sesion expirada, recarga la pagina')
-      }
+      const { data, error: fnError } = await supabase.functions.invoke('ia-outbound-primer-mensaje', {
+        body: {
+          agente_id: agenteId,
+          telefono: normalizarTelefono(form.telefono.trim()),
+          nombre: form.nombre.trim() || null,
+          email: form.email.trim() || null,
+          servicio: form.servicio.trim() || null,
+        },
+      })
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      if (!supabaseUrl) {
-        throw new Error('VITE_SUPABASE_URL no configurado')
-      }
-
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      const res = await fetch(
-        `${supabaseUrl}/functions/v1/ia-outbound-primer-mensaje`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-            'apikey': anonKey,
-          },
-          body: JSON.stringify({
-            agente_id: agenteId,
-            telefono: normalizarTelefono(form.telefono.trim()),
-            nombre: form.nombre.trim() || null,
-            email: form.email.trim() || null,
-            servicio: form.servicio.trim() || null,
-          }),
-        }
-      )
-
-      let data
-      const contentType = res.headers.get('content-type') || ''
-      if (contentType.includes('json')) {
-        data = await res.json()
-      } else {
-        const text = await res.text()
-        throw new Error(`Error ${res.status}: ${text.slice(0, 200)}`)
-      }
-      if (!res.ok || data.error) {
-        throw new Error(data.error || data.details || `Error ${res.status}`)
-      }
+      if (fnError) throw new Error(fnError.message || 'Error enviando primer mensaje')
+      if (data?.error) throw new Error(data.error)
 
       setResult(data)
     } catch (err) {
