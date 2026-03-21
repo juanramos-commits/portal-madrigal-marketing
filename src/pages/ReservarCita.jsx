@@ -47,6 +47,12 @@ const MailIcon = () => (
   </svg>
 )
 
+const DownloadIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+)
+
 function formatFecha(date) {
   const d = new Date(date)
   return d.toLocaleDateString('es-ES', {
@@ -71,6 +77,45 @@ function getMadridDateParts(date) {
     timeZone: 'Europe/Madrid',
   }).format(d) // Returns YYYY-MM-DD
   return parts
+}
+
+function buildGoogleCalendarUrl(fechaHora, duracion, titulo) {
+  const start = new Date(fechaHora)
+  const end = new Date(start.getTime() + duracion * 60000)
+  const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: titulo,
+    dates: `${fmt(start)}/${fmt(end)}`,
+    details: 'Reserva confirmada desde Madrigal Marketing',
+  })
+  return `https://calendar.google.com/calendar/render?${params.toString()}`
+}
+
+function downloadICS(fechaHora, duracion, titulo) {
+  const start = new Date(fechaHora)
+  const end = new Date(start.getTime() + duracion * 60000)
+  const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Madrigal Marketing//Reserva//ES',
+    'BEGIN:VEVENT',
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(end)}`,
+    `SUMMARY:${titulo}`,
+    'DESCRIPTION:Reserva confirmada desde Madrigal Marketing',
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n')
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'reserva-madrigal.ics'
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 export default function ReservarCita() {
@@ -158,10 +203,10 @@ export default function ReservarCita() {
     return map
   }, [slots])
 
-  // Limit to only the next 3 days with available slots
+  // Limit to only the next 5 days with available slots
   const allowedDates = useMemo(() => {
     const sorted = Object.keys(slotsByDate).sort()
-    return new Set(sorted.slice(0, 3))
+    return new Set(sorted.slice(0, 5))
   }, [slotsByDate])
 
   // Auto-select the first available date on load
@@ -510,6 +555,26 @@ export default function ReservarCita() {
                     <ClockIcon />
                     <span>{formatHora(resultData.fecha_hora)} · {resultData.duracion} min</span>
                   </div>
+                </div>
+              )}
+              {resultData && (
+                <div className="rb-calendar-actions">
+                  <a
+                    href={buildGoogleCalendarUrl(resultData.fecha_hora, resultData.duracion, enlace?.nombre || 'Reunión Madrigal')}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rb-cal-btn rb-cal-btn-google"
+                  >
+                    <CalendarIcon />
+                    Añadir a Google Calendar
+                  </a>
+                  <button
+                    className="rb-cal-btn rb-cal-btn-ics"
+                    onClick={() => downloadICS(resultData.fecha_hora, resultData.duracion, enlace?.nombre || 'Reunión Madrigal')}
+                  >
+                    <DownloadIcon />
+                    Descargar .ics
+                  </button>
                 </div>
               )}
               <div className="rb-exito-reminder">
