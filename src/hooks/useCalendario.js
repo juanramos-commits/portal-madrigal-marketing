@@ -460,32 +460,55 @@ export function useCalendario() {
 
   // Create enlace
   const crearEnlace = useCallback(async (enlace) => {
+    const { closer_ids, ...dbFields } = enlace
     const { data, error: err } = await supabase
       .from('ventas_enlaces_agenda')
       .insert({
-        nombre: enlace.nombre,
-        slug: enlace.slug,
-        setter_id: enlace.setter_id || null,
-        fuente: enlace.fuente || null,
+        nombre: dbFields.nombre,
+        slug: dbFields.slug,
+        setter_id: dbFields.setter_id || null,
+        fuente: dbFields.fuente || null,
         activo: true,
         creado_por_id: user?.id,
       })
       .select('*, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email)')
       .single()
     if (err) throw err
+
+    // Insert closers into junction table
+    if (closer_ids?.length > 0) {
+      await supabase
+        .from('ventas_enlaces_closers')
+        .insert(closer_ids.map(cid => ({ enlace_id: data.id, closer_id: cid })))
+    }
+
+    data.closer_ids = closer_ids || []
     setEnlaces(prev => [data, ...prev])
     return data
   }, [user?.id])
 
   // Update enlace
   const actualizarEnlace = useCallback(async (enlaceId, campos) => {
+    const { closer_ids, ...dbCampos } = campos
     const { data, error: err } = await supabase
       .from('ventas_enlaces_agenda')
-      .update({ ...campos, updated_at: new Date().toISOString() })
+      .update({ ...dbCampos, updated_at: new Date().toISOString() })
       .eq('id', enlaceId)
       .select('*, setter:usuarios!ventas_enlaces_agenda_setter_id_fkey(id, nombre, email)')
       .single()
     if (err) throw err
+
+    // Sync closers in junction table
+    if (closer_ids !== undefined) {
+      await supabase.from('ventas_enlaces_closers').delete().eq('enlace_id', enlaceId)
+      if (closer_ids.length > 0) {
+        await supabase
+          .from('ventas_enlaces_closers')
+          .insert(closer_ids.map(cid => ({ enlace_id: enlaceId, closer_id: cid })))
+      }
+    }
+
+    data.closer_ids = closer_ids !== undefined ? closer_ids : []
     setEnlaces(prev => prev.map(e => e.id === enlaceId ? data : e))
   }, [])
 

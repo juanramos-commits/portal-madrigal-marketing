@@ -96,11 +96,13 @@ function downloadICS(fechaHora, duracion, titulo) {
   const start = new Date(fechaHora)
   const end = new Date(start.getTime() + duracion * 60000)
   const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  const uid = `${fmt(start)}-${Math.random().toString(36).slice(2, 10)}@madrigalmarketing.es`
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
     'PRODID:-//Madrigal Marketing//Reserva//ES',
     'BEGIN:VEVENT',
+    `UID:${uid}`,
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
     `SUMMARY:${titulo}`,
