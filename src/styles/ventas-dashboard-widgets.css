@@ -1030,6 +1030,7 @@
 .db-wdesglose-totals td {
   border-top: 2px solid var(--text-muted);
   background: rgba(255, 255, 255, 0.05);
+  font-weight: var(--weight-semibold);
 }
 
 /* ── Widget Funnel ─────────────────────────────────────────────────────── */

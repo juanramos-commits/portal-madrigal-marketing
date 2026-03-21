@@ -110,10 +110,10 @@ export default memo(function WidgetDesglose({ widgetDef, data }) {
           </tbody>
           <tfoot>
             <tr className="db-wdesglose-totals">
-              <td className="db-wtable-name"><strong>Total</strong></td>
+              <td className="db-wtable-name">Total</td>
               {cols.map(c => (
                 <td key={c.key} className={c.isTasa ? tasaClass(totals[c.key]) : 'db-wconv-count'}>
-                  <strong>{c.isTasa ? `${totals[c.key].toFixed(1)}%` : totals[c.key]}</strong>
+                  {c.isTasa ? `${totals[c.key].toFixed(1)}%` : totals[c.key]}
                 </td>
               ))}
             </tr>
