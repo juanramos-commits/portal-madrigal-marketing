@@ -8,7 +8,9 @@ import { prefetchLeadDetail } from './CRMLeadDetalle'
 
 function getInitials(name) {
   if (!name) return '?'
-  return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+  const words = name.split(' ')
+  if (words.length === 1) return name.slice(0, 2).toUpperCase()
+  return words.map(w => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
 function timeAgo(date) {
