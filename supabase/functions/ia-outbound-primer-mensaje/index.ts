@@ -276,33 +276,93 @@ Deno.serve(async (req) => {
       }
     }
 
-    // === SEND VIA ia-whatsapp-send ===
-    const sendRes = await fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify(sendBody),
-    })
+    // === LOAD WA TOKEN (env → DB fallback) ===
+    let waToken = Deno.env.get('WA_ACCESS_TOKEN') ?? ''
+    if (!waToken || waToken.length < 100) {
+      const { data: configRow } = await supabase
+        .from('ia_config')
+        .select('value')
+        .eq('key', 'wa_access_token')
+        .maybeSingle()
+      if (configRow?.value) waToken = configRow.value
+    }
 
-    const sendResult = await sendRes.json()
+    // === SEND TEMPLATES DIRECTLY TO META API ===
+    const phoneNumberId = agente.whatsapp_phone_id
+    const templates = (agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio')
+      ? ['re_contacto_rosalia_1', 're_contacto_rosalia_2', 're_contacto_rosalia_3']
+      : ['primer_mensaje_formulario']
 
-    if (!sendRes.ok || sendResult.error) {
-      await supabase.from('ia_logs').insert({
-        agente_id: agenteId,
-        conversacion_id: conversacionId,
-        tipo: 'error',
-        mensaje: `Error enviando primer mensaje a ${telefono}: ${sendResult.error || 'Unknown'}`,
-        detalles: sendResult,
+    const TEMPLATE_TEXTS: Record<string, string> = {
+      're_contacto_rosalia_1': 'Hola! Soy Rosalía de Madrigal Marketing. Acabo de incorporarme como directora del Departamento de Desarrollo de Proveedores y estoy revisando nuestra base de contactos.',
+      're_contacto_rosalia_2': 'He visto que en su momento solicitaste información sobre nuestros servicios y quería saber si sigues en el sector y te interesaría que te cuente las novedades para la campaña 2026.',
+      're_contacto_rosalia_3': 'Un saludo!',
+      'primer_mensaje_formulario': `Hola ${nombre || 'amigo/a'}, soy Rosalía, del equipo de Madrigal Marketing. Hemos recibido tu solicitud de información sobre nuestros servicios. Cuéntame, qué es lo que más te está frenando ahora mismo para conseguir más clientes?`,
+    }
+
+    const toNum = telefono.replace(/\+/g, '')
+    let sentCount = 0
+    let sendError = ''
+
+    for (let i = 0; i < templates.length; i++) {
+      const tplName = templates[i]
+      const tplParams: Record<string, unknown> = tplName === 'primer_mensaje_formulario'
+        ? { components: [{ type: 'body', parameters: [{ type: 'text', parameter_name: 'nombre', text: nombre || 'amigo/a' }] }] }
+        : {}
+
+      const metaRes = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${waToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: toNum,
+          type: 'template',
+          template: { name: tplName, language: { code: 'es' }, ...tplParams },
+        }),
       })
+      const metaData = await metaRes.json()
+
+      if (!metaRes.ok) {
+        sendError = metaData.error?.message || 'Meta API error'
+        await supabase.from('ia_logs').insert({
+          agente_id: agenteId, conversacion_id: conversacionId, tipo: 'error',
+          mensaje: `Error enviando template ${tplName} a ${telefono}: ${sendError}`,
+          detalles: metaData,
+        })
+        break
+      }
+
+      // Store message
+      await supabase.from('ia_mensajes').insert({
+        conversacion_id: conversacionId, direction: 'outbound', sender: 'bot',
+        content: TEMPLATE_TEXTS[tplName] || `[Plantilla: ${tplName}]`,
+        message_type: 'text', wa_message_id: metaData.messages?.[0]?.id, template_name: tplName,
+      })
+      sentCount++
+
+      // Typing delay between messages
+      if (i < templates.length - 1) {
+        const delay = 3000 + Math.random() * 3000 + (TEMPLATE_TEXTS[tplName]?.length || 50) * 50
+        await new Promise(r => setTimeout(r, Math.min(15000, Math.max(4000, delay))))
+      }
+    }
+
+    if (sentCount === 0) {
       return jsonResponse({
         error: 'Failed to send first message',
-        details: sendResult.error || sendResult,
+        details: sendError,
         lead_id: leadId,
         conversacion_id: conversacionId,
       }, 502)
     }
+
+    // Update conversation
+    await supabase.from('ia_conversaciones').update({
+      last_bot_message_at: new Date().toISOString(),
+      estado: 'waiting_reply',
+    }).eq('id', conversacionId)
+
+    const sendResult = { sent: sentCount }
 
     // === LOG ===
     const templateDesc = (agente.tipo === 'repescadora' || agente.tipo === 'outbound_frio')
@@ -418,3 +478,4 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Internal error', details: String(err) }, 500)
   }
 })
+// deployed sábado, 21 de marzo de 2026, 20:23:30 CET

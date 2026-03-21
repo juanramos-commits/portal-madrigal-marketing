@@ -79,9 +79,16 @@ export default function ContactoManualModal({ open, onClose, agenteId }) {
         }
       )
 
-      const data = await res.json()
+      let data
+      const contentType = res.headers.get('content-type') || ''
+      if (contentType.includes('json')) {
+        data = await res.json()
+      } else {
+        const text = await res.text()
+        throw new Error(`Error ${res.status}: ${text.slice(0, 200)}`)
+      }
       if (!res.ok || data.error) {
-        throw new Error(data.error || 'Error enviando primer mensaje')
+        throw new Error(data.error || data.details || `Error ${res.status}`)
       }
 
       setResult(data)
