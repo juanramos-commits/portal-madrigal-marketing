@@ -356,6 +356,10 @@ export function useVentasCRM() {
         setLeads(newLeads)
         setLeadCounts(newCounts)
         setTotalLeads(total)
+        // Update module cache — preserves pipeline selection for back navigation
+        if (_pipelineStateCache) {
+          _pipelineStateCache = { ..._pipelineStateCache, pipelineActivo: pipeline, etapas: etapasData, leads: newLeads, leadCounts: newCounts, totalLeads: total }
+        }
       } else {
         // Table view: still uses buildLeadQuery (needs count: exact for pagination)
         const queryFn = buildLeadQueryRef.current || buildLeadQuery
@@ -1277,8 +1281,10 @@ export function useVentasCRM() {
     setLeads({})
     setLeadCounts({})
     setTablaPage(0)
-    // Clear module cache — new pipeline data will replace it
-    _pipelineStateCache = null
+    // Update module cache with new pipeline — preserves state for back navigation
+    if (_pipelineStateCache) {
+      _pipelineStateCache = { ..._pipelineStateCache, pipelineActivo: pipeline, leads: {}, leadCounts: {}, totalLeads: 0 }
+    }
     // Load etapas + leads directly — no reliance on chained useEffects
     cargarPipelineCompleto(pipeline, vista)
   }, [cargarPipelineCompleto, vista])

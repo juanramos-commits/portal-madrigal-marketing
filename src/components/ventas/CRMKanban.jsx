@@ -99,6 +99,20 @@ export default function CRMKanban({
   const [overColumnId, setOverColumnId] = useState(null)
   const [moverSheetData, setMoverSheetData] = useState(null)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches)
+  const kanbanRef = useRef(null)
+
+  // Restore horizontal scroll position on remount (back from lead detail)
+  useEffect(() => {
+    const saved = sessionStorage.getItem('crm_kanban_scroll')
+    if (saved && kanbanRef.current) {
+      kanbanRef.current.scrollLeft = parseInt(saved, 10)
+    }
+    return () => {
+      if (kanbanRef.current) {
+        sessionStorage.setItem('crm_kanban_scroll', String(kanbanRef.current.scrollLeft))
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)')
@@ -275,7 +289,7 @@ export default function CRMKanban({
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragCancel}
     >
-      <div className="crm-kanban">
+      <div className="crm-kanban" ref={kanbanRef}>
         {etapas.map(etapa => (
           <CRMKanbanColumn
             key={etapa.id}
