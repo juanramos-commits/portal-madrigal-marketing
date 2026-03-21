@@ -453,8 +453,13 @@ export function useVentasCRM() {
       const userEsSetter = userRoles.some(r => r.rol === 'setter')
       const userEsCloser = userRoles.some(r => r.rol === 'closer')
 
-      let defaultPipeline = null
-      if (pipelinesData && pipelinesData.length > 0) {
+      // Restore cached pipeline if still valid, otherwise compute default
+      const cachedPipelineId = _pipelineStateCache?.pipelineActivo?.id
+      let defaultPipeline = cachedPipelineId
+        ? pipelinesData?.find(p => p.id === cachedPipelineId) || null
+        : null
+
+      if (!defaultPipeline && pipelinesData && pipelinesData.length > 0) {
         if (tienePermiso('ventas.crm.ver_todos')) {
           defaultPipeline = pipelinesData[0]
         } else if (userEsSetter && !userEsCloser) {
