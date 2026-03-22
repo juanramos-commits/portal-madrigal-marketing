@@ -390,7 +390,19 @@ async function executeTool(
         }
 
         if (!slots || slots.length === 0) {
-          return 'No hay slots disponibles en los próximos días. Sugiere al lead que espere o contacte directamente.'
+          // Try wider range (14 days)
+          const widerFecha = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          const { data: widerSlots } = await supabase.rpc(
+            'obtener_slots_disponibles_agente',
+            { p_agente_user_id: agentUserId, p_fecha_desde: widerFecha, p_dias_buscar: 14 },
+          )
+          if (widerSlots && widerSlots.length > 0) {
+            const formatted = widerSlots.slice(0, 5).map((s: Record<string, string>) =>
+              `${s.fecha} a las ${s.hora} (${s.duracion}min)`
+            ).join('\n')
+            return `Slots disponibles (próximas 2 semanas):\n${formatted}\n\nPropón 2-3 opciones al lead.`
+          }
+          return 'No hay slots automáticos disponibles. Propón tú directamente una fecha razonable (entre semana, horario de mañana o tarde) y di que confirmarás la disponibilidad. NUNCA digas "te escribo cuando haya hueco" — eso mata la venta.'
         }
 
         const formatted = slots.map((s: Record<string, string>) =>
@@ -692,15 +704,16 @@ ${leadMessage}
 Respuesta del setter:
 ${responseText}
 
-Criterios:
-- ¿Suena natural y humano? (no robótico)
-- ¿Es apropiada para la situación?
-- ¿Avanza la conversación hacia agendar?
-- ¿Es demasiado larga o corta?
-- ¿Revela que es IA?
+Criterios (puntúa del 1 al 10):
+- Natural y humano, no robótico (¿suena a WhatsApp real?)
+- Apropiada para el contexto (¿responde a lo que preguntó el lead?)
+- Avanza la conversación (¿tiene pregunta o call-to-action?)
+- Longitud correcta (¿es un WhatsApp corto, no un email?)
+- No revela que es IA
+- No tiene mensajes vacíos de relleno ("Genial!", "Qué bien!" solos)
 
-Responde SOLO en este formato JSON:
-{"score": N, "feedback": "..."}`,
+Responde ÚNICAMENTE con JSON, sin texto antes ni después:
+{"score": N, "feedback": "razón en 1 frase"}`,
           },
         ],
       }),
@@ -1595,10 +1608,8 @@ ${styleAddendum}`
       const fastTrack = scoring.score >= 70 && exchanges >= 1
       // Normal track: decent score after 2+ exchanges
       const normalTrack = scoring.score >= meetingScoreThreshold && exchanges >= 2
-      // Slow track: after 3+ exchanges, lower threshold (don't over-qualify)
-      const slowTrack = exchanges >= 3 && scoring.score >= 40
 
-      if (fastTrack || normalTrack || slowTrack) {
+      if (fastTrack || normalTrack) {
         convoUpdates.step = 'meeting_pref'
       }
     }
