@@ -1,0 +1,168 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - complementary [ref=e4]:
+    - img "Madrigal" [ref=e7]
+    - navigation [ref=e8]:
+      - generic [ref=e9]:
+        - generic [ref=e11] [cursor=pointer]:
+          - generic [ref=e12]:
+            - img [ref=e13]
+            - generic [ref=e15]: Por organizar
+          - generic [ref=e16]:
+            - img [ref=e18]
+            - button [ref=e20]:
+              - img [ref=e21]
+        - generic [ref=e28]:
+          - link "Dashboard" [ref=e29] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e30]
+            - generic [ref=e35]: Dashboard
+          - link "Notificaciones" [ref=e36] [cursor=pointer]:
+            - /url: /notificaciones
+            - img [ref=e37]
+            - generic [ref=e40]: Notificaciones
+          - link "Tareas" [ref=e41] [cursor=pointer]:
+            - /url: /tareas
+            - img [ref=e42]
+            - generic [ref=e45]: Tareas
+          - link "Clientes" [ref=e46] [cursor=pointer]:
+            - /url: /clientes
+            - img [ref=e47]
+            - generic [ref=e52]: Clientes
+          - link "CRM" [ref=e53] [cursor=pointer]:
+            - /url: /crm
+            - img [ref=e54]
+            - generic [ref=e58]: CRM
+          - link "Paquetes de Clientes" [ref=e59] [cursor=pointer]:
+            - /url: /paquetes-clientes
+            - img [ref=e60]
+            - generic [ref=e63]: Paquetes de Clientes
+          - link "Facturas" [ref=e64] [cursor=pointer]:
+            - /url: /documentacion/facturas
+            - img [ref=e65]
+            - generic [ref=e68]: Facturas
+          - link "Contrato" [ref=e69] [cursor=pointer]:
+            - /url: /documentacion/contrato
+            - img [ref=e70]
+            - generic [ref=e73]: Contrato
+          - link "Reuniones" [ref=e74] [cursor=pointer]:
+            - /url: /reuniones
+            - img [ref=e75]
+            - generic [ref=e77]: Reuniones
+          - link "Archivos" [ref=e78] [cursor=pointer]:
+            - /url: /archivos
+            - img [ref=e79]
+            - generic [ref=e81]: Archivos
+          - link "Madrigalito" [ref=e82] [cursor=pointer]:
+            - /url: /madrigalito
+            - img [ref=e83]
+            - generic [ref=e87]: Madrigalito
+          - link "Usuarios" [ref=e88] [cursor=pointer]:
+            - /url: /usuarios
+            - img [ref=e89]
+            - generic [ref=e97]: Usuarios
+          - link "Roles" [ref=e98] [cursor=pointer]:
+            - /url: /roles
+            - img [ref=e99]
+            - generic [ref=e101]: Roles
+          - link "Sugerencias" [ref=e102] [cursor=pointer]:
+            - /url: /sugerencias
+            - img [ref=e103]
+            - generic [ref=e105]: Sugerencias
+          - link "Registro de Actividad" [ref=e106] [cursor=pointer]:
+            - /url: /audit-log
+            - img [ref=e107]
+            - generic [ref=e110]: Registro de Actividad
+          - link "Alertas de Seguridad" [ref=e111] [cursor=pointer]:
+            - /url: /alertas-seguridad
+            - img [ref=e112]
+            - generic [ref=e114]: Alertas de Seguridad
+          - link "Seguridad" [ref=e115] [cursor=pointer]:
+            - /url: /seguridad-dashboard
+            - img [ref=e116]
+            - generic [ref=e117]: Seguridad
+          - link "Mi Seguridad" [ref=e118] [cursor=pointer]:
+            - /url: /mi-seguridad
+            - img [ref=e119]
+            - generic [ref=e122]: Mi Seguridad
+      - generic [ref=e125] [cursor=pointer]:
+        - generic [ref=e126]:
+          - img [ref=e127]
+          - generic [ref=e131]: Ventas
+        - generic [ref=e132]:
+          - img [ref=e134]
+          - button [ref=e136]:
+            - img [ref=e137]
+      - status [ref=e144]
+    - generic [ref=e145]:
+      - generic [ref=e146]:
+        - generic [ref=e147]: M
+        - generic [ref=e148]:
+          - generic [ref=e149]: Madrigal Marketing
+          - generic [ref=e150]: Super Admin
+      - button "Cerrar Sesión" [ref=e151] [cursor=pointer]:
+        - img [ref=e152]
+        - generic [ref=e155]: Cerrar Sesión
+  - generic [ref=e158]:
+    - navigation [ref=e159]:
+      - heading "Cold Email" [level=2] [ref=e161]
+      - list [ref=e162]:
+        - listitem [ref=e163]:
+          - link "Dashboard" [ref=e164] [cursor=pointer]:
+            - /url: /cold-email
+            - img [ref=e166]
+            - generic [ref=e168]: Dashboard
+        - listitem [ref=e169]:
+          - link "Contactos" [ref=e170] [cursor=pointer]:
+            - /url: /cold-email/contactos
+            - img [ref=e172]
+            - generic [ref=e177]: Contactos
+        - listitem [ref=e178]:
+          - link "Secuencias" [ref=e179] [cursor=pointer]:
+            - /url: /cold-email/secuencias
+            - img [ref=e181]
+            - generic [ref=e182]: Secuencias
+        - listitem [ref=e183]:
+          - link "Respuestas" [ref=e184] [cursor=pointer]:
+            - /url: /cold-email/respuestas
+            - img [ref=e186]
+            - generic [ref=e189]: Respuestas
+        - listitem [ref=e190]:
+          - link "Envíos" [ref=e191] [cursor=pointer]:
+            - /url: /cold-email/envios
+            - img [ref=e193]
+            - generic [ref=e196]: Envíos
+        - listitem [ref=e197]:
+          - link "Plantillas" [ref=e198] [cursor=pointer]:
+            - /url: /cold-email/plantillas
+            - img [ref=e200]
+            - generic [ref=e203]: Plantillas
+        - listitem [ref=e204]:
+          - link "Config" [ref=e205] [cursor=pointer]:
+            - /url: /cold-email/config
+            - img [ref=e207]
+            - generic [ref=e210]: Config
+    - main [ref=e211]:
+      - generic [ref=e212]:
+        - heading "Respuestas" [level=1] [ref=e214]
+        - generic [ref=e215]:
+          - generic [ref=e216]:
+            - generic [ref=e217]:
+              - textbox "Buscar..." [ref=e218]
+              - generic [ref=e219]:
+                - button "Todas" [active] [ref=e220] [cursor=pointer]
+                - button "pendiente" [ref=e221] [cursor=pointer]
+                - button "interesado" [ref=e222] [cursor=pointer]
+                - button "no ahora" [ref=e223] [cursor=pointer]
+                - button "baja" [ref=e224] [cursor=pointer]
+                - button "negativo" [ref=e225] [cursor=pointer]
+                - button "irrelevante" [ref=e226] [cursor=pointer]
+            - generic [ref=e228]:
+              - img [ref=e230]
+              - paragraph [ref=e233]: No hay respuestas.
+          - generic [ref=e235]:
+            - img [ref=e237]
+            - paragraph [ref=e239]: Selecciona una conversacion para ver los detalles.
+```
