@@ -414,18 +414,28 @@ Deno.serve(async (req) => {
             .limit(1)
             .single()
 
-          // Create CRM lead
-          const { data: crmLead } = await supabase
+          // Check if CRM lead already exists with this phone
+          const { data: existingCrmLead } = await supabase
             .from('ventas_leads')
-            .insert({
-              nombre: nombre || telefono,
-              telefono,
-              email: email || null,
-              fuente: origen === 'whatsapp' ? 'whatsapp' : 'referido',
-              setter_asignado_id: agente.usuario_id,
-            })
             .select('id')
-            .single()
+            .eq('telefono', telefono)
+            .maybeSingle()
+
+          let crmLead = existingCrmLead
+          if (!crmLead) {
+            const { data: newCrmLead } = await supabase
+              .from('ventas_leads')
+              .insert({
+                nombre: nombre || telefono,
+                telefono,
+                email: email || null,
+                fuente: origen === 'whatsapp' ? 'whatsapp' : 'referido',
+                setter_asignado_id: agente.usuario_id,
+              })
+              .select('id')
+              .single()
+            crmLead = newCrmLead
+          }
 
           if (crmLead && etapa) {
             // Create pipeline estado

@@ -18,7 +18,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'content-type, authorization',
+  'Access-Control-Allow-Headers': 'content-type, authorization, apikey, x-client-info, x-supabase-api-version',
 }
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {
@@ -476,7 +476,7 @@ async function executeTool(
         // Update IA conversation state
         await supabase
           .from('ia_conversaciones')
-          .update({ estado: 'agendado', chatbot_activo: false, step: 'agendado' })
+          .update({ estado: 'agendado', chatbot_activo: false })
           .eq('id', convo.id)
 
         // Sync Google Calendar — creates event + Meet link
@@ -696,6 +696,7 @@ async function evaluateQuality(
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(10000),
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 200,
@@ -879,6 +880,7 @@ async function callClaudeWithRetry(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(25000), // 25s timeout per attempt
       })
 
       if (res.ok) {
@@ -1586,8 +1588,17 @@ ${learnedRules}`
           agente_id: agenteId,
           conversacion_id: conversacionId,
           tipo: 'info',
-          mensaje: `Respuesta descartada: el lead envió mensaje(s) mientras la IA pensaba. Se re-procesará con contexto completo.`,
+          mensaje: `Respuesta descartada: el lead envió mensaje(s) mientras la IA pensaba. Re-procesando...`,
         }) } catch (_e) { /* ignore */ }
+        await releaseLock(supabase, conversacionId)
+        // Re-trigger processing with updated context after short delay
+        setTimeout(() => {
+          fetch(`${supabaseUrl}/functions/v1/ia-process-message`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+            body: JSON.stringify({ agente_id: agenteId, conversacion_id: conversacionId, lead_id: leadId }),
+          }).catch(() => {})
+        }, 3000)
         return jsonResponse({ status: 'discarded', reason: 'new_inbound_during_thinking' })
       }
     }
