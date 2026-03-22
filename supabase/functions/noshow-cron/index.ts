@@ -199,19 +199,35 @@ async function executePaso(
   const canal = conf.canal as string
   const confId = conf.id as string
 
-  // === WHATSAPP MESSAGES ===
+  // === WHATSAPP TEMPLATES (approved in Meta) ===
+  // Maps paso → { template_name, params: ordered array of variable values }
+  const waTemplates: Record<string, { template: string; params: string[] } | null> = {
+    confirmacion: { template: 'confirmacion_cita_utility', params: [vars.nombre, vars.closer, vars.fecha, vars.hora] },
+    micro_compromiso: { template: 'micro_compromiso_utility', params: [vars.closer] },
+    prueba_social: { template: 'prueba_social_utility3', params: [vars.fecha] },
+    video_closer: { template: 'video_director_utility', params: [vars.fecha] },
+    d1_escasez: { template: 'recordatorio_d1_utility', params: [vars.nombre, vars.hora, vars.closer] },
+    d0_2h: { template: 'recordatorio_2h_utility3', params: [vars.url] },
+    d0_15m: { template: 'recordatorio_15m_utility3', params: [vars.url] },
+    noshow_5m: { template: 'noshow_5m_utility', params: [vars.nombre, vars.closer] },
+    noshow_30m: { template: 'noshow_reagendar_utility', params: [vars.nombre] },
+    noshow_24h: { template: 'noshow_reagendar_utility', params: [vars.nombre] },
+    post_asistencia: { template: 'post_asistencia_utility', params: [vars.closer] },
+  }
+
+  // Fallback text messages (used if template not available or inside 24h window)
   const waMessages: Record<string, string> = {
-    confirmacion: `Hola {{nombre}}! Tu videollamada con {{closer}} queda confirmada para el {{fecha}} a las {{hora}}. Te envío los detalles por email!`,
-    micro_compromiso: `Para que {{closer}} pueda preparar tu caso, me dices cuántas bodas hiciste el año pasado?`,
-    prueba_social: `Por cierto {{nombre}}, mira lo que consiguen {{categoria}}s como tú con nuestro sistema. Te cuento en la llamada del {{fecha}}!`,
-    video_closer: `{{closer}} te ha dejado un mensaje para la llamada del {{fecha}}. Está preparando tu caso!`,
-    d1_escasez: `Hola {{nombre}}! Mañana a las {{hora}} tienes la videollamada con {{closer}}. Tu hueco es uno de los últimos de esta semana. Todo bien para esa hora?`,
-    d0_2h: `En 2 horas tienes la videollamada! {{closer}} está preparando tu caso. Enlace: {{url}}`,
-    d0_15m: `{{closer}} te espera! {{url}}`,
-    noshow_5m: `Hola {{nombre}}, {{closer}} está en la llamada esperándote. Todo bien?`,
-    noshow_30m: `No te preocupes {{nombre}}! Elige otro momento que te venga mejor y lo cuadramos`,
-    noshow_24h: `Oye {{nombre}}, que no pudiste venir no pasa nada. Si te sigue interesando, dime y te busco otro hueco esta semana`,
-    post_asistencia: `Qué tal ha ido la llamada con {{closer}}? Todo claro?`,
+    confirmacion: `Hola ${vars.nombre}! Tu videollamada con ${vars.closer} queda confirmada para el ${vars.fecha} a las ${vars.hora}. Te envio los detalles por email!`,
+    micro_compromiso: `Para que ${vars.closer} pueda preparar tu caso, me dices cuantas bodas hiciste el año pasado?`,
+    prueba_social: `Mira lo que consiguen profesionales como tu con nuestro sistema de captacion. Te lo cuento todo en tu llamada del ${vars.fecha}, nos vemos!`,
+    video_closer: `El director de Madrigal te ha dejado un mensaje para tu llamada del ${vars.fecha}. Esta preparando tu caso!`,
+    d1_escasez: `Hola ${vars.nombre}! Mañana a las ${vars.hora} tienes la videollamada con ${vars.closer}. Tu hueco es uno de los ultimos de esta semana. Todo bien para esa hora?`,
+    d0_2h: `En 2 horas tienes tu videollamada con nuestro equipo! Estamos preparando tu caso. Conectate aqui: ${vars.url}`,
+    d0_15m: `Tu videollamada empieza en 15 minutos! Nuestro equipo te espera. Conectate aqui: ${vars.url}`,
+    noshow_5m: `Hola ${vars.nombre}, ${vars.closer} esta en la llamada esperandote. Todo bien?`,
+    noshow_30m: `No te preocupes ${vars.nombre}! Elige otro momento que te venga mejor y lo cuadramos. Responde a este mensaje y te buscamos hueco`,
+    noshow_24h: `Oye ${vars.nombre}, que no pudiste venir no pasa nada. Si te sigue interesando, dime y te busco otro hueco esta semana`,
+    post_asistencia: `Que tal ha ido la llamada con ${vars.closer}? Todo claro?`,
   }
 
   // === EMAIL SUBJECTS & BODIES ===
@@ -239,32 +255,54 @@ async function executePaso(
 
   // === SEND WHATSAPP ===
   if (canal.includes('whatsapp') && leadPhone) {
-    const template = waMessages[paso]
-    if (template) {
-      const text = replaceVars(template, vars)
-      const waToken = await resolveWaToken(supabase)
+    const waToken = await resolveWaToken(supabase)
+    if (!waToken) { error = 'No WA token available'; }
+    else {
+      const { data: phoneConfig } = await supabase
+        .from('ia_config').select('value').eq('key', 'noshow_whatsapp_phone_id').maybeSingle()
+      const phoneId = phoneConfig?.value && phoneConfig.value !== 'PENDING' ? phoneConfig.value : null
 
-      if (waToken) {
-        // Get WhatsApp phone_id from noshow config (dedicated number)
-        const { data: phoneConfig } = await supabase
-          .from('ia_config')
-          .select('value')
-          .eq('key', 'noshow_whatsapp_phone_id')
-          .maybeSingle()
+      if (!phoneId) { error = 'No WhatsApp phone_id configured'; }
+      else {
+        const toNum = leadPhone.replace(/\+/g, '')
+        const tplConfig = waTemplates[paso]
+        let waBody: Record<string, unknown>
 
-        const phoneId = phoneConfig?.value && phoneConfig.value !== 'PENDING' ? phoneConfig.value : null
-        if (phoneId) {
-          const toNum = leadPhone.replace(/\+/g, '')
+        if (tplConfig) {
+          // Use approved template (works outside 24h window)
+          const components: Array<Record<string, unknown>> = []
+          if (tplConfig.params.length > 0) {
+            components.push({
+              type: 'body',
+              parameters: tplConfig.params.map(p => ({ type: 'text', text: p || '' })),
+            })
+          }
+          waBody = {
+            messaging_product: 'whatsapp',
+            to: toNum,
+            type: 'template',
+            template: {
+              name: tplConfig.template,
+              language: { code: 'es_ES' },
+              ...(components.length > 0 ? { components } : {}),
+            },
+          }
+        } else {
+          // Fallback: plain text (only works inside 24h window)
+          waBody = {
+            messaging_product: 'whatsapp',
+            to: toNum,
+            type: 'text',
+            text: { body: waMessages[paso] || `Recordatorio de tu videollamada con ${vars.closer}` },
+          }
+        }
+
+        try {
           const res = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
             method: 'POST',
             headers: { Authorization: `Bearer ${waToken}`, 'Content-Type': 'application/json' },
             signal: AbortSignal.timeout(15000),
-            body: JSON.stringify({
-              messaging_product: 'whatsapp',
-              to: toNum,
-              type: 'text',
-              text: { body: text },
-            }),
+            body: JSON.stringify(waBody),
           })
           const data = await res.json()
 
@@ -281,11 +319,9 @@ async function executePaso(
           } else {
             error = data.error?.message || 'WhatsApp send failed'
           }
-        } else {
-          error = 'No WhatsApp phone_id configured'
+        } catch (fetchErr) {
+          error = `WA fetch error: ${fetchErr}`
         }
-      } else {
-        error = 'No WA token available'
       }
     }
   }
