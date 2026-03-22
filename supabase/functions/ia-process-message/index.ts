@@ -187,11 +187,11 @@ async function releaseLock(
 function analyzeSentiment(text: string): string {
   const lower = text.toLowerCase()
 
-  const urgentPatterns = /urgente|cuanto antes|ya mismo|necesito ya|hoy mismo/
-  const frustratedPatterns = /harto|hasta las narices|mala experiencia|fatal|horrible|pesados|dejadme|no funciona nada/
-  const negativePatterns = /no me interesa|muy caro|no creo|no sé|no se|paso|nah|pfff|bah/
-  const positivePatterns = /genial|perfecto|me encanta|suena bien|interesante|me gusta|vale|ok|guay|de acuerdo|me apunto/
-  const interestedPatterns = /cuéntame|cuentame|quiero saber|cómo funciona|como funciona|qué ofrecéis|que ofreceis|precio|cuánto|cuanto cuesta/
+  const urgentPatterns = /urgente|cuanto antes|ya mismo|necesito ya|hoy mismo|lo antes posible|esta semana/
+  const frustratedPatterns = /harto|hasta las narices|mala experiencia|fatal|horrible|pesados|dejadme|no funciona nada|estafa|timo|spam/
+  const negativePatterns = /no me interesa|muy caro|no creo|paso|nah|pfff|bah|no gracias|no quiero|dejadme en paz/
+  const positivePatterns = /genial|perfecto|me encanta|suena bien|interesante|me gusta|vale|ok|guay|de acuerdo|me apunto|claro|por supuesto|venga|adelante|dale|vamos|buena idea|mola/
+  const interestedPatterns = /cuéntame|cuentame|quiero saber|cómo funciona|como funciona|qué ofrecéis|que ofreceis|precio|cuánto|cuanto cuesta|en qué consiste|que haceis|como trabajais|me interesa|dime más|dimelo|explícame|explicame/
 
   if (urgentPatterns.test(lower)) return 'urgente'
   if (frustratedPatterns.test(lower)) return 'frustrado'
@@ -283,10 +283,12 @@ function detectObjection(text: string): { detected: boolean; tipo: string; descr
 
   const patterns: Array<{ tipo: string; regex: RegExp; desc: string }> = [
     { tipo: 'precio', regex: /muy caro|no me lo puedo permitir|demasiado|fuera de presupuesto|no tengo dinero|cuánto cuesta|es mucho/, desc: 'Objeción de precio' },
-    { tipo: 'tiempo', regex: /no tengo tiempo|estoy muy liado|ahora no puedo|más adelante|quizás luego|otro momento/, desc: 'Objeción de tiempo' },
-    { tipo: 'confianza', regex: /no me fío|no confío|parece estafa|es fiable|cómo sé que|quién sois|no os conozco/, desc: 'Objeción de confianza' },
-    { tipo: 'competencia', regex: /ya tengo|trabajo con otro|ya uso|otra agencia|otra empresa|competencia/, desc: 'Objeción de competencia' },
-    { tipo: 'pensar', regex: /lo tengo que pensar|déjame pensarlo|ya te digo|necesito pensarlo|consultarlo|hablarlo con/, desc: 'Necesita pensarlo' },
+    { tipo: 'tiempo', regex: /no tengo tiempo|estoy muy liado|ahora no puedo|más adelante|quizás luego|otro momento|la semana que viene|después de|cuando pase/, desc: 'Objeción de tiempo' },
+    { tipo: 'confianza', regex: /no me fío|no confío|parece estafa|es fiable|cómo sé que|quién sois|no os conozco|spam|publicidad|timo/, desc: 'Objeción de confianza' },
+    { tipo: 'competencia', regex: /ya tengo|trabajo con otro|ya uso|otra agencia|otra empresa|competencia|lo llevo yo/, desc: 'Objeción de competencia' },
+    { tipo: 'pensar', regex: /lo tengo que pensar|déjame pensarlo|ya te digo|necesito pensarlo|consultarlo|hablarlo con|me lo pienso/, desc: 'Necesita pensarlo' },
+    { tipo: 'no_sector', regex: /he cerrado|ya no.*boda|dejé.*sector|no.*dedico.*boda|cambié.*trabajo|ya no.*evento|no.*sector/, desc: 'Ya no está en el sector' },
+    { tipo: 'opt_out', regex: /no me escrib|dejad.*paz|no.*mole|borra.*datos|no.*contactéis|no.*llam|darme de baja|quita.*lista/, desc: 'Pide no ser contactado' },
   ]
 
   for (const p of patterns) {
@@ -1044,6 +1046,25 @@ Deno.serve(async (req) => {
         descripcion: objection.descripcion,
         resuelta: false,
       })
+
+      // Auto-handle opt_out: mark lead and stop chatbot
+      if (objection.tipo === 'opt_out') {
+        await supabase.from('ia_leads').update({ opted_out: true, opted_out_at: new Date().toISOString() }).eq('id', leadId)
+        await supabase.from('ia_conversaciones').update({ estado: 'descartado', chatbot_activo: false }).eq('id', conversacionId)
+        await supabase.from('ia_logs').insert({
+          agente_id: agenteId, conversacion_id: conversacionId, tipo: 'info',
+          mensaje: `Lead opt-out detectado automáticamente: "${messageContent.substring(0, 100)}"`,
+        })
+      }
+
+      // Auto-handle no_sector: mark as descartado
+      if (objection.tipo === 'no_sector') {
+        await supabase.from('ia_conversaciones').update({ estado: 'descartado' }).eq('id', conversacionId)
+        await supabase.from('ia_logs').insert({
+          agente_id: agenteId, conversacion_id: conversacionId, tipo: 'info',
+          mensaje: `Lead ya no en sector detectado: "${messageContent.substring(0, 100)}"`,
+        })
+      }
     }
 
     // === TRACK LEAD ACTIVE HOURS ===
@@ -1132,76 +1153,39 @@ Tono: ${estilo.tono || 'no disponible'}
 
     const contextAddendum = `
 
---- REGLA CRÍTICA: BASE DE CONOCIMIENTO ---
-DEBES usar la herramienta consultar_base_conocimiento en tu PRIMERA interacción con cada lead y siempre que el lead pregunte sobre servicios, precios, metodología o qué hacemos. NUNCA improvises sobre los servicios de la empresa — consulta primero.
+--- INSTRUCCIONES DEL SISTEMA ---
 
---- REGLA CRÍTICA: REUNIONES ---
-Step actual: "${convo.step}" | Lead score: ${scoring.score}/${agentConfig.umbral_score_reunion || 60}
+FORMATO: Divide SIEMPRE tu respuesta en 2-3 mensajes cortos separados por --- en su propia línea.
+Cada mensaje: 1-2 frases máximo. NUNCA escribas un párrafo largo.
 
-SI step = "qualify":
-- Cualifica en 2-3 intercambios máximo. Lo que necesitas detectar:
-  1. Interés REAL en conseguir más clientes o mejorar su captación
-  2. Que tenga capacidad de inversión (pregunta de forma natural, no directa)
-  3. Que encaje en el sector (bodas, eventos, profesional independiente)
-- PROHIBIDO mencionar videollamada, reunión, cita, llamada o agendar
-- Si el lead MUESTRA interés activo (pregunta cómo funciona, habla de su problema de captación, menciona presupuesto) → no necesitas más preguntas, el sistema avanzará solo
-- Combina validación + pregunta: "Genial, 20 bodas está muy bien. Y cómo los consigues ahora mismo, boca a boca?"
-- Detecta DOLOR: si dice que depende del boca a boca, que le faltan clientes, que no sabe cómo captar → eso es señal de compra, valídalo y avanza
-- NO hagas preguntas genéricas tipo "a qué te dedicas" si ya lo sabes por el contexto
-
-SI step = "meeting_pref":
-- PRIMERO pregunta si le parece bien hacer una videollamada corta (NO asumas que sí)
-- ESPERA a que el lead diga que sí
-- SOLO ENTONCES usa la herramienta consultar_calendario para ver fechas disponibles
-- NUNCA inventes fechas ni digas "esta semana" sin consultar el calendario
-- Propón 2-3 opciones concretas del calendario
-
---- REGLAS ADICIONALES DE FORMATO (OBLIGATORIO) ---
-
-FORMATO WHATSAPP: Escribe como una persona real en WhatsApp. NUNCA envíes un bloque largo.
-- SIEMPRE divide tu respuesta en 2-3 mensajes cortos separados por "---" en su propia línea.
-- Cada mensaje debe tener 1-2 frases máximo (como mensajes reales de WhatsApp).
-- NUNCA escribas un párrafo largo. Si tu respuesta tiene más de 2 frases, DEBES separarla con ---.
-- NUNCA uses signos de apertura: ¿ ¡ — están PROHIBIDOS. Solo usa ? y ! al final.
-- NUNCA termines un mensaje con punto final.
-- NUNCA uses dos puntos (:) en medio de frase — suena a bot. Reformula la frase.
-- NUNCA te presentes si la plantilla inicial ya lo hizo — el lead ya sabe quién eres.
-- El primer mensaje en el historial es una plantilla que TÚ ya enviaste. Lee su contenido y continúa la conversación desde ahí sin repetir nada.
-
-IMPORTANTE: El separador --- DEBE estar solo en su propia línea, con un salto de línea antes y después. Así:
-
-mensaje 1
----
-mensaje 2
----
-mensaje 3
-
-Ejemplo CORRECTO (3 mensajes separados):
+Ejemplo:
 Perfecto, eso es justo lo que hacemos
 ---
-Ayudamos a profesionales como tú a conseguir clientes de forma constante
----
-Cuéntame, a qué te dedicas exactamente
+Cuéntame, cómo consigues clientes ahora mismo?
 
-Ejemplo INCORRECTO (un solo bloque largo):
-Perfecto, eso es justo lo que hacemos. Ayudamos a profesionales como tú a conseguir clientes de forma constante. Cuéntame, a qué te dedicas exactamente
+El primer mensaje del historial es una plantilla que TÚ ya enviaste. NUNCA repitas su contenido.
 
---- CONTEXTO DEL AGENTE ---
-Nombre del agente: ${agente.nombre || 'Asistente'}
-Tipo de agente: ${agente.tipo || 'setter'}
-Especialidad: ${especialidad}
+STEP ACTUAL: "${convo.step}"
 
---- CONTEXTO ACTUAL ---
-Nombre del lead: ${lead.nombre || 'Desconocido'}
-Teléfono: ${lead.telefono}
-Lead score: ${scoring.score}/100
-Sentimiento actual: ${sentiment}
-Servicio de interés: ${lead.servicio || 'No especificado'}
-Estado conversación: ${convo.estado}
-Step actual: ${convo.step}
-Resumen conversación: ${convo.resumen || 'Sin resumen previo'}
-Objeción detectada: ${objection ? `${objection.tipo}: ${objection.descripcion}` : 'Ninguna'}
-Fecha/hora actual (Madrid): ${getMadridDateTime()}
+${convo.step === 'first_message' || convo.step === 'qualify' ? `Estás CUALIFICANDO. Máximo 2-3 intercambios.
+- Detecta si sigue en el sector, cómo le va, cómo consigue clientes
+- Si muestra dolor (boca a boca, pocos clientes, estancado) → es señal de compra
+- NO menciones reunión/videollamada/agendar todavía
+- Termina SIEMPRE con una pregunta que avance la conversación` : ''}
+${convo.step === 'meeting_pref' ? `El lead está CUALIFICADO. Propón una videollamada corta de 20 min.
+- Pregunta si le viene bien una videollamada. Espera a que diga sí
+- SOLO ENTONCES usa consultar_calendario y propón 2-3 opciones
+- NUNCA inventes fechas` : ''}
+
+Usa consultar_base_conocimiento si el lead pregunta sobre servicios, precios o qué hacemos.
+
+--- CONTEXTO ---
+Lead: ${lead.nombre || 'Desconocido'} | Servicio: ${lead.servicio || '?'}
+Score: ${scoring.score}/100 | Sentimiento: ${sentiment}
+Step: ${convo.step} | Estado: ${convo.estado}
+${convo.resumen ? `Resumen: ${convo.resumen}` : ''}
+${objection ? `Objeción: ${objection.tipo}` : ''}
+Fecha: ${getMadridDateTime()}
 ${styleAddendum}`
 
     const fullSystemPrompt = systemPrompt + contextAddendum
@@ -1596,16 +1580,26 @@ ${styleAddendum}`
       convoUpdates.step = 'qualify'
     }
 
-    // Advance qualify → meeting_pref when score is high enough and enough exchanges happened
-    const meetingScoreThreshold = (agentConfig.umbral_score_reunion as number) || 60
+    // Advance qualify → meeting_pref when lead shows enough interest
+    const meetingScoreThreshold = (agentConfig.umbral_score_reunion as number) || 55
     const { count: exchangeCount } = await supabase
       .from('ia_mensajes')
       .select('id', { count: 'exact', head: true })
       .eq('conversacion_id', conversacionId)
       .eq('direction', 'inbound')
 
-    if (convo.step === 'qualify' && scoring.score >= meetingScoreThreshold && (exchangeCount || 0) >= 2) {
-      convoUpdates.step = 'meeting_pref'
+    if (convo.step === 'qualify') {
+      const exchanges = exchangeCount || 0
+      // Fast track: high score after just 1 exchange (lead showed clear interest/pain)
+      const fastTrack = scoring.score >= 70 && exchanges >= 1
+      // Normal track: decent score after 2+ exchanges
+      const normalTrack = scoring.score >= meetingScoreThreshold && exchanges >= 2
+      // Slow track: after 3+ exchanges, lower threshold (don't over-qualify)
+      const slowTrack = exchanges >= 3 && scoring.score >= 40
+
+      if (fastTrack || normalTrack || slowTrack) {
+        convoUpdates.step = 'meeting_pref'
+      }
     }
 
     // Mark objection as resolved if bot responded after objection
