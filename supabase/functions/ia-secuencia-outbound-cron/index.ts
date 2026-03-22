@@ -281,7 +281,7 @@ Deno.serve(async (req) => {
                 // Load lead
                 const { data: qLead } = await supabase
                   .from('ia_leads')
-                  .select('id, telefono, nombre, opted_out')
+                  .select('id, telefono, nombre, email, servicio, opted_out')
                   .eq('id', qConvo.lead_id)
                   .single()
 
@@ -364,16 +364,41 @@ Deno.serve(async (req) => {
                         .limit(1)
                         .single()
 
-                      const { data: crmLead } = await supabase
+                      // Check if CRM lead already exists
+                      const { data: existingCrm } = await supabase
                         .from('ventas_leads')
-                        .insert({
-                          nombre: qLead.nombre || qLead.telefono,
-                          telefono: qLead.telefono,
-                          fuente: 'referido',
-                          setter_asignado_id: agente.usuario_id,
-                        })
                         .select('id')
-                        .single()
+                        .eq('telefono', qLead.telefono)
+                        .maybeSingle()
+
+                      // Map servicio to categoria
+                      let categoriaId = null
+                      if (qLead.servicio) {
+                        const { data: cat } = await supabase
+                          .from('ventas_categorias')
+                          .select('id')
+                          .ilike('nombre', `%${qLead.servicio.split(' ')[0]}%`)
+                          .limit(1)
+                          .maybeSingle()
+                        if (cat) categoriaId = cat.id
+                      }
+
+                      let crmLead = existingCrm
+                      if (!crmLead) {
+                        const { data: newCrm } = await supabase
+                          .from('ventas_leads')
+                          .insert({
+                            nombre: qLead.nombre || qLead.telefono,
+                            telefono: qLead.telefono,
+                            email: qLead.email || null,
+                            fuente: 'referido',
+                            categoria_id: categoriaId,
+                            setter_asignado_id: agente.usuario_id,
+                          })
+                          .select('id')
+                          .single()
+                        crmLead = newCrm
+                      }
 
                       if (crmLead && etapa) {
                         await supabase.from('ventas_lead_pipeline').insert({

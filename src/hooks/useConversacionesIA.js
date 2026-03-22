@@ -94,7 +94,14 @@ export function useConversacionesIA(agenteId) {
         .order('updated_at', { ascending: false })
         .limit(100)
 
-      if (filtro !== 'todas') {
+      // Hide queued conversations unless explicitly filtered
+      if (filtro === 'en_cola') {
+        query = query.eq('estado', 'queued')
+      } else {
+        query = query.neq('estado', 'queued')
+      }
+
+      if (filtro !== 'todas' && filtro !== 'en_cola') {
         if (filtro === 'sin_leer') {
           query = query.eq('leida', false)
         } else if (filtro === 'humano') {

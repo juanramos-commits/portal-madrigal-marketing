@@ -421,6 +421,18 @@ Deno.serve(async (req) => {
             .eq('telefono', telefono)
             .maybeSingle()
 
+          // Map servicio to categoria
+          let categoriaId = null
+          if (servicio) {
+            const { data: cat } = await supabase
+              .from('ventas_categorias')
+              .select('id')
+              .ilike('nombre', `%${servicio.split(' ')[0]}%`)
+              .limit(1)
+              .maybeSingle()
+            if (cat) categoriaId = cat.id
+          }
+
           let crmLead = existingCrmLead
           if (!crmLead) {
             const { data: newCrmLead } = await supabase
@@ -430,6 +442,7 @@ Deno.serve(async (req) => {
                 telefono,
                 email: email || null,
                 fuente: origen === 'whatsapp' ? 'whatsapp' : 'referido',
+                categoria_id: categoriaId,
                 setter_asignado_id: agente.usuario_id,
               })
               .select('id')
