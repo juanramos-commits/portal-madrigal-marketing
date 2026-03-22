@@ -475,7 +475,9 @@ Deno.serve(async (req) => {
         conversacion_id: conversacionId,
         direction: 'outbound',
         sender,
-        content: content || `[${type}]`,
+        content: type === 'template'
+          ? resolveTemplateText(msg.template_name as string, (msg.template_params as Record<string, unknown>) || {})
+          : (content || `[${type}]`),
         message_type: type === 'template' ? 'text' : type,
         media_url: mediaUrl || null,
         wa_message_id: result.waMessageId,
