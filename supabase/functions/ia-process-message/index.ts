@@ -1179,8 +1179,9 @@ ${convo.step === 'meeting_pref' ? `El lead está CUALIFICADO. Propón una videol
 
 Usa consultar_base_conocimiento si el lead pregunta sobre servicios, precios o qué hacemos.
 
---- CONTEXTO ---
-Lead: ${lead.nombre || 'Desconocido'} | Servicio: ${lead.servicio || '?'}
+--- DATOS DEL LEAD (ya los conoces, NUNCA preguntes algo que ya sabes) ---
+Nombre: ${lead.nombre || 'Desconocido'}
+${lead.servicio ? `Servicio/profesión: ${lead.servicio} — YA SABES que es ${lead.servicio}, NO le preguntes a qué se dedica` : 'Servicio: desconocido'}
 Score: ${scoring.score}/100 | Sentimiento: ${sentiment}
 Step: ${convo.step} | Estado: ${convo.estado}
 ${convo.resumen ? `Resumen: ${convo.resumen}` : ''}
