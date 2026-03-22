@@ -62,7 +62,13 @@ Deno.serve(async (req) => {
 
   // === NORMALIZE PHONE ===
   telefono = telefono.replace(/[\s\-\(\)\.]/g, '').replace(/^["']+|["']+$/g, '')
-  if (telefono.startsWith('+')) {
+  // Strip + to re-normalize (prevents +659... without country code)
+  const barePhone = telefono.replace(/^\+/, '')
+  if (/^[679]\d{8}$/.test(barePhone)) {
+    telefono = '+34' + barePhone
+  } else if (/^34[679]\d{8}$/.test(barePhone)) {
+    telefono = '+' + barePhone
+  } else if (telefono.startsWith('+')) {
     // Already has country code
   } else if (telefono.startsWith('00')) {
     telefono = '+' + telefono.slice(2)

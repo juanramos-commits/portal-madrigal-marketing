@@ -4,9 +4,11 @@ import { Send, AlertCircle, CheckCircle, X } from 'lucide-react'
 import '../../styles/agentes-ia.css'
 
 function normalizarTelefono(raw) {
-  // Strip spaces, dashes, parens
-  let tel = raw.replace(/[\s\-\(\)]/g, '')
-  // Add + if missing
+  let tel = raw.replace(/[\s\-\(\)\.]/g, '')
+  // Spanish mobile without country code → add +34
+  if (/^[67]\d{8}$/.test(tel)) return '+34' + tel
+  if (/^9\d{8}$/.test(tel)) return '+34' + tel
+  if (/^34[679]\d{8}$/.test(tel)) return '+' + tel
   if (!tel.startsWith('+')) tel = '+' + tel
   return tel
 }
