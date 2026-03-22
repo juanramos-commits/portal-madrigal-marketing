@@ -391,19 +391,36 @@ async function executeTool(
       }
       if (context.bookingUsed) context.bookingUsed.value = true
 
-      const fechaHora = toolInput.fecha_hora as string
+      const fechaHoraRaw = toolInput.fecha_hora as string
       const nombreLead = toolInput.nombre_lead as string
       const resumen = toolInput.resumen as string
 
+      // Claude provides times in Madrid timezone — store with explicit timezone
+      // Append Madrid timezone if no timezone specified
+      let fechaHora = fechaHoraRaw
+      if (!fechaHoraRaw.includes('Z') && !fechaHoraRaw.includes('+') && !fechaHoraRaw.includes('Europe')) {
+        fechaHora = fechaHoraRaw + '+01:00' // CET (winter), will be +02:00 in summer
+        // Detect summer time (last Sunday of March to last Sunday of October)
+        try {
+          const d = new Date(fechaHoraRaw)
+          const month = d.getMonth() // 0-indexed
+          if (month >= 2 && month <= 9) { // March-October range (approximate)
+            fechaHora = fechaHoraRaw + '+02:00' // CEST
+          }
+        } catch { /* keep CET */ }
+      }
+
       try {
+        // Pick closer with fewest upcoming citas (round-robin)
         const { data: closers } = await supabase
           .from('ventas_roles_comerciales')
           .select('usuario_id')
           .eq('rol', 'closer')
+          .eq('activo', true)
           .limit(5)
 
         if (!closers || closers.length === 0) {
-          return 'Error: no hay closers disponibles. Informa al lead que le confirmarás la cita por email.'
+          return 'Error: no hay closers disponibles. Informa al lead que le confirmarás la cita.'
         }
 
         let selectedCloserId = closers[0].usuario_id
@@ -423,30 +440,55 @@ async function executeTool(
           }
         }
 
+        // Find enlace_agenda for this closer (needed for Google Calendar integration)
+        const { data: enlace } = await supabase
+          .from('ventas_enlaces_agenda')
+          .select('id, duracion_minutos')
+          .or(`setter_id.eq.${selectedCloserId}`)
+          .eq('activo', true)
+          .limit(1)
+          .maybeSingle()
+
+        // Use enlace duration or default 45 min (not 60)
+        const duracion = enlace?.duracion_minutos || 45
+
+        // Create cita
         const { data: cita, error: citaErr } = await supabase
           .from('ventas_citas')
           .insert({
             lead_id: lead.crm_lead_id || null,
             closer_id: selectedCloserId,
             setter_origen_id: agente.usuario_id || null,
+            enlace_agenda_id: enlace?.id || null,
             fecha_hora: fechaHora,
-            duracion_minutos: 60,
+            duracion_minutos: duracion,
             estado: 'agendada',
             origen_agendacion: 'agente_ia',
             notas_closer: resumen,
           })
-          .select()
+          .select('id')
           .single()
 
         if (citaErr) {
           return `Error al reservar: ${citaErr.message}. Disculpa y propón otra hora.`
         }
 
-        // Update conversation
+        // Update IA conversation state
         await supabase
           .from('ia_conversaciones')
-          .update({ estado: 'agendado' })
+          .update({ estado: 'agendado', chatbot_activo: false, step: 'agendado' })
           .eq('id', convo.id)
+
+        // Sync Google Calendar — creates event + Meet link
+        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/google-calendar-sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+            body: JSON.stringify({ action: 'create_event', cita_id: cita.id }),
+          })
+        } catch (_e) { /* Google sync non-fatal */ }
 
         // Sync with CRM if linked
         if (lead.crm_lead_id) {
@@ -467,8 +509,6 @@ async function executeTool(
         }
 
         // CRM sync: move etapa
-        const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
-        const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
         fetch(`${supabaseUrl}/functions/v1/ia-crm-sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
@@ -481,7 +521,7 @@ async function executeTool(
           .eq('id', selectedCloserId)
           .single()
 
-        return `Cita reservada correctamente para ${fechaHora} con ${closerUser?.nombre || 'nuestro equipo'}. Confirma al lead que recibirá los detalles.`
+        return `Cita reservada para ${fechaHoraRaw} (hora Madrid) con ${closerUser?.nombre || 'nuestro equipo'}. Duración: ${duracion} min. Confirma al lead la fecha y dile que recibirá un enlace de videollamada.`
       } catch (err) {
         return `Error reservando cita: ${err}. Informa al lead que lo gestionarás manualmente.`
       }
