@@ -490,6 +490,15 @@ async function executeTool(
           })
         } catch (_e) { /* Google sync non-fatal */ }
 
+        // Activate anti no-show sequence
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/noshow-trigger`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+            body: JSON.stringify({ cita_id: cita.id }),
+          })
+        } catch (_e) { /* noshow non-fatal */ }
+
         // Sync with CRM if linked
         if (lead.crm_lead_id) {
           await supabase
