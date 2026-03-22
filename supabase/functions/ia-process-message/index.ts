@@ -1381,6 +1381,9 @@ ${styleAddendum}`
       }
     }
 
+    // Clean up bot-sounding characters
+    finalResponse = finalResponse.replace(/[—–]/g, '.').replace(/\.\./g, '.')
+
     // === QUALITY EVALUATION (HAIKU) ===
     const qualityThreshold = (agente.config as Record<string, unknown>)?.umbral_calidad_minima as number || 6
     let qualityScore = 7
@@ -1566,7 +1569,7 @@ ${styleAddendum}`
     }
 
     // Advance qualify → meeting_pref when lead shows enough interest
-    const meetingScoreThreshold = (agentConfig.umbral_score_reunion as number) || 55
+    const meetingScoreThreshold = (agentConfig.umbral_score_reunion as number) || 65
     const { count: exchangeCount } = await supabase
       .from('ia_mensajes')
       .select('id', { count: 'exact', head: true })
