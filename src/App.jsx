@@ -70,6 +70,9 @@ const ColdEmailPlantillas = lazy(() => import('./pages/ventas/ColdEmailPlantilla
 const ColdEmailEnvios = lazy(() => import('./pages/ventas/ColdEmailEnvios'))
 const ColdEmailConfig = lazy(() => import('./pages/ventas/ColdEmailConfig'))
 
+// Confirmaciones (Anti No-Show)
+const Confirmaciones = lazy(() => import('./pages/ventas/Confirmaciones'))
+
 // Páginas de Agentes IA
 const AgentesIA = lazy(() => import('./pages/ventas/AgentesIA'))
 const AgenteIADetalle = lazy(() => import('./pages/ventas/AgenteIADetalle'))
@@ -198,6 +201,7 @@ function App() {
               <Route path="envios" element={<ColdEmailEnvios />} />
               <Route path="config" element={<ColdEmailConfig />} />
             </Route>
+            <Route path="ventas/confirmaciones" element={<PermissionRoute permiso="sistema.logs"><Confirmaciones /></PermissionRoute>} />
             <Route path="ventas/agentes-ia" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><AgentesIA /></PermissionRoute>} />
             <Route path="ventas/agentes-ia/supervisor" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><SupervisorIA /></PermissionRoute>} />
             <Route path="ventas/agentes-ia/:id" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><AgenteIADetalle /></PermissionRoute>} />
