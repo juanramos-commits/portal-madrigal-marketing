@@ -324,94 +324,63 @@ async function executeTool(
     case 'consultar_calendario': {
       const fechaDesde = (toolInput.fecha_desde as string) ||
         new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-      const diasBuscar = (toolInput.dias_buscar as number) || 5
+      const diasBuscar = (toolInput.dias_buscar as number) || 7
 
       try {
-        const agentUserId = agente.usuario_id
-        if (!agentUserId) {
-          // No user_id configured — query all closers' availability
-          const { data: closers } = await supabase
-            .from('ventas_roles_comerciales')
-            .select('usuario_id')
-            .eq('rol', 'closer')
-            .limit(3)
+        // Always query CLOSERS' availability, not the bot's
+        const { data: closers } = await supabase
+          .from('ventas_roles_comerciales')
+          .select('usuario_id')
+          .eq('rol', 'closer')
+          .eq('activo', true)
 
-          if (!closers || closers.length === 0) {
-            return 'No hay closers disponibles. Deriva a un humano para agendar.'
+        if (!closers || closers.length === 0) {
+          return 'Propón al lead una fecha entre semana (lunes a viernes) en horario de 10:00 a 19:00 y dile que confirmarás disponibilidad. No digas que no hay hueco.'
+        }
+
+        // Try each closer until we find slots
+        let allSlots: Array<Record<string, string>> = []
+        for (const closer of closers) {
+          try {
+            const { data: slots } = await supabase.rpc(
+              'obtener_slots_disponibles_agente',
+              { p_agente_usuario_id: closer.usuario_id, p_fecha_desde: fechaDesde, p_dias: diasBuscar },
+            )
+            if (slots && slots.length > 0) {
+              allSlots = slots
+              break
+            }
+          } catch {
+            // RPC might fail — try next closer
           }
+        }
 
-          // Get slots from first closer
-          const { data: slots, error } = await supabase.rpc(
-            'obtener_slots_disponibles_agente',
-            {
-              p_agente_usuario_id: closers[0].usuario_id,
-              p_fecha_desde: fechaDesde,
-              p_dias: diasBuscar,
-            },
-          )
-
-          if (error || !slots || slots.length === 0) {
-            return 'No hay slots disponibles en los próximos días. Sugiere al lead que espere o contacte directamente.'
-          }
-
-          const formatted = slots.map((s: Record<string, string>) =>
-            `${s.fecha} a las ${s.hora} (${s.duracion}min)`,
+        if (allSlots.length > 0) {
+          const formatted = allSlots.slice(0, 5).map((s: Record<string, string>) =>
+            `${s.fecha} a las ${s.hora} (${s.duracion}min)`
           ).join('\n')
-
-          return `Slots disponibles:\n${formatted}\n\nPropón 2-3 opciones al lead de forma natural, no como una lista.`
+          return `Slots disponibles:\n${formatted}\n\nPropón 2-3 opciones al lead de forma natural.`
         }
 
-        const { data: slots, error } = await supabase.rpc(
-          'obtener_slots_disponibles_agente',
-          {
-            p_agente_usuario_id: agentUserId,
-            p_fecha_desde: fechaDesde,
-            p_dias: diasBuscar,
-          },
-        )
+        // No RPC slots found — check if closers have general availability configured
+        const { data: disps } = await supabase
+          .from('ventas_calendario_disponibilidad')
+          .select('dia_semana, hora_inicio, hora_fin')
+          .eq('usuario_id', closers[0].usuario_id)
+          .order('dia_semana')
 
-        if (error) {
-          const { data: disps } = await supabase
-            .from('ventas_calendario_disponibilidad')
-            .select('*')
-            .eq('usuario_id', agentUserId)
-            .order('dia_semana')
-
-          if (!disps || disps.length === 0) {
-            return 'No hay disponibilidad configurada en el calendario. Deriva a un humano para agendar.'
-          }
-
-          const slotsText = disps.map((d: Record<string, unknown>) => {
-            const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-            return `${dias[d.dia_semana as number]}: ${d.hora_inicio} - ${d.hora_fin}`
-          }).join('\n')
-
-          return `Disponibilidad general del calendario:\n${slotsText}\n\nPropón horarios dentro de estos rangos para los próximos días laborables.`
+        if (disps && disps.length > 0) {
+          const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+          const slotsText = disps.map((d: Record<string, unknown>) =>
+            `${dias[d.dia_semana as number]}: ${d.hora_inicio} - ${d.hora_fin}`
+          ).join('\n')
+          return `Disponibilidad general:\n${slotsText}\n\nPropón horarios dentro de estos rangos para los próximos días laborables.`
         }
 
-        if (!slots || slots.length === 0) {
-          // Try wider range (14 days)
-          const widerFecha = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-          const { data: widerSlots } = await supabase.rpc(
-            'obtener_slots_disponibles_agente',
-            { p_agente_user_id: agentUserId, p_fecha_desde: widerFecha, p_dias_buscar: 14 },
-          )
-          if (widerSlots && widerSlots.length > 0) {
-            const formatted = widerSlots.slice(0, 5).map((s: Record<string, string>) =>
-              `${s.fecha} a las ${s.hora} (${s.duracion}min)`
-            ).join('\n')
-            return `Slots disponibles (próximas 2 semanas):\n${formatted}\n\nPropón 2-3 opciones al lead.`
-          }
-          return 'No hay slots automáticos disponibles. Propón tú directamente una fecha razonable (entre semana, horario de mañana o tarde) y di que confirmarás la disponibilidad. NUNCA digas "te escribo cuando haya hueco" — eso mata la venta.'
-        }
-
-        const formatted = slots.map((s: Record<string, string>) =>
-          `${s.fecha} a las ${s.hora} (${s.duracion}min)`,
-        ).join('\n')
-
-        return `Slots disponibles:\n${formatted}\n\nPropón 2-3 opciones al lead de forma natural, no como una lista.`
+        // Ultimate fallback — never leave lead without options
+        return 'Propón al lead una fecha entre semana (lunes a viernes) en horario de 10:00 a 19:00 y dile que confirmarás disponibilidad exacta. NUNCA digas que no hay hueco ni que te escribirás después.'
       } catch (err) {
-        return `Error consultando calendario: ${err}. Deriva a un humano si el lead quiere agendar.`
+        return 'Propón al lead una fecha entre semana en horario de 10:00 a 19:00. Dile que confirmarás. No menciones problemas técnicos.'
       }
     }
 
