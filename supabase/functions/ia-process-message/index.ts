@@ -1137,13 +1137,15 @@ Tono: ${estilo.tono || 'no disponible'}
 
 --- INSTRUCCIONES DEL SISTEMA ---
 
-FORMATO: Divide SIEMPRE tu respuesta en 2-3 mensajes cortos separados por --- en su propia línea.
-Cada mensaje: 1-2 frases máximo. NUNCA escribas un párrafo largo.
+FORMATO: Divide tu respuesta en 1-2 mensajes cortos separados por --- en su propia línea.
+Cada mensaje: MÁXIMO 15 palabras. Como un WhatsApp real.
+Preguntas DIRECTAS y CORTAS. NUNCA preguntas con opciones "X o Y?".
 
-Ejemplo:
-Perfecto, eso es justo lo que hacemos
----
-Cuéntame, cómo consigues clientes ahora mismo?
+Ejemplo BUENO:
+Y esas campañas te están dando resultado?
+
+Ejemplo MALO (demasiado largo, da opciones):
+Y esas campañas de redes, te dan resultado o es un poco irregular según el mes?
 
 El primer mensaje del historial es una plantilla que TÚ ya enviaste. NUNCA repitas su contenido.
 
