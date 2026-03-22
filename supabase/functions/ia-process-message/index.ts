@@ -1412,6 +1412,8 @@ ${learnedRules}`
       .replace(/detalle fino/gi, 'detalle')
       .replace(/todo integrado/gi, 'todo montado')
       .replace(/sistema completo/gi, 'sistema')
+      // Remove "X o Y?" pattern from questions — keep only the first part
+      .replace(/,?\s*(o\s+(es\s+)?(un\s+poco\s+)?[\w\sáéíóúñ]+)\?/gi, '?')
 
     // === QUALITY EVALUATION (HAIKU) ===
     const qualityThreshold = (agente.config as Record<string, unknown>)?.umbral_calidad_minima as number || 6
@@ -1510,7 +1512,11 @@ ${learnedRules}`
       }
     }
 
-    messageParts = messageParts.filter(p => p.length > 0).slice(0, 4) // Max 4 messages
+    // Remove filler-only messages (Genial!, Qué bien!, Me alegra!, etc.)
+    const fillerPattern = /^(genial|qué bien|que bien|me alegra|perfecto|estupendo|fantástico|maravilloso)[!.,]?\s*$/i
+    messageParts = messageParts
+      .filter(p => p.length > 0 && !fillerPattern.test(p.trim()))
+      .slice(0, 4) // Max 4 messages
 
     console.log(`[split] Response split into ${messageParts.length} parts`)
 
