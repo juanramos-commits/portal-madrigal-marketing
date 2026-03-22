@@ -201,7 +201,7 @@ function App() {
               <Route path="envios" element={<ColdEmailEnvios />} />
               <Route path="config" element={<ColdEmailConfig />} />
             </Route>
-            <Route path="ventas/confirmaciones" element={<PermissionRoute permiso="sistema.logs"><Confirmaciones /></PermissionRoute>} />
+            <Route path="ventas/confirmaciones" element={<PermissionRoute permiso="ventas.confirmaciones.ver"><Confirmaciones /></PermissionRoute>} />
             <Route path="ventas/agentes-ia" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><AgentesIA /></PermissionRoute>} />
             <Route path="ventas/agentes-ia/supervisor" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><SupervisorIA /></PermissionRoute>} />
             <Route path="ventas/agentes-ia/:id" element={<PermissionRoute permiso="ventas.agentes_ia.ver"><AgenteIADetalle /></PermissionRoute>} />
