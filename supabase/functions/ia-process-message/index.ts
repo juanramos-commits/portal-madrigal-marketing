@@ -1443,20 +1443,15 @@ ${learnedRules}`
         detalles: { score: qualityScore, feedback: qualityFeedback, response: finalResponse },
       })
 
+      // Don't derive to human — just log the alert and send anyway
+      // The quality check is informational, not blocking
       await supabase.from('ia_alertas_supervisor').insert({
         agente_id: agenteId,
         conversacion_id: conversacionId,
-        tipo: 'calidad_baja',
-        mensaje: `Respuesta bloqueada por calidad baja (${qualityScore}/10): ${qualityFeedback}`,
+        tipo: 'quality_rating_warning',
+        mensaje: `Respuesta con calidad baja (${qualityScore}/10): ${qualityFeedback}`,
         leida: false,
       })
-
-      await executeTool('derivar_humano', {
-        motivo: `Calidad de respuesta baja (${qualityScore}/10)`,
-        urgente: false,
-      }, { supabase, agente, lead, convo, bookingUsed })
-
-      return jsonResponse({ status: 'blocked', reason: 'quality_low', score: qualityScore })
     }
 
     // === TIMING INTELIGENTE ===
@@ -1485,15 +1480,15 @@ ${learnedRules}`
       .filter(p => p.length > 0)
 
     // Fallback: if no --- delimiter found and response is long, split on double newlines
-    if (messageParts.length <= 1 && finalResponse.length > 100) {
+    if (messageParts.length <= 1 && finalResponse.length > 60) {
       messageParts = finalResponse
         .split(/\n\n+/)
         .map(p => p.replace(/\n+/g, ' ').trim())
         .filter(p => p.length > 0)
     }
 
-    // Fallback 2: if still one block and very long, split on sentence boundaries
-    if (messageParts.length <= 1 && finalResponse.length > 120) {
+    // Fallback 2: if still one block and long, split on sentence boundaries
+    if (messageParts.length <= 1 && finalResponse.length > 80) {
       const text = messageParts[0] || finalResponse
       // Split after sentence-ending punctuation followed by space
       const sentences = text.split(/(?<=[.!?])\s+/).filter(s => s.length > 0)
