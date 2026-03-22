@@ -1404,8 +1404,14 @@ ${learnedRules}`
       }
     }
 
-    // Clean up bot-sounding characters
-    finalResponse = finalResponse.replace(/[—–]/g, '.').replace(/\.\./g, '.')
+    // Clean up bot-sounding text
+    finalResponse = finalResponse
+      .replace(/[—–]/g, '.')
+      .replace(/\.\./g, '.')
+      .replace(/\bleads\b/gi, 'parejas')
+      .replace(/detalle fino/gi, 'detalle')
+      .replace(/todo integrado/gi, 'todo montado')
+      .replace(/sistema completo/gi, 'sistema')
 
     // === QUALITY EVALUATION (HAIKU) ===
     const qualityThreshold = (agente.config as Record<string, unknown>)?.umbral_calidad_minima as number || 6
