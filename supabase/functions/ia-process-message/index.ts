@@ -868,7 +868,7 @@ function parseFollowupDate(whenText: string): Date | null {
 async function callClaudeWithRetry(
   body: Record<string, unknown>,
   anthropicKey: string,
-  maxRetries = 5,
+  maxRetries = 2,
 ): Promise<{ data: Record<string, unknown>; ok: boolean; error?: string }> {
   let lastError = ''
   for (let attempt = 0; attempt < maxRetries; attempt++) {

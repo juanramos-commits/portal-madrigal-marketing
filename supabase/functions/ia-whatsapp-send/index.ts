@@ -27,6 +27,10 @@ function resolveTemplateText(
       `He visto que en su momento solicitaste información sobre nuestros servicios y quería saber si sigues en el sector y te interesaría que te cuente las novedades para la campaña 2026.`,
     're_contacto_rosalia_3':
       `Un saludo!`,
+    'follow_up':
+      `Hola! Solo quería saber si habías tenido tiempo de pensarlo. Seguimos?`,
+    'derivacion_humano':
+      `[Notificación interna: conversación derivada a humano]`,
   }
 
   return TEMPLATES[templateName] || `[Plantilla: ${templateName}]`
