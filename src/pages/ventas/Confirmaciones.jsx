@@ -1,37 +1,41 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../contexts/AuthContext'
 import {
-  CalendarCheck, Clock, CheckCircle, XCircle, AlertTriangle,
-  RefreshCw, Send, ArrowRight, Phone, Mail, User, TrendingUp,
+  CalendarCheck, CheckCircle, AlertTriangle, RefreshCw, Phone, Mail, TrendingUp, Calendar,
 } from 'lucide-react'
-import '../../styles/ventas-crm.css'
+import '../../styles/ventas-dashboard-widgets.css'
 
-function formatDate(d) {
+function formatDateShort(d) {
   const date = new Date(d)
-  const dias = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
-  return `${dias[date.getDay()]} ${date.getDate()}/${date.getMonth() + 1} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+  return `${date.getDate()}/${date.getMonth() + 1}`
+}
+
+function formatTime(d) {
+  const date = new Date(d)
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 function RiskBadge({ score }) {
-  if (score >= 70) return <span className="crm-card-cat" style={{ background: '#EF4444', color: '#fff' }}>Riesgo alto {score}%</span>
-  if (score >= 50) return <span className="crm-card-cat" style={{ background: '#F59E0B', color: '#000' }}>Riesgo medio {score}%</span>
-  return <span className="crm-card-cat" style={{ background: '#10B981', color: '#fff' }}>Riesgo bajo {score}%</span>
+  if (score >= 70) return <span className="db-wtable-estado" style={{ background: 'var(--error)', color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>Alto {score}%</span>
+  if (score >= 50) return <span className="db-wtable-estado" style={{ background: 'var(--warning)', color: '#000', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>Medio {score}%</span>
+  return <span className="db-wtable-estado" style={{ background: 'var(--success)', color: '#fff', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>Bajo {score}%</span>
 }
 
 function StepDot({ estado }) {
-  if (estado === 'enviado' || estado === 'entregado') return <span title="Enviado" style={{ color: '#3B82F6' }}>●</span>
-  if (estado === 'respondido' || estado === 'confirmado') return <span title="Confirmado" style={{ color: '#10B981' }}>●</span>
-  if (estado === 'reagendado') return <span title="Reagendado" style={{ color: '#F59E0B' }}>●</span>
-  if (estado === 'cancelado' || estado === 'saltado') return <span title="Saltado" style={{ color: '#6B7280' }}>○</span>
-  return <span title="Pendiente" style={{ color: '#374151' }}>○</span>
+  const colors = {
+    enviado: 'var(--primary)', entregado: 'var(--primary)',
+    respondido: 'var(--success)', confirmado: 'var(--success)',
+    reagendado: 'var(--warning)',
+    cancelado: 'var(--text-muted)', saltado: 'var(--text-muted)',
+  }
+  const color = colors[estado] || 'var(--bg-active)'
+  return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: color }} title={estado || 'pendiente'} />
 }
 
 export default function Confirmaciones() {
-  const { usuario } = useAuth()
   const [tab, setTab] = useState('hoy')
   const [citas, setCitas] = useState([])
-  const [metricas, setMetricas] = useState({ asistencia: 0, confirmadas: 0, reagendadas: 0, noShows: 0, total: 0 })
+  const [metricas, setMetricas] = useState({ asistencia: 0, confirmadas: 0, noShows: 0, total: 0 })
   const [loading, setLoading] = useState(true)
   const [config, setConfig] = useState([])
 
@@ -88,13 +92,11 @@ export default function Confirmaciones() {
           .not('estado_reunion_id', 'is', null)
 
         const asistieron = realizadas?.length || 0
-        const noshows = Math.max(0, total - asistieron)
         setMetricas({
           total,
           confirmadas,
           asistencia: total > 0 ? Math.round(asistieron / total * 100) : 0,
-          reagendadas: 0,
-          noShows: noshows,
+          noShows: Math.max(0, total - asistieron),
         })
       }
     } catch (err) {
@@ -103,10 +105,7 @@ export default function Confirmaciones() {
   }, [])
 
   const cargarConfig = useCallback(async () => {
-    const { data } = await supabase
-      .from('ventas_noshow_config')
-      .select('*')
-      .order('orden')
+    const { data } = await supabase.from('ventas_noshow_config').select('*').order('orden')
     setConfig(data || [])
   }, [])
 
@@ -114,67 +113,71 @@ export default function Confirmaciones() {
   useEffect(() => { cargarMetricas() }, [cargarMetricas])
   useEffect(() => { if (tab === 'config') cargarConfig() }, [tab, cargarConfig])
 
+  const tabs = [
+    { id: 'hoy', label: 'Hoy' },
+    { id: 'pipeline', label: 'Pipeline' },
+    { id: 'config', label: 'Configuración' },
+  ]
+
   return (
-    <div className="crm-page" style={{ padding: '24px 32px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <CalendarCheck size={24} />
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>Confirmaciones</h1>
+    <div className="db-page">
+      {/* Toolbar */}
+      <div className="db-toolbar">
+        <div className="db-toolbar-filters">
+          <CalendarCheck size={20} style={{ color: 'var(--text-muted)' }} />
+          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Confirmaciones</h1>
         </div>
-        <button
-          className="ui-btn ui-btn--secondary ui-btn--sm"
-          onClick={() => { cargarCitas(); cargarMetricas() }}
-          style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-        >
-          <RefreshCw size={14} /> Refrescar
-        </button>
+        <div className="db-toolbar-actions">
+          <button className="db-toolbar-btn" onClick={() => { cargarCitas(); cargarMetricas() }}>
+            <RefreshCw size={14} />
+            <span>Refrescar</span>
+          </button>
+        </div>
       </div>
 
-      {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
-        <KPICard icon={<TrendingUp size={20} />} label="Asistencia 30d" value={`${metricas.asistencia}%`} color="#10B981" />
-        <KPICard icon={<CheckCircle size={20} />} label="Confirmadas D-1" value={metricas.confirmadas} color="#3B82F6" />
-        <KPICard icon={<AlertTriangle size={20} />} label="No-shows 30d" value={metricas.noShows} color="#F59E0B" />
-        <KPICard icon={<CalendarCheck size={20} />} label="Total citas 30d" value={metricas.total} color="#8B5CF6" />
+      {/* KPIs — using widget shell style */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 'var(--space-sm)' }}>
+        <KPICard icon={<TrendingUp size={18} />} label="Asistencia 30d" value={`${metricas.asistencia}%`} color="var(--success)" />
+        <KPICard icon={<CheckCircle size={18} />} label="Confirmadas D-1" value={metricas.confirmadas} color="var(--primary)" />
+        <KPICard icon={<AlertTriangle size={18} />} label="No-shows 30d" value={metricas.noShows} color="var(--warning)" />
+        <KPICard icon={<Calendar size={18} />} label="Total citas 30d" value={metricas.total} color="var(--text-muted)" />
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {['hoy', 'pipeline', 'config'].map(t => (
+      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--border)', paddingBottom: 0 }}>
+        {tabs.map(t => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={t.id}
+            onClick={() => setTab(t.id)}
             style={{
-              padding: '8px 16px',
-              borderRadius: 8,
+              padding: '10px 20px',
               border: 'none',
-              background: tab === t ? 'var(--accent)' : 'var(--bg-secondary)',
-              color: tab === t ? '#fff' : 'var(--text)',
+              borderBottom: tab === t.id ? '2px solid var(--accent)' : '2px solid transparent',
+              background: 'none',
+              color: tab === t.id ? 'var(--text)' : 'var(--text-muted)',
               cursor: 'pointer',
               fontWeight: 500,
               fontSize: 13,
-              textTransform: 'capitalize',
+              transition: 'all 0.15s',
             }}
           >
-            {t === 'hoy' ? 'Hoy' : t === 'pipeline' ? 'Pipeline' : 'Configuración'}
+            {t.label}
           </button>
         ))}
       </div>
 
       {/* Content */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Cargando...</div>
+        <div className="db-loading">Cargando...</div>
       ) : tab === 'config' ? (
         <ConfigTab config={config} onUpdate={cargarConfig} />
       ) : citas.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+        <div className="db-widget-empty" style={{ padding: 48 }}>
           {tab === 'hoy' ? 'No hay citas para hoy' : 'No hay citas futuras'}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {citas.map(cita => (
-            <CitaCard key={cita.id} cita={cita} />
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+          {citas.map(cita => <CitaCard key={cita.id} cita={cita} />)}
         </div>
       )}
     </div>
@@ -183,77 +186,69 @@ export default function Confirmaciones() {
 
 function KPICard({ icon, label, value, color }) {
   return (
-    <div style={{
-      background: 'var(--bg-card)',
-      borderRadius: 12,
-      padding: '16px 20px',
-      border: '1px solid var(--border)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color }}>
-        {icon}
-        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+    <div className="db-wshell" style={{ padding: 0 }}>
+      <div style={{ padding: '14px 18px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <span style={{ color }}>{icon}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
+        </div>
+        <div style={{ fontSize: 26, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{value}</div>
       </div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>{value}</div>
     </div>
   )
 }
+
+const PASO_ORDER = ['confirmacion', 'micro_compromiso', 'prueba_social', 'video_closer', 'recurso_valor', 'd1_escasez', 'd1_email', 'd0_2h', 'd0_15m', 'noshow_5m', 'noshow_30m', 'noshow_24h', 'post_asistencia']
 
 function CitaCard({ cita }) {
   const lead = cita.lead || {}
   const closer = cita.closer || {}
   const confs = cita.confirmaciones || []
-  const citaDate = new Date(cita.fecha_hora)
-  const isPast = citaDate < new Date()
-
-  const pasoOrder = ['confirmacion', 'micro_compromiso', 'prueba_social', 'video_closer', 'recurso_valor', 'd1_escasez', 'd1_email', 'd0_2h', 'd0_15m', 'noshow_5m', 'noshow_30m', 'noshow_24h', 'post_asistencia']
 
   return (
-    <div style={{
-      background: 'var(--bg-card)',
-      borderRadius: 12,
-      padding: 16,
-      border: '1px solid var(--border)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 16,
-    }}>
-      {/* Time */}
-      <div style={{ minWidth: 70, textAlign: 'center' }}>
-        <div style={{ fontSize: 20, fontWeight: 700 }}>{formatDate(cita.fecha_hora).split(' ')[1]}</div>
-        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatDate(cita.fecha_hora).split(' ')[0]}</div>
-      </div>
-
-      {/* Lead info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontWeight: 600, fontSize: 15 }}>{lead.nombre || 'Sin nombre'}</span>
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>con {closer.nombre || '?'}</span>
+    <div className="db-wshell" style={{ padding: '12px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Date/time */}
+        <div style={{ minWidth: 55, textAlign: 'center' }}>
+          <div style={{ fontSize: 18, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{formatTime(cita.fecha_hora)}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatDateShort(cita.fecha_hora)}</div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 12, color: 'var(--text-secondary)' }}>
-          {lead.telefono && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Phone size={11} /> {lead.telefono}</span>}
-          {lead.email && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Mail size={11} /> {lead.email}</span>}
+
+        {/* Separator */}
+        <div style={{ width: 1, height: 36, background: 'var(--border)' }} />
+
+        {/* Lead info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <span style={{ fontWeight: 600, fontSize: 14 }}>{lead.nombre || 'Sin nombre'}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>con {closer.nombre || '?'}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: 'var(--text-tertiary)' }}>
+            {lead.telefono && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Phone size={10} /> {lead.telefono}</span>}
+            {lead.email && <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><Mail size={10} /> {lead.email}</span>}
+          </div>
         </div>
-      </div>
 
-      {/* Steps progress */}
-      <div style={{ display: 'flex', gap: 3, alignItems: 'center', fontSize: 14 }}>
-        {pasoOrder.map(paso => {
-          const conf = confs.find(c => c.paso === paso)
-          return <StepDot key={paso} estado={conf?.estado || 'programado'} />
-        })}
-      </div>
+        {/* Steps progress */}
+        <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+          {PASO_ORDER.map(paso => {
+            const conf = confs.find(c => c.paso === paso)
+            return <StepDot key={paso} estado={conf?.estado} />
+          })}
+        </div>
 
-      {/* Status */}
-      <div style={{ minWidth: 120, textAlign: 'right' }}>
-        {cita.noshow_confirmado ? (
-          <span style={{ color: '#10B981', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
-            <CheckCircle size={14} /> Confirmada
-          </span>
-        ) : cita.noshow_secuencia_activa ? (
-          <RiskBadge score={cita.noshow_risk_score} />
-        ) : (
-          <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Sin secuencia</span>
-        )}
+        {/* Status */}
+        <div style={{ minWidth: 100, textAlign: 'right' }}>
+          {cita.noshow_confirmado ? (
+            <span style={{ color: 'var(--success)', fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+              <CheckCircle size={13} /> Confirmada
+            </span>
+          ) : cita.noshow_secuencia_activa ? (
+            <RiskBadge score={cita.noshow_risk_score} />
+          ) : (
+            <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>Sin secuencia</span>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -261,52 +256,39 @@ function CitaCard({ cita }) {
 
 function ConfigTab({ config, onUpdate }) {
   const togglePaso = async (paso, activo) => {
-    await supabase
-      .from('ventas_noshow_config')
-      .update({ activo: !activo })
-      .eq('paso', paso)
+    await supabase.from('ventas_noshow_config').update({ activo: !activo }).eq('paso', paso)
     onUpdate()
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 var(--space-xs)' }}>
         Activa o desactiva pasos de la secuencia. Los cambios aplican a citas nuevas.
-      </div>
+      </p>
       {config.map(step => (
         <div
           key={step.paso}
+          className="db-wshell"
           style={{
-            background: 'var(--bg-card)',
-            borderRadius: 10,
-            padding: '12px 16px',
-            border: '1px solid var(--border)',
+            padding: '10px 16px',
             display: 'flex',
             alignItems: 'center',
             gap: 12,
             opacity: step.activo ? 1 : 0.5,
           }}
         >
-          <span style={{ fontWeight: 600, fontSize: 14, minWidth: 24, color: 'var(--text-muted)' }}>{step.orden}</span>
+          <span style={{ fontWeight: 600, fontSize: 13, minWidth: 20, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>{step.orden}</span>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 500, fontSize: 14 }}>{step.descripcion}</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', gap: 12, marginTop: 2 }}>
+            <div style={{ fontWeight: 500, fontSize: 13 }}>{step.descripcion}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'flex', gap: 12, marginTop: 2 }}>
               <span>{step.canal}</span>
               <span>{step.timing_tipo}: {step.timing_valor}m</span>
             </div>
           </div>
           <button
             onClick={() => togglePaso(step.paso, step.activo)}
-            style={{
-              padding: '4px 12px',
-              borderRadius: 6,
-              border: 'none',
-              background: step.activo ? '#10B981' : 'var(--bg-active)',
-              color: step.activo ? '#fff' : 'var(--text-muted)',
-              cursor: 'pointer',
-              fontSize: 12,
-              fontWeight: 500,
-            }}
+            className={`db-toolbar-btn ${step.activo ? 'db-toolbar-btn--save' : ''}`}
+            style={{ padding: '4px 12px', fontSize: 11, minWidth: 70 }}
           >
             {step.activo ? 'Activo' : 'Inactivo'}
           </button>
