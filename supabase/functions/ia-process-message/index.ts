@@ -794,6 +794,7 @@ async function generateSummary(
         'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(10000),
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 300,

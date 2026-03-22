@@ -67,6 +67,7 @@ async function downloadMedia(
   try {
     const metaRes = await fetch(`https://graph.facebook.com/v21.0/${mediaId}`, {
       headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(10000),
     })
     if (!metaRes.ok) return null
     const metaData = await metaRes.json()
@@ -75,6 +76,7 @@ async function downloadMedia(
 
     const mediaRes = await fetch(mediaUrl, {
       headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(15000),
     })
     if (!mediaRes.ok) return null
     const arrayBuffer = await mediaRes.arrayBuffer()
@@ -115,6 +117,7 @@ async function transcribeAudio(audioUrl: string, openaiKey: string): Promise<str
       method: 'POST',
       headers: { Authorization: `Bearer ${openaiKey}` },
       body: formData,
+      signal: AbortSignal.timeout(30000),
     })
     if (!res.ok) return null
     const data = await res.json()
@@ -134,6 +137,7 @@ async function analyzeImage(imageUrl: string, openaiKey: string): Promise<string
         Authorization: `Bearer ${openaiKey}`,
         'Content-Type': 'application/json',
       },
+      signal: AbortSignal.timeout(20000),
       body: JSON.stringify({
         model: 'gpt-4o',
         messages: [{
