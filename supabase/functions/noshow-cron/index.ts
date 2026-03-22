@@ -234,7 +234,7 @@ async function executePaso(
   const emailMessages: Record<string, { asunto: string; cuerpo: string }> = {
     confirmacion: {
       asunto: `Tu videollamada con {{closer}} — {{fecha}} a las {{hora}}`,
-      cuerpo: `Hola {{nombre}},\n\nTu videollamada está confirmada:\n\n📅 {{fecha}} a las {{hora}}\n👤 Con {{closer}}\n🔗 Enlace: {{url}}\n\nSi necesitas cambiar la hora, responde a este email.\n\nUn saludo,\nMadrigal Marketing`,
+      cuerpo: `Hola {{nombre}},\n\nTu videollamada está confirmada:\n\n📅 {{fecha}} a las {{hora}}\n👤 Con {{closer}}\n🔗 Enlace: {{url}}\n\n🔗 Página de tu reunión: https://app.madrigalmarketing.es/reunion/{{token}}\n\nSi necesitas cambiar la hora, responde a este email.\n\nUn saludo,\nMadrigal Marketing`,
     },
     d1_email: {
       asunto: `Mañana a las {{hora}} — confirmamos?`,
@@ -336,16 +336,68 @@ async function executePaso(
       try {
         const resendKey = Deno.env.get('RESEND_API_KEY') || ''
         if (resendKey) {
+          // Build email body — HTML for confirmacion, plain text for rest
+          const emailBody: Record<string, unknown> = {
+            from: 'Madrigal Marketing <confirmaciones@madrigalmarketing.es>',
+            to: [leadEmail],
+            subject: asunto,
+          }
+
+          if (paso === 'confirmacion') {
+            // HTML email with ICS attachment for confirmation
+            const citaDateObj = new Date(cita.fecha_hora as string)
+            const endDate = new Date(citaDateObj.getTime() + ((cita.duracion_minutos as number) || 45) * 60000)
+            const fmtICS = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+
+            const icsContent = [
+              'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Madrigal Marketing//NoShow//ES',
+              'BEGIN:VEVENT',
+              `DTSTART:${fmtICS(citaDateObj)}`,
+              `DTEND:${fmtICS(endDate)}`,
+              `SUMMARY:Videollamada con ${vars.closer} - Madrigal Marketing`,
+              `DESCRIPTION:Enlace: ${vars.url}\\nPágina: https://app.madrigalmarketing.es/reunion/${vars.token}`,
+              `URL:${vars.url}`,
+              'STATUS:CONFIRMED',
+              `UID:${(cita as Record<string,unknown>).id}@madrigalmarketing.es`,
+              'END:VEVENT', 'END:VCALENDAR',
+            ].join('\r\n')
+
+            emailBody.html = `
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:0 auto;color:#333;">
+  <div style="text-align:center;padding:20px 0;border-bottom:1px solid #eee;">
+    <span style="font-size:14px;letter-spacing:0.2em;color:#999;font-weight:700;">MADRIGAL</span>
+  </div>
+  <div style="padding:30px 20px;">
+    <h1 style="font-size:20px;margin:0 0 20px;color:#111;">Tu videollamada está confirmada</h1>
+    <div style="background:#f8f9fa;border-radius:10px;padding:16px 20px;margin-bottom:20px;">
+      <div style="margin-bottom:8px;">📅 <strong>${vars.fecha}</strong> a las <strong>${vars.hora}</strong></div>
+      <div style="margin-bottom:8px;">👤 Con <strong>${vars.closer}</strong></div>
+      <div>⏱️ ${(cita.duracion_minutos as number) || 45} minutos</div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <a href="https://app.madrigalmarketing.es/reunion/${vars.token}" style="display:block;text-align:center;padding:14px;background:#10B981;color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;margin-bottom:10px;">Ver detalles de tu reunión</a>
+      ${vars.url ? `<a href="${vars.url}" style="display:block;text-align:center;padding:12px;border:1px solid #ddd;border-radius:8px;text-decoration:none;color:#333;font-weight:600;font-size:14px;">Enlace videollamada</a>` : ''}
+    </div>
+    <p style="font-size:13px;color:#666;">Si necesitas cambiar la hora, responde a este email.</p>
+  </div>
+  <div style="text-align:center;padding:16px;border-top:1px solid #eee;font-size:11px;color:#999;">
+    Madrigal Marketing · Captación para el sector bodas
+  </div>
+</div>`
+            emailBody.attachments = [{
+              filename: 'reunion-madrigal.ics',
+              content: btoa(icsContent),
+              content_type: 'text/calendar',
+            }]
+          } else {
+            emailBody.text = cuerpo
+          }
+
           const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
             signal: AbortSignal.timeout(10000),
-            body: JSON.stringify({
-              from: 'Madrigal Marketing <confirmaciones@madrigalmarketing.es>',
-              to: [leadEmail],
-              subject: asunto,
-              text: cuerpo,
-            }),
+            body: JSON.stringify(emailBody),
           })
           const data = await res.json()
 
