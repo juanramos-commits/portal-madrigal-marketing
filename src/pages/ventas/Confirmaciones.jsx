@@ -87,12 +87,14 @@ export default function Confirmaciones() {
           .lte('fecha_hora', new Date().toISOString())
           .not('estado_reunion_id', 'is', null)
 
+        const asistieron = realizadas?.length || 0
+        const noshows = Math.max(0, total - asistieron)
         setMetricas({
           total,
           confirmadas,
-          asistencia: total > 0 ? Math.round((realizadas?.length || 0) / total * 100) : 0,
+          asistencia: total > 0 ? Math.round(asistieron / total * 100) : 0,
           reagendadas: 0,
-          noShows: total - (realizadas?.length || 0) - data.filter(c => c.estado !== 'agendada').length,
+          noShows: noshows,
         })
       }
     } catch (err) {
