@@ -199,11 +199,21 @@ export default function Confirmaciones() {
   useEffect(() => { cargarMetricas(); cargarClosers() }, [cargarMetricas, cargarClosers])
   useEffect(() => { if (tab === 'config') cargarConfig() }, [tab, cargarConfig])
 
+  const [recursos, setRecursos] = useState([])
+
+  const cargarRecursos = useCallback(async () => {
+    const { data } = await supabase.from('ventas_noshow_recursos').select('*').order('tipo, categoria')
+    setRecursos(data || [])
+  }, [])
+
+  useEffect(() => { if (tab === 'recursos') cargarRecursos() }, [tab, cargarRecursos])
+
   const tabs = [
     { id: 'hoy', label: 'Hoy y mañana' },
     { id: 'pipeline', label: 'Pipeline' },
     { id: 'metricas', label: 'Métricas' },
     { id: 'config', label: 'Configuración' },
+    { id: 'recursos', label: 'Recursos' },
   ]
 
   return (
@@ -287,6 +297,8 @@ export default function Confirmaciones() {
       {/* Content */}
       {tab === 'metricas' ? (
         <MetricasTab metricas={metricas} />
+      ) : tab === 'recursos' ? (
+        <RecursosTab recursos={recursos} onUpdate={cargarRecursos} />
       ) : tab === 'config' ? (
         <ConfigTab config={config} onUpdate={cargarConfig} />
       ) : loading ? (
@@ -556,6 +568,113 @@ function ConfigTab({ config, onUpdate }) {
           >
             {step.activo ? 'Activo' : 'Inactivo'}
           </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ── Recursos Tab ─────────────────────────────────────────────────────────
+
+function RecursosTab({ recursos, onUpdate }) {
+  const [editingId, setEditingId] = useState(null)
+  const [editUrl, setEditUrl] = useState('')
+
+  const toggleActivo = async (id, activo) => {
+    await supabase.from('ventas_noshow_recursos').update({ activo: !activo }).eq('id', id)
+    onUpdate()
+  }
+
+  const saveUrl = async (id) => {
+    await supabase.from('ventas_noshow_recursos').update({ media_url: editUrl || null }).eq('id', id)
+    setEditingId(null)
+    onUpdate()
+  }
+
+  const TIPO_LABELS = { caso_exito: 'Caso de éxito', recurso_valor: 'Recurso de valor', video_closer: 'Vídeo director' }
+  const TIPO_ICONS = { caso_exito: '⭐', recurso_valor: '📄', video_closer: '🎥' }
+
+  // Group by tipo
+  const grouped = {}
+  recursos.forEach(r => {
+    if (!grouped[r.tipo]) grouped[r.tipo] = []
+    grouped[r.tipo].push(r)
+  })
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+        Añade URLs de vídeos, PDFs o enlaces a casos de éxito. Actívalos cuando estén listos.
+      </p>
+
+      {Object.entries(grouped).map(([tipo, items]) => (
+        <div key={tipo}>
+          <h3 style={{ fontSize: 14, fontWeight: 600, margin: '0 0 var(--space-xs)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>{TIPO_ICONS[tipo]}</span> {TIPO_LABELS[tipo] || tipo}
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
+            {items.map(r => (
+              <div
+                key={r.id}
+                style={{
+                  background: 'var(--bg-card)', borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border)', padding: '12px 16px',
+                  display: 'flex', alignItems: 'flex-start', gap: 12,
+                  opacity: r.activo ? 1 : 0.5, transition: 'opacity 0.2s',
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 3 }}>{r.titulo}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 2 }}>
+                    {r.categoria || 'General'} {r.dato_concreto && `· ${r.dato_concreto}`}
+                  </div>
+                  {editingId === r.id ? (
+                    <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                      <input
+                        type="url"
+                        value={editUrl}
+                        onChange={e => setEditUrl(e.target.value)}
+                        placeholder="https://..."
+                        style={{
+                          flex: 1, background: 'var(--bg-secondary)', border: '1px solid var(--border)',
+                          borderRadius: 6, padding: '6px 10px', color: 'var(--text)', fontSize: 12,
+                        }}
+                      />
+                      <button onClick={() => saveUrl(r.id)} style={{ background: 'var(--success)', border: 'none', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', color: '#000', fontSize: 11, fontWeight: 600 }}>Guardar</button>
+                      <button onClick={() => setEditingId(null)} style={{ background: 'var(--bg-active)', border: 'none', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 11 }}>Cancelar</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                      {r.media_url ? (
+                        <a href={r.media_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--primary)', textDecoration: 'none' }}>
+                          {r.media_url.length > 50 ? r.media_url.slice(0, 50) + '...' : r.media_url}
+                        </a>
+                      ) : (
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Sin URL</span>
+                      )}
+                      <button
+                        onClick={() => { setEditingId(r.id); setEditUrl(r.media_url || '') }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2 }}
+                      >
+                        <Edit3 size={11} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={() => toggleActivo(r.id, r.activo)}
+                  style={{
+                    padding: '5px 14px', fontSize: 11, fontWeight: 600,
+                    minWidth: 80, borderRadius: 6, border: 'none', cursor: 'pointer',
+                    background: r.activo ? 'var(--success)' : 'var(--bg-active)',
+                    color: r.activo ? '#000' : 'var(--text-muted)',
+                  }}
+                >
+                  {r.activo ? 'Activo' : 'Inactivo'}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       ))}
     </div>
