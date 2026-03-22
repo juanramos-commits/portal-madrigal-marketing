@@ -1129,6 +1129,27 @@ Tono: ${estilo.tono || 'no disponible'}
 `
     }
 
+    // === LOAD LEARNED PATTERNS ===
+    let learnedRules = ''
+    const { data: aprendizajes } = await supabase
+      .from('ia_aprendizajes')
+      .select('tipo, contenido, confianza')
+      .eq('agente_id', agenteId)
+      .eq('activo', true)
+      .order('confianza', { ascending: false })
+      .limit(15)
+
+    if (aprendizajes && aprendizajes.length > 0) {
+      const ganadores = aprendizajes.filter((a: Record<string, unknown>) => a.tipo === 'patron_ganador').map((a: Record<string, unknown>) => `✓ ${a.contenido}`)
+      const perdedores = aprendizajes.filter((a: Record<string, unknown>) => a.tipo === 'patron_perdedor').map((a: Record<string, unknown>) => `✗ ${a.contenido}`)
+      const reglas = aprendizajes.filter((a: Record<string, unknown>) => a.tipo === 'regla_aprendida').map((a: Record<string, unknown>) => `• ${a.contenido}`)
+
+      learnedRules = `\n--- APRENDIZAJES DE CONVERSACIONES ANTERIORES ---\n`
+      if (reglas.length > 0) learnedRules += `REGLAS:\n${reglas.join('\n')}\n`
+      if (ganadores.length > 0) learnedRules += `LO QUE FUNCIONA:\n${ganadores.join('\n')}\n`
+      if (perdedores.length > 0) learnedRules += `LO QUE NO FUNCIONA:\n${perdedores.join('\n')}\n`
+    }
+
     // Add context to system prompt
     const agentConfig = (agente.config as Record<string, unknown>) || {}
     const especialidad = agentConfig.especialidad || agente.tipo || 'setter'
@@ -1172,7 +1193,8 @@ Step: ${convo.step} | Estado: ${convo.estado}
 ${convo.resumen ? `Resumen: ${convo.resumen}` : ''}
 ${objection ? `Objeción: ${objection.tipo}` : ''}
 Fecha: ${getMadridDateTime()}
-${styleAddendum}`
+${styleAddendum}
+${learnedRules}`
 
     const fullSystemPrompt = systemPrompt + contextAddendum
 
