@@ -71,6 +71,8 @@ async function sendTextMessage(
   to: string,
   text: string,
 ): Promise<{ ok: boolean; waMessageId?: string; error?: string }> {
+  // WhatsApp max message length is 4096 chars
+  if (text.length > 4096) text = text.substring(0, 4090) + '...'
   try {
     const res = await fetch(
       `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,

@@ -542,6 +542,38 @@ async function processWebhookAsync(
               break
             }
 
+            case 'interactive': {
+              // Button replies and list replies
+              const interactive = message.interactive as Record<string, unknown>
+              const interactiveType = interactive?.type as string
+              if (interactiveType === 'button_reply') {
+                const btnReply = interactive.button_reply as Record<string, string>
+                content = btnReply?.title || btnReply?.id || '[Botón pulsado]'
+              } else if (interactiveType === 'list_reply') {
+                const listReply = interactive.list_reply as Record<string, string>
+                content = listReply?.title || listReply?.description || listReply?.id || '[Opción seleccionada]'
+              } else {
+                content = `[Interactivo: ${interactiveType}]`
+              }
+              messageType = 'text'
+              break
+            }
+
+            case 'location': {
+              const loc = message.location as Record<string, unknown>
+              content = `[Ubicación: ${loc?.latitude}, ${loc?.longitude}${loc?.name ? ' - ' + loc.name : ''}]`
+              messageType = 'text'
+              break
+            }
+
+            case 'contacts': {
+              const contacts = message.contacts as Array<Record<string, unknown>>
+              const contactName = (contacts?.[0]?.name as Record<string, string>)?.formatted_name || 'contacto'
+              content = `[Contacto compartido: ${contactName}]`
+              messageType = 'text'
+              break
+            }
+
             default: {
               content = `[Tipo de mensaje no soportado: ${msgType}]`
               messageType = 'text'

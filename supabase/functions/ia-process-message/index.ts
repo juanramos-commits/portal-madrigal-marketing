@@ -1013,15 +1013,31 @@ Deno.serve(async (req) => {
       }
     }
 
-    // === GUARD CHECKS ===
+    // === GUARD CHECKS (release lock before returning) ===
     if (!convo.chatbot_activo) {
+      await releaseLock(supabase, conversacionId)
       return jsonResponse({ status: 'skipped', reason: 'chatbot_inactivo' })
     }
     if (!agente.activo) {
+      await releaseLock(supabase, conversacionId)
       return jsonResponse({ status: 'skipped', reason: 'agente_inactivo' })
     }
     if (lead.opted_out) {
+      await releaseLock(supabase, conversacionId)
       return jsonResponse({ status: 'skipped', reason: 'lead_opted_out' })
+    }
+
+    // === RATE LIMIT: max 3 AI responses per minute per conversation ===
+    const { count: recentBotMsgs } = await supabase
+      .from('ia_mensajes')
+      .select('id', { count: 'exact', head: true })
+      .eq('conversacion_id', conversacionId)
+      .eq('direction', 'outbound')
+      .eq('sender', 'bot')
+      .gte('created_at', new Date(Date.now() - 60000).toISOString())
+    if ((recentBotMsgs || 0) >= 3) {
+      await releaseLock(supabase, conversacionId)
+      return jsonResponse({ status: 'rate_limited', reason: 'too_many_responses_per_minute' })
     }
 
     // === SENTIMENT ANALYSIS ===
