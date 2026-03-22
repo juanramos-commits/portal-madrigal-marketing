@@ -72,6 +72,7 @@ const ColdEmailConfig = lazy(() => import('./pages/ventas/ColdEmailConfig'))
 
 // Confirmaciones (Anti No-Show)
 const Confirmaciones = lazy(() => import('./pages/ventas/Confirmaciones'))
+const PreReunion = lazy(() => import('./pages/PreReunion'))
 
 // Páginas de Agentes IA
 const AgentesIA = lazy(() => import('./pages/ventas/AgentesIA'))
@@ -155,6 +156,7 @@ function App() {
           <Route path="/activar-cuenta" element={<ActivarCuenta />} />
           <Route path="/privacidad" element={<PoliticaPrivacidad />} />
           <Route path="/reservar/:slug" element={<ReservarCita />} />
+          <Route path="/reunion/:token" element={<PreReunion />} />
           <Route path="/preferencias-email/:token" element={<EmailPreferences />} />
 
           {/* Rutas protegidas */}

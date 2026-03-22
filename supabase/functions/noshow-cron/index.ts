@@ -54,6 +54,17 @@ Deno.serve(async (req) => {
   )
 
   try {
+    // === 0. Check kill switch ===
+    const { data: activeConfig } = await supabase
+      .from('ia_config')
+      .select('value')
+      .eq('key', 'noshow_active')
+      .maybeSingle()
+
+    if (!activeConfig || activeConfig.value !== 'true') {
+      return jsonRes({ status: 'ok', processed: 0, reason: 'system_disabled' })
+    }
+
     // === 1. Find pending confirmaciones ready to execute ===
     const { data: pending, error: pendErr } = await supabase
       .from('ventas_cita_confirmaciones')
@@ -234,16 +245,14 @@ async function executePaso(
       const waToken = await resolveWaToken(supabase)
 
       if (waToken) {
-        // Get WhatsApp phone_id from the noshow config or use a default
-        // For now, use the same phone as Rosalía's agent
-        const { data: agente } = await supabase
-          .from('ia_agentes')
-          .select('whatsapp_phone_id')
-          .eq('activo', true)
-          .limit(1)
+        // Get WhatsApp phone_id from noshow config (dedicated number)
+        const { data: phoneConfig } = await supabase
+          .from('ia_config')
+          .select('value')
+          .eq('key', 'noshow_whatsapp_phone_id')
           .maybeSingle()
 
-        const phoneId = agente?.whatsapp_phone_id
+        const phoneId = phoneConfig?.value && phoneConfig.value !== 'PENDING' ? phoneConfig.value : null
         if (phoneId) {
           const toNum = leadPhone.replace(/\+/g, '')
           const res = await fetch(`https://graph.facebook.com/v21.0/${phoneId}/messages`, {
