@@ -555,7 +555,9 @@ export default function TabMetricas({ agenteId, agente }) {
       const convs = convsRes.data || []
       const queuedCount = queuedRes.count || 0
       const noResponseStates = ['no_response', 'descartado']
-      const respondedStates = ['needs_reply', 'handoff_humano', 'waiting_reply', 'scheduled_followup', 'qualify', 'meeting_pref', 'agendado']
+      // "Respondieron" = lead sent at least one message (needs_reply, qualify, meeting_pref, agendado, handoff)
+      // NOT waiting_reply or scheduled_followup (bot sent, lead hasn't replied yet)
+      const respondedStates = ['needs_reply', 'handoff_humano', 'qualify', 'meeting_pref', 'agendado']
       const contactados = convs.filter(c => c.estado !== 'queued').length
       setConvStats({
         total: convs.length,
