@@ -606,16 +606,17 @@ async function executeTool(
         leida: false,
       })
 
-      // Send WhatsApp notification to team lead (+34659878684)
+      // Send WhatsApp notification to team lead (configurable via agent config)
       const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
       const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      const handoffPhone = ((agente.config as Record<string, unknown>)?.handoff_notify_phone as string) || '+34659878684'
       fetch(`${supabaseUrl}/functions/v1/ia-whatsapp-send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
         body: JSON.stringify({
           agente_id: agente.id,
           conversacion_id: convo.id,
-          to: '+34659878684',
+          to: handoffPhone,
           sender: 'bot',
           template_name: 'derivacion_humano',
           template_params: {},
@@ -1583,7 +1584,7 @@ ${learnedRules}`
       .filter(p => p.length > 0 && !fillerPattern.test(p.trim()))
       .slice(0, 4) // Max 4 messages
 
-    console.log(`[split] Response split into ${messageParts.length} parts`)
+    // Debug log removed — was cluttering logs
 
     // === PRE-SEND CHECK: Did lead send more messages while AI was thinking? ===
     // Compare latest inbound message timestamp vs when we acquired the lock.
