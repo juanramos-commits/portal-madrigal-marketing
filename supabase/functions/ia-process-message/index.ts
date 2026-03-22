@@ -537,7 +537,7 @@ async function executeTool(
           'match_documents_rosalia',
           {
             query_embedding: embedding,
-            match_threshold: 0.7,
+            match_threshold: 0.3,
             match_count: 3,
           },
         )
