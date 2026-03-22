@@ -515,6 +515,14 @@ async function executeTool(
           body: JSON.stringify({ conversacion_id: convo.id, action: 'etapa_agendado' }),
         }).catch(() => {})
 
+        // Track meeting metric
+        try { await supabase.rpc('ia_increment_metricas', {
+          p_agente_id: agente.id,
+          p_fecha: getMadridDate(),
+          p_ab_version: convo.ab_version || 'A',
+          p_reuniones_agendadas: 1,
+        }) } catch (_e) { /* ignore */ }
+
         const { data: closerUser } = await supabase
           .from('usuarios')
           .select('nombre')

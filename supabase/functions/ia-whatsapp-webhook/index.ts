@@ -389,6 +389,17 @@ async function processWebhookAsync(
             convoUpdates.followup_at = null
           }
 
+          // If lead writes after booking or handoff, alert supervisor (don't reactivate bot)
+          if (['agendado', 'handoff_humano'].includes(convo.estado as string)) {
+            try { await supabase.from('ia_alertas_supervisor').insert({
+              agente_id: agente.id,
+              conversacion_id: convo.id,
+              tipo: 'lead_caliente_sin_respuesta',
+              mensaje: `Lead "${lead.nombre || lead.telefono}" escribió después de ${convo.estado}. Necesita respuesta humana.`,
+              leida: false,
+            }) } catch (_e) { /* ignore */ }
+          }
+
           await supabase
             .from('ia_conversaciones')
             .update(convoUpdates)
