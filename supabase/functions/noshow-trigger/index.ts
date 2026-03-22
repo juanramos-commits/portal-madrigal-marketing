@@ -189,6 +189,14 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Don't schedule pre-meeting value steps if they would fire too close to or after the cita
+      // These need breathing room (at least 2h before cita) to be useful
+      const preSteps = ['micro_compromiso', 'prueba_social', 'video_closer', 'recurso_valor']
+      const twoHoursBefore = new Date(citaTime.getTime() - 2 * 60 * 60 * 1000)
+      if (preSteps.includes(step.paso) && sendAt >= twoHoursBefore) {
+        continue
+      }
+
       confirmaciones.push({
         cita_id: citaId,
         paso: step.paso,
