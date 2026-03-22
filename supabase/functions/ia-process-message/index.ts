@@ -1153,12 +1153,13 @@ STEP ACTUAL: "${convo.step}"
 
 ${convo.step === 'first_message' || convo.step === 'qualify' ? `Estás CUALIFICANDO. Máximo 2-3 intercambios.
 - Detecta si sigue en el sector, cómo le va, cómo consigue clientes
-- Si muestra dolor (boca a boca, pocos clientes, estancado) → es señal de compra
-- NO menciones reunión/videollamada/agendar todavía
-- Termina SIEMPRE con una pregunta que avance la conversación` : ''}
-${convo.step === 'meeting_pref' ? `El lead está CUALIFICADO. Propón una videollamada corta de 20 min.
-- Pregunta si le viene bien una videollamada. Espera a que diga sí
-- SOLO ENTONCES usa consultar_calendario y propón 2-3 opciones
+- Si muestra dolor → VALIDA y CREA CURIOSIDAD. No propongas reunión aún
+- Ejemplo: "Eso le pasa a muchos. Justo es lo que solucionamos"
+- Deja que el lead pregunte más. Termina con algo que genere curiosidad` : ''}
+${convo.step === 'meeting_pref' ? `El lead ha mostrado interés. PERO no vayas directo a videollamada.
+- Si el lead aún no ha preguntado "cómo lo hacéis" → crea curiosidad primero
+- Si el lead YA preguntó o dijo "cuéntame" → ahora sí propón videollamada corta
+- SOLO cuando acepte, usa consultar_calendario
 - NUNCA inventes fechas` : ''}
 
 Usa consultar_base_conocimiento si el lead pregunta sobre servicios, precios o qué hacemos.
