@@ -327,7 +327,7 @@ async function executeTool(
       const diasBuscar = (toolInput.dias_buscar as number) || 7
 
       try {
-        // Always query CLOSERS' availability, not the bot's
+        // Query closers' availability (Pablo Zamora, Mercedes)
         const { data: closers } = await supabase
           .from('ventas_roles_comerciales')
           .select('usuario_id')
