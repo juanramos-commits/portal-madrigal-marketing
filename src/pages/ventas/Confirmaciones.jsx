@@ -28,8 +28,22 @@ function StepDot({ estado }) {
     reagendado: 'var(--warning)',
     cancelado: 'var(--text-muted)', saltado: 'var(--text-muted)',
   }
-  const color = colors[estado] || 'var(--bg-active)'
-  return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: color }} title={estado || 'pendiente'} />
+  const color = colors[estado] || 'var(--border)'
+  const isFilled = estado && estado !== 'programado'
+  return (
+    <span
+      title={estado || 'pendiente'}
+      style={{
+        display: 'inline-block',
+        width: 10,
+        height: 10,
+        borderRadius: '50%',
+        background: isFilled ? color : 'transparent',
+        border: isFilled ? 'none' : `2px solid var(--border)`,
+        boxSizing: 'border-box',
+      }}
+    />
+  )
 }
 
 export default function Confirmaciones() {
@@ -172,8 +186,11 @@ export default function Confirmaciones() {
       ) : tab === 'config' ? (
         <ConfigTab config={config} onUpdate={cargarConfig} />
       ) : citas.length === 0 ? (
-        <div className="db-widget-empty" style={{ padding: 48 }}>
-          {tab === 'hoy' ? 'No hay citas para hoy' : 'No hay citas futuras'}
+        <div className="db-wshell" style={{ padding: 48, textAlign: 'center' }}>
+          <CalendarCheck size={32} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
+          <div style={{ color: 'var(--text-muted)', fontSize: 14 }}>
+            {tab === 'hoy' ? 'No hay citas para hoy' : 'No hay citas futuras'}
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)' }}>
@@ -287,8 +304,18 @@ function ConfigTab({ config, onUpdate }) {
           </div>
           <button
             onClick={() => togglePaso(step.paso, step.activo)}
-            className={`db-toolbar-btn ${step.activo ? 'db-toolbar-btn--save' : ''}`}
-            style={{ padding: '4px 12px', fontSize: 11, minWidth: 70 }}
+            style={{
+              padding: '5px 14px',
+              fontSize: 11,
+              fontWeight: 600,
+              minWidth: 75,
+              borderRadius: 6,
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+              background: step.activo ? 'var(--success)' : 'var(--bg-active)',
+              color: step.activo ? '#000' : 'var(--text-muted)',
+            }}
           >
             {step.activo ? 'Activo' : 'Inactivo'}
           </button>
