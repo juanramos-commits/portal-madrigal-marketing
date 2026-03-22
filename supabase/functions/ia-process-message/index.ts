@@ -486,7 +486,7 @@ async function executeTool(
           await fetch(`${supabaseUrl}/functions/v1/google-calendar-sync`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
-            body: JSON.stringify({ action: 'create_event', cita_id: cita.id }),
+            body: JSON.stringify({ action: 'create', cita_id: cita.id }),
           })
         } catch (_e) { /* Google sync non-fatal */ }
 
