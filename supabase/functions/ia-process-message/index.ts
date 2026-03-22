@@ -1412,8 +1412,6 @@ ${learnedRules}`
       .replace(/detalle fino/gi, 'detalle')
       .replace(/todo integrado/gi, 'todo montado')
       .replace(/sistema completo/gi, 'sistema')
-      // Remove "X o Y?" pattern from questions — keep only the first part
-      .replace(/,?\s*(o\s+(es\s+)?(un\s+poco\s+)?[\w\sáéíóúñ]+)\?/gi, '?')
 
     // === QUALITY EVALUATION (HAIKU) ===
     const qualityThreshold = (agente.config as Record<string, unknown>)?.umbral_calidad_minima as number || 6
