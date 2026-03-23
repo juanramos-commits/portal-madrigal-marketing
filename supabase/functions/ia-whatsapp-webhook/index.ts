@@ -205,9 +205,36 @@ async function processWebhookAsync(
 
         if (waStatus === 'failed') {
           const errors = (status.errors as Array<Record<string, unknown>>) || []
+          const errorCode = errors[0]?.code as number || 0
           const errorMsg = errors.map(e => `${e.code}: ${e.title}`).join(', ') || 'Unknown'
+
+          // Update message status
+          await supabase
+            .from('ia_mensajes')
+            .update({ wa_status: 'failed' })
+            .eq('wa_message_id', waMessageId)
+
+          // Find the conversation for this failed message
+          const { data: failedMsg } = await supabase
+            .from('ia_mensajes')
+            .select('conversacion_id')
+            .eq('wa_message_id', waMessageId)
+            .maybeSingle()
+
+          if (failedMsg?.conversacion_id) {
+            // For undeliverable (131026) or re-engagement (131047): mark conversation as failed
+            if (errorCode === 131026 || errorCode === 131047) {
+              await supabase
+                .from('ia_conversaciones')
+                .update({ estado: 'failed', chatbot_activo: false })
+                .eq('id', failedMsg.conversacion_id)
+                .in('estado', ['waiting_reply', 'queued', 'needs_reply'])
+            }
+          }
+
           await supabase.from('ia_logs').insert({
             agente_id: agente.id,
+            conversacion_id: failedMsg?.conversacion_id || null,
             tipo: 'error',
             mensaje: `WhatsApp delivery failed for ${waMessageId}: ${errorMsg}`,
             detalles: { wa_message_id: waMessageId, errors },
