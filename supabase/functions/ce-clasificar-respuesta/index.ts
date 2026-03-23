@@ -15,6 +15,7 @@ function jsonResponse(body: Record<string, unknown>, status = 200) {
 /** Valid classification values. */
 const VALID_CLASIFICACIONES = [
   "interesado",
+  "interesado_email",
   "no_ahora",
   "baja",
   "negativo",
@@ -26,6 +27,7 @@ type Clasificacion = (typeof VALID_CLASIFICACIONES)[number];
 /** Map classification to enrollment estado. */
 const CLASIFICACION_A_ESTADO: Record<Clasificacion, string> = {
   interesado: "interesado",
+  interesado_email: "interesado",
   baja: "baja",
   negativo: "negativo",
   no_ahora: "no_ahora",
@@ -77,15 +79,33 @@ Deno.serve(async (req) => {
     const contacto = respuesta.ce_contactos as any;
     const replyCuerpo = respuesta.cuerpo ?? "";
 
-    // ── 2-3. Build prompt and call OpenAI ────────────────────────────
-    const systemPrompt = `You are an email classification assistant. Classify the following reply to a cold email into exactly one of these categories:
-- interesado: the person shows interest, wants more info, or agrees to a meeting
-- no_ahora: the person is not interested right now but leaves the door open for the future
-- baja: the person explicitly asks to be removed from the list or to stop receiving emails
-- negativo: the person responds negatively, rudely, or threatens action
-- irrelevante: the reply is an auto-reply, out-of-office, delivery notification, or otherwise not a real human response
+    // ── 2-3. Build prompt and call Anthropic ──────────────────────────
+    const systemPrompt = `Eres un asistente de clasificación de respuestas a emails de prospección comercial para una agencia de marketing de bodas (Madrigal Marketing). Clasifica cada respuesta en UNA categoría y decide si requiere respuesta por email.
 
-Reply with valid JSON only: {"clasificacion": "<category>", "confianza": <0.0-1.0>, "razon": "<brief reason in Spanish>"}`;
+CATEGORÍAS (elige exactamente UNA):
+- interesado: Acepta contacto por WhatsApp o responde positivamente sin hacer preguntas que requieran respuesta por email. Incluye:
+  • Dice "sí", "vale", "perfecto", "escríbeme", "cuéntame"
+  • Da su teléfono o pide contacto por WhatsApp
+  • Responde brevemente aceptando ("Ok", "Sin problema", "Genial")
+- interesado_email: Muestra interés PERO hace preguntas concretas o pide que le respondan por email. Incluye:
+  • Hace preguntas sobre precios, cómo funciona, garantías, referencias
+  • Pregunta sobre compatibilidad con su situación ("solo trabajo como X, ¿sirve?")
+  • Pide explícitamente que le respondan por correo ("respóndeme por aquí")
+  • Cualquier respuesta que necesite una contestación personalizada por email
+- no_ahora: SOLO si dice explícitamente "ahora no" o "quizás más adelante". NO uses esta categoría para preguntas o dudas.
+- baja: Pide explícitamente ser eliminado de la lista o que no le escriban más.
+- negativo: Responde con un "No" seco, de forma brusca, o amenaza.
+- irrelevante: Respuestas automáticas (autoresponder, out-of-office, acuse de recibo automático). Señales: asunto empieza con "Auto:", texto genérico sin contexto personal, firma institucional sin contenido real.
+
+REGLAS IMPORTANTES:
+- Si DUDA entre interesado e interesado_email, elige interesado_email. Es mejor reenviar de más que perder una pregunta.
+- Una pregunta SIEMPRE es interés (interesado o interesado_email), NUNCA es "no_ahora".
+- "No gracias" sin más = negativo. "No me interesa ahora" = no_ahora.
+- Los autoresponders son SIEMPRE irrelevante, aunque digan "nos pondremos en contacto".
+- Si alguien dice "cuéntame por aquí" (por email) = interesado_email.
+- Si alguien dice "escríbeme al WhatsApp" = interesado.
+
+Responde SOLO con JSON válido: {"clasificacion": "<categoría>", "confianza": <0.0-1.0>, "razon": "<razón breve en español>"}`;
 
     const userPrompt = `ORIGINAL EMAIL SENT:
 Subject: ${paso.asunto_a}
@@ -215,7 +235,7 @@ ${replyCuerpo}`;
     // ── 7. If interested → create CRM lead ───────────────────────────
     let crmLeadId: string | null = null;
 
-    if (clasificacion === "interesado") {
+    if (clasificacion === "interesado" || clasificacion === "interesado_email") {
       // Create lead in ventas_leads.
       const { data: lead, error: leadErr } = await supabase
         .from("ventas_leads")
@@ -276,6 +296,13 @@ ${replyCuerpo}`;
           }
         }
 
+        // Auto-assign setter via reparto config
+        try {
+          await supabase.rpc("ventas_asignar_lead_automatico", { p_lead_id: crmLeadId });
+        } catch {
+          // Non-critical — lead is still created
+        }
+
         // Link lead back to respuesta and contacto.
         await Promise.all([
           supabase
@@ -290,12 +317,61 @@ ${replyCuerpo}`;
       }
     }
 
-    // ── 8. Return result ─────────────────────────────────────────────
+    // ── 8. Forward to email if interesado_email ───────────────────────
+    let emailForwarded = false;
+
+    if (clasificacion === "interesado_email") {
+      const resendApiKey = Deno.env.get("RESEND_API_KEY");
+      const notifyEmail = "info@madrigalmarketing.es";
+
+      if (resendApiKey) {
+        try {
+          const fwdResp = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${resendApiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: "Cold Email Bot <info@mail.madrigalmarketing.es>",
+              to: [notifyEmail],
+              subject: `[Respuesta Cold Email] ${contacto.nombre ?? contacto.email} - necesita respuesta`,
+              text: `RESPUESTA QUE REQUIERE CONTESTACIÓN POR EMAIL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+De: ${contacto.nombre ?? "?"} (${contacto.email})
+Empresa: ${contacto.empresa ?? "N/A"}
+Teléfono: ${contacto.telefono ?? "N/A"}
+
+Su respuesta:
+${replyCuerpo}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Clasificación IA: ${clasificacion} (confianza: ${parsed.confianza})
+Razón: ${parsed.razon}
+${crmLeadId ? `Lead CRM: creado` : ""}
+
+Para responder, escribe directamente a: ${contacto.email}`,
+            }),
+          });
+
+          emailForwarded = fwdResp.ok;
+          if (!fwdResp.ok) {
+            console.error("ce-clasificar-respuesta: forward email error:", await fwdResp.text());
+          }
+        } catch (fwdErr: any) {
+          console.error("ce-clasificar-respuesta: forward email failed:", fwdErr.message);
+        }
+      }
+    }
+
+    // ── 9. Return result ─────────────────────────────────────────────
     return jsonResponse({
       clasificacion,
       confianza: parsed.confianza,
       razon: parsed.razon,
       crm_lead_id: crmLeadId,
+      email_forwarded: emailForwarded,
     });
   } catch (err) {
     console.error("ce-clasificar-respuesta error:", err);
