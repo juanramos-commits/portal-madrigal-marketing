@@ -22,30 +22,60 @@ const EVENT_MAP: Record<string, string> = {
   'email.complained': 'complained',
 }
 
-// ── Webhook signature verification (optional) ──────────────────────────────
+// ── Webhook signature verification (Svix format used by Resend) ─────────────
+
+function base64ToUint8Array(base64: string): Uint8Array {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes
+}
 
 async function verifyResendSignature(
   body: string,
-  signatureHeader: string | null,
+  req: Request,
   secret: string,
 ): Promise<boolean> {
-  if (!secret || !signatureHeader) return true // Skip if not configured
+  if (!secret) return true // Skip if not configured
 
   try {
+    // Svix sends: svix-id, svix-timestamp, svix-signature
+    const svixId = req.headers.get('svix-id')
+    const svixTimestamp = req.headers.get('svix-timestamp')
+    const svixSignature = req.headers.get('svix-signature')
+
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      console.warn('ce-webhook-resend: missing svix headers, skipping verification')
+      return true
+    }
+
+    // Svix secret starts with "whsec_" prefix → strip it
+    const rawSecret = secret.startsWith('whsec_') ? secret.slice(6) : secret
+    const secretBytes = base64ToUint8Array(rawSecret)
+
+    // Sign: "{svix-id}.{svix-timestamp}.{body}"
+    const toSign = `${svixId}.${svixTimestamp}.${body}`
     const encoder = new TextEncoder()
+
     const key = await crypto.subtle.importKey(
       'raw',
-      encoder.encode(secret),
+      secretBytes,
       { name: 'HMAC', hash: 'SHA-256' },
       false,
       ['sign'],
     )
-    const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(body))
-    const expected = Array.from(new Uint8Array(signature))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
+    const signatureBytes = await crypto.subtle.sign('HMAC', key, encoder.encode(toSign))
+    const computed = btoa(String.fromCharCode(...new Uint8Array(signatureBytes)))
 
-    return signatureHeader === expected
+    // svix-signature can have multiple signatures: "v1,<sig1> v1,<sig2>"
+    const signatures = svixSignature.split(' ')
+    for (const sig of signatures) {
+      const parts = sig.split(',')
+      if (parts.length === 2 && parts[1] === computed) return true
+    }
+
+    console.warn('ce-webhook-resend: signature mismatch')
+    return false
   } catch (err) {
     console.warn('Signature verification failed:', err)
     return false
@@ -81,12 +111,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ ok: true, skipped: true, reason: 'invalid JSON' })
     }
 
-    // ── 2. Verify webhook signature (optional) ───────────────────────────
+    // ── 2. Verify webhook signature (Svix format) ────────────────────────
     const webhookSecret = Deno.env.get('RESEND_WEBHOOK_SECRET') ?? ''
-    const signatureHeader = req.headers.get('resend-signature') ?? req.headers.get('svix-signature')
 
     if (webhookSecret) {
-      const valid = await verifyResendSignature(rawBody, signatureHeader, webhookSecret)
+      const valid = await verifyResendSignature(rawBody, req, webhookSecret)
       if (!valid) {
         console.warn('ce-webhook-resend: invalid signature')
         return jsonResponse({ ok: true, skipped: true, reason: 'invalid signature' })
