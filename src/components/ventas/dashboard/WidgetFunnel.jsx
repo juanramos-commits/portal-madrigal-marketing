@@ -25,7 +25,9 @@ export default memo(function WidgetFunnel({ widgetDef, data }) {
   if (allZero || firstVal === 0) return <div className="db-widget-empty">Sin datos para este periodo</div>
 
   const lastKey = niveles[niveles.length - 1].key
-  const tasaGlobal = firstVal > 0 ? ((Number(data[lastKey]) || 0) / firstVal * 100).toFixed(1) : '0.0'
+  const ventasVal = Number(data[lastKey]) || 0
+  const tasaBase = isCloser ? (Number(data.realizadas) || 0) : firstVal
+  const tasaGlobal = tasaBase > 0 ? (ventasVal / tasaBase * 100).toFixed(1) : '0.0'
 
   return (
     <div className="db-wfunnel">
