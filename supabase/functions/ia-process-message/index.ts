@@ -482,10 +482,10 @@ async function executeTool(
           return `Error al reservar: ${citaErr.message}. Disculpa y propón otra hora.`
         }
 
-        // Update IA conversation state
+        // Update IA conversation state — keep chatbot active for one more reply (closing message)
         await supabase
           .from('ia_conversaciones')
-          .update({ estado: 'agendado', chatbot_activo: false })
+          .update({ estado: 'agendado', chatbot_activo: true })
           .eq('id', convo.id)
 
         // Sync Google Calendar — creates event + Meet link
@@ -1723,6 +1723,11 @@ ${learnedRules}`
       convo.resumen, messageContent, finalResponse, anthropicKey,
     )
     convoUpdates.resumen = newResumen
+
+    // If conversation is already agendado, deactivate bot after this closing reply
+    if (convo.estado === 'agendado') {
+      convoUpdates.chatbot_activo = false
+    }
 
     await supabase
       .from('ia_conversaciones')
