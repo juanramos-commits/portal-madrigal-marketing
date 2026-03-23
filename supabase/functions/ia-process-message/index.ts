@@ -395,19 +395,28 @@ async function executeTool(
       const nombreLead = toolInput.nombre_lead as string
       const resumen = toolInput.resumen as string
 
-      // Claude provides times in Madrid timezone — store with explicit timezone
-      // Append Madrid timezone if no timezone specified
+      // Claude provides times in Madrid timezone — convert to UTC properly
       let fechaHora = fechaHoraRaw
       if (!fechaHoraRaw.includes('Z') && !fechaHoraRaw.includes('+') && !fechaHoraRaw.includes('Europe')) {
-        fechaHora = fechaHoraRaw + '+01:00' // CET (winter), will be +02:00 in summer
-        // Detect summer time (last Sunday of March to last Sunday of October)
+        // Use Intl to determine if Madrid is in CET or CEST at the given date
         try {
-          const d = new Date(fechaHoraRaw)
-          const month = d.getMonth() // 0-indexed
-          if (month >= 2 && month <= 9) { // March-October range (approximate)
-            fechaHora = fechaHoraRaw + '+02:00' // CEST
-          }
-        } catch { /* keep CET */ }
+          // Parse the date parts to build a proper Date in Madrid tz
+          const madridOffset = (() => {
+            const d = new Date(fechaHoraRaw)
+            // Get UTC offset for Madrid at this specific date
+            const utcStr = d.toLocaleString('en-US', { timeZone: 'UTC' })
+            const madridStr = d.toLocaleString('en-US', { timeZone: 'Europe/Madrid' })
+            const utcDate = new Date(utcStr)
+            const madridDate = new Date(madridStr)
+            return (madridDate.getTime() - utcDate.getTime()) / 3600000
+          })()
+          const offsetStr = madridOffset >= 0
+            ? `+${String(Math.floor(madridOffset)).padStart(2, '0')}:00`
+            : `-${String(Math.floor(Math.abs(madridOffset))).padStart(2, '0')}:00`
+          fechaHora = fechaHoraRaw + offsetStr
+        } catch {
+          fechaHora = fechaHoraRaw + '+01:00' // Fallback CET
+        }
       }
 
       try {
